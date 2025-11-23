@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ _('Iniciar sesión') }}</title>
+    <style>
+        /* (Los estilos no requieren traducción) */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: Inter, system-ui;
+            background: linear-gradient(180deg, #f5f7fb, #eef2f8);
+            color: #111;
+        }
+
+        .wrap {
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(22, 42, 77, 0.08);
+            padding: 28px;
+            border: 1px solid rgba(16, 24, 40, 0.04);
+        }
+
+        h1 {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        p.lead {
+            margin-bottom: 20px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        form {
+            display: grid;
+            gap: 14px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #0f172a;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #e6e9ef;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .input input {
+            border: none;
+            outline: none;
+            font-size: 15px;
+            width: 100%;
+            background: transparent;
+        }
+
+        .help {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 15px;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            color: white;
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.18);
+        }
+
+        .secondary {
+            background: transparent;
+            border: 1px solid #e6e9ef;
+            color: #0f172a;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .footer {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .error {
+            color: #b91c1c;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <main class="card" role="main" aria-labelledby="loginTitle">
+            <h1 id="loginTitle">{{ _('Iniciar sesión') }}</h1>
+            <p class="lead">{{ _('Introduce tus credenciales para acceder a tu cuenta.') }}</p>
+
+            <form id="loginForm" method="post" action="{{ url_for('auth.login') }}">
+                <div>
+                    <label for="email">{{ _('Correo electrónico') }}</label>
+                    <div class="input">
+                        <input id="email" name="email" type="email" autocomplete="email"
+                            placeholder="{{ _('tú@ejemplo.com') }}" required />
+                    </div>
+                    <div class="help">{{ _('Usa el correo asociado a tu cuenta.') }}</div>
+                </div>
+
+                <div>
+                    <label for="password">{{ _('Contraseña') }}</label>
+                    <div class="input">
+                        <input id="password" name="password" type="password" autocomplete="current-password"
+                            placeholder="••••••••" required />
+                        <button type="button" id="togglePwd" class="secondary"
+                            aria-label="{{ _('Mostrar u ocultar contraseña') }}">{{ _('Mostrar') }}</button>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:6px;">
+                    <label class="checkbox">
+                        <input type="checkbox" name="remember" /> {{ _('Recuérdame') }}
+                    </label>
+                    <a href="#"
+                        style="font-size:13px; color:#2563eb; text-decoration:none;">{{ _('¿Olvidaste tu contraseña?') }}</a>
+                </div>
+
+                <div>
+                    <button type="submit" class="btn">{{ _('Entrar') }}</button>
+                    <div id="errorMsg" class="error" role="alert" aria-live="polite" style="display:none;"></div>
+                </div>
+            </form>
+
+            <div class="footer">
+                {{ _('¿No tienes cuenta?') }}
+                <a href="#" style="color:#2563eb; text-decoration:none;">{{ _('Regístrate') }}</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Textos de JS marcados para que Flask-Babel pueda extraerlos
+        const TXT_SHOW = "{{ _('Mostrar') }}";
+        const TXT_HIDE = "{{ _('Ocultar') }}";
+        const ERR_EMAIL = "{{ _('Por favor introduce tu correo.') }}";
+        const ERR_PASS = "{{ _('La contraseña debe tener al menos 6 caracteres.') }}";
+        const ERR_CONN = "{{ _('No se pudo conectar al servidor.') }}";
+        const ERR_LOGIN = "{{ _('Error al iniciar sesión') }}";
+
+        (function () {
+            const pwd = document.getElementById('password');
+            const toggle = document.getElementById('togglePwd');
+            const form = document.getElementById('loginForm');
+            const errorMsg = document.getElementById('errorMsg');
+
+            toggle.addEventListener('click', () => {
+                if (pwd.type === 'password') {
+                    pwd.type = 'text';
+                    toggle.textContent = TXT_HIDE;
+                } else {
+                    pwd.type = 'password';
+                    toggle.textContent = TXT_SHOW;
+                }
+            });
+
+            form.addEventListener('submit', (e) => {
+                errorMsg.style.display = 'none';
+                errorMsg.textContent = '';
+
+                const email = document.getElementById('email').value.trim();
+                const password = pwd.value;
+
+                if (!email) {
+                    e.preventDefault();
+                    showError(ERR_EMAIL);
+                    return;
+                }
+                if (password.length < 6) {
+                    e.preventDefault();
+                    showError(ERR_PASS);
+                    return;
+                }
+            });
+
+            function showError(text) {
+                errorMsg.textContent = text;
+                errorMsg.style.display = 'block';
+            }
+
+            document.getElementById('email').focus();
+        })();
+    </script>
+</body>
+
+</html>
