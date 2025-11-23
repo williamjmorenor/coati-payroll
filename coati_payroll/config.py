@@ -52,8 +52,7 @@ def load_config_from_file() -> dict:
     try:
         from configobj import ConfigObj
     except ImportError:
-        log.debug(
-            "ConfigObj not available, skipping file-based configuration.")
+        log.debug("ConfigObj not available, skipping file-based configuration.")
         return {}
 
     search_paths = [
@@ -74,8 +73,7 @@ def load_config_from_file() -> dict:
 
                 # Handle aliases as specified in the requirements
                 if "DATABASE_URL" in config_dict:
-                    config_dict["SQLALCHEMY_DATABASE_URI"] = config_dict[
-                        "DATABASE_URL"]
+                    config_dict["SQLALCHEMY_DATABASE_URI"] = config_dict["DATABASE_URL"]
                     # Keep the alias for backward compatibility
 
                 if "REDIS_URL" in config_dict:
@@ -85,8 +83,7 @@ def load_config_from_file() -> dict:
                 return config_dict
 
             except Exception as e:
-                log.warning(
-                    f"Error loading configuration from {config_path}: {e}")
+                log.warning(f"Error loading configuration from {config_path}: {e}")
                 continue
 
     log.trace("No configuration file found in search paths.")
@@ -104,7 +101,8 @@ GENERIC_VARS = ["ENV", "APP_ENV"]
 # Gestión de variables de entorno.
 DESARROLLO = any(
     str(environ.get(var, "")).strip().lower() in VALORES_TRUE
-    for var in [*DEBUG_VARS, *FRAMEWORK_VARS, *GENERIC_VARS])
+    for var in [*DEBUG_VARS, *FRAMEWORK_VARS, *GENERIC_VARS]
+)
 
 # < --------------------------------------------------------------------------------------------- >
 # Directorios base de la aplicacion
@@ -132,15 +130,19 @@ else:
 
 # < --------------------------------------------------------------------------------------------- >
 # Directorio base temas.
-DIRECTORIO_BASE_UPLOADS = Path(
-    str(path.join(str(DIRECTORIO_ARCHIVOS), "files")))
+DIRECTORIO_BASE_UPLOADS = Path(str(path.join(str(DIRECTORIO_ARCHIVOS), "files")))
 
 # < --------------------------------------------------------------------------------------------- >
 # Ubicación predeterminada de base de datos SQLITE
-if TESTING := ("PYTEST_CURRENT_TEST" in environ or "PYTEST_VERSION" in environ
-               or hasattr(sys, "_called_from_test") or environ.get("CI")
-               or "pytest" in sys.modules
-               or path.basename(sys.argv[0]) in ["pytest", "py.test"]):
+if TESTING := (
+    "PYTEST_CURRENT_TEST" in environ
+    or "PYTEST_VERSION" in environ
+    or "TESTING" in environ
+    or hasattr(sys, "_called_from_test")
+    or environ.get("CI")
+    or "pytest" in sys.modules
+    or path.basename(sys.argv[0]) in ["pytest", "py.test"]
+):
     SQLITE: str = "sqlite://"
 else:
     if name == "nt":
@@ -156,11 +158,11 @@ CONFIGURACION["SECRET_KEY"] = environ.get("SECRET_KEY") or "dev"  # nosec
 
 # Warn if using default SECRET_KEY in production
 if not DESARROLLO and CONFIGURACION["SECRET_KEY"] == "dev":
-    log.warning(
-        "Using default SECRET_KEY in production! This will can cause issues ")
+    log.warning("Using default SECRET_KEY in production! This will can cause issues ")
 
-CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = (environ.get("DATABASE_URL")
-                                            or SQLITE)  # nosec
+CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = (
+    environ.get("DATABASE_URL") or SQLITE
+)  # nosec
 # Opciones comunes de configuración.
 CONFIGURACION["PRESERVE_CONTEXT_ON_EXCEPTION"] = False
 
@@ -179,40 +181,41 @@ if DATABASE_URL_BASE := CONFIGURACION.get("SQLALCHEMY_DATABASE_URI"):
 
     DATABASE_URL_CORREGIDA = DATABASE_URL_BASE
 
-    prefix = DATABASE_URL_BASE.split(
-        ":", 1)[0]  # Extraer prefijo: "postgres", "mysql", etc.
+    prefix = DATABASE_URL_BASE.split(":", 1)[
+        0
+    ]  # Extraer prefijo: "postgres", "mysql", etc.
 
     # Caso especial: Heroku + PostgreSQL
     if environ.get("DYNO") and prefix in (
-            "postgres",
-            "postgresql",
+        "postgres",
+        "postgresql",
     ):  # type: ignore[operator]
         parsed = urlparse(DATABASE_URL_BASE)  # type: ignore[arg-type]
         query = parse_qs(parsed.query)
         query["sslmode"] = ["require"]
         DATABASE_URL_CORREGIDA = urlunparse(
-            parsed._replace(scheme="postgresql",
-                            query=urlencode(query, doseq=True)))
+            parsed._replace(scheme="postgresql", query=urlencode(query, doseq=True))
+        )
 
     else:
         # Corrige el esquema según el prefijo detectado
         match prefix:
             case "postgresql":
-                DATABASE_URL_CORREGIDA = ("postgresql+pg8000" +
-                                          DATABASE_URL_BASE[10:]
-                                          )  # type: ignore[index]
+                DATABASE_URL_CORREGIDA = (
+                    "postgresql+pg8000" + DATABASE_URL_BASE[10:]
+                )  # type: ignore[index]
             case "postgres":
-                DATABASE_URL_CORREGIDA = ("postgresql+pg8000" +
-                                          DATABASE_URL_BASE[8:]
-                                          )  # type: ignore[index]
+                DATABASE_URL_CORREGIDA = (
+                    "postgresql+pg8000" + DATABASE_URL_BASE[8:]
+                )  # type: ignore[index]
             case "mysql":
-                DATABASE_URL_CORREGIDA = ("mysql+pymysql" +
-                                          DATABASE_URL_BASE[5:]
-                                          )  # type: ignore[index]
+                DATABASE_URL_CORREGIDA = (
+                    "mysql+pymysql" + DATABASE_URL_BASE[5:]
+                )  # type: ignore[index]
             case "mariadb":  # Not tested, but should work.
-                DATABASE_URL_CORREGIDA = ("mariadb+mariadbconnector" +
-                                          DATABASE_URL_BASE[7:]
-                                          )  # type: ignore[index]
+                DATABASE_URL_CORREGIDA = (
+                    "mariadb+mariadbconnector" + DATABASE_URL_BASE[7:]
+                )  # type: ignore[index]
             case _:
                 pass  # Prefijo desconocido o ya corregido
 

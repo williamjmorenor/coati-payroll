@@ -69,14 +69,10 @@ class BaseTabla:
         index=True,
         default=generador_de_codigos_unicos,
     )
-    timestamp = database.Column(database.DateTime,
-                                default=utc_now,
-                                nullable=False)
+    timestamp = database.Column(database.DateTime, default=utc_now, nullable=False)
     creado = database.Column(database.Date, default=date.today, nullable=False)
     creado_por = database.Column(database.String(150), nullable=True)
-    modificado = database.Column(database.DateTime,
-                                 onupdate=utc_now,
-                                 nullable=True)
+    modificado = database.Column(database.DateTime, onupdate=utc_now, nullable=True)
     modificado_por = database.Column(database.String(150), nullable=True)
 
 
@@ -84,21 +80,20 @@ class Usuario(UserMixin, database.Model, BaseTabla):
     """Una entidad con acceso al sistema."""
 
     # Información Básica
-    __table_args__ = (database.UniqueConstraint("usuario",
-                                                name="id_usuario_unico"), )
-    __table_args__ = (database.UniqueConstraint("correo_electronico",
-                                                name="correo_usuario_unico"), )
+    __table_args__ = (database.UniqueConstraint("usuario", name="id_usuario_unico"),)
+    __table_args__ = (
+        database.UniqueConstraint("correo_electronico", name="correo_usuario_unico"),
+    )
     # Info de sistema
-    usuario = database.Column(database.String(150),
-                              nullable=False,
-                              index=True,
-                              unique=True)
+    usuario = database.Column(
+        database.String(150), nullable=False, index=True, unique=True
+    )
     acceso = database.Column(database.LargeBinary(), nullable=False)
     nombre = database.Column(database.String(100))
     apellido = database.Column(database.String(100))
     correo_electronico = database.Column(database.String(150))
-    correo_electronico_verificado = database.Column(database.Boolean(),
-                                                    default=False)
+    correo_electronico_verificado = database.Column(database.Boolean(), default=False)
     tipo = database.Column(
-        database.String(20))  # Puede ser: admin, user, instructor, moderator
+        database.String(20)
+    )  # Puede ser: admin, user, instructor, moderator
     activo = database.Column(database.Boolean())
