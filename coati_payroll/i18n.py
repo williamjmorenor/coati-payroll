@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""App module."""
+"""Internationalization module."""
 
 from __future__ import annotations
 
@@ -22,17 +22,26 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Third party libraries
 # <-------------------------------------------------------------------------> #
-from flask import Blueprint, render_template
-from flask_login import login_required
+from flask_babel import gettext, lazy_gettext, ngettext
 
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
 
-app = Blueprint("app", __name__)
+
+# ---------------------------------------------------------------------------------------
+# Translation functions
+# ---------------------------------------------------------------------------------------
+def _(text: str) -> str:
+    """Mark text for translation."""
+    return gettext(text)
 
 
-@app.route("/")
-@login_required
-def index():
-    return render_template("index.html")
+def _n(singular: str, plural: str, n: int) -> str:
+    """Mark text for plural translation."""
+    return ngettext(singular, plural, n)
+
+
+def _l(text: str) -> str:
+    """Mark text for lazy translation (useful in forms)."""
+    return lazy_gettext(text)

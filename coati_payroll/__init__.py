@@ -29,6 +29,7 @@ from os import environ
 # Third party libraries
 # <-------------------------------------------------------------------------> #
 from flask import Flask, flash, redirect, url_for
+from flask_babel import Babel
 from flask_login import LoginManager
 from flask_session import Session
 
@@ -38,11 +39,13 @@ from flask_session import Session
 from coati_payroll.app import app as app_blueprint
 from coati_payroll.auth import auth
 from coati_payroll.config import DIRECTORIO_ARCHIVOS_BASE, DIRECTORIO_PLANTILLAS_BASE
+from coati_payroll.i18n import _
 from coati_payroll.model import Usuario, db
 
 # Third party libraries
 session_manager = Session()
 login_manager = LoginManager()
+babel = Babel()
 
 
 # ---------------------------------------------------------------------------------------
@@ -97,6 +100,7 @@ def create_app(config) -> Flask:
         app.config["SESSION_PERMANENT"] = False
         app.config["SESSION_USE_SIGNER"] = True
 
+    babel.init_app(app)
     session_manager.init_app(app)
     login_manager.init_app(app)
 
