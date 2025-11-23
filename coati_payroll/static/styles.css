@@ -1,0 +1,100 @@
+/* ---------------------------
+   PALETA DE COLORES COATY
+------------------------------ */
+
+.bg-coaty-dark {
+    background-color: #4b3621 !important;
+    /* marrón oscuro */
+}
+
+.bg-coaty-light {
+    background-color: #d9c3a4 !important;
+    /* beige terroso */
+}
+
+/* Sidebar */
+.sidebar {
+    width: 230px;
+    min-height: 100vh;
+    padding: 20px 0;
+    transition: transform 0.3s ease;
+}
+
+.sidebar .nav-link {
+    color: #3a2c1b;
+    font-weight: 500;
+    padding: 12px 20px;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #b89b6c;
+    color: white;
+}
+
+/* Mobile: sidebar oculto */
+@media (max-width: 992px) {
+    .sidebar {
+        position: fixed;
+        top: 56px;
+        /* altura navbar */
+        left: 0;
+        transform: translateX(-100%);
+        width: 220px;
+        z-index: 1030;
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+}
+
+/* Navbar links */
+.navbar-nav .nav-link {
+    color: #f5e6d8 !important;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #fcd488 !important;
+}
+
+/* Botón flotante para abrir la sidebar en móvil */
+.sidebar-floating-btn {
+    position: fixed;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    z-index: 2000;
+    background-color: #4b3621;
+    /* mismo color de la navbar */
+    color: white;
+    border: none;
+    padding: 12px 14px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.25);
+    font-size: 1.6rem;
+}
+
+/* Botón izquierdo del menú (igual estilo que el de la derecha) */
+.sidebar-toggle-btn {
+    background-color: #4b3621 !important;
+    /* beige claro */
+    border: 1px solid #4b3621 !important;
+    /* borde marrón oscuro */
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-toggle-btn i {
+    font-size: 1.4rem;
+    color: #4b3621 !important;
+    /* mismo color del borde */
+}
+
+/* Hover opcional */
+.sidebar-toggle-btn:hover {
+    background-color: #c7b092 !important;
+}
