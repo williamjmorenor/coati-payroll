@@ -26,7 +26,7 @@ from datetime import datetime
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, render_template, redirect, url_for, flash
-from flask_login import login_user
+from flask_login import login_user, logout_user
 
 # <-------------------------------------------------------------------------> #
 # Local modules
@@ -69,12 +69,20 @@ def login():
     return render_template("auth/login.html", form=form)
 
 
-ph = PasswordHasher()
+@auth.route("/logout")
+def logout():
+    """Cerrar sesión del usuario."""
+    logout_user()
+    flash(_("Sesión cerrada correctamente."), "info")
+    return redirect(url_for("auth.login"))
 
 
 # ---------------------------------------------------------------------------------------
 # Proteger contraseñas de usuarios.
 # ---------------------------------------------------------------------------------------
+ph = PasswordHasher()
+
+
 def proteger_passwd(clave: str, /) -> bytes:
     """Devuelve una contraseña salteada con argon2."""
     _hash = ph.hash(clave.encode()).encode("utf-8")
