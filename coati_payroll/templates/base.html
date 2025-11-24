@@ -32,7 +32,8 @@
         <div class="collapse navbar-collapse justify-content-end" id="topNav">
             <ul class="navbar-nav mb-2 mb-lg-0">
                 <li class="nav-item"><a class="nav-link" href="#">{{ _('Mi Perfil') }}</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">{{ _('Cerrar Sesión') }}</a></li>
+                <li class="nav-item"><a class="nav-link"
+                        href="{{  url_for('auth.logout') }}">{{ _('Cerrar Sesión') }}</a></li>
             </ul>
         </div>
     </nav>
