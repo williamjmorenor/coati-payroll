@@ -41,6 +41,7 @@ from coati_payroll.auth import auth
 from coati_payroll.config import DIRECTORIO_ARCHIVOS_BASE, DIRECTORIO_PLANTILLAS_BASE
 from coati_payroll.i18n import _
 from coati_payroll.model import Usuario, db
+from coati_payroll.log import log
 
 # Third party libraries
 session_manager = Session()
@@ -85,7 +86,29 @@ def create_app(config) -> Flask:
 
         app.config.from_object(configuration)
 
+    log.trace("create_app: initializing app")
     db.init_app(app)
+
+    # Mostrar la URI de la base de datos para diagnóstico
+    try:
+        db_uri = app.config.get("SQLALCHEMY_DATABASE_URI")
+        log.trace(f"create_app: SQLALCHEMY_DATABASE_URI = {db_uri}")
+    except Exception:
+        log.trace("create_app: could not read SQLALCHEMY_DATABASE_URI from app.config")
+
+    # Asegurar la creación de las tablas básicas al iniciar la app.
+    try:
+        log.trace("create_app: calling ensure_database_initialized")
+        ensure_database_initialized(app)
+        log.trace("create_app: ensure_database_initialized completed")
+    except Exception as exc:
+        log.trace(f"create_app: ensure_database_initialized raised: {exc}")
+        try:
+            log.exception("create_app: ensure_database_initialized exception")
+        except Exception:
+            pass
+        # No interrumpir el arranque si la inicialización automática falla.
+        pass
 
     if session_redis_url := environ.get("SESSION_REDIS_URL", None):
         from redis import Redis
@@ -108,3 +131,80 @@ def create_app(config) -> Flask:
     app.register_blueprint(app_blueprint, url_prefix="/")
 
     return app
+
+
+def ensure_database_initialized(app: Flask | None = None) -> None:
+    """Verifica que la base de datos haya sido inicializada.
+
+    - Si la tabla de `Usuario` no existe, ejecuta `create_all()`.
+    - Si no existe al menos un usuario con `tipo='admin'`, crea un usuario
+      administrador usando las variables de entorno `ADMIN_USER` y
+      `ADMIN_PASSWORD` (con valores por defecto si no están presentes).
+
+    Esta función puede llamarse con la `app` o desde un `app.app_context()` ya activo.
+    """
+
+    from os import environ as _environ
+    from coati_payroll.model import Usuario, db as _db
+    from coati_payroll.auth import proteger_passwd as _proteger_passwd
+
+    # Determinar si debemos usar el contexto de la app pasada o el actual.
+    ctx = app
+    if ctx is None:
+        from flask import current_app
+
+        ctx = current_app
+
+    with ctx.app_context():
+        # Crear todas las tablas definidas (idempotente). Esto garantiza que
+        # el archivo sqlite se cree cuando se use una URI sqlite.
+        try:
+            # Logear información útil para diagnóstico
+            try:
+                log.trace(f"ensure_database_initialized: engine.url = {_db.engine.url}")
+            except Exception:
+                log.trace("ensure_database_initialized: could not read _db.engine.url")
+
+            try:
+                db_uri = ctx.config.get("SQLALCHEMY_DATABASE_URI")
+                log.trace(
+                    f"ensure_database_initialized: Flask SQLALCHEMY_DATABASE_URI = {db_uri}"
+                )
+            except Exception:
+                log.trace(
+                    "ensure_database_initialized: could not read SQLALCHEMY_DATABASE_URI from ctx.config"
+                )
+
+            log.trace("ensure_database_initialized: calling create_all()")
+            _db.create_all()
+            log.trace("ensure_database_initialized: create_all() completed")
+        except Exception as exc:
+            # Registrar excepción completa para diagnóstico
+            log.trace(f"ensure_database_initialized: create_all() raised: {exc}")
+            try:
+                log.exception("ensure_database_initialized: create_all() exception")
+            except Exception:
+                pass
+            # Re-raise? No — dejar que el llamador decida; aquí se registra la traza.
+
+        # Comprobar existencia de al menos un admin.
+        registro_admin = _db.session.execute(
+            _db.select(Usuario).filter_by(tipo="admin")
+        ).scalar_one_or_none()
+
+        if registro_admin is None:
+            # Leer credenciales de entorno o usar valores por defecto.
+            admin_user = _environ.get("ADMIN_USER", "coati-admin")
+            admin_pass = _environ.get("ADMIN_PASSWORD", "coati-admin")
+
+            nuevo = Usuario()
+            nuevo.usuario = admin_user
+            nuevo.acceso = _proteger_passwd(admin_pass)
+            nuevo.nombre = "Administrador"
+            nuevo.apellido = ""
+            nuevo.correo_electronico = None
+            nuevo.tipo = "admin"
+            nuevo.activo = True
+
+            _db.session.add(nuevo)
+            _db.session.commit()

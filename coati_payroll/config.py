@@ -18,7 +18,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Standard library
 # <-------------------------------------------------------------------------> #
-from os import environ, getcwd, name, path, sys
+from os import environ, getcwd, path, sys
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
@@ -108,7 +108,11 @@ DESARROLLO = any(
 # Directorios base de la aplicacion
 DIRECTORIO_ACTUAL: Path = Path(path.abspath(path.dirname(__file__)))
 DIRECTORIO_APP: Path = DIRECTORIO_ACTUAL.parent.absolute()
-DIRECTORIO_DESARROLLO: Path = DIRECTORIO_APP.parent.absolute()
+# DIRECTORIO_DESARROLLO was previously set to the grandparent which made
+# the default DB land outside the project (e.g. C:\code). Use the project
+# directory (`DIRECTORIO_APP`) as the development root so database files
+# are created inside the repository.
+DIRECTORIO_DESARROLLO: Path = DIRECTORIO_APP
 DIRECTORIO_PLANTILLAS_BASE: str = path.join(DIRECTORIO_ACTUAL, "templates")
 DIRECTORIO_ARCHIVOS_BASE: str = path.join(DIRECTORIO_ACTUAL, "static")
 
@@ -134,7 +138,11 @@ DIRECTORIO_BASE_UPLOADS = Path(str(path.join(str(DIRECTORIO_ARCHIVOS), "files"))
 
 # < --------------------------------------------------------------------------------------------- >
 # Ubicación predeterminada de base de datos SQLITE
-if TESTING := (
+# En entornos de testing usamos una base de datos en memoria; en desarrollo
+# usamos un archivo `coati_payroll.db` ubicado en la raíz del repositorio
+# (DIRECTORIO_DESARROLLO). Normalizamos la ruta con Path.as_posix() para
+# evitar problemas con separadores en Windows.
+TESTING = (
     "PYTEST_CURRENT_TEST" in environ
     or "PYTEST_VERSION" in environ
     or "TESTING" in environ
@@ -142,13 +150,15 @@ if TESTING := (
     or environ.get("CI")
     or "pytest" in sys.modules
     or path.basename(sys.argv[0]) in ["pytest", "py.test"]
-):
-    SQLITE: str = "sqlite://"
+)
+
+if TESTING:
+    # Use DB in memory for tests to avoid filesystem side-effects
+    SQLITE: str = "sqlite:///:memory:"
 else:
-    if name == "nt":
-        SQLITE = "sqlite:///" + str(DIRECTORIO_DESARROLLO) + "\\now_lms.db"
-    else:
-        SQLITE = "sqlite:///" + str(DIRECTORIO_DESARROLLO) + "/now_lms.db"
+    # File-based sqlite in project root
+    sqlite_file = DIRECTORIO_DESARROLLO.joinpath("coati_payroll.db")
+    SQLITE = f"sqlite:///{sqlite_file.as_posix()}"
 
 # < --------------------------------------------------------------------------------------------- >
 # Configuración de la aplicación:

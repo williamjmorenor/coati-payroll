@@ -2,6 +2,7 @@ argon2-cffi
 babel
 configobj
 cryptography
+email-validator
 flask
 flask-babel
 flask-caching

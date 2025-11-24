@@ -11,18 +11,35 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Forms module."""
+
+"""Forms module.
+
+Contiene los formularios WTForms usados por la aplicación.
+"""
 
 from __future__ import annotations
 
-# <-------------------------------------------------------------------------> #
-# Standard library
-# <-------------------------------------------------------------------------> #
+# Terceros
+from flask_wtf import FlaskForm
+from wtforms import PasswordField, StringField, SubmitField
+from wtforms.validators import DataRequired, Length
+from coati_payroll.i18n import _
 
-# <-------------------------------------------------------------------------> #
-# Third party libraries
-# <-------------------------------------------------------------------------> #
 
-# <-------------------------------------------------------------------------> #
-# Local modules
-# <-------------------------------------------------------------------------> #
+class LoginForm(FlaskForm):
+    """Formulario de inicio de sesión.
+
+    Campos:
+    - email: correo o nombre de usuario identificador del usuario
+    - password: contraseña
+    """
+
+    # Permitimos que el usuario use su nombre de usuario o su correo electrónico
+    # para iniciar sesión, por eso no forzamos el validador Email.
+    email = StringField(
+        _("Usuario o correo electrónico"), validators=[DataRequired(), Length(max=150)]
+    )
+    password = PasswordField(
+        _("Contraseña"), validators=[DataRequired(), Length(min=6)]
+    )
+    submit = SubmitField(_("Entrar"))

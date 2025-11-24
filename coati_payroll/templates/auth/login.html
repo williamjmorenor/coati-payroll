@@ -148,36 +148,47 @@
             <p class="lead">{{ _('Introduce tus credenciales para acceder a tu cuenta.') }}</p>
 
             <form id="loginForm" method="post" action="{{ url_for('auth.login') }}">
+                {{ form.hidden_tag() }}
+
+                {%- set flashed = get_flashed_messages(with_categories=true) -%}
+                {% if flashed %}
+                <div id="errorMsg" class="error" role="alert" aria-live="polite" style="display:block;">
+                    {{ flashed[0][1] }}
+                </div>
+                {% else %}
+                <div id="errorMsg" class="error" role="alert" aria-live="polite" style="display:none;"></div>
+                {% endif %}
                 <div>
-                    <label for="email">{{ _('Correo electrónico') }}</label>
+                    <label for="{{ form.email.id }}">{{ _('Correo electrónico') }}</label>
                     <div class="input">
-                        <input id="email" name="email" type="email" autocomplete="email"
-                            placeholder="{{ _('tú@ejemplo.com') }}" required />
+                        {{ form.email(id='email', autocomplete='username', placeholder=_('usuario o correo')) }}
                     </div>
-                    <div class="help">{{ _('Usa el correo asociado a tu cuenta.') }}</div>
+                    <div class="help">{{ _('Usa el correo o el nombre de usuario asociado a tu cuenta.') }}</div>
+                    {% if form.email.errors %}
+                    <div class="error">{{ form.email.errors[0] }}</div>
+                    {% endif %}
                 </div>
 
                 <div>
-                    <label for="password">{{ _('Contraseña') }}</label>
+                    <label for="{{ form.password.id }}">{{ _('Contraseña') }}</label>
                     <div class="input">
-                        <input id="password" name="password" type="password" autocomplete="current-password"
-                            placeholder="••••••••" required />
+                        {{ form.password(id='password', autocomplete='current-password', placeholder='••••••••') }}
                         <button type="button" id="togglePwd" class="secondary"
                             aria-label="{{ _('Mostrar u ocultar contraseña') }}">{{ _('Mostrar') }}</button>
                     </div>
+                    {% if form.password.errors %}
+                    <div class="error">{{ form.password.errors[0] }}</div>
+                    {% endif %}
                 </div>
 
                 <div class="row" style="margin-top:6px;">
-                    <label class="checkbox">
-                        <input type="checkbox" name="remember" /> {{ _('Recuérdame') }}
-                    </label>
+                    <div></div>
                     <a href="#"
                         style="font-size:13px; color:#2563eb; text-decoration:none;">{{ _('¿Olvidaste tu contraseña?') }}</a>
                 </div>
 
                 <div>
-                    <button type="submit" class="btn">{{ _('Entrar') }}</button>
-                    <div id="errorMsg" class="error" role="alert" aria-live="polite" style="display:none;"></div>
+                    {{ form.submit(class_='btn') }}
                 </div>
             </form>
 
