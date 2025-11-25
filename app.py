@@ -67,8 +67,8 @@ def serve():
         except Exception:
             pass
 
-    log.trace("serve: starting waitress on 0.0.0.0:8080")
-    serve(app, host="0.0.0.0", port=8080)
+    log.trace("serve: starting waitress on 0.0.0.0:5000")
+    serve(app, host="0.0.0.0", port=5000)
 
 
 if __name__ == "__main__":
