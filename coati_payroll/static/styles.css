@@ -1,89 +1,514 @@
 /* ==================================================
    Tema moderno inspirado en colores de un coati
-   - Palette: marrones cálidos, acento verdoso, toques amber
-   - Tipografía y elementos más suaves y limpios
+   - Palette: tonos café cálidos, elegantes y profesionales
+   - Tipografía moderna y limpia
    ==================================================*/
 
 :root{
-  --coati-dark: #3e2f24;      /* oscuro, para navbar */
-  --coati-mid:  #7f5a3c;      /* marrón medio */
-  --coati-sand: #efe1cf;      /* fondo claro */
-  --coati-accent:#2f9d78;     /* verde-acoativo */
-  --coati-amber:#f2c078;      /* acento secundario */
+  --coati-dark: #4a3728;      /* café oscuro profundo para navbar */
+  --coati-navbar: #5c4033;    /* café medio-oscuro para navbar */
+  --coati-mid:  #8b6b4f;      /* marrón medio para textos */
+  --coati-sand: #f5ebe0;      /* fondo claro cálido para sidebar */
+  --coati-light: #faf6f1;     /* crema muy suave */
+  --coati-accent:#c4a77d;     /* dorado/café claro para acentos */
+  --coati-amber:#d4a574;      /* ámbar cálido */
+  --coati-border:#e8ddd0;     /* borde sutil */
   --muted:      #6b6b6b;
-  --bg:         #fbfaf9;
-  --radius:     10px;
+  --bg:         #ffffff;      /* blanco limpio para contenido */
+  --radius:     8px;
+  --transition: 0.25s ease;
 }
 
-/* Tipografía base */
+/* Tipografía base - moderna y limpia */
 body{
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   background: var(--bg);
-  color: #222;
+  color: #333;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
+  line-height: 1.6;
 }
 
-/* Navbar */
+/* Navbar - elegante y funcional */
 .navbar{
-  background: linear-gradient(90deg,var(--coati-dark), rgba(62,47,36,0.95));
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: var(--coati-dark);
+  border-bottom: 3px solid var(--coati-accent);
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
-.navbar .navbar-brand{ color: var(--coati-amber); font-weight:700; letter-spacing:1px }
-.navbar .nav-link{ color: rgba(255,255,255,0.9) !important; font-weight:500 }
-.navbar .nav-link:hover{ color: var(--coati-amber) !important }
+.navbar .navbar-brand{ 
+  color: var(--coati-accent); 
+  font-weight: 700; 
+  letter-spacing: 1.5px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.navbar .navbar-brand:hover{ color: #fff }
+.navbar .nav-link{ 
+  color: rgba(255,255,255,0.85) !important; 
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  transition: color var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.navbar .nav-link:hover{ color: var(--coati-accent) !important }
+.navbar .nav-link i { font-size: 1rem; }
 
-/* Sidebar modern */
+/* Navbar nav items - ensure horizontal layout and no bullets */
+.navbar .navbar-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Logo placeholder */
+.logo-placeholder {
+  width: 32px;
+  height: 32px;
+  background: var(--coati-accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: var(--coati-dark);
+  font-size: 0.9rem;
+}
+
+/* Sidebar modern - minimalista y organizado */
 .sidebar{
-  width: 220px;
-  min-height:100vh;
-  padding: 20px 14px;
-  background: linear-gradient(180deg, var(--coati-sand), #f6efe7);
-  box-shadow: 2px 0 12px rgba(26,20,15,0.04);
+  width: 250px;
+  min-height: calc(100vh - 60px);
+  padding: 20px 12px;
+  background: var(--coati-sand);
+  border-right: 1px solid var(--coati-border);
+  transition: left var(--transition);
 }
 .sidebar .nav-link{
   color: var(--coati-mid);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom:6px;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 4px;
+  font-weight: 500;
+  transition: all var(--transition);
+  position: relative;
 }
-.sidebar .nav-link:hover{ background: rgba(47,157,120,0.08); color: var(--coati-accent); }
-.sidebar .nav-link i{ color: var(--coati-mid); margin-right: 10px }
+.sidebar .nav-link:hover{ 
+  background: rgba(139,107,79,0.1); 
+  color: var(--coati-dark);
+  padding-left: 20px;
+}
+.sidebar .nav-link:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--coati-accent);
+  border-radius: 0 3px 3px 0;
+}
+.sidebar .nav-link i{ color: var(--coati-mid); margin-right: 12px; font-size: 1.1rem; }
+.sidebar .nav-link:hover i { color: var(--coati-dark); }
 
-/* Floating small button */
-.sidebar-floating-btn{ background: var(--coati-accent); color: #fff; border-radius: 12px; padding:10px 12px; box-shadow:0 6px 18px rgba(47,157,120,0.18) }
+/* Sidebar section dividers */
+.sidebar .nav-divider {
+  height: 1px;
+  background: var(--coati-border);
+  margin: 12px 8px;
+}
 
-/* Sidebar toggle */
-.sidebar-toggle-btn{ background: transparent; border:1px solid rgba(255,255,255,0.08); color: #fff; padding:6px 10px; border-radius:8px }
+/* Sidebar title/header */
+.sidebar-header {
+  padding: 16px 16px 24px 16px;
+  border-bottom: 1px solid var(--coati-border);
+  margin-bottom: 16px;
+}
+.sidebar-header .brand-title {
+  font-weight: 700;
+  color: var(--coati-dark);
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-header .brand-subtitle {
+  color: var(--coati-mid);
+  font-size: 0.85rem;
+  margin-left: 42px;
+}
 
-/* Main content area */
-main{ padding:18px 20px }
-main .container{ max-width:1100px; margin-left:0; padding-left:0 }
+/* Floating small button - hidden by default */
+.sidebar-floating-btn{ display: none; }
+
+/* Sidebar toggle button */
+.sidebar-toggle-btn{ 
+  background: transparent; 
+  border: 1px solid rgba(255,255,255,0.2); 
+  color: #fff; 
+  padding: 6px 10px; 
+  border-radius: var(--radius);
+  transition: all var(--transition);
+}
+.sidebar-toggle-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--coati-accent);
+}
+
+/* Main content area - limpia y espaciosa */
+main{ 
+  padding: 24px 32px;
+  background: var(--bg);
+  min-height: calc(100vh - 60px);
+}
+main .container{ max-width: 1100px; margin-left: 0; padding-left: 0 }
+
+/* Content headers */
+main h1, main h2, main h3 {
+  color: var(--coati-dark);
+  font-weight: 600;
+}
 
 /* Cards y bloques */
-.card{ border-radius: var(--radius); box-shadow: 0 10px 30px rgba(18,18,18,0.06); border: none }
-.card .card-header{ background: transparent; border-bottom:none; font-weight:700 }
+.card{ 
+  border-radius: var(--radius); 
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+  border: 1px solid var(--coati-border);
+  transition: box-shadow var(--transition);
+}
+.card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+.card .card-header{ 
+  background: transparent; 
+  border-bottom: 1px solid var(--coati-border); 
+  font-weight: 600;
+  color: var(--coati-dark);
+}
 
 /* Botones */
-.btn{ border-radius: 12px; padding: 10px 16px }
-.btn-primary{ background: linear-gradient(90deg,var(--coati-accent), #4fbf9a); border:none; box-shadow: 0 8px 20px rgba(47,157,120,0.12) }
-.btn-secondary{ background: transparent; border:1px solid rgba(62,47,36,0.06); color:var(--coati-mid) }
+.btn{ 
+  border-radius: var(--radius); 
+  padding: 10px 20px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+.btn-primary{ 
+  background: var(--coati-mid); 
+  border: none; 
+  box-shadow: 0 4px 12px rgba(139,107,79,0.2);
+}
+.btn-primary:hover {
+  background: var(--coati-dark);
+  box-shadow: 0 6px 16px rgba(74,55,40,0.25);
+}
+.btn-secondary{ 
+  background: transparent; 
+  border: 1px solid var(--coati-border); 
+  color: var(--coati-mid);
+}
+.btn-secondary:hover {
+  background: var(--coati-sand);
+  border-color: var(--coati-mid);
+}
 
 /* Formularios */
-input, textarea, select{ border-radius:8px; border:1px solid rgba(36,36,36,0.06); padding:10px 12px; background: #fff }
-label{ color:var(--muted); font-size:0.95rem }
+input, textarea, select{ 
+  border-radius: var(--radius); 
+  border: 1px solid var(--coati-border); 
+  padding: 10px 14px; 
+  background: #fff;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--coati-mid);
+  box-shadow: 0 0 0 3px rgba(139,107,79,0.1);
+}
+label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
 
-/* Login card specific tweaks */
+/* =====================================================
+   LOGIN PAGE STYLES
+   ===================================================== */
+
+/* Login page body */
+.login-page {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Login container - split layout */
+.login-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Left side - Branding panel */
+.login-branding {
+  flex: 1;
+  background: linear-gradient(135deg, var(--coati-dark) 0%, #5c4033 50%, var(--coati-mid) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-branding::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(196,167,125,0.1) 0%, transparent 70%);
+}
+
+.branding-content {
+  text-align: center;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-container {
+  margin-bottom: 24px;
+}
+
+.logo-large {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+}
+
+.brand-name {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.brand-name span {
+  font-weight: 400;
+  color: var(--coati-accent);
+}
+
+.brand-tagline {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 40px;
+}
+
+.brand-features {
+  text-align: left;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.feature-item:last-child {
+  border-bottom: none;
+}
+
+.feature-item i {
+  font-size: 1.2rem;
+  color: var(--coati-accent);
+}
+
+.feature-item span {
+  font-size: 0.95rem;
+}
+
+/* Right side - Login form */
+.login-form-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: var(--bg);
+}
+
+.login-form-wrapper {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-header {
+  margin-bottom: 32px;
+}
+
+.login-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--coati-dark);
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Login form specific styles */
+.login-form-container .form-control-lg {
+  padding: 12px 16px;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--coati-border);
+}
+
+.login-form-container .form-control-lg:focus {
+  border-color: var(--coati-mid);
+  box-shadow: 0 0 0 3px rgba(139,107,79,0.15);
+}
+
+.login-form-container .btn-primary {
+  padding: 14px 24px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.login-form-container .btn-outline-secondary {
+  border-color: var(--coati-border);
+  color: var(--coati-mid);
+}
+
+.login-form-container .btn-outline-secondary:hover {
+  background: var(--coati-sand);
+  border-color: var(--coati-mid);
+  color: var(--coati-dark);
+}
+
+.login-form-container .input-group .form-control-lg {
+  border-right: none;
+}
+
+.login-form-container .input-group .btn {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.login-form-container .alert-warning {
+  background: rgba(212,165,116,0.15);
+  border: 1px solid var(--coati-amber);
+  color: var(--coati-dark);
+  border-radius: var(--radius);
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.login-footer a {
+  color: var(--coati-mid);
+  font-weight: 500;
+}
+
+.login-footer a:hover {
+  color: var(--coati-dark);
+}
+
+/* Login page responsive */
+@media (max-width: 991.98px) {
+  .login-container {
+    flex-direction: column;
+  }
+  
+  .login-branding {
+    padding: 40px 24px;
+    min-height: auto;
+  }
+  
+  .brand-name {
+    font-size: 2rem;
+  }
+  
+  .brand-features {
+    display: none;
+  }
+  
+  .login-form-container {
+    padding: 32px 24px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .login-branding {
+    padding: 32px 20px;
+  }
+  
+  .logo-large {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  
+  .brand-name {
+    font-size: 1.75rem;
+  }
+  
+  .brand-tagline {
+    margin-bottom: 0;
+  }
+  
+  .login-form-container {
+    padding: 24px 20px;
+  }
+  
+  .login-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* =====================================================
+   END LOGIN PAGE STYLES
+   ===================================================== */
+
+/* Legacy Login card specific tweaks */
 .card-login{ max-width:460px; margin: auto }
 
 /* Footer */
 .footer{ color:var(--muted); font-size:0.95rem }
 
 /* Responsive adjustments */
-@media (max-width: 992px){
-  .sidebar{ position:fixed; left:-260px; top:56px; transition: left .28s ease }
-  .sidebar.open{ left:0 }
-  main{ padding:18px }
+@media (max-width: 991.98px){
+  .sidebar{ 
+    position: fixed; 
+    left: -280px; 
+    top: 56px; 
+    z-index: 1000;
+    width: 260px;
+    height: calc(100vh - 56px);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+    overflow-y: auto;
+  }
+  .sidebar.open{ left: 0; }
+  main{ padding: 20px 16px; }
+  
+  /* Show mobile-only links in sidebar when on small screens */
+  .sidebar .mobile-only-links {
+    display: block;
+  }
 }
 
 /* Small helpers */
@@ -91,8 +516,8 @@ label{ color:var(--muted); font-size:0.95rem }
 .rounded-lg{ border-radius: var(--radius) }
 
 /* Accents for links */
-a{ color:var(--coati-accent) }
-a:hover{ color:#247a5e }
+a{ color: var(--coati-mid); transition: color var(--transition); }
+a:hover{ color: var(--coati-dark); }
 
 /* Utilities keeping compatibility with previous classes */
 .bg-coaty-dark{ background-color: var(--coati-dark) !important }
@@ -100,26 +525,49 @@ a:hover{ color:#247a5e }
 
 /* Sidebar submenus */
 .sidebar .submenu {
-  background: rgba(255,255,255,0.3);
-  border-radius: 8px;
+  background: rgba(255,255,255,0.5);
+  border-radius: var(--radius);
   margin-top: 4px;
   margin-bottom: 8px;
+  border-left: 2px solid var(--coati-border);
+  margin-left: 16px;
+  padding-left: 8px;
 }
 .sidebar .submenu .nav-link {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   padding: 8px 12px;
   margin-bottom: 2px;
+  color: var(--muted);
 }
 .sidebar .submenu .nav-link:hover {
-  background: rgba(47,157,120,0.12);
+  background: rgba(139,107,79,0.08);
+  color: var(--coati-dark);
+}
+.sidebar .submenu .nav-link:hover::before {
+  display: none;
 }
 .sidebar .submenu-arrow {
-  font-size: 0.75rem;
-  transition: transform 0.2s ease;
+  font-size: 0.7rem;
+  transition: transform var(--transition);
+  color: var(--coati-mid);
 }
 .sidebar [aria-expanded="true"] .submenu-arrow {
   transform: rotate(180deg);
 }
 .sidebar .nav-link[data-bs-toggle="collapse"] {
   cursor: pointer;
+}
+
+/* Sidebar mobile-only links (profile/logout) */
+.sidebar .mobile-only-links {
+  display: none;
+  border-top: 1px solid var(--coati-border);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+.sidebar .mobile-only-links .nav-link {
+  color: var(--coati-mid);
+}
+.sidebar .mobile-only-links .nav-link:hover {
+  color: var(--coati-dark);
 }
