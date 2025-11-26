@@ -251,7 +251,12 @@ class Planilla(database.Model, BaseTabla):
     __tablename__ = "planilla"
 
     nombre = database.Column(database.String(150), nullable=False, unique=True)
+    descripcion = database.Column(database.String(255), nullable=True)
     activo = database.Column(database.Boolean(), default=True, nullable=False)
+
+    parametros = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
 
     tipo_planilla_id = database.Column(
         database.String(26), database.ForeignKey("tipo_planilla.id"), nullable=False
@@ -262,6 +267,13 @@ class Planilla(database.Model, BaseTabla):
         database.String(26), database.ForeignKey("moneda.id"), nullable=False
     )
     moneda = database.relationship("Moneda", back_populates="planillas")
+
+    # Período Fiscal
+    periodo_fiscal_inicio = database.Column(database.Date, nullable=True)
+    periodo_fiscal_fin = database.Column(database.Date, nullable=True)
+
+    # Ultima ejecución
+    ultima_ejecucion = database.Column(database.DateTime, nullable=True)
 
     # relaciones con componentes configurados
     planilla_percepciones = database.relationship(
@@ -295,6 +307,9 @@ class Percepcion(database.Model, BaseTabla):
     )
     nombre = database.Column(database.String(150), nullable=False)
     descripcion = database.Column(database.String(255), nullable=True)
+    unidad_calculo = database.Column(
+        database.String(20), nullable=True
+    )  # ej. 'hora', 'dia', 'mes', etc.
 
     # tipo de cálculo: 'fijo', 'porcentaje_salario', 'porcentaje_bruto', 'formula', 'horas', etc.
     formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
@@ -302,11 +317,37 @@ class Percepcion(database.Model, BaseTabla):
         database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
     )
     formula = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    condicion = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
     porcentaje = database.Column(database.Numeric(5, 2), nullable=True)
     gravable = database.Column(database.Boolean(), default=True)
     recurrente = database.Column(database.Boolean(), default=False)
     activo = database.Column(database.Boolean(), default=True)
-    orden = database.Column(database.Integer, nullable=True, default=0)
+
+    # Vigencia: hasta cuándo es válida esta percepción (opcional)
+    vigente_desde = database.Column(
+        database.Date, nullable=True
+    )  # opcional, si quieres rango
+    valido_hasta = database.Column(database.Date, nullable=True)
+
+    # Especificidad de cálculo
+    base_calculo = database.Column(  # ej: 'salario_base', 'gravable', 'bruto', 'neto'
+        database.String(50), nullable=True
+    )
+    unidad_calculo = database.Column(  # ej: 'horas', 'dias', None
+        database.String(20), nullable=True
+    )
+
+    # Control contable
+    contabilizable = database.Column(database.Boolean(), default=True, nullable=False)
+    codigo_cuenta_debe = database.Column(database.String(64), nullable=True)
+    codigo_cuenta_haber = database.Column(database.String(64), nullable=True)
+
+    # Control edición en nómina
+    editable_en_nomina = database.Column(
+        database.Boolean(), default=False, nullable=False
+    )
 
     planillas = database.relationship(
         "PlanillaIngreso",
@@ -327,17 +368,38 @@ class Deduccion(database.Model, BaseTabla):
     descripcion = database.Column(database.String(255), nullable=True)
 
     tipo = database.Column(database.String(30), nullable=False, default="general")
+    es_impuesto = database.Column(database.Boolean(), default=False)
 
     formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
     monto_default = database.Column(
         database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
     )
     formula = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    condicion = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
     porcentaje = database.Column(database.Numeric(5, 2), nullable=True)
     antes_impuesto = database.Column(database.Boolean(), default=True)
     recurrente = database.Column(database.Boolean(), default=False)
     activo = database.Column(database.Boolean(), default=True)
-    orden = database.Column(database.Integer, nullable=True, default=0)
+
+    # Vigencia
+    vigente_desde = database.Column(database.Date, nullable=True)
+    valido_hasta = database.Column(database.Date, nullable=True)
+
+    # Base y unidad de cálculo
+    base_calculo = database.Column(database.String(50), nullable=True)
+    unidad_calculo = database.Column(database.String(20), nullable=True)
+
+    # Control contable
+    contabilizable = database.Column(database.Boolean(), default=True, nullable=False)
+    codigo_cuenta_debe = database.Column(database.String(64), nullable=True)
+    codigo_cuenta_haber = database.Column(database.String(64), nullable=True)
+
+    # Control edición en nómina
+    editable_en_nomina = database.Column(
+        database.Boolean(), default=False, nullable=False
+    )
 
     planillas = database.relationship(
         "PlanillaDeduccion",
@@ -554,6 +616,10 @@ class NominaNovedad(database.Model, BaseTabla):
     empleado_id = database.Column(
         database.String(26), database.ForeignKey("empleado.id"), nullable=False
     )
+
+    tipo_valor = database.Column(
+        database.String(20), nullable=True
+    )  # horas | dias | cantidad | monto | porcentaje
 
     # El código del concepto que se está modificando/aplicando
     codigo_concepto = database.Column(database.String(50), nullable=False)
