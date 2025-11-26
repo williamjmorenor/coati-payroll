@@ -97,3 +97,29 @@ a:hover{ color:#247a5e }
 /* Utilities keeping compatibility with previous classes */
 .bg-coaty-dark{ background-color: var(--coati-dark) !important }
 .bg-coaty-light{ background-color: var(--coati-sand) !important }
+
+/* Sidebar submenus */
+.sidebar .submenu {
+  background: rgba(255,255,255,0.3);
+  border-radius: 8px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+.sidebar .submenu .nav-link {
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  margin-bottom: 2px;
+}
+.sidebar .submenu .nav-link:hover {
+  background: rgba(47,157,120,0.12);
+}
+.sidebar .submenu-arrow {
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+.sidebar [aria-expanded="true"] .submenu-arrow {
+  transform: rotate(180deg);
+}
+.sidebar .nav-link[data-bs-toggle="collapse"] {
+  cursor: pointer;
+}
