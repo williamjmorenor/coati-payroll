@@ -13,6 +13,14 @@ Sistema de gestión de nómina desarrollado en Flask con SQLAlchemy. Permite:
 
 ## Recent Changes
 
+### 2025-11-27
+- Agregadas tablas de Prestaciones (aportes del empleador):
+  - `Prestacion`: Catálogo de prestaciones patronales (INSS patronal, vacaciones, etc.)
+  - `PlanillaPrestacion`: Asociación de prestaciones a planillas
+- Relación `planilla_prestaciones` agregada a `Planilla`
+- Campo `prestacion_id` y relación `prestacion` agregados a `NominaDetalle`
+- `NominaDetalle.tipo` ahora soporta: 'ingreso', 'deduccion', 'prestacion'
+
 ### 2025-11-25
 - Agregadas nuevas tablas al modelo de datos:
   - `HistorialSalario`: Control de cambios salariales con fecha efectiva
@@ -55,6 +63,7 @@ coati_payroll/
 | `Planilla` | Definición de planillas |
 | `Percepcion` | Catálogo de percepciones/ingresos |
 | `Deduccion` | Catálogo de deducciones (tipo: general, impuesto, adelanto) |
+| `Prestacion` | Catálogo de prestaciones patronales (aportes del empleador) |
 
 ### Tablas de Configuración de Planilla
 
@@ -62,6 +71,7 @@ coati_payroll/
 |-------|-----------|
 | `PlanillaIngreso` | Percepciones asociadas a una planilla |
 | `PlanillaDeduccion` | Deducciones asociadas a una planilla |
+| `PlanillaPrestacion` | Prestaciones asociadas a una planilla |
 | `PlanillaEmpleado` | Empleados asignados a planillas |
 
 ### Tablas de Ejecución (Nóminas)
@@ -70,7 +80,7 @@ coati_payroll/
 |-------|-----------|
 | `Nomina` | Cabecera de nómina generada |
 | `NominaEmpleado` | Detalle por empleado en una nómina |
-| `NominaDetalle` | Líneas de percepciones/deducciones |
+| `NominaDetalle` | Líneas de percepciones/deducciones/prestaciones |
 | `NominaNovedad` | Novedades aplicadas (horas extra, ausencias) |
 
 ### Tablas de Control Adicional
@@ -91,6 +101,7 @@ La fórmula básica es:
 
 ```
 Salario Neto = Salario Base + Percepciones - Deducciones
+Costo Total Empleador = Salario Neto + Prestaciones
 ```
 
 Donde:
@@ -99,6 +110,11 @@ Donde:
   - `general`: Deducciones normales
   - `impuesto`: Aplica tabla de tramos fiscales
   - `adelanto`: Abono automático a adelantos pendientes
+- **Prestaciones**: Aportes del empleador (no afectan salario neto):
+  - INSS patronal
+  - Provisión de vacaciones
+  - Aguinaldo proporcional
+  - Otros beneficios legales
 
 ## Vacaciones (Nicaragua)
 

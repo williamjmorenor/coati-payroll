@@ -211,23 +211,27 @@ if DATABASE_URL_BASE := CONFIGURACION.get("SQLALCHEMY_DATABASE_URI"):
         # Corrige el esquema según el prefijo detectado
         match prefix:
             case "postgresql":
-                DATABASE_URL_CORREGIDA = (
-                    "postgresql+pg8000" + DATABASE_URL_BASE[10:]
-                )  # type: ignore[index]
+                parsed = urlparse(DATABASE_URL_BASE)
+                query = parse_qs(parsed.query)
+                query.pop("sslmode", None)
+                new_query = urlencode(query, doseq=True) if query else ""
+                cleaned = urlunparse(parsed._replace(query=new_query))
+                DATABASE_URL_CORREGIDA = "postgresql+pg8000" + cleaned[10:]
             case "postgres":
-                DATABASE_URL_CORREGIDA = (
-                    "postgresql+pg8000" + DATABASE_URL_BASE[8:]
-                )  # type: ignore[index]
+                parsed = urlparse(DATABASE_URL_BASE)
+                query = parse_qs(parsed.query)
+                query.pop("sslmode", None)
+                new_query = urlencode(query, doseq=True) if query else ""
+                cleaned = urlunparse(parsed._replace(query=new_query))
+                DATABASE_URL_CORREGIDA = "postgresql+pg8000" + cleaned[8:]
             case "mysql":
-                DATABASE_URL_CORREGIDA = (
-                    "mysql+pymysql" + DATABASE_URL_BASE[5:]
-                )  # type: ignore[index]
-            case "mariadb":  # Not tested, but should work.
+                DATABASE_URL_CORREGIDA = "mysql+pymysql" + DATABASE_URL_BASE[5:]
+            case "mariadb":
                 DATABASE_URL_CORREGIDA = (
                     "mariadb+mariadbconnector" + DATABASE_URL_BASE[7:]
-                )  # type: ignore[index]
+                )
             case _:
-                pass  # Prefijo desconocido o ya corregido
+                pass
 
     # Actualizar configuración si hubo cambio
     if DATABASE_URL_BASE != DATABASE_URL_CORREGIDA:

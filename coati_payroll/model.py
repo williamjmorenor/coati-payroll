@@ -302,6 +302,10 @@ class Planilla(database.Model, BaseTabla):
         "PlanillaDeduccion",
         back_populates="planilla",
     )
+    planilla_prestaciones = database.relationship(
+        "PlanillaPrestacion",
+        back_populates="planilla",
+    )
 
     # empleados asignados a la planilla (config)
     planilla_empleados = database.relationship(
@@ -428,6 +432,55 @@ class Deduccion(database.Model, BaseTabla):
     adelantos = database.relationship("Adelanto", back_populates="deduccion")
 
 
+# Prestaciones (aportes del empleador: seguridad social, etc.)
+class Prestacion(database.Model, BaseTabla):
+    __tablename__ = "prestacion"
+
+    codigo = database.Column(
+        database.String(50), unique=True, nullable=False, index=True
+    )
+    nombre = database.Column(database.String(150), nullable=False)
+    descripcion = database.Column(database.String(255), nullable=True)
+
+    tipo = database.Column(database.String(30), nullable=False, default="patronal")
+
+    formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
+    monto_default = database.Column(
+        database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
+    )
+    formula = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    condicion = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
+    porcentaje = database.Column(database.Numeric(5, 2), nullable=True)
+    recurrente = database.Column(database.Boolean(), default=False)
+    activo = database.Column(database.Boolean(), default=True)
+
+    vigente_desde = database.Column(database.Date, nullable=True)
+    valido_hasta = database.Column(database.Date, nullable=True)
+
+    base_calculo = database.Column(database.String(50), nullable=True)
+    unidad_calculo = database.Column(database.String(20), nullable=True)
+
+    tope_aplicacion = database.Column(database.Numeric(14, 2), nullable=True)
+
+    contabilizable = database.Column(database.Boolean(), default=True, nullable=False)
+    codigo_cuenta_debe = database.Column(database.String(64), nullable=True)
+    codigo_cuenta_haber = database.Column(database.String(64), nullable=True)
+
+    editable_en_nomina = database.Column(
+        database.Boolean(), default=False, nullable=False
+    )
+
+    planillas = database.relationship(
+        "PlanillaPrestacion",
+        back_populates="prestacion",
+    )
+    nomina_detalles = database.relationship(
+        "NominaDetalle", back_populates="prestacion"
+    )
+
+
 # Definición de componentes de planilla
 class PlanillaIngreso(database.Model, BaseTabla):
     __tablename__ = "planilla_ingreso"
@@ -477,6 +530,31 @@ class PlanillaDeduccion(database.Model, BaseTabla):
 
     planilla = database.relationship("Planilla", back_populates="planilla_deducciones")
     deduccion = database.relationship("Deduccion", back_populates="planillas")
+
+
+class PlanillaPrestacion(database.Model, BaseTabla):
+    __tablename__ = "planilla_prestacion"
+    __table_args__ = (
+        database.UniqueConstraint(
+            "planilla_id", "prestacion_id", name="uq_planilla_prestacion"
+        ),
+    )
+
+    planilla_id = database.Column(
+        database.String(26), database.ForeignKey("planilla.id"), nullable=False
+    )
+    prestacion_id = database.Column(
+        database.String(26), database.ForeignKey("prestacion.id"), nullable=False
+    )
+
+    orden = database.Column(database.Integer, nullable=True, default=0)
+    editable = database.Column(database.Boolean(), default=True)
+    monto_predeterminado = database.Column(database.Numeric(14, 2), nullable=True)
+    porcentaje = database.Column(database.Numeric(5, 2), nullable=True)
+    activo = database.Column(database.Boolean(), default=True)
+
+    planilla = database.relationship("Planilla", back_populates="planilla_prestaciones")
+    prestacion = database.relationship("Prestacion", back_populates="planillas")
 
 
 class PlanillaEmpleado(database.Model, BaseTabla):
@@ -595,8 +673,8 @@ class NominaDetalle(database.Model, BaseTabla):
         database.String(26), database.ForeignKey("nomina_empleado.id"), nullable=False
     )
     tipo = database.Column(
-        database.String(10), nullable=False
-    )  # 'ingreso' | 'deduccion'
+        database.String(15), nullable=False
+    )  # 'ingreso' | 'deduccion' | 'prestacion'
     codigo = database.Column(database.String(50), nullable=False)
     descripcion = database.Column(database.String(255), nullable=True)
     monto = database.Column(
@@ -611,6 +689,9 @@ class NominaDetalle(database.Model, BaseTabla):
     deduccion_id = database.Column(
         database.String(26), database.ForeignKey("deduccion.id"), nullable=True
     )
+    prestacion_id = database.Column(
+        database.String(26), database.ForeignKey("prestacion.id"), nullable=True
+    )
 
     nomina_empleado = database.relationship(
         "NominaEmpleado", back_populates="nomina_detalles"
@@ -620,6 +701,9 @@ class NominaDetalle(database.Model, BaseTabla):
     )
     deduccion = database.relationship(
         "Deduccion", back_populates="nomina_detalles", foreign_keys=[deduccion_id]
+    )
+    prestacion = database.relationship(
+        "Prestacion", back_populates="nomina_detalles", foreign_keys=[prestacion_id]
     )
 
 
