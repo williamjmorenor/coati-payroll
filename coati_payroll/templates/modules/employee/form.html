@@ -36,10 +36,22 @@
                 
                 <div class="row">
                     <div class="col-md-4">
+                        {{ render_field(form.tipo_identificacion) }}
+                    </div>
+                    <div class="col-md-4">
                         {{ render_field(form.identificacion_personal) }}
                     </div>
                     <div class="col-md-4">
                         {{ render_field(form.fecha_nacimiento) }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ render_field(form.id_seguridad_social) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ render_field(form.id_fiscal) }}
                     </div>
                     <div class="col-md-4">
                         {{ render_field(form.genero) }}
@@ -126,6 +138,64 @@
                         {{ render_field(form.numero_cuenta_bancaria) }}
                     </div>
                 </div>
+                
+                {% if custom_fields %}
+                <hr class="my-4">
+                <h5 class="mb-3">
+                    <i class="bi bi-input-cursor-text me-2"></i>{{ _('Campos Personalizados') }}
+                </h5>
+                <p class="text-muted small mb-3">{{ _('Estos campos son personalizados y pueden ser configurados desde el menú de Configuración.') }}</p>
+                
+                <div class="row">
+                    {% for field in custom_fields %}
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {% if field.tipo_dato == 'booleano' %}
+                                {# Checkbox for boolean fields #}
+                                <div class="form-check">
+                                    <input type="checkbox" 
+                                           class="form-check-input" 
+                                           name="custom_{{ field.nombre_campo }}" 
+                                           id="custom_{{ field.nombre_campo }}"
+                                           {% if custom_values.get(field.nombre_campo) %}checked{% endif %}>
+                                    <label class="form-check-label" for="custom_{{ field.nombre_campo }}">
+                                        {{ field.etiqueta }}
+                                    </label>
+                                </div>
+                            {% else %}
+                                <label class="form-label" for="custom_{{ field.nombre_campo }}">
+                                    {{ field.etiqueta }}
+                                </label>
+                                {% if field.tipo_dato == 'texto' %}
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="custom_{{ field.nombre_campo }}" 
+                                           id="custom_{{ field.nombre_campo }}"
+                                           value="{{ custom_values.get(field.nombre_campo) or '' }}">
+                                {% elif field.tipo_dato == 'entero' %}
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="custom_{{ field.nombre_campo }}" 
+                                           id="custom_{{ field.nombre_campo }}"
+                                           step="1"
+                                           value="{{ custom_values.get(field.nombre_campo) or '' }}">
+                                {% elif field.tipo_dato == 'decimal' %}
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="custom_{{ field.nombre_campo }}" 
+                                           id="custom_{{ field.nombre_campo }}"
+                                           step="0.01"
+                                           value="{{ custom_values.get(field.nombre_campo) or '' }}">
+                                {% endif %}
+                            {% endif %}
+                            {% if field.descripcion %}
+                                <small class="text-muted">{{ field.descripcion }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 
                 <div class="mt-4">
                     {{ form.submit(class="btn btn-primary") }}

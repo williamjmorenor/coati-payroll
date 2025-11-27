@@ -23,7 +23,7 @@ from flask_login import current_user, login_required
 
 from coati_payroll.forms import EmployeeForm
 from coati_payroll.i18n import _
-from coati_payroll.model import Empleado, Moneda, db
+from coati_payroll.model import CampoPersonalizado, Empleado, Moneda, db
 from coati_payroll.vistas.constants import PER_PAGE
 
 employee_bp = Blueprint("employee", __name__, url_prefix="/employee")
@@ -41,6 +41,56 @@ def get_currency_choices():
     return [("", _("Seleccionar..."))] + [
         (c.id, f"{c.codigo} - {c.nombre}") for c in currencies
     ]
+
+
+def get_custom_fields():
+    """Get all active custom fields ordered by 'orden'."""
+    return (
+        db.session.execute(
+            db.select(CampoPersonalizado)
+            .filter_by(activo=True)
+            .order_by(CampoPersonalizado.orden)
+        )
+        .scalars()
+        .all()
+    )
+
+
+def process_custom_fields_from_request(custom_fields):
+    """Process custom field values from form request and return as dict.
+
+    Args:
+        custom_fields: List of CampoPersonalizado objects
+
+    Returns:
+        Dictionary with custom field names as keys and their converted values
+    """
+    datos_adicionales = {}
+    for field in custom_fields:
+        field_name = f"custom_{field.nombre_campo}"
+        raw_value = request.form.get(field_name, "")
+
+        if field.tipo_dato == "texto":
+            stripped = raw_value.strip() if raw_value else ""
+            datos_adicionales[field.nombre_campo] = stripped or None
+        elif field.tipo_dato == "entero":
+            try:
+                datos_adicionales[field.nombre_campo] = (
+                    int(raw_value) if raw_value else None
+                )
+            except ValueError:
+                datos_adicionales[field.nombre_campo] = None
+        elif field.tipo_dato == "decimal":
+            try:
+                datos_adicionales[field.nombre_campo] = (
+                    float(raw_value) if raw_value else None
+                )
+            except ValueError:
+                datos_adicionales[field.nombre_campo] = None
+        elif field.tipo_dato == "booleano":
+            # Checkbox will send value only if checked
+            datos_adicionales[field.nombre_campo] = field_name in request.form
+    return datos_adicionales
 
 
 @employee_bp.route("/")
@@ -65,6 +115,7 @@ def new():
     """Create a new employee."""
     form = EmployeeForm()
     form.moneda_id.choices = get_currency_choices()
+    custom_fields = get_custom_fields()
 
     if form.validate_on_submit():
         employee = Empleado()
@@ -74,7 +125,10 @@ def new():
         employee.segundo_apellido = form.segundo_apellido.data
         employee.genero = form.genero.data or None
         employee.nacionalidad = form.nacionalidad.data
+        employee.tipo_identificacion = form.tipo_identificacion.data or None
         employee.identificacion_personal = form.identificacion_personal.data
+        employee.id_seguridad_social = form.id_seguridad_social.data or None
+        employee.id_fiscal = form.id_fiscal.data or None
         employee.tipo_sangre = form.tipo_sangre.data or None
         employee.fecha_nacimiento = form.fecha_nacimiento.data
         employee.fecha_alta = form.fecha_alta.data
@@ -94,6 +148,9 @@ def new():
         employee.tipo_contrato = form.tipo_contrato.data or None
         employee.creado_por = current_user.usuario
 
+        # Process custom fields
+        employee.datos_adicionales = process_custom_fields_from_request(custom_fields)
+
         db.session.add(employee)
         db.session.commit()
         flash(_("Empleado creado exitosamente."), "success")
@@ -106,7 +163,11 @@ def new():
         form.salario_base.data = Decimal("0.00")
 
     return render_template(
-        "modules/employee/form.html", form=form, title=_("Nuevo Empleado")
+        "modules/employee/form.html",
+        form=form,
+        title=_("Nuevo Empleado"),
+        custom_fields=custom_fields,
+        custom_values={},
     )
 
 
@@ -121,6 +182,7 @@ def edit(id: str):
 
     form = EmployeeForm(obj=employee)
     form.moneda_id.choices = get_currency_choices()
+    custom_fields = get_custom_fields()
 
     if form.validate_on_submit():
         employee.primer_nombre = form.primer_nombre.data
@@ -129,7 +191,10 @@ def edit(id: str):
         employee.segundo_apellido = form.segundo_apellido.data
         employee.genero = form.genero.data or None
         employee.nacionalidad = form.nacionalidad.data
+        employee.tipo_identificacion = form.tipo_identificacion.data or None
         employee.identificacion_personal = form.identificacion_personal.data
+        employee.id_seguridad_social = form.id_seguridad_social.data or None
+        employee.id_fiscal = form.id_fiscal.data or None
         employee.tipo_sangre = form.tipo_sangre.data or None
         employee.fecha_nacimiento = form.fecha_nacimiento.data
         employee.fecha_alta = form.fecha_alta.data
@@ -149,15 +214,23 @@ def edit(id: str):
         employee.tipo_contrato = form.tipo_contrato.data or None
         employee.modificado_por = current_user.usuario
 
+        # Process custom fields
+        employee.datos_adicionales = process_custom_fields_from_request(custom_fields)
+
         db.session.commit()
         flash(_("Empleado actualizado exitosamente."), "success")
         return redirect(url_for("employee.index"))
+
+    # Get existing custom field values
+    custom_values = employee.datos_adicionales or {}
 
     return render_template(
         "modules/employee/form.html",
         form=form,
         title=_("Editar Empleado"),
         employee=employee,
+        custom_fields=custom_fields,
+        custom_values=custom_values,
     )
 
 

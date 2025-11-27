@@ -131,12 +131,19 @@ def create_app(config) -> Flask:
     app.register_blueprint(app_blueprint, url_prefix="/")
 
     # Register CRUD blueprints
-    from coati_payroll.vistas import user_bp, currency_bp, exchange_rate_bp, employee_bp
+    from coati_payroll.vistas import (
+        user_bp,
+        currency_bp,
+        exchange_rate_bp,
+        employee_bp,
+        custom_field_bp,
+    )
 
     app.register_blueprint(user_bp)
     app.register_blueprint(currency_bp)
     app.register_blueprint(exchange_rate_bp)
     app.register_blueprint(employee_bp)
+    app.register_blueprint(custom_field_bp)
 
     return app
 

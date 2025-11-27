@@ -17,5 +17,12 @@ from coati_payroll.vistas.user import user_bp
 from coati_payroll.vistas.currency import currency_bp
 from coati_payroll.vistas.exchange_rate import exchange_rate_bp
 from coati_payroll.vistas.employee import employee_bp
+from coati_payroll.vistas.custom_field import custom_field_bp
 
-__all__ = ["user_bp", "currency_bp", "exchange_rate_bp", "employee_bp"]
+__all__ = [
+    "user_bp",
+    "currency_bp",
+    "exchange_rate_bp",
+    "employee_bp",
+    "custom_field_bp",
+]

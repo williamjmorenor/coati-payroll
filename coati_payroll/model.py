@@ -166,9 +166,12 @@ class Empleado(database.Model, BaseTabla):
 
     genero = database.Column(database.String(20), nullable=True)
     nacionalidad = database.Column(database.String(100), nullable=True)
+    tipo_identificacion = database.Column(database.String(50), nullable=True)
     identificacion_personal = database.Column(
         database.String(50), unique=True, nullable=False
     )
+    id_seguridad_social = database.Column(database.String(50), nullable=True)
+    id_fiscal = database.Column(database.String(50), nullable=True)
     tipo_sangre = database.Column(database.String(10), nullable=True)
     fecha_nacimiento = database.Column(database.Date, nullable=True)
 
@@ -861,3 +864,34 @@ class AdelantoAbono(database.Model, BaseTabla):
 
     adelanto = database.relationship("Adelanto", back_populates="abonos")
     nomina = database.relationship("Nomina")
+
+
+# Definición de campos personalizados para empleados
+class CampoPersonalizado(database.Model, BaseTabla):
+    """Custom field definition for employee records.
+
+    Stores the definition of custom fields that can be added to employee records.
+    The actual values are stored in the `datos_adicionales` JSON column of Empleado.
+
+    Field types:
+    - texto: String/text field
+    - entero: Integer field
+    - decimal: Decimal/float field
+    - booleano: Boolean (true/false) field
+    """
+
+    __tablename__ = "campo_personalizado"
+    __table_args__ = (
+        database.UniqueConstraint("nombre_campo", name="uq_campo_nombre"),
+    )
+
+    nombre_campo = database.Column(
+        database.String(100), unique=True, nullable=False, index=True
+    )
+    etiqueta = database.Column(database.String(150), nullable=False)
+    tipo_dato = database.Column(
+        database.String(20), nullable=False, default="texto"
+    )  # texto, entero, decimal, booleano
+    descripcion = database.Column(database.String(255), nullable=True)
+    orden = database.Column(database.Integer, nullable=False, default=0)
+    activo = database.Column(database.Boolean(), default=True, nullable=False)

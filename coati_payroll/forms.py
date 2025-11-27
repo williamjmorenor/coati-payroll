@@ -134,9 +134,24 @@ class EmployeeForm(FlaskForm):
     nacionalidad = StringField(
         _("Nacionalidad"), validators=[Optional(), Length(max=100)]
     )
+    tipo_identificacion = SelectField(
+        _("Tipo de identificación"),
+        choices=[
+            ("", _("Seleccionar...")),
+            ("cedula", _("Cédula")),
+            ("pasaporte", _("Pasaporte")),
+            ("carnet_residente", _("Carnet de residente")),
+            ("otro", _("Otro")),
+        ],
+        validators=[Optional()],
+    )
     identificacion_personal = StringField(
         _("Identificación personal"), validators=[DataRequired(), Length(max=50)]
     )
+    id_seguridad_social = StringField(
+        _("ID Seguridad Social"), validators=[Optional(), Length(max=50)]
+    )
+    id_fiscal = StringField(_("ID Fiscal"), validators=[Optional(), Length(max=50)])
     tipo_sangre = SelectField(
         _("Tipo de sangre"),
         choices=[
@@ -197,4 +212,42 @@ class EmployeeForm(FlaskForm):
         ],
         validators=[Optional()],
     )
+    submit = SubmitField(_("Guardar"))
+
+
+class CustomFieldForm(FlaskForm):
+    """Form for creating and editing custom employee fields."""
+
+    nombre_campo = StringField(
+        _("Nombre del campo"),
+        validators=[DataRequired(), Length(max=100)],
+        description=_(
+            "Nombre interno único del campo (sin espacios ni caracteres especiales)"
+        ),
+    )
+    etiqueta = StringField(
+        _("Etiqueta"),
+        validators=[DataRequired(), Length(max=150)],
+        description=_("Nombre visible del campo en el formulario"),
+    )
+    tipo_dato = SelectField(
+        _("Tipo de dato"),
+        choices=[
+            ("texto", _("Texto")),
+            ("entero", _("Número entero")),
+            ("decimal", _("Número decimal")),
+            ("booleano", _("Verdadero/Falso")),
+        ],
+        validators=[DataRequired()],
+    )
+    descripcion = StringField(
+        _("Descripción"), validators=[Optional(), Length(max=255)]
+    )
+    orden = DecimalField(
+        _("Orden de visualización"),
+        validators=[Optional()],
+        places=0,
+        default=0,
+    )
+    activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
