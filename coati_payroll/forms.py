@@ -25,12 +25,13 @@ from wtforms import (
     BooleanField,
     DateField,
     DecimalField,
+    IntegerField,
     PasswordField,
     SelectField,
     StringField,
     SubmitField,
 )
-from wtforms.validators import DataRequired, Email, Length, Optional
+from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional
 from coati_payroll.i18n import _
 
 
@@ -211,6 +212,63 @@ class EmployeeForm(FlaskForm):
             ("practicas", _("Prácticas")),
         ],
         validators=[Optional()],
+    )
+    # Datos iniciales de implementación
+    anio_implementacion_inicial = IntegerField(
+        _("Año de implementación inicial"),
+        validators=[Optional(), NumberRange(min=1900, max=2100)],
+        description=_("Año fiscal cuando se implementó el sistema por primera vez"),
+    )
+    mes_ultimo_cierre = SelectField(
+        _("Último mes cerrado"),
+        choices=[
+            ("", _("Seleccionar...")),
+            ("1", _("Enero")),
+            ("2", _("Febrero")),
+            ("3", _("Marzo")),
+            ("4", _("Abril")),
+            ("5", _("Mayo")),
+            ("6", _("Junio")),
+            ("7", _("Julio")),
+            ("8", _("Agosto")),
+            ("9", _("Septiembre")),
+            ("10", _("Octubre")),
+            ("11", _("Noviembre")),
+            ("12", _("Diciembre")),
+        ],
+        validators=[Optional()],
+        coerce=lambda x: int(x) if x else None,
+        description=_("Último mes cerrado antes de pasar al nuevo sistema"),
+    )
+    salario_acumulado = DecimalField(
+        _("Salario acumulado"),
+        validators=[Optional()],
+        places=2,
+        description=_("Suma de salarios del año fiscal antes del sistema"),
+    )
+    impuesto_acumulado = DecimalField(
+        _("Impuesto acumulado"),
+        validators=[Optional()],
+        places=2,
+        description=_("Suma de impuestos pagados en el año fiscal antes del sistema"),
+    )
+    ultimo_salario_1 = DecimalField(
+        _("Penúltimo salario mensual"),
+        validators=[Optional()],
+        places=2,
+        description=_("Salario del mes anterior al último"),
+    )
+    ultimo_salario_2 = DecimalField(
+        _("Antepenúltimo salario mensual"),
+        validators=[Optional()],
+        places=2,
+        description=_("Salario de 2 meses antes del último"),
+    )
+    ultimo_salario_3 = DecimalField(
+        _("Tercer salario anterior"),
+        validators=[Optional()],
+        places=2,
+        description=_("Salario de 3 meses antes del último"),
     )
     submit = SubmitField(_("Guardar"))
 

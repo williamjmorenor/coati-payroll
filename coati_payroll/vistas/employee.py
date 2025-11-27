@@ -93,6 +93,27 @@ def process_custom_fields_from_request(custom_fields):
     return datos_adicionales
 
 
+def process_last_three_salaries(form):
+    """Process last three salary fields from form and return as dict.
+
+    Stores salaries as strings to preserve Decimal precision in JSON.
+
+    Args:
+        form: EmployeeForm instance with salary fields
+
+    Returns:
+        Dictionary with last three salaries as strings, or None if empty
+    """
+    ultimos_salarios = {}
+    if form.ultimo_salario_1.data:
+        ultimos_salarios["salario_1"] = str(form.ultimo_salario_1.data)
+    if form.ultimo_salario_2.data:
+        ultimos_salarios["salario_2"] = str(form.ultimo_salario_2.data)
+    if form.ultimo_salario_3.data:
+        ultimos_salarios["salario_3"] = str(form.ultimo_salario_3.data)
+    return ultimos_salarios if ultimos_salarios else None
+
+
 @employee_bp.route("/")
 @login_required
 def index():
@@ -147,6 +168,15 @@ def new():
         employee.numero_cuenta_bancaria = form.numero_cuenta_bancaria.data
         employee.tipo_contrato = form.tipo_contrato.data or None
         employee.creado_por = current_user.usuario
+
+        # Initial implementation data
+        employee.anio_implementacion_inicial = form.anio_implementacion_inicial.data
+        employee.mes_ultimo_cierre = form.mes_ultimo_cierre.data
+        employee.salario_acumulado = form.salario_acumulado.data or Decimal("0.00")
+        employee.impuesto_acumulado = form.impuesto_acumulado.data or Decimal("0.00")
+
+        # Store last three salaries in JSON format using helper function
+        employee.ultimos_tres_salarios = process_last_three_salaries(form)
 
         # Process custom fields
         employee.datos_adicionales = process_custom_fields_from_request(custom_fields)
@@ -214,12 +244,31 @@ def edit(id: str):
         employee.tipo_contrato = form.tipo_contrato.data or None
         employee.modificado_por = current_user.usuario
 
+        # Initial implementation data
+        employee.anio_implementacion_inicial = form.anio_implementacion_inicial.data
+        employee.mes_ultimo_cierre = form.mes_ultimo_cierre.data
+        employee.salario_acumulado = form.salario_acumulado.data or Decimal("0.00")
+        employee.impuesto_acumulado = form.impuesto_acumulado.data or Decimal("0.00")
+
+        # Store last three salaries in JSON format using helper function
+        employee.ultimos_tres_salarios = process_last_three_salaries(form)
+
         # Process custom fields
         employee.datos_adicionales = process_custom_fields_from_request(custom_fields)
 
         db.session.commit()
         flash(_("Empleado actualizado exitosamente."), "success")
         return redirect(url_for("employee.index"))
+
+    # Pre-populate last three salaries from employee data
+    if request.method != "POST":
+        ultimos_salarios = employee.ultimos_tres_salarios or {}
+        if ultimos_salarios.get("salario_1"):
+            form.ultimo_salario_1.data = Decimal(str(ultimos_salarios["salario_1"]))
+        if ultimos_salarios.get("salario_2"):
+            form.ultimo_salario_2.data = Decimal(str(ultimos_salarios["salario_2"]))
+        if ultimos_salarios.get("salario_3"):
+            form.ultimo_salario_3.data = Decimal(str(ultimos_salarios["salario_3"]))
 
     # Get existing custom field values
     custom_values = employee.datos_adicionales or {}

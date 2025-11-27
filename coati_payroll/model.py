@@ -203,6 +203,21 @@ class Empleado(database.Model, BaseTabla):
     tipo_contrato = database.Column(database.String(50), nullable=True)
     fecha_ultimo_aumento = database.Column(database.Date, nullable=True)
 
+    # Datos iniciales de implementación
+    # Estos campos almacenan saldos acumulados cuando el sistema se implementa
+    # a mitad de un período fiscal
+    anio_implementacion_inicial = database.Column(database.Integer, nullable=True)
+    mes_ultimo_cierre = database.Column(database.Integer, nullable=True)
+    salario_acumulado = database.Column(
+        database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
+    )
+    impuesto_acumulado = database.Column(
+        database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
+    )
+    ultimos_tres_salarios = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
+
     # relaciones
     planilla_asociaciones = database.relationship(
         "PlanillaEmpleado",
