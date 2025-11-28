@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="content-header">
+    <h3>
+        Nómina: {{ nomina.periodo_inicio.strftime('%d/%m/%Y') }} - {{ nomina.periodo_fin.strftime('%d/%m/%Y') }}
+    </h3>
+    <div>
+        <a href="{{ url_for('planilla.listar_nominas', planilla_id=planilla.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Historial
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Resumen de la Nómina</h5>
+            <div>
+                {% if nomina.estado == 'generado' %}
+                <form action="{{ url_for('planilla.aprobar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
+                      method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-success" onclick="return confirm('¿Aprobar esta nómina?')">
+                        <i class="fas fa-check"></i> Aprobar
+                    </button>
+                </form>
+                {% elif nomina.estado == 'aprobado' %}
+                <form action="{{ url_for('planilla.aplicar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
+                      method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('¿Marcar como aplicada/pagada?')">
+                        <i class="fas fa-money-bill"></i> Aplicar/Pagar
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Planilla:</strong><br>
+                {{ planilla.nombre }}
+            </div>
+            <div class="col-md-2">
+                <strong>Estado:</strong><br>
+                {% if nomina.estado == 'generado' %}
+                <span class="badge badge-warning">Generado</span>
+                {% elif nomina.estado == 'aprobado' %}
+                <span class="badge badge-info">Aprobado</span>
+                {% elif nomina.estado == 'aplicado' %}
+                <span class="badge badge-success">Aplicado</span>
+                {% endif %}
+            </div>
+            <div class="col-md-2">
+                <strong>Moneda:</strong><br>
+                {{ planilla.moneda.codigo if planilla.moneda else 'N/A' }}
+            </div>
+            <div class="col-md-2">
+                <strong>Empleados:</strong><br>
+                {{ nomina_empleados|length }}
+            </div>
+            <div class="col-md-3">
+                <strong>Generado:</strong><br>
+                {{ nomina.fecha_generacion.strftime('%d/%m/%Y %H:%M') }}
+                {% if nomina.generado_por %}por {{ nomina.generado_por }}{% endif %}
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-1">Total Bruto</h6>
+                        <h4 class="text-primary mb-0">{{ "{:,.2f}".format(nomina.total_bruto|float) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-1">Total Deducciones</h6>
+                        <h4 class="text-danger mb-0">{{ "{:,.2f}".format(nomina.total_deducciones|float) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-1">Total Neto</h6>
+                        <h4 class="text-success mb-0">{{ "{:,.2f}".format(nomina.total_neto|float) }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Detalle por Empleado</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Empleado</th>
+                    <th>Cargo</th>
+                    <th class="text-right">Salario Base</th>
+                    <th class="text-right">Ingresos</th>
+                    <th class="text-right">Deducciones</th>
+                    <th class="text-right">Neto</th>
+                    <th>T/C</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ne in nomina_empleados %}
+                <tr>
+                    <td>
+                        <strong>{{ ne.empleado.primer_nombre }} {{ ne.empleado.primer_apellido }}</strong>
+                        {% if ne.empleado.segundo_apellido %}{{ ne.empleado.segundo_apellido }}{% endif %}
+                    </td>
+                    <td>{{ ne.cargo_snapshot or ne.empleado.cargo or 'N/A' }}</td>
+                    <td class="text-right">{{ "{:,.2f}".format(ne.sueldo_base_historico|float) }}</td>
+                    <td class="text-right text-primary">+{{ "{:,.2f}".format(ne.total_ingresos|float) }}</td>
+                    <td class="text-right text-danger">-{{ "{:,.2f}".format(ne.total_deducciones|float) }}</td>
+                    <td class="text-right"><strong>{{ "{:,.2f}".format(ne.salario_neto|float) }}</strong></td>
+                    <td>{{ "{:.4f}".format(ne.tipo_cambio_aplicado|float) if ne.tipo_cambio_aplicado else '1.0' }}</td>
+                    <td>
+                        <a href="{{ url_for('planilla.ver_nomina_empleado', planilla_id=planilla.id, nomina_id=nomina.id, nomina_empleado_id=ne.id) }}"
+                           class="btn btn-sm btn-outline-primary" title="Ver Detalle">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="table-dark">
+                    <th colspan="2">TOTALES</th>
+                    <th class="text-right">-</th>
+                    <th class="text-right">{{ "{:,.2f}".format(nomina.total_bruto|float) }}</th>
+                    <th class="text-right">{{ "{:,.2f}".format(nomina.total_deducciones|float) }}</th>
+                    <th class="text-right">{{ "{:,.2f}".format(nomina.total_neto|float) }}</th>
+                    <th colspan="2"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

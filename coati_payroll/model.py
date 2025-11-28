@@ -251,6 +251,14 @@ class Empleado(database.Model, BaseTabla):
 
 # Gestión de planillas
 class TipoPlanilla(database.Model, BaseTabla):
+    """Payroll type configuration.
+
+    Defines the type of payroll (monthly, biweekly, weekly, etc.) and its
+    fiscal period parameters. The fiscal period can be different from the
+    calendar year (Jan-Dec) and is defined here to support various accounting
+    requirements.
+    """
+
     __tablename__ = "tipo_planilla"
 
     codigo = database.Column(database.String(20), unique=True, nullable=False)
@@ -262,10 +270,50 @@ class TipoPlanilla(database.Model, BaseTabla):
         database.String(20), nullable=False, default="mensual"
     )  # ej. mensual, quincenal, semanal
 
+    # Fiscal period configuration
+    # mes_inicio_fiscal: Month when the fiscal year starts (1-12)
+    mes_inicio_fiscal = database.Column(
+        database.Integer, nullable=False, default=1
+    )  # 1 = January
+    # dia_inicio_fiscal: Day of month when fiscal year starts
+    dia_inicio_fiscal = database.Column(database.Integer, nullable=False, default=1)
+
+    # Accumulated calculation settings
+    # acumula_anual: Whether this payroll type accumulates values annually
+    acumula_anual = database.Column(database.Boolean(), default=True, nullable=False)
+    # periodos_por_anio: Number of payroll periods per fiscal year
+    periodos_por_anio = database.Column(database.Integer, nullable=False, default=12)
+
+    # Tax calculation parameters (stored as JSON for flexibility)
+    parametros_calculo = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
+
+    activo = database.Column(database.Boolean(), default=True, nullable=False)
+
     planillas = database.relationship("Planilla", back_populates="tipo_planilla")
+    acumulados = database.relationship("AcumuladoAnual", back_populates="tipo_planilla")
 
 
 class Planilla(database.Model, BaseTabla):
+    """Master payroll record that connects employees, perceptions, deductions, and benefits.
+
+    The Planilla acts as the central hub for payroll configuration:
+    - Employees assigned via PlanillaEmpleado
+    - Perceptions via PlanillaIngreso
+    - Deductions via PlanillaDeduccion (with priority order)
+    - Benefits via PlanillaPrestacion
+    - Calculation rules via PlanillaReglaCalculo
+
+    Automatic Deductions:
+    The payroll engine automatically applies loan installments and salary advances
+    from the Adelanto table for employees with active loans, regardless of whether
+    those deductions are explicitly configured in planilla_deducciones.
+    The priority for these automatic deductions is controlled by:
+    - prioridad_prestamos: Priority for loan installments
+    - prioridad_adelantos: Priority for salary advances
+    """
+
     __tablename__ = "planilla"
 
     nombre = database.Column(database.String(150), nullable=False, unique=True)
@@ -293,6 +341,24 @@ class Planilla(database.Model, BaseTabla):
     # Ultima ejecución
     ultima_ejecucion = database.Column(database.DateTime, nullable=True)
 
+    # Automatic deduction priorities (applied even if not in planilla_deducciones)
+    # Loans and advances from Adelanto table are automatically deducted
+    # Lower number = higher priority (applied first)
+    prioridad_prestamos = database.Column(
+        database.Integer, nullable=False, default=250
+    )  # Default: after mandatory deductions
+    prioridad_adelantos = database.Column(
+        database.Integer, nullable=False, default=251
+    )  # Default: right after loans
+
+    # Whether to apply automatic loan/advance deductions
+    aplicar_prestamos_automatico = database.Column(
+        database.Boolean(), default=True, nullable=False
+    )
+    aplicar_adelantos_automatico = database.Column(
+        database.Boolean(), default=True, nullable=False
+    )
+
     # relaciones con componentes configurados
     planilla_percepciones = database.relationship(
         "PlanillaIngreso",
@@ -304,6 +370,12 @@ class Planilla(database.Model, BaseTabla):
     )
     planilla_prestaciones = database.relationship(
         "PlanillaPrestacion",
+        back_populates="planilla",
+    )
+
+    # reglas de cálculo asociadas (impuestos, fórmulas complejas)
+    planilla_reglas_calculo = database.relationship(
+        "PlanillaReglaCalculo",
         back_populates="planilla",
     )
 
@@ -320,8 +392,19 @@ class Planilla(database.Model, BaseTabla):
     )
 
 
-# Percepciones y deducciones
+# Percepciones y deducciones - THESE AFFECT EMPLOYEE'S NET PAY
+# Percepciones (ingresos) se SUMAN al salario
+# Deducciones se RESTAN del salario
 class Percepcion(database.Model, BaseTabla):
+    """Income items that ADD to employee's pay.
+
+    Percepciones are income items that increase the employee's gross salary.
+    Examples: base salary, overtime, bonuses, commissions, allowances.
+
+    Together with Deducciones, these determine the employee's net pay.
+    (Prestaciones do NOT affect employee pay - they are employer costs.)
+    """
+
     __tablename__ = "percepcion"
 
     codigo = database.Column(
@@ -433,7 +516,22 @@ class Deduccion(database.Model, BaseTabla):
 
 
 # Prestaciones (aportes del empleador: seguridad social, etc.)
+# NOTA: Las prestaciones son costos patronales que NO afectan el pago al empleado.
+# Solo las percepciones y deducciones afectan el salario neto del empleado.
+# Ejemplos de prestaciones: INSS patronal, provisión de vacaciones, aguinaldo, indemnización.
 class Prestacion(database.Model, BaseTabla):
+    """Employer contributions and provisions.
+
+    Prestaciones are employer costs that do NOT affect the employee's net pay.
+    They represent the company's obligations such as:
+    - Social security employer contributions (INSS patronal)
+    - Vacation provisions
+    - 13th month (aguinaldo) provisions
+    - Severance provisions (indemnización)
+
+    Only Percepciones (income) and Deducciones affect the employee's net salary.
+    """
+
     __tablename__ = "prestacion"
 
     codigo = database.Column(
@@ -508,6 +606,22 @@ class PlanillaIngreso(database.Model, BaseTabla):
 
 
 class PlanillaDeduccion(database.Model, BaseTabla):
+    """Association between Planilla and Deduccion with priority ordering.
+
+    The 'prioridad' field determines the order in which deductions are applied.
+    This is critical when the net salary doesn't cover all deductions.
+
+    Priority guidelines:
+    - 1-100: Legal/mandatory deductions (taxes, social security)
+    - 101-200: Court-ordered deductions (alimony, garnishments)
+    - 201-300: Company loans and salary advances
+    - 301-400: Voluntary deductions (savings, insurance)
+    - 401+: Other deductions
+
+    Note: Loan installments from the Adelanto table are handled automatically
+    by the payroll engine, not through JSON calculation rules.
+    """
+
     __tablename__ = "planilla_deduccion"
     __table_args__ = (
         database.UniqueConstraint(
@@ -522,11 +636,22 @@ class PlanillaDeduccion(database.Model, BaseTabla):
         database.String(26), database.ForeignKey("deduccion.id"), nullable=False
     )
 
+    # Priority order for applying deductions (lower = higher priority)
+    prioridad = database.Column(database.Integer, nullable=False, default=100)
+
+    # Legacy field kept for backward compatibility, use 'prioridad' instead
     orden = database.Column(database.Integer, nullable=True, default=0)
+
     editable = database.Column(database.Boolean(), default=True)
     monto_predeterminado = database.Column(database.Numeric(14, 2), nullable=True)
     porcentaje = database.Column(database.Numeric(5, 2), nullable=True)
     activo = database.Column(database.Boolean(), default=True)
+
+    # Whether this deduction is mandatory (cannot be skipped if salary insufficient)
+    es_obligatoria = database.Column(database.Boolean(), default=False)
+
+    # Whether to stop processing if salary is insufficient for this deduction
+    detener_si_insuficiente = database.Column(database.Boolean(), default=False)
 
     planilla = database.relationship("Planilla", back_populates="planilla_deducciones")
     deduccion = database.relationship("Deduccion", back_populates="planillas")
@@ -555,6 +680,44 @@ class PlanillaPrestacion(database.Model, BaseTabla):
 
     planilla = database.relationship("Planilla", back_populates="planilla_prestaciones")
     prestacion = database.relationship("Prestacion", back_populates="planillas")
+
+
+class PlanillaReglaCalculo(database.Model, BaseTabla):
+    """Association between Planilla and ReglaCalculo (calculation rules/tax tables).
+
+    This allows a payroll to have multiple calculation rules associated,
+    such as income tax rules, social security rules, etc.
+    """
+
+    __tablename__ = "planilla_regla_calculo"
+    __table_args__ = (
+        database.UniqueConstraint(
+            "planilla_id", "regla_calculo_id", name="uq_planilla_regla"
+        ),
+    )
+
+    planilla_id = database.Column(
+        database.String(26), database.ForeignKey("planilla.id"), nullable=False
+    )
+    regla_calculo_id = database.Column(
+        database.String(26), database.ForeignKey("regla_calculo.id"), nullable=False
+    )
+
+    # Order of execution (important for dependent calculations)
+    orden = database.Column(database.Integer, nullable=False, default=0)
+
+    # Whether this rule is active for this payroll
+    activo = database.Column(database.Boolean(), default=True)
+
+    # Optional: override parameters for this specific payroll
+    parametros_override = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
+
+    planilla = database.relationship(
+        "Planilla", back_populates="planilla_reglas_calculo"
+    )
+    regla_calculo = database.relationship("ReglaCalculo", back_populates="planillas")
 
 
 class PlanillaEmpleado(database.Model, BaseTabla):
@@ -994,3 +1157,155 @@ class CampoPersonalizado(database.Model, BaseTabla):
     descripcion = database.Column(database.String(255), nullable=True)
     orden = database.Column(database.Integer, nullable=False, default=0)
     activo = database.Column(database.Boolean(), default=True, nullable=False)
+
+
+# Reglas de cálculo (impuestos, percepciones, deducciones complejas)
+class ReglaCalculo(database.Model, BaseTabla):
+    """Calculation rules for taxes, perceptions, and deductions.
+
+    Stores the complete JSON schema for calculating complex rules like
+    income tax (IR), social security deductions, etc. The schema defines
+    variables, conditions, formulas, and tax lookup tables.
+
+    This allows country-agnostic configuration of tax rules that can be
+    versioned and applied based on effective dates.
+    """
+
+    __tablename__ = "regla_calculo"
+    __table_args__ = (
+        database.UniqueConstraint("codigo", "version", name="uq_regla_codigo_version"),
+    )
+
+    codigo = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # e.g., 'IR_NICARAGUA', 'INSS_LABORAL'
+    nombre = database.Column(database.String(150), nullable=False)
+    descripcion = database.Column(database.Text, nullable=True)
+    jurisdiccion = database.Column(
+        database.String(100), nullable=True
+    )  # e.g., 'Nicaragua', 'Costa Rica'
+
+    # Reference currency for the tax rule calculations.
+    # The rule is currency-agnostic - the actual payroll currency is defined
+    # in TipoPlanilla. When the payroll currency differs from the reference
+    # currency, exchange rates are applied during calculation.
+    # Example: IR Nicaragua uses NIO as reference, but payroll can be in USD.
+    moneda_referencia = database.Column(
+        database.String(10), nullable=True
+    )  # e.g., 'NIO', 'USD' - reference currency for rule calculations
+
+    version = database.Column(
+        database.String(20), nullable=False, default="1.0.0"
+    )  # Semantic versioning
+
+    # Type of rule: 'impuesto', 'deduccion', 'percepcion', 'prestacion'
+    tipo_regla = database.Column(
+        database.String(30), nullable=False, default="impuesto"
+    )
+
+    # The complete JSON schema defining the calculation logic
+    # Structure includes: meta, inputs, steps, tax_tables, output
+    esquema_json = database.Column(
+        MutableDict.as_mutable(JSON), nullable=False, default=dict
+    )
+
+    # Validity period
+    vigente_desde = database.Column(database.Date, nullable=False)
+    vigente_hasta = database.Column(database.Date, nullable=True)
+
+    activo = database.Column(database.Boolean(), default=True, nullable=False)
+
+    # Optional relationship to specific deduction/perception/benefit
+    deduccion_id = database.Column(
+        database.String(26), database.ForeignKey("deduccion.id"), nullable=True
+    )
+    percepcion_id = database.Column(
+        database.String(26), database.ForeignKey("percepcion.id"), nullable=True
+    )
+    prestacion_id = database.Column(
+        database.String(26), database.ForeignKey("prestacion.id"), nullable=True
+    )
+
+    # Relationship to planillas that use this rule
+    planillas = database.relationship(
+        "PlanillaReglaCalculo",
+        back_populates="regla_calculo",
+    )
+
+
+# Acumulados anuales por empleado (para cálculos como IR en Nicaragua)
+class AcumuladoAnual(database.Model, BaseTabla):
+    """Annual accumulated values per employee per payroll type.
+
+    Stores running totals of salary, deductions, and taxes for each employee
+    per fiscal year and payroll type. This is essential for progressive tax
+    calculations like Nicaragua's IR which requires annual accumulated values.
+
+    The fiscal year period is defined in the TipoPlanilla (payroll type) to
+    support different fiscal periods (not just Jan-Dec).
+
+    Updated after each payroll run to maintain accurate year-to-date totals.
+    """
+
+    __tablename__ = "acumulado_anual"
+    __table_args__ = (
+        database.UniqueConstraint(
+            "empleado_id",
+            "tipo_planilla_id",
+            "periodo_fiscal_inicio",
+            name="uq_acumulado_empleado_tipo_periodo",
+        ),
+    )
+
+    empleado_id = database.Column(
+        database.String(26),
+        database.ForeignKey("empleado.id"),
+        nullable=False,
+        index=True,
+    )
+
+    # Reference to payroll type (which defines the fiscal period)
+    tipo_planilla_id = database.Column(
+        database.String(26),
+        database.ForeignKey("tipo_planilla.id"),
+        nullable=False,
+        index=True,
+    )
+
+    # Fiscal period start date (calculated from TipoPlanilla settings)
+    # This allows tracking accumulated values per fiscal year
+    periodo_fiscal_inicio = database.Column(database.Date, nullable=False, index=True)
+    periodo_fiscal_fin = database.Column(database.Date, nullable=False)
+
+    # Accumulated salary values
+    salario_bruto_acumulado = database.Column(
+        database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )
+    salario_gravable_acumulado = database.Column(
+        database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )
+
+    # Accumulated deductions (before tax)
+    deducciones_antes_impuesto_acumulado = database.Column(
+        database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )
+
+    # Accumulated taxes
+    impuesto_retenido_acumulado = database.Column(
+        database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )
+
+    # Number of payrolls processed
+    periodos_procesados = database.Column(database.Integer, nullable=False, default=0)
+
+    # Last processed period
+    ultimo_periodo_procesado = database.Column(database.Date, nullable=True)
+
+    # Additional accumulated data (JSON for flexibility)
+    # Can store: inss_acumulado, otras_deducciones_acumuladas, percepciones_acumuladas, etc.
+    datos_adicionales = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
+
+    empleado = database.relationship("Empleado", backref="acumulados_anuales")
+    tipo_planilla = database.relationship("TipoPlanilla", back_populates="acumulados")

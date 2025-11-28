@@ -309,3 +309,489 @@ class CustomFieldForm(FlaskForm):
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
+
+
+class ReglaCalculoForm(FlaskForm):
+    """Form for creating and editing calculation rules."""
+
+    codigo = StringField(
+        _("Código"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código único de la regla (ej: IR_NICARAGUA)"),
+    )
+    nombre = StringField(
+        _("Nombre"),
+        validators=[DataRequired(), Length(max=150)],
+        description=_("Nombre descriptivo de la regla"),
+    )
+    descripcion = StringField(
+        _("Descripción"),
+        validators=[Optional(), Length(max=500)],
+    )
+    jurisdiccion = StringField(
+        _("Jurisdicción"),
+        validators=[Optional(), Length(max=100)],
+        description=_("País o región donde aplica (ej: Nicaragua)"),
+    )
+    moneda_referencia = StringField(
+        _("Moneda de Referencia"),
+        validators=[Optional(), Length(max=10)],
+        description=_(
+            "Moneda base para cálculos de la regla (ej: NIO). "
+            "La moneda de la planilla se define en el Tipo de Planilla."
+        ),
+    )
+    version = StringField(
+        _("Versión"),
+        validators=[DataRequired(), Length(max=20)],
+        default="1.0.0",
+        description=_("Versión semántica (ej: 1.0.0)"),
+    )
+    tipo_regla = SelectField(
+        _("Tipo de regla"),
+        choices=[
+            ("impuesto", _("Impuesto")),
+            ("deduccion", _("Deducción")),
+            ("percepcion", _("Percepción")),
+            ("prestacion", _("Prestación")),
+        ],
+        validators=[DataRequired()],
+    )
+    vigente_desde = DateField(
+        _("Vigente desde"),
+        validators=[DataRequired()],
+        description=_("Fecha desde la cual la regla es válida"),
+    )
+    vigente_hasta = DateField(
+        _("Vigente hasta"),
+        validators=[Optional()],
+        description=_("Fecha hasta la cual la regla es válida (vacío = indefinido)"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))
+
+
+# ============================================================================
+# PAYROLL CONCEPTS FORMS (Percepciones, Deducciones, Prestaciones)
+# ============================================================================
+
+
+class PercepcionForm(FlaskForm):
+    """Form for creating and editing perceptions (income items).
+
+    Percepciones are income items that ADD to employee's pay.
+    Only Percepciones and Deducciones affect the employee's net salary.
+    """
+
+    codigo = StringField(
+        _("Código"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código único de la percepción (ej: SALARIO_BASE)"),
+    )
+    nombre = StringField(
+        _("Nombre"),
+        validators=[DataRequired(), Length(max=150)],
+        description=_("Nombre descriptivo de la percepción"),
+    )
+    descripcion = StringField(
+        _("Descripción"),
+        validators=[Optional(), Length(max=255)],
+    )
+    formula_tipo = SelectField(
+        _("Tipo de Cálculo"),
+        choices=[
+            ("fijo", _("Monto Fijo")),
+            ("porcentaje_salario", _("Porcentaje del Salario Base")),
+            ("porcentaje_bruto", _("Porcentaje del Salario Bruto")),
+            ("formula", _("Fórmula Personalizada")),
+            ("horas", _("Por Horas")),
+            ("dias", _("Por Días")),
+        ],
+        validators=[DataRequired()],
+    )
+    monto_default = DecimalField(
+        _("Monto Predeterminado"),
+        validators=[Optional()],
+        description=_("Monto fijo cuando aplica"),
+    )
+    porcentaje = DecimalField(
+        _("Porcentaje"),
+        validators=[Optional(), NumberRange(min=0, max=100)],
+        description=_("Porcentaje para cálculos (0-100)"),
+    )
+    base_calculo = SelectField(
+        _("Base de Cálculo"),
+        choices=[
+            ("", _("-- Seleccionar --")),
+            ("salario_base", _("Salario Base")),
+            ("salario_bruto", _("Salario Bruto")),
+            ("salario_gravable", _("Salario Gravable")),
+            ("salario_neto", _("Salario Neto")),
+        ],
+        validators=[Optional()],
+    )
+    unidad_calculo = SelectField(
+        _("Unidad de Cálculo"),
+        choices=[
+            ("", _("-- Ninguna --")),
+            ("hora", _("Por Hora")),
+            ("dia", _("Por Día")),
+            ("mes", _("Por Mes")),
+        ],
+        validators=[Optional()],
+    )
+    gravable = BooleanField(
+        _("Gravable"),
+        default=True,
+        description=_("¿Esta percepción está sujeta a impuestos?"),
+    )
+    recurrente = BooleanField(
+        _("Recurrente"),
+        default=False,
+        description=_("¿Se aplica automáticamente en cada nómina?"),
+    )
+    # Vigencia
+    vigente_desde = DateField(
+        _("Vigente Desde"),
+        validators=[Optional()],
+        description=_("Fecha desde la cual esta percepción es válida"),
+    )
+    valido_hasta = DateField(
+        _("Válido Hasta"),
+        validators=[Optional()],
+        description=_(
+            "Fecha hasta la cual esta percepción es válida (vacío = indefinido)"
+        ),
+    )
+    # Contabilidad
+    contabilizable = BooleanField(
+        _("Contabilizable"),
+        default=True,
+    )
+    codigo_cuenta_debe = StringField(
+        _("Cuenta Contable (Debe)"),
+        validators=[Optional(), Length(max=64)],
+    )
+    codigo_cuenta_haber = StringField(
+        _("Cuenta Contable (Haber)"),
+        validators=[Optional(), Length(max=64)],
+    )
+    editable_en_nomina = BooleanField(
+        _("Editable en Nómina"),
+        default=False,
+        description=_("¿Permitir modificar el monto durante la nómina?"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))
+
+
+class DeduccionForm(FlaskForm):
+    """Form for creating and editing deductions."""
+
+    codigo = StringField(
+        _("Código"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código único de la deducción (ej: INSS_LABORAL)"),
+    )
+    nombre = StringField(
+        _("Nombre"),
+        validators=[DataRequired(), Length(max=150)],
+        description=_("Nombre descriptivo de la deducción"),
+    )
+    descripcion = StringField(
+        _("Descripción"),
+        validators=[Optional(), Length(max=255)],
+    )
+    tipo = SelectField(
+        _("Tipo de Deducción"),
+        choices=[
+            ("general", _("General")),
+            ("impuesto", _("Impuesto")),
+            ("seguro_social", _("Seguro Social")),
+            ("prestamo", _("Préstamo")),
+            ("adelanto", _("Adelanto")),
+            ("pension_alimenticia", _("Pensión Alimenticia")),
+            ("ahorro", _("Ahorro Voluntario")),
+            ("sindical", _("Cuota Sindical")),
+            ("otro", _("Otro")),
+        ],
+        validators=[DataRequired()],
+    )
+    es_impuesto = BooleanField(
+        _("Es Impuesto"),
+        default=False,
+        description=_("¿Esta deducción es un impuesto (IR, ISR)?"),
+    )
+    formula_tipo = SelectField(
+        _("Tipo de Cálculo"),
+        choices=[
+            ("fijo", _("Monto Fijo")),
+            ("porcentaje_salario", _("Porcentaje del Salario Base")),
+            ("porcentaje_bruto", _("Porcentaje del Salario Bruto")),
+            ("porcentaje_gravable", _("Porcentaje del Salario Gravable")),
+            ("formula", _("Fórmula Personalizada")),
+            ("tabla", _("Tabla de Impuestos")),
+        ],
+        validators=[DataRequired()],
+    )
+    monto_default = DecimalField(
+        _("Monto Predeterminado"),
+        validators=[Optional()],
+        description=_("Monto fijo cuando aplica"),
+    )
+    porcentaje = DecimalField(
+        _("Porcentaje"),
+        validators=[Optional(), NumberRange(min=0, max=100)],
+        description=_("Porcentaje para cálculos (0-100)"),
+    )
+    base_calculo = SelectField(
+        _("Base de Cálculo"),
+        choices=[
+            ("", _("-- Seleccionar --")),
+            ("salario_base", _("Salario Base")),
+            ("salario_bruto", _("Salario Bruto")),
+            ("salario_gravable", _("Salario Gravable")),
+            ("salario_neto", _("Salario Neto")),
+        ],
+        validators=[Optional()],
+    )
+    unidad_calculo = SelectField(
+        _("Unidad de Cálculo"),
+        choices=[
+            ("", _("-- Ninguna --")),
+            ("hora", _("Por Hora")),
+            ("dia", _("Por Día")),
+            ("mes", _("Por Mes")),
+        ],
+        validators=[Optional()],
+    )
+    antes_impuesto = BooleanField(
+        _("Antes de Impuesto"),
+        default=True,
+        description=_("¿Se deduce antes de calcular impuestos?"),
+    )
+    recurrente = BooleanField(
+        _("Recurrente"),
+        default=False,
+        description=_("¿Se aplica automáticamente en cada nómina?"),
+    )
+    # Vigencia
+    vigente_desde = DateField(
+        _("Vigente Desde"),
+        validators=[Optional()],
+        description=_("Fecha desde la cual esta deducción es válida"),
+    )
+    valido_hasta = DateField(
+        _("Válido Hasta"),
+        validators=[Optional()],
+        description=_(
+            "Fecha hasta la cual esta deducción es válida (vacío = indefinido)"
+        ),
+    )
+    # Contabilidad
+    contabilizable = BooleanField(
+        _("Contabilizable"),
+        default=True,
+    )
+    codigo_cuenta_debe = StringField(
+        _("Cuenta Contable (Debe)"),
+        validators=[Optional(), Length(max=64)],
+    )
+    codigo_cuenta_haber = StringField(
+        _("Cuenta Contable (Haber)"),
+        validators=[Optional(), Length(max=64)],
+    )
+    editable_en_nomina = BooleanField(
+        _("Editable en Nómina"),
+        default=False,
+        description=_("¿Permitir modificar el monto durante la nómina?"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))
+
+
+class PlanillaForm(FlaskForm):
+    """Form for creating and editing payroll master records (Planilla).
+
+    A Planilla is the central hub that connects employees, perceptions,
+    deductions, benefits, and calculation rules.
+    """
+
+    nombre = StringField(
+        _("Nombre"),
+        validators=[DataRequired(), Length(max=150)],
+        description=_("Nombre único de la planilla (ej: Planilla Quincenal Córdobas)"),
+    )
+    descripcion = StringField(
+        _("Descripción"),
+        validators=[Optional(), Length(max=255)],
+    )
+    tipo_planilla_id = SelectField(
+        _("Tipo de Planilla"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Define periodicidad, período fiscal y configuración de cálculo"),
+    )
+    moneda_id = SelectField(
+        _("Moneda"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Moneda en la que se pagarán los salarios"),
+    )
+    periodo_fiscal_inicio = DateField(
+        _("Inicio Período Fiscal"),
+        validators=[Optional()],
+        description=_("Fecha de inicio del período fiscal actual"),
+    )
+    periodo_fiscal_fin = DateField(
+        _("Fin Período Fiscal"),
+        validators=[Optional()],
+        description=_("Fecha de fin del período fiscal actual"),
+    )
+    # Automatic deduction priorities
+    prioridad_prestamos = IntegerField(
+        _("Prioridad Préstamos"),
+        validators=[Optional(), NumberRange(min=1, max=999)],
+        default=250,
+        description=_("Prioridad para deducir cuotas de préstamos (menor = primero)"),
+    )
+    prioridad_adelantos = IntegerField(
+        _("Prioridad Adelantos"),
+        validators=[Optional(), NumberRange(min=1, max=999)],
+        default=251,
+        description=_("Prioridad para deducir adelantos salariales (menor = primero)"),
+    )
+    aplicar_prestamos_automatico = BooleanField(
+        _("Aplicar Préstamos Automáticamente"),
+        default=True,
+        description=_("¿Deducir automáticamente las cuotas de préstamos?"),
+    )
+    aplicar_adelantos_automatico = BooleanField(
+        _("Aplicar Adelantos Automáticamente"),
+        default=True,
+        description=_("¿Deducir automáticamente los adelantos salariales?"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))
+
+
+class PrestacionForm(FlaskForm):
+    """Form for creating and editing benefits (employer contributions).
+
+    Prestaciones are employer costs that do NOT affect the employee's net pay.
+    Examples: INSS patronal, vacation provisions, aguinaldo provisions.
+    """
+
+    codigo = StringField(
+        _("Código"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código único de la prestación (ej: INSS_PATRONAL)"),
+    )
+    nombre = StringField(
+        _("Nombre"),
+        validators=[DataRequired(), Length(max=150)],
+        description=_("Nombre descriptivo de la prestación"),
+    )
+    descripcion = StringField(
+        _("Descripción"),
+        validators=[Optional(), Length(max=255)],
+    )
+    tipo = SelectField(
+        _("Tipo de Prestación"),
+        choices=[
+            ("patronal", _("Aporte Patronal")),
+            ("seguro_social", _("Seguro Social Patronal")),
+            ("vacaciones", _("Vacaciones")),
+            ("aguinaldo", _("Aguinaldo / Treceavo Mes")),
+            ("indemnizacion", _("Indemnización")),
+            ("capacitacion", _("Capacitación")),
+            ("otro", _("Otro")),
+        ],
+        validators=[DataRequired()],
+    )
+    formula_tipo = SelectField(
+        _("Tipo de Cálculo"),
+        choices=[
+            ("fijo", _("Monto Fijo")),
+            ("porcentaje_salario", _("Porcentaje del Salario Base")),
+            ("porcentaje_bruto", _("Porcentaje del Salario Bruto")),
+            ("formula", _("Fórmula Personalizada")),
+            ("provision", _("Provisión Mensual")),
+        ],
+        validators=[DataRequired()],
+    )
+    monto_default = DecimalField(
+        _("Monto Predeterminado"),
+        validators=[Optional()],
+        description=_("Monto fijo cuando aplica"),
+    )
+    porcentaje = DecimalField(
+        _("Porcentaje"),
+        validators=[Optional(), NumberRange(min=0, max=100)],
+        description=_("Porcentaje para cálculos (0-100)"),
+    )
+    base_calculo = SelectField(
+        _("Base de Cálculo"),
+        choices=[
+            ("", _("-- Seleccionar --")),
+            ("salario_base", _("Salario Base")),
+            ("salario_bruto", _("Salario Bruto")),
+            ("salario_gravable", _("Salario Gravable")),
+        ],
+        validators=[Optional()],
+    )
+    unidad_calculo = SelectField(
+        _("Unidad de Cálculo"),
+        choices=[
+            ("", _("-- Ninguna --")),
+            ("hora", _("Por Hora")),
+            ("dia", _("Por Día")),
+            ("mes", _("Por Mes")),
+        ],
+        validators=[Optional()],
+    )
+    tope_aplicacion = DecimalField(
+        _("Tope de Aplicación"),
+        validators=[Optional()],
+        description=_(
+            "Monto máximo sobre el cual se aplica el cálculo (ej: techo salarial INSS)"
+        ),
+    )
+    recurrente = BooleanField(
+        _("Recurrente"),
+        default=True,
+        description=_("¿Se provisiona automáticamente en cada nómina?"),
+    )
+    # Vigencia
+    vigente_desde = DateField(
+        _("Vigente Desde"),
+        validators=[Optional()],
+        description=_("Fecha desde la cual esta prestación es válida"),
+    )
+    valido_hasta = DateField(
+        _("Válido Hasta"),
+        validators=[Optional()],
+        description=_(
+            "Fecha hasta la cual esta prestación es válida (vacío = indefinido)"
+        ),
+    )
+    # Contabilidad
+    contabilizable = BooleanField(
+        _("Contabilizable"),
+        default=True,
+    )
+    codigo_cuenta_debe = StringField(
+        _("Cuenta Contable (Debe)"),
+        validators=[Optional(), Length(max=64)],
+    )
+    codigo_cuenta_haber = StringField(
+        _("Cuenta Contable (Haber)"),
+        validators=[Optional(), Length(max=64)],
+    )
+    editable_en_nomina = BooleanField(
+        _("Editable en Nómina"),
+        default=False,
+        description=_("¿Permitir modificar el monto durante la nómina?"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))

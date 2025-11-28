@@ -137,6 +137,11 @@ def create_app(config) -> Flask:
         exchange_rate_bp,
         employee_bp,
         custom_field_bp,
+        calculation_rule_bp,
+        percepcion_bp,
+        deduccion_bp,
+        prestacion_bp,
+        planilla_bp,
     )
 
     app.register_blueprint(user_bp)
@@ -144,6 +149,11 @@ def create_app(config) -> Flask:
     app.register_blueprint(exchange_rate_bp)
     app.register_blueprint(employee_bp)
     app.register_blueprint(custom_field_bp)
+    app.register_blueprint(calculation_rule_bp)
+    app.register_blueprint(percepcion_bp)
+    app.register_blueprint(deduccion_bp)
+    app.register_blueprint(prestacion_bp)
+    app.register_blueprint(planilla_bp)
 
     return app
 

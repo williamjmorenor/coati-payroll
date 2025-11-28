@@ -70,26 +70,30 @@ def process_custom_fields_from_request(custom_fields):
         field_name = f"custom_{field.nombre_campo}"
         raw_value = request.form.get(field_name, "")
 
-        if field.tipo_dato == "texto":
-            stripped = raw_value.strip() if raw_value else ""
-            datos_adicionales[field.nombre_campo] = stripped or None
-        elif field.tipo_dato == "entero":
-            try:
-                datos_adicionales[field.nombre_campo] = (
-                    int(raw_value) if raw_value else None
-                )
-            except ValueError:
-                datos_adicionales[field.nombre_campo] = None
-        elif field.tipo_dato == "decimal":
-            try:
-                datos_adicionales[field.nombre_campo] = (
-                    float(raw_value) if raw_value else None
-                )
-            except ValueError:
-                datos_adicionales[field.nombre_campo] = None
-        elif field.tipo_dato == "booleano":
-            # Checkbox will send value only if checked
-            datos_adicionales[field.nombre_campo] = field_name in request.form
+        match field.tipo_dato:
+            case "texto":
+                stripped = raw_value.strip() if raw_value else ""
+                datos_adicionales[field.nombre_campo] = stripped or None
+            case "entero":
+                try:
+                    datos_adicionales[field.nombre_campo] = (
+                        int(raw_value) if raw_value else None
+                    )
+                except ValueError:
+                    datos_adicionales[field.nombre_campo] = None
+            case "decimal":
+                try:
+                    datos_adicionales[field.nombre_campo] = (
+                        float(raw_value) if raw_value else None
+                    )
+                except ValueError:
+                    datos_adicionales[field.nombre_campo] = None
+            case "booleano":
+                # Checkbox will send value only if checked
+                datos_adicionales[field.nombre_campo] = field_name in request.form
+            case _:
+                # Unknown type, store as text
+                datos_adicionales[field.nombre_campo] = raw_value or None
     return datos_adicionales
 
 

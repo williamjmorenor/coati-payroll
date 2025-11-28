@@ -80,7 +80,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link d-flex align-items-center" href="#">
+                    <a class="nav-link d-flex align-items-center" href="{{ url_for('planilla.index') }}">
                         <i class="bi bi-calculator me-2"></i>
                         <span>{{ _('Planillas') }}</span>
                     </a>
@@ -151,6 +151,26 @@
                             <li class="nav-item">
                                 <a class="nav-link py-2" href="#">
                                     <i class="bi bi-card-list me-2"></i>{{ _('Tipo de Planilla') }}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link py-2" href="{{ url_for('percepcion.index') }}">
+                                    <i class="bi bi-plus-circle me-2"></i>{{ _('Percepciones') }}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link py-2" href="{{ url_for('deduccion.index') }}">
+                                    <i class="bi bi-dash-circle me-2"></i>{{ _('Deducciones') }}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link py-2" href="{{ url_for('prestacion.index') }}">
+                                    <i class="bi bi-gift me-2"></i>{{ _('Prestaciones') }}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link py-2" href="{{ url_for('calculation_rule.index') }}">
+                                    <i class="bi bi-code-square me-2"></i>{{ _('Reglas de Cálculo') }}
                                 </a>
                             </li>
                             <li class="nav-item">

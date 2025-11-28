@@ -18,6 +18,13 @@ from coati_payroll.vistas.currency import currency_bp
 from coati_payroll.vistas.exchange_rate import exchange_rate_bp
 from coati_payroll.vistas.employee import employee_bp
 from coati_payroll.vistas.custom_field import custom_field_bp
+from coati_payroll.vistas.calculation_rule import calculation_rule_bp
+from coati_payroll.vistas.payroll_concepts import (
+    percepcion_bp,
+    deduccion_bp,
+    prestacion_bp,
+)
+from coati_payroll.vistas.planilla import planilla_bp
 
 __all__ = [
     "user_bp",
@@ -25,4 +32,9 @@ __all__ = [
     "exchange_rate_bp",
     "employee_bp",
     "custom_field_bp",
+    "calculation_rule_bp",
+    "percepcion_bp",
+    "deduccion_bp",
+    "prestacion_bp",
+    "planilla_bp",
 ]
