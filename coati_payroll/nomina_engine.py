@@ -317,15 +317,15 @@ class NominaEngine:
             return Decimal("1.00")
 
         # Look up exchange rate
-        tipo_cambio = (
-            TipoCambio.query.filter(
+        tipo_cambio = db.session.execute(
+            db.select(TipoCambio)
+            .filter(
                 TipoCambio.moneda_origen_id == empleado.moneda_id,
                 TipoCambio.moneda_destino_id == self.planilla.moneda_id,
                 TipoCambio.fecha <= self.fecha_calculo,
             )
             .order_by(TipoCambio.fecha.desc())
-            .first()
-        )
+        ).scalar()
 
         if tipo_cambio:
             return Decimal(str(tipo_cambio.tasa))
@@ -352,10 +352,16 @@ class NominaEngine:
             return novedades
 
         # Query novelties for this employee in this nomina period
-        nomina_novedades = NominaNovedad.query.filter(
-            NominaNovedad.empleado_id == empleado.id,
-            NominaNovedad.nomina_id == self.nomina.id,
-        ).all()
+        nomina_novedades = (
+            db.session.execute(
+                db.select(NominaNovedad).filter(
+                    NominaNovedad.empleado_id == empleado.id,
+                    NominaNovedad.nomina_id == self.nomina.id,
+                )
+            )
+            .scalars()
+            .all()
+        )
 
         for novedad in nomina_novedades:
             codigo = novedad.codigo_concepto
@@ -474,11 +480,13 @@ class NominaEngine:
         periodo_fiscal_fin = date(anio + 1, mes_inicio, dia_inicio)
 
         # Look up existing accumulated record
-        acumulado = AcumuladoAnual.query.filter(
-            AcumuladoAnual.empleado_id == empleado.id,
-            AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
-            AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
-        ).first()
+        acumulado = db.session.execute(
+            db.select(AcumuladoAnual).filter(
+                AcumuladoAnual.empleado_id == empleado.id,
+                AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
+                AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
+            )
+        ).scalar()
 
         return acumulado
 
@@ -612,11 +620,17 @@ class NominaEngine:
         saldo_disponible = emp_calculo.salario_bruto - emp_calculo.total_deducciones
 
         # Get active loans/advances
-        adelantos = Adelanto.query.filter(
-            Adelanto.empleado_id == empleado.id,
-            Adelanto.estado == "aprobado",
-            Adelanto.saldo_pendiente > 0,
-        ).all()
+        adelantos = (
+            db.session.execute(
+                db.select(Adelanto).filter(
+                    Adelanto.empleado_id == empleado.id,
+                    Adelanto.estado == "aprobado",
+                    Adelanto.saldo_pendiente > 0,
+                )
+            )
+            .scalars()
+            .all()
+        )
 
         # Separate loans and advances
         prestamos = [a for a in adelantos if a.deduccion_id]
@@ -935,11 +949,13 @@ class NominaEngine:
         periodo_fiscal_fin = date(anio + 1, mes_inicio, dia_inicio)
 
         # Get or create accumulated record
-        acumulado = AcumuladoAnual.query.filter(
-            AcumuladoAnual.empleado_id == empleado.id,
-            AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
-            AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
-        ).first()
+        acumulado = db.session.execute(
+            db.select(AcumuladoAnual).filter(
+                AcumuladoAnual.empleado_id == empleado.id,
+                AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
+                AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
+            )
+        ).scalar()
 
         if not acumulado:
             acumulado = AcumuladoAnual(
@@ -971,7 +987,7 @@ class NominaEngine:
         for deduccion in emp_calculo.deducciones:
             # Check if this is a tax deduction
             deduccion_obj = (
-                Deduccion.query.get(deduccion.deduccion_id)
+                db.session.get(Deduccion, deduccion.deduccion_id)
                 if deduccion.deduccion_id
                 else None
             )
@@ -1021,7 +1037,7 @@ def ejecutar_nomina(
     Returns:
         Tuple of (Nomina or None, list of errors, list of warnings)
     """
-    planilla = Planilla.query.get(planilla_id)
+    planilla = db.session.get(Planilla, planilla_id)
     if not planilla:
         return None, ["Planilla no encontrada."], []
 

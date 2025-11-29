@@ -54,7 +54,11 @@ planilla_bp = Blueprint("planilla", __name__, url_prefix="/planilla")
 @login_required
 def index():
     """List all planillas."""
-    planillas = Planilla.query.order_by(Planilla.nombre).all()
+    planillas = (
+        db.session.execute(db.select(Planilla).order_by(Planilla.nombre))
+        .scalars()
+        .all()
+    )
     return render_template("modules/planilla/index.html", planillas=planillas)
 
 
@@ -92,7 +96,7 @@ def new():
 @login_required
 def edit(planilla_id: str):
     """Edit a planilla and manage its associations."""
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     form = PlanillaForm(obj=planilla)
     _populate_form_choices(form)
 
@@ -114,41 +118,83 @@ def edit(planilla_id: str):
         return redirect(url_for("planilla.edit", planilla_id=planilla.id))
 
     # Get current associations for display
-    empleados_asignados = PlanillaEmpleado.query.filter_by(
-        planilla_id=planilla_id
-    ).all()
-    percepciones_asignadas = PlanillaIngreso.query.filter_by(
-        planilla_id=planilla_id
-    ).all()
-    deducciones_asignadas = (
-        PlanillaDeduccion.query.filter_by(planilla_id=planilla_id)
-        .order_by(PlanillaDeduccion.prioridad)
+    empleados_asignados = (
+        db.session.execute(
+            db.select(PlanillaEmpleado).filter_by(planilla_id=planilla_id)
+        )
+        .scalars()
         .all()
     )
-    prestaciones_asignadas = PlanillaPrestacion.query.filter_by(
-        planilla_id=planilla_id
-    ).all()
+    percepciones_asignadas = (
+        db.session.execute(
+            db.select(PlanillaIngreso).filter_by(planilla_id=planilla_id)
+        )
+        .scalars()
+        .all()
+    )
+    deducciones_asignadas = (
+        db.session.execute(
+            db.select(PlanillaDeduccion)
+            .filter_by(planilla_id=planilla_id)
+            .order_by(PlanillaDeduccion.prioridad)
+        )
+        .scalars()
+        .all()
+    )
+    prestaciones_asignadas = (
+        db.session.execute(
+            db.select(PlanillaPrestacion).filter_by(planilla_id=planilla_id)
+        )
+        .scalars()
+        .all()
+    )
     reglas_asignadas = (
-        PlanillaReglaCalculo.query.filter_by(planilla_id=planilla_id)
-        .order_by(PlanillaReglaCalculo.orden)
+        db.session.execute(
+            db.select(PlanillaReglaCalculo)
+            .filter_by(planilla_id=planilla_id)
+            .order_by(PlanillaReglaCalculo.orden)
+        )
+        .scalars()
         .all()
     )
 
     # Get available items for adding
     empleados_disponibles = (
-        Empleado.query.filter_by(activo=True).order_by(Empleado.primer_apellido).all()
+        db.session.execute(
+            db.select(Empleado)
+            .filter_by(activo=True)
+            .order_by(Empleado.primer_apellido)
+        )
+        .scalars()
+        .all()
     )
     percepciones_disponibles = (
-        Percepcion.query.filter_by(activo=True).order_by(Percepcion.nombre).all()
+        db.session.execute(
+            db.select(Percepcion).filter_by(activo=True).order_by(Percepcion.nombre)
+        )
+        .scalars()
+        .all()
     )
     deducciones_disponibles = (
-        Deduccion.query.filter_by(activo=True).order_by(Deduccion.nombre).all()
+        db.session.execute(
+            db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)
+        )
+        .scalars()
+        .all()
     )
     prestaciones_disponibles = (
-        Prestacion.query.filter_by(activo=True).order_by(Prestacion.nombre).all()
+        db.session.execute(
+            db.select(Prestacion).filter_by(activo=True).order_by(Prestacion.nombre)
+        )
+        .scalars()
+        .all()
     )
     reglas_disponibles = (
-        ReglaCalculo.query.filter_by(activo=True).order_by(ReglaCalculo.nombre).all()
+        db.session.execute(
+            db.select(ReglaCalculo).filter_by(activo=True).order_by(ReglaCalculo.nombre)
+        )
+        .scalars()
+        .all()
     )
 
     return render_template(
@@ -173,7 +219,7 @@ def edit(planilla_id: str):
 @login_required
 def delete(planilla_id: str):
     """Delete a planilla."""
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
 
     # Check if planilla has nominas (payroll runs)
     if planilla.nominas:
@@ -195,7 +241,7 @@ def delete(planilla_id: str):
 @login_required
 def add_empleado(planilla_id: str):
     """Add an employee to the planilla."""
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     empleado_id = request.form.get("empleado_id")
 
     if not empleado_id:
@@ -203,9 +249,11 @@ def add_empleado(planilla_id: str):
         return redirect(url_for("planilla.edit", planilla_id=planilla_id))
 
     # Check if already exists
-    existing = PlanillaEmpleado.query.filter_by(
-        planilla_id=planilla_id, empleado_id=empleado_id
-    ).first()
+    existing = db.session.execute(
+        db.select(PlanillaEmpleado).filter_by(
+            planilla_id=planilla_id, empleado_id=empleado_id
+        )
+    ).scalar_one_or_none()
 
     if existing:
         flash(_("El empleado ya está asignado a esta planilla."), "warning")
@@ -228,7 +276,7 @@ def add_empleado(planilla_id: str):
 @login_required
 def remove_empleado(planilla_id: str, association_id: str):
     """Remove an employee from the planilla."""
-    association = PlanillaEmpleado.query.get_or_404(association_id)
+    association = db.get_or_404(PlanillaEmpleado, association_id)
     db.session.delete(association)
     db.session.commit()
     flash(_("Empleado removido exitosamente."), "success")
@@ -244,16 +292,18 @@ def remove_empleado(planilla_id: str, association_id: str):
 @login_required
 def add_percepcion(planilla_id: str):
     """Add a perception to the planilla."""
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     percepcion_id = request.form.get("percepcion_id")
 
     if not percepcion_id:
         flash(_("Debe seleccionar una percepción."), "error")
         return redirect(url_for("planilla.edit", planilla_id=planilla_id))
 
-    existing = PlanillaIngreso.query.filter_by(
-        planilla_id=planilla_id, percepcion_id=percepcion_id
-    ).first()
+    existing = db.session.execute(
+        db.select(PlanillaIngreso).filter_by(
+            planilla_id=planilla_id, percepcion_id=percepcion_id
+        )
+    ).scalar_one_or_none()
 
     if existing:
         flash(_("La percepción ya está asignada a esta planilla."), "warning")
@@ -281,7 +331,7 @@ def add_percepcion(planilla_id: str):
 @login_required
 def remove_percepcion(planilla_id: str, association_id: str):
     """Remove a perception from the planilla."""
-    association = PlanillaIngreso.query.get_or_404(association_id)
+    association = db.get_or_404(PlanillaIngreso, association_id)
     db.session.delete(association)
     db.session.commit()
     flash(_("Percepción removida exitosamente."), "success")
@@ -297,16 +347,18 @@ def remove_percepcion(planilla_id: str, association_id: str):
 @login_required
 def add_deduccion(planilla_id: str):
     """Add a deduction to the planilla with priority."""
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     deduccion_id = request.form.get("deduccion_id")
 
     if not deduccion_id:
         flash(_("Debe seleccionar una deducción."), "error")
         return redirect(url_for("planilla.edit", planilla_id=planilla_id))
 
-    existing = PlanillaDeduccion.query.filter_by(
-        planilla_id=planilla_id, deduccion_id=deduccion_id
-    ).first()
+    existing = db.session.execute(
+        db.select(PlanillaDeduccion).filter_by(
+            planilla_id=planilla_id, deduccion_id=deduccion_id
+        )
+    ).scalar_one_or_none()
 
     if existing:
         flash(_("La deducción ya está asignada a esta planilla."), "warning")
@@ -334,7 +386,7 @@ def add_deduccion(planilla_id: str):
 @login_required
 def remove_deduccion(planilla_id: str, association_id: str):
     """Remove a deduction from the planilla."""
-    association = PlanillaDeduccion.query.get_or_404(association_id)
+    association = db.get_or_404(PlanillaDeduccion, association_id)
     db.session.delete(association)
     db.session.commit()
     flash(_("Deducción removida exitosamente."), "success")
@@ -347,7 +399,7 @@ def remove_deduccion(planilla_id: str, association_id: str):
 @login_required
 def update_deduccion_priority(planilla_id: str, association_id: str):
     """Update the priority of a deduction."""
-    association = PlanillaDeduccion.query.get_or_404(association_id)
+    association = db.get_or_404(PlanillaDeduccion, association_id)
 
     prioridad = request.form.get("prioridad", type=int)
     if prioridad is not None:
@@ -368,16 +420,18 @@ def update_deduccion_priority(planilla_id: str, association_id: str):
 @login_required
 def add_prestacion(planilla_id: str):
     """Add a benefit (prestacion) to the planilla."""
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     prestacion_id = request.form.get("prestacion_id")
 
     if not prestacion_id:
         flash(_("Debe seleccionar una prestación."), "error")
         return redirect(url_for("planilla.edit", planilla_id=planilla_id))
 
-    existing = PlanillaPrestacion.query.filter_by(
-        planilla_id=planilla_id, prestacion_id=prestacion_id
-    ).first()
+    existing = db.session.execute(
+        db.select(PlanillaPrestacion).filter_by(
+            planilla_id=planilla_id, prestacion_id=prestacion_id
+        )
+    ).scalar_one_or_none()
 
     if existing:
         flash(_("La prestación ya está asignada a esta planilla."), "warning")
@@ -405,7 +459,7 @@ def add_prestacion(planilla_id: str):
 @login_required
 def remove_prestacion(planilla_id: str, association_id: str):
     """Remove a benefit from the planilla."""
-    association = PlanillaPrestacion.query.get_or_404(association_id)
+    association = db.get_or_404(PlanillaPrestacion, association_id)
     db.session.delete(association)
     db.session.commit()
     flash(_("Prestación removida exitosamente."), "success")
@@ -421,16 +475,18 @@ def remove_prestacion(planilla_id: str, association_id: str):
 @login_required
 def add_regla(planilla_id: str):
     """Add a calculation rule to the planilla."""
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     regla_calculo_id = request.form.get("regla_calculo_id")
 
     if not regla_calculo_id:
         flash(_("Debe seleccionar una regla de cálculo."), "error")
         return redirect(url_for("planilla.edit", planilla_id=planilla_id))
 
-    existing = PlanillaReglaCalculo.query.filter_by(
-        planilla_id=planilla_id, regla_calculo_id=regla_calculo_id
-    ).first()
+    existing = db.session.execute(
+        db.select(PlanillaReglaCalculo).filter_by(
+            planilla_id=planilla_id, regla_calculo_id=regla_calculo_id
+        )
+    ).scalar_one_or_none()
 
     if existing:
         flash(_("La regla ya está asignada a esta planilla."), "warning")
@@ -455,7 +511,7 @@ def add_regla(planilla_id: str):
 @login_required
 def remove_regla(planilla_id: str, association_id: str):
     """Remove a calculation rule from the planilla."""
-    association = PlanillaReglaCalculo.query.get_or_404(association_id)
+    association = db.get_or_404(PlanillaReglaCalculo, association_id)
     db.session.delete(association)
     db.session.commit()
     flash(_("Regla de cálculo removida exitosamente."), "success")
@@ -475,7 +531,7 @@ def ejecutar_nomina(planilla_id: str):
     from coati_payroll.nomina_engine import NominaEngine
     from coati_payroll.model import Nomina
 
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
 
     if request.method == "POST":
         periodo_inicio = request.form.get("periodo_inicio")
@@ -534,11 +590,11 @@ def ejecutar_nomina(planilla_id: str):
 
     # GET - show execution form
     # Get last nomina for default dates
-    ultima_nomina = (
-        Nomina.query.filter_by(planilla_id=planilla_id)
+    ultima_nomina = db.session.execute(
+        db.select(Nomina)
+        .filter_by(planilla_id=planilla_id)
         .order_by(Nomina.periodo_fin.desc())
-        .first()
-    )
+    ).scalar()
 
     # Calculate suggested period
     from datetime import timedelta
@@ -585,10 +641,14 @@ def listar_nominas(planilla_id: str):
     """List all nominas for a planilla."""
     from coati_payroll.model import Nomina
 
-    planilla = Planilla.query.get_or_404(planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     nominas = (
-        Nomina.query.filter_by(planilla_id=planilla_id)
-        .order_by(Nomina.periodo_fin.desc())
+        db.session.execute(
+            db.select(Nomina)
+            .filter_by(planilla_id=planilla_id)
+            .order_by(Nomina.periodo_fin.desc())
+        )
+        .scalars()
         .all()
     )
 
@@ -605,14 +665,18 @@ def ver_nomina(planilla_id: str, nomina_id: str):
     """View details of a specific nomina."""
     from coati_payroll.model import Nomina, NominaEmpleado
 
-    planilla = Planilla.query.get_or_404(planilla_id)
-    nomina = Nomina.query.get_or_404(nomina_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
         flash(_("La nómina no pertenece a esta planilla."), "error")
         return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
 
-    nomina_empleados = NominaEmpleado.query.filter_by(nomina_id=nomina_id).all()
+    nomina_empleados = (
+        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id))
+        .scalars()
+        .all()
+    )
 
     return render_template(
         "modules/planilla/ver_nomina.html",
@@ -628,9 +692,9 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
     """View details of an employee's payroll."""
     from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle
 
-    planilla = Planilla.query.get_or_404(planilla_id)
-    nomina = Nomina.query.get_or_404(nomina_id)
-    nomina_empleado = NominaEmpleado.query.get_or_404(nomina_empleado_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+    nomina_empleado = db.get_or_404(NominaEmpleado, nomina_empleado_id)
 
     if nomina_empleado.nomina_id != nomina_id:
         flash(_("El detalle no pertenece a esta nómina."), "error")
@@ -639,8 +703,12 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
         )
 
     detalles = (
-        NominaDetalle.query.filter_by(nomina_empleado_id=nomina_empleado_id)
-        .order_by(NominaDetalle.orden)
+        db.session.execute(
+            db.select(NominaDetalle)
+            .filter_by(nomina_empleado_id=nomina_empleado_id)
+            .order_by(NominaDetalle.orden)
+        )
+        .scalars()
         .all()
     )
 
@@ -666,7 +734,7 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
     """Approve a nomina for payment."""
     from coati_payroll.model import Nomina
 
-    nomina = Nomina.query.get_or_404(nomina_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
         flash(_("La nómina no pertenece a esta planilla."), "error")
@@ -694,7 +762,7 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
     """Mark a nomina as applied (paid)."""
     from coati_payroll.model import Nomina
 
-    nomina = Nomina.query.get_or_404(nomina_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
         flash(_("La nómina no pertenece a esta planilla."), "error")
@@ -724,13 +792,23 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 def _populate_form_choices(form: PlanillaForm):
     """Populate form select choices from database."""
     tipos = (
-        TipoPlanilla.query.filter_by(activo=True).order_by(TipoPlanilla.codigo).all()
+        db.session.execute(
+            db.select(TipoPlanilla).filter_by(activo=True).order_by(TipoPlanilla.codigo)
+        )
+        .scalars()
+        .all()
     )
     form.tipo_planilla_id.choices = [("", _("-- Seleccionar --"))] + [
         (t.id, f"{t.codigo} - {t.descripcion or t.codigo}") for t in tipos
     ]
 
-    monedas = Moneda.query.filter_by(activo=True).order_by(Moneda.codigo).all()
+    monedas = (
+        db.session.execute(
+            db.select(Moneda).filter_by(activo=True).order_by(Moneda.codigo)
+        )
+        .scalars()
+        .all()
+    )
     form.moneda_id.choices = [("", _("-- Seleccionar --"))] + [
         (m.id, f"{m.codigo} - {m.nombre}") for m in monedas
     ]
