@@ -241,7 +241,8 @@ def delete(planilla_id: str):
 @login_required
 def add_empleado(planilla_id: str):
     """Add an employee to the planilla."""
-    planilla = db.get_or_404(Planilla, planilla_id)
+    # Verify planilla exists (raises 404 if not found)
+    db.get_or_404(Planilla, planilla_id)
     empleado_id = request.form.get("empleado_id")
 
     if not empleado_id:
@@ -292,7 +293,8 @@ def remove_empleado(planilla_id: str, association_id: str):
 @login_required
 def add_percepcion(planilla_id: str):
     """Add a perception to the planilla."""
-    planilla = db.get_or_404(Planilla, planilla_id)
+    # Verify planilla exists (raises 404 if not found)
+    db.get_or_404(Planilla, planilla_id)
     percepcion_id = request.form.get("percepcion_id")
 
     if not percepcion_id:
@@ -347,7 +349,8 @@ def remove_percepcion(planilla_id: str, association_id: str):
 @login_required
 def add_deduccion(planilla_id: str):
     """Add a deduction to the planilla with priority."""
-    planilla = db.get_or_404(Planilla, planilla_id)
+    # Verify planilla exists (raises 404 if not found)
+    db.get_or_404(Planilla, planilla_id)
     deduccion_id = request.form.get("deduccion_id")
 
     if not deduccion_id:
@@ -420,7 +423,8 @@ def update_deduccion_priority(planilla_id: str, association_id: str):
 @login_required
 def add_prestacion(planilla_id: str):
     """Add a benefit (prestacion) to the planilla."""
-    planilla = db.get_or_404(Planilla, planilla_id)
+    # Verify planilla exists (raises 404 if not found)
+    db.get_or_404(Planilla, planilla_id)
     prestacion_id = request.form.get("prestacion_id")
 
     if not prestacion_id:
@@ -475,7 +479,8 @@ def remove_prestacion(planilla_id: str, association_id: str):
 @login_required
 def add_regla(planilla_id: str):
     """Add a calculation rule to the planilla."""
-    planilla = db.get_or_404(Planilla, planilla_id)
+    # Verify planilla exists (raises 404 if not found)
+    db.get_or_404(Planilla, planilla_id)
     regla_calculo_id = request.form.get("regla_calculo_id")
 
     if not regla_calculo_id:

@@ -477,7 +477,6 @@ class NominaEngine:
             anio -= 1
 
         periodo_fiscal_inicio = date(anio, mes_inicio, dia_inicio)
-        periodo_fiscal_fin = date(anio + 1, mes_inicio, dia_inicio)
 
         # Look up existing accumulated record
         acumulado = db.session.execute(
@@ -923,13 +922,13 @@ class NominaEngine:
     def _actualizar_acumulados(
         self,
         emp_calculo: EmpleadoCalculo,
-        nomina_empleado: NominaEmpleado,
+        _nomina_empleado: NominaEmpleado,
     ) -> None:
         """Update accumulated annual values for the employee.
 
         Args:
             emp_calculo: Employee calculation container
-            nomina_empleado: The created NominaEmpleado record
+            _nomina_empleado: The created NominaEmpleado record (reserved for future use)
         """
         if not self.planilla.tipo_planilla:
             return

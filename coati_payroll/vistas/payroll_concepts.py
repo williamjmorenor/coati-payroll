@@ -63,6 +63,7 @@ def get_concept_config(concept_type: str) -> dict:
                 "icon": "bi-plus-circle",
                 "template_dir": "modules/percepcion",
                 "blueprint": "percepcion",
+                "route_prefix": "percepcion_",
             }
         case "deduccion":
             return {
@@ -73,6 +74,7 @@ def get_concept_config(concept_type: str) -> dict:
                 "icon": "bi-dash-circle",
                 "template_dir": "modules/deduccion",
                 "blueprint": "deduccion",
+                "route_prefix": "deduccion_",
             }
         case "prestacion":
             return {
@@ -83,6 +85,7 @@ def get_concept_config(concept_type: str) -> dict:
                 "icon": "bi-gift",
                 "template_dir": "modules/prestacion",
                 "blueprint": "prestacion",
+                "route_prefix": "prestacion_",
             }
         case _:
             raise ValueError(f"Unknown concept type: {concept_type}")
@@ -124,7 +127,7 @@ def create_concept(concept_type: str):
         db.session.add(concept)
         db.session.commit()
         flash(_("%(type)s creada exitosamente.", type=config["singular"]), "success")
-        return redirect(url_for(f"{config['blueprint']}.index"))
+        return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     return render_template(
         f"{config['template_dir']}/form.html",
@@ -134,16 +137,16 @@ def create_concept(concept_type: str):
     )
 
 
-def edit_concept(concept_type: str, id: str):
+def edit_concept(concept_type: str, concept_id: str):
     """Generic edit view for payroll concepts."""
     config = get_concept_config(concept_type)
     Model = config["model"]
     Form = config["form"]
 
-    concept = db.session.get(Model, id)
+    concept = db.session.get(Model, concept_id)
     if not concept:
         flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
-        return redirect(url_for(f"{config['blueprint']}.index"))
+        return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     form = Form(obj=concept)
 
@@ -155,7 +158,7 @@ def edit_concept(concept_type: str, id: str):
         flash(
             _("%(type)s actualizada exitosamente.", type=config["singular"]), "success"
         )
-        return redirect(url_for(f"{config['blueprint']}.index"))
+        return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     return render_template(
         f"{config['template_dir']}/form.html",
@@ -166,15 +169,15 @@ def edit_concept(concept_type: str, id: str):
     )
 
 
-def delete_concept(concept_type: str, id: str):
+def delete_concept(concept_type: str, concept_id: str):
     """Generic delete view for payroll concepts."""
     config = get_concept_config(concept_type)
     Model = config["model"]
 
-    concept = db.session.get(Model, id)
+    concept = db.session.get(Model, concept_id)
     if not concept:
         flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
-        return redirect(url_for(f"{config['blueprint']}.index"))
+        return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     # Check if concept is in use
     if hasattr(concept, "planillas") and concept.planillas:
@@ -185,12 +188,12 @@ def delete_concept(concept_type: str, id: str):
             ),
             "error",
         )
-        return redirect(url_for(f"{config['blueprint']}.index"))
+        return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     db.session.delete(concept)
     db.session.commit()
     flash(_("%(type)s eliminada exitosamente.", type=config["singular"]), "success")
-    return redirect(url_for(f"{config['blueprint']}.index"))
+    return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
 
 def populate_concept_from_form(concept, form):
@@ -274,30 +277,30 @@ def populate_concept_from_form(concept, form):
 
 @percepcion_bp.route("/")
 @login_required
-def index():
+def percepcion_index():
     """List all perceptions."""
     return list_concepts("percepcion")
 
 
 @percepcion_bp.route("/new", methods=["GET", "POST"])
 @login_required
-def new():
+def percepcion_new():
     """Create a new perception."""
     return create_concept("percepcion")
 
 
-@percepcion_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@percepcion_bp.route("/edit/<string:concept_id>", methods=["GET", "POST"])
 @login_required
-def edit(id: str):
+def percepcion_edit(concept_id: str):
     """Edit an existing perception."""
-    return edit_concept("percepcion", id)
+    return edit_concept("percepcion", concept_id)
 
 
-@percepcion_bp.route("/delete/<string:id>", methods=["POST"])
+@percepcion_bp.route("/delete/<string:concept_id>", methods=["POST"])
 @login_required
-def delete(id: str):
+def percepcion_delete(concept_id: str):
     """Delete a perception."""
-    return delete_concept("percepcion", id)
+    return delete_concept("percepcion", concept_id)
 
 
 # ============================================================================
@@ -307,30 +310,30 @@ def delete(id: str):
 
 @deduccion_bp.route("/")
 @login_required
-def index():
+def deduccion_index():
     """List all deductions."""
     return list_concepts("deduccion")
 
 
 @deduccion_bp.route("/new", methods=["GET", "POST"])
 @login_required
-def new():
+def deduccion_new():
     """Create a new deduction."""
     return create_concept("deduccion")
 
 
-@deduccion_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@deduccion_bp.route("/edit/<string:concept_id>", methods=["GET", "POST"])
 @login_required
-def edit(id: str):
+def deduccion_edit(concept_id: str):
     """Edit an existing deduction."""
-    return edit_concept("deduccion", id)
+    return edit_concept("deduccion", concept_id)
 
 
-@deduccion_bp.route("/delete/<string:id>", methods=["POST"])
+@deduccion_bp.route("/delete/<string:concept_id>", methods=["POST"])
 @login_required
-def delete(id: str):
+def deduccion_delete(concept_id: str):
     """Delete a deduction."""
-    return delete_concept("deduccion", id)
+    return delete_concept("deduccion", concept_id)
 
 
 # ============================================================================
@@ -340,27 +343,27 @@ def delete(id: str):
 
 @prestacion_bp.route("/")
 @login_required
-def index():
+def prestacion_index():
     """List all benefits."""
     return list_concepts("prestacion")
 
 
 @prestacion_bp.route("/new", methods=["GET", "POST"])
 @login_required
-def new():
+def prestacion_new():
     """Create a new benefit."""
     return create_concept("prestacion")
 
 
-@prestacion_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@prestacion_bp.route("/edit/<string:concept_id>", methods=["GET", "POST"])
 @login_required
-def edit(id: str):
+def prestacion_edit(concept_id: str):
     """Edit an existing benefit."""
-    return edit_concept("prestacion", id)
+    return edit_concept("prestacion", concept_id)
 
 
-@prestacion_bp.route("/delete/<string:id>", methods=["POST"])
+@prestacion_bp.route("/delete/<string:concept_id>", methods=["POST"])
 @login_required
-def delete(id: str):
+def prestacion_delete(concept_id: str):
     """Delete a benefit."""
-    return delete_concept("prestacion", id)
+    return delete_concept("prestacion", concept_id)

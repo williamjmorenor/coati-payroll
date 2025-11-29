@@ -107,7 +107,7 @@ def to_decimal(value: Any) -> Decimal:
     try:
         return Decimal(str(value))
     except (InvalidOperation, ValueError) as e:
-        raise ValidationError(f"Cannot convert '{value}' to Decimal: {e}")
+        raise ValidationError(f"Cannot convert '{value}' to Decimal: {e}") from e
 
 
 def safe_divide(numerator: Decimal, denominator: Decimal) -> Decimal:
@@ -329,10 +329,10 @@ class FormulaEngine:
                 # Try to parse as number
                 try:
                     values.append(to_decimal(token))
-                except ValidationError:
+                except ValidationError as exc:
                     raise CalculationError(
                         f"Unknown variable or invalid number: {token}"
-                    )
+                    ) from exc
 
             i += 1
 
@@ -561,7 +561,7 @@ class FormulaEngine:
                 self._execute_step(step)
             except Exception as e:
                 step_name = step.get("name", "unknown")
-                raise CalculationError(f"Error in step '{step_name}': {e}")
+                raise CalculationError(f"Error in step '{step_name}': {e}") from e
 
         # Get the final output
         output_name = self.schema.get("output", "")
