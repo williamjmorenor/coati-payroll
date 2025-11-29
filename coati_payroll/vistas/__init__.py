@@ -25,6 +25,7 @@ from coati_payroll.vistas.payroll_concepts import (
     prestacion_bp,
 )
 from coati_payroll.vistas.planilla import planilla_bp
+from coati_payroll.vistas.tipo_planilla import tipo_planilla_bp
 
 __all__ = [
     "user_bp",
@@ -37,4 +38,5 @@ __all__ = [
     "deduccion_bp",
     "prestacion_bp",
     "planilla_bp",
+    "tipo_planilla_bp",
 ]

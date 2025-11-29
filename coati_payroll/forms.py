@@ -675,6 +675,81 @@ class PlanillaForm(FlaskForm):
     submit = SubmitField(_("Guardar"))
 
 
+class TipoPlanillaForm(FlaskForm):
+    """Form for creating and editing payroll types (TipoPlanilla).
+
+    Defines the type of payroll (monthly, biweekly, weekly, etc.) and its
+    fiscal period parameters.
+    """
+
+    codigo = StringField(
+        _("Código"),
+        validators=[DataRequired(), Length(max=20)],
+        description=_("Código único del tipo de planilla (ej: MENSUAL)"),
+    )
+    descripcion = StringField(
+        _("Descripción"),
+        validators=[Optional(), Length(max=150)],
+        description=_("Descripción del tipo de planilla"),
+    )
+    periodicidad = SelectField(
+        _("Periodicidad"),
+        choices=[
+            ("mensual", _("Mensual")),
+            ("quincenal", _("Quincenal")),
+            ("semanal", _("Semanal")),
+        ],
+        validators=[DataRequired()],
+        description=_("Frecuencia de pago de la planilla"),
+    )
+    dias = IntegerField(
+        _("Días"),
+        validators=[DataRequired(), NumberRange(min=1, max=365)],
+        default=30,
+        description=_("Número de días usados para prorrateos"),
+    )
+    mes_inicio_fiscal = SelectField(
+        _("Mes Inicio Fiscal"),
+        choices=[
+            ("1", _("Enero")),
+            ("2", _("Febrero")),
+            ("3", _("Marzo")),
+            ("4", _("Abril")),
+            ("5", _("Mayo")),
+            ("6", _("Junio")),
+            ("7", _("Julio")),
+            ("8", _("Agosto")),
+            ("9", _("Septiembre")),
+            ("10", _("Octubre")),
+            ("11", _("Noviembre")),
+            ("12", _("Diciembre")),
+        ],
+        validators=[DataRequired()],
+        coerce=int,
+        default=1,
+        description=_("Mes en que inicia el año fiscal"),
+    )
+    dia_inicio_fiscal = IntegerField(
+        _("Día Inicio Fiscal"),
+        validators=[DataRequired(), NumberRange(min=1, max=31)],
+        default=1,
+        description=_("Día del mes en que inicia el año fiscal"),
+    )
+    acumula_anual = BooleanField(
+        _("Acumula Anual"),
+        default=True,
+        description=_("¿Los valores se acumulan anualmente?"),
+    )
+    periodos_por_anio = IntegerField(
+        _("Períodos por Año"),
+        validators=[DataRequired(), NumberRange(min=1, max=365)],
+        default=12,
+        description=_("Número de períodos de nómina por año fiscal"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))
+
+
 class PrestacionForm(FlaskForm):
     """Form for creating and editing benefits (employer contributions).
 
