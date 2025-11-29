@@ -1,0 +1,105 @@
+site_name: Coati Payroll - Documentación
+site_description: Sistema de administración de nóminas y planillas
+site_author: BMO Soluciones, S.A.
+site_url: https://williamjmorenor.github.io/coati/
+
+repo_name: williamjmorenor/coati
+repo_url: https://github.com/williamjmorenor/coati
+
+theme:
+  name: material
+  language: es
+  palette:
+    - scheme: default
+      primary: teal
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Cambiar a modo oscuro
+    - scheme: slate
+      primary: teal
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Cambiar a modo claro
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+
+plugins:
+  - search
+  - glightbox
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Inicio: index.md
+  - Instalación:
+    - Requisitos del Sistema: instalacion/requisitos.md
+    - Instalación: instalacion/instalacion.md
+    - Configuración Inicial: instalacion/configuracion.md
+  - Guía de Uso:
+    - Primeros Pasos: guia/primeros-pasos.md
+    - Gestión de Usuarios: guia/usuarios.md
+    - Monedas y Tipos de Cambio: guia/monedas.md
+    - Gestión de Empleados: guia/empleados.md
+    - Percepciones (Ingresos): guia/percepciones.md
+    - Deducciones: guia/deducciones.md
+    - Prestaciones (Aportes Patronales): guia/prestaciones.md
+    - Préstamos y Adelantos: guia/prestamos.md
+    - Configuración de Planillas: guia/planillas.md
+    - Ejecución de Nómina: guia/nomina.md
+  - Tutorial Completo:
+    - Paso a Paso - Nómina Completa: tutorial/nomina-completa.md
+  - Referencia:
+    - Glosario: referencia/glosario.md
+    - Preguntas Frecuentes: referencia/faq.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/williamjmorenor/coati
+
+copyright: Copyright &copy; 2025 BMO Soluciones, S.A.
