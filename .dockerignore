@@ -1,0 +1,70 @@
+# Git
+.git
+.gitignore
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Documentation
+docs/_build/
+
+# Local databases
+*.db
+
+# Environment files
+.env
+.envrc
+
+# Development files
+development.txt
+test.txt
+docs.txt
+
+# Replit
+.replit
+replit.md
+
+# Ruff / Linting
+.ruff_cache/
+.mypy_cache/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Misc
+*.log
+*.tmp
+*.temp

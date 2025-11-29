@@ -36,9 +36,11 @@ repo_root = Path(__file__).resolve().parent
 default_db_path = repo_root.joinpath("coati_payroll.db")
 default_db_uri = f"sqlite:///{default_db_path}"
 
-# For development we force the database to repo-root `coati_payroll.db` to
-# ensure predictable behavior when running `python app.py`.
-environ["DATABASE_URL"] = default_db_uri
+# Only set the default database URL if DATABASE_URL is not already provided.
+# This allows Docker containers and production environments to provide their
+# own database URL via environment variables.
+if not environ.get("DATABASE_URL"):
+    environ["DATABASE_URL"] = default_db_uri
 
 # Crear aplicación.
 app = create_app(configuration)
