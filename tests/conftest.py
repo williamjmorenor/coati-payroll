@@ -20,10 +20,18 @@ import sys
 sys.modules["pytest"]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def app():
-    """Create and configure a new app instance for each test."""
+    """Create and configure a new app instance for each test module.
+
+    Using module scope to avoid SQLAlchemy metadata conflicts with session table.
+    """
+    import os
     from coati_payroll import create_app
+    from coati_payroll.model import db
+
+    # Set environment variable to use filesystem session before app creation
+    os.environ["SESSION_REDIS_URL"] = ""
 
     test_config = {
         "TESTING": True,
@@ -31,11 +39,10 @@ def app():
         "SECRET_KEY": "test-secret-key",
         "WTF_CSRF_ENABLED": False,
     }
+
     app = create_app(test_config)
 
     with app.app_context():
-        from coati_payroll.model import db
-
         db.create_all()
         yield app
         db.session.remove()
@@ -109,3 +116,40 @@ def simple_formula_schema():
         ],
         "output": "result",
     }
+
+
+@pytest.fixture
+def authenticated_client(app, client):
+    """Create an authenticated test client with a logged-in user.
+
+    This fixture creates a test user (if one doesn't exist) and logs them in,
+    returning a test client that can access protected routes.
+    """
+    with app.app_context():
+        from coati_payroll.model import Usuario, db
+        from coati_payroll.auth import proteger_passwd
+
+        # Check if the test user already exists (from a previous test in the module)
+        existing_user = db.session.execute(
+            db.select(Usuario).filter_by(usuario="testuser")
+        ).scalar_one_or_none()
+
+        if not existing_user:
+            # Create a test user
+            user = Usuario()
+            user.usuario = "testuser"
+            user.acceso = proteger_passwd("testpassword")
+            user.nombre = "Test"
+            user.apellido = "User"
+            user.tipo = "admin"
+            user.activo = True
+            db.session.add(user)
+            db.session.commit()
+
+    # Log in the user
+    client.post(
+        "/auth/login",
+        data={"email": "testuser", "password": "testpassword"},
+        follow_redirects=True,
+    )
+    return client

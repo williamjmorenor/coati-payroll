@@ -32,9 +32,16 @@ from flask_babel import gettext, lazy_gettext, ngettext
 # ---------------------------------------------------------------------------------------
 # Translation functions
 # ---------------------------------------------------------------------------------------
-def _(text: str) -> str:
-    """Mark text for translation."""
-    return gettext(text)
+def _(text: str, **kwargs) -> str:
+    """Mark text for translation.
+
+    Supports keyword arguments for string formatting.
+    Example: _("Hello %(name)s", name="World")
+    """
+    translated = gettext(text)
+    if kwargs:
+        return translated % kwargs
+    return translated
 
 
 def _n(singular: str, plural: str, n: int) -> str:
