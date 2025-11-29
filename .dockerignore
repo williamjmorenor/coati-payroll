@@ -51,6 +51,8 @@ docs/_build/
 development.txt
 test.txt
 docs.txt
+docs/*
+tests/*
 
 # Replit
 .replit
