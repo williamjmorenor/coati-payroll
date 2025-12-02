@@ -1078,12 +1078,14 @@ def listar_novedades(planilla_id: str, nomina_id: str):
     )
 
 
-@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/novedades/new", methods=["GET", "POST"])
+@planilla_bp.route(
+    "/<planilla_id>/nomina/<nomina_id>/novedades/new", methods=["GET", "POST"]
+)
 @login_required
 def nueva_novedad(planilla_id: str, nomina_id: str):
     """Add a new novedad to a nomina."""
     from decimal import Decimal
-    from coati_payroll.model import Nomina, NominaNovedad, NominaEmpleado
+    from coati_payroll.model import Nomina, NominaNovedad
     from coati_payroll.forms import NominaNovedadForm
 
     planilla = db.get_or_404(Planilla, planilla_id)
@@ -1096,7 +1098,11 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
     if nomina.estado == "aplicado":
         flash(_("No se pueden agregar novedades a una nómina aplicada."), "error")
         return redirect(
-            url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id)
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
         )
 
     form = NominaNovedadForm()
@@ -1121,7 +1127,11 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
         db.session.commit()
         flash(_("Novedad agregada exitosamente."), "success")
         return redirect(
-            url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id)
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
         )
 
     return render_template(
@@ -1155,13 +1165,21 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     if novedad.nomina_id != nomina_id:
         flash(_("La novedad no pertenece a esta nómina."), "error")
         return redirect(
-            url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id)
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
         )
 
     if nomina.estado == "aplicado":
         flash(_("No se pueden editar novedades de una nómina aplicada."), "error")
         return redirect(
-            url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id)
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
         )
 
     form = NominaNovedadForm(obj=novedad)
@@ -1192,7 +1210,11 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
         db.session.commit()
         flash(_("Novedad actualizada exitosamente."), "success")
         return redirect(
-            url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id)
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
         )
 
     return render_template(
@@ -1224,20 +1246,30 @@ def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     if novedad.nomina_id != nomina_id:
         flash(_("La novedad no pertenece a esta nómina."), "error")
         return redirect(
-            url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id)
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
         )
 
     if nomina.estado == "aplicado":
         flash(_("No se pueden eliminar novedades de una nómina aplicada."), "error")
         return redirect(
-            url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id)
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
         )
 
     db.session.delete(novedad)
     db.session.commit()
     flash(_("Novedad eliminada exitosamente."), "success")
     return redirect(
-        url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id)
+        url_for(
+            "planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id
+        )
     )
 
 
@@ -1247,9 +1279,7 @@ def _populate_novedad_form_choices(form, nomina_id: str):
 
     # Get employees associated with this nomina
     nomina_empleados = (
-        db.session.execute(
-            db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)
-        )
+        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id))
         .scalars()
         .all()
     )

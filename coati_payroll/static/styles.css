@@ -1,106 +1,163 @@
 /* ==================================================
-   Tema moderno inspirado en colores de un coati
-   - Palette: tonos café cálidos, elegantes y profesionales
-   - Tipografía moderna y limpia
+   Tema Empresarial Coati Payroll
+   - Estilo empresarial profesional
+   - Paleta: tonos profesionales y corporativos
+   - Tipografía compacta y legible
    ==================================================*/
 
 :root{
-  --coati-dark: #4a3728;      /* café oscuro profundo para navbar */
-  --coati-navbar: #5c4033;    /* café medio-oscuro para navbar */
-  --coati-mid:  #8b6b4f;      /* marrón medio para textos */
-  --coati-sand: #f5ebe0;      /* fondo claro cálido para sidebar */
-  --coati-light: #faf6f1;     /* crema muy suave */
-  --coati-accent:#c4a77d;     /* dorado/café claro para acentos */
-  --coati-amber:#d4a574;      /* ámbar cálido */
-  --coati-border:#e8ddd0;     /* borde sutil */
-  --muted:      #6b6b6b;
-  --bg:         #ffffff;      /* blanco limpio para contenido */
-  --radius:     8px;
-  --transition: 0.25s ease;
+  /* Primary Enterprise Palette */
+  --coati-dark: #5D4037;      /* Marrón Mocha Oscuro - navegación */
+  --coati-navbar: #5D4037;    /* Marrón Mocha Oscuro - navbar */
+  --coati-primary: #A0522D;   /* Terracota / Naranja Quemado - acciones primarias */
+  --coati-mid:  #5D4037;      /* Marrón para acentos */
+  --coati-sand: #FAF8F6;      /* Blanco cálido/crudo - fondo sidebar */
+  --coati-light: #FAF8F6;     /* Blanco cálido/crudo */
+  --coati-accent:#A0522D;     /* Terracota para acentos */
+  --coati-amber:#A0522D;      /* Terracota */
+  
+  /* Neutral Grays */
+  --coati-border:#DDDDDD;     /* Gris para bordes */
+  --coati-border-light:#EEEEEE; /* Gris muy claro para separadores */
+  --text-primary: #333333;    /* Gris oscuro para texto principal */
+  --text-secondary: #666666;  /* Gris medio para texto secundario */
+  --muted: #666666;
+  
+  /* Background */
+  --bg: #FAF8F6;              /* Blanco cálido/crudo para contenido */
+  --bg-white: #FFFFFF;        /* Blanco puro para cards */
+  
+  /* UI */
+  --radius: 4px;              /* Bordes más sutiles */
+  --transition: 0.2s ease;
+  
+  /* Sidebar dimensions */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 56px;
 }
 
-/* Tipografía base - moderna y limpia */
+/* Tipografía base - empresarial y compacta */
 body{
-  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  font-family: 'Roboto', 'Open Sans', system-ui, -apple-system, sans-serif;
   background: var(--bg);
-  color: #333;
+  color: var(--text-primary);
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  line-height: 1.6;
+  line-height: 1.5;
+  font-size: 13px;
 }
 
-/* Navbar - elegante y funcional */
+/* Navbar - empresarial y compacta */
 .navbar{
-  background: var(--coati-dark);
-  border-bottom: 3px solid var(--coati-accent);
-  padding: 0.5rem 1rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: var(--coati-navbar);
+  border-bottom: 1px solid var(--coati-border);
+  padding: 0.35rem 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  min-height: 48px;
 }
 .navbar .navbar-brand{ 
-  color: var(--coati-accent); 
-  font-weight: 700; 
-  letter-spacing: 1.5px;
-  font-size: 1.1rem;
+  color: #FFFFFF; 
+  font-weight: 600; 
+  letter-spacing: 0.5px;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
-.navbar .navbar-brand:hover{ color: #fff }
+.navbar .navbar-brand:hover{ color: #FFFFFF; opacity: 0.9; }
 .navbar .nav-link{ 
   color: rgba(255,255,255,0.85) !important; 
   font-weight: 500;
-  padding: 0.5rem 1rem;
+  font-size: 12px;
+  padding: 0.4rem 0.75rem;
   transition: color var(--transition);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
-.navbar .nav-link:hover{ color: var(--coati-accent) !important }
-.navbar .nav-link i { font-size: 1rem; }
+.navbar .nav-link:hover{ color: #FFFFFF !important; }
+.navbar .nav-link i { font-size: 0.9rem; }
 
 /* Navbar nav items - ensure horizontal layout and no bullets */
 .navbar .navbar-nav {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: row;
+}
+.navbar .navbar-nav .nav-item {
+  list-style: none;
 }
 
-/* Logo placeholder */
+/* Sidebar list - remove bullets */
+.sidebar ul,
+.sidebar .nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sidebar li,
+.sidebar .nav-item {
+  list-style: none;
+}
+
+/* Logo placeholder - compacto */
 .logo-placeholder {
-  width: 32px;
-  height: 32px;
-  background: var(--coati-accent);
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  background: var(--coati-primary);
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  color: var(--coati-dark);
-  font-size: 0.9rem;
+  color: #FFFFFF;
+  font-size: 0.8rem;
 }
 
-/* Sidebar modern - minimalista y organizado */
+/* Sidebar empresarial - colapsable con iconos, superpuesto al contenido */
 .sidebar{
-  width: 250px;
-  min-height: calc(100vh - 60px);
-  padding: 20px 12px;
-  background: var(--coati-sand);
+  width: var(--sidebar-collapsed-width);
+  min-height: calc(100vh - 48px);
+  padding: 8px 4px;
+  background: var(--bg-white);
   border-right: 1px solid var(--coati-border);
-  transition: left var(--transition);
+  transition: width var(--transition);
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: fixed;
+  left: 0;
+  top: 48px;
+  z-index: 100;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+.sidebar:hover {
+  width: var(--sidebar-width);
+  box-shadow: 4px 0 15px rgba(0,0,0,0.1);
 }
 .sidebar .nav-link{
-  color: var(--coati-mid);
+  color: var(--text-secondary);
   border-radius: var(--radius);
-  padding: 12px 16px;
-  margin-bottom: 4px;
+  padding: 8px 12px;
+  margin-bottom: 2px;
   font-weight: 500;
+  font-size: 12px;
   transition: all var(--transition);
   position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar .nav-link span span {
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.sidebar:hover .nav-link span span {
+  opacity: 1;
 }
 .sidebar .nav-link:hover{ 
-  background: rgba(139,107,79,0.1); 
-  color: var(--coati-dark);
-  padding-left: 20px;
+  background: rgba(160,82,45,0.08); 
+  color: var(--coati-primary);
 }
 .sidebar .nav-link:hover::before {
   content: '';
@@ -109,38 +166,50 @@ body{
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
-  height: 60%;
-  background: var(--coati-accent);
-  border-radius: 0 3px 3px 0;
+  height: 70%;
+  background: var(--coati-primary);
+  border-radius: 0 2px 2px 0;
 }
-.sidebar .nav-link i{ color: var(--coati-mid); margin-right: 12px; font-size: 1.1rem; }
-.sidebar .nav-link:hover i { color: var(--coati-dark); }
+.sidebar .nav-link i{ color: var(--text-secondary); margin-right: 10px; font-size: 1rem; min-width: 20px; }
+.sidebar .nav-link:hover i { color: var(--coati-primary); }
 
 /* Sidebar section dividers */
 .sidebar .nav-divider {
   height: 1px;
-  background: var(--coati-border);
-  margin: 12px 8px;
+  background: var(--coati-border-light);
+  margin: 8px 6px;
 }
 
-/* Sidebar title/header */
+/* Sidebar title/header - oculto cuando colapsado */
 .sidebar-header {
-  padding: 16px 16px 24px 16px;
-  border-bottom: 1px solid var(--coati-border);
-  margin-bottom: 16px;
+  overflow: hidden;
+  opacity: 0;
+  height: 0;
+  padding: 0;
+  border: none;
+  margin: 0;
+  transition: all var(--transition);
+}
+.sidebar:hover .sidebar-header {
+  opacity: 1;
+  height: auto;
+  padding: 10px 12px 16px 12px;
+  border-bottom: 1px solid var(--coati-border-light);
+  margin-bottom: 8px;
 }
 .sidebar-header .brand-title {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--coati-dark);
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  white-space: nowrap;
 }
 .sidebar-header .brand-subtitle {
-  color: var(--coati-mid);
-  font-size: 0.85rem;
-  margin-left: 42px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-left: 36px;
 }
 
 /* Floating small button - hidden by default */
@@ -160,80 +229,199 @@ body{
   border-color: var(--coati-accent);
 }
 
-/* Main content area - limpia y espaciosa */
+/* Main content area - empresarial */
 main{ 
-  padding: 24px 32px;
+  padding: 16px 24px;
   background: var(--bg);
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 48px);
+  flex: 1;
+  margin-left: var(--sidebar-collapsed-width);
+  width: calc(100% - var(--sidebar-collapsed-width));
 }
-main .container{ max-width: 1100px; margin-left: 0; padding-left: 0 }
+main .container{ max-width: 100%; margin-left: 0; padding-left: 0 }
+main .container-fluid { padding-left: 0; padding-right: 0; }
 
-/* Content headers */
+/* Content headers - compactos */
 main h1, main h2, main h3 {
-  color: var(--coati-dark);
+  color: var(--text-primary);
   font-weight: 600;
 }
+main h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
 
-/* Cards y bloques */
+/* Cards - empresarial */
 .card{ 
   border-radius: var(--radius); 
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04); 
   border: 1px solid var(--coati-border);
-  transition: box-shadow var(--transition);
+  background: var(--bg-white);
 }
 .card:hover {
-  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 .card .card-header{ 
   background: transparent; 
-  border-bottom: 1px solid var(--coati-border); 
+  border-bottom: 1px solid var(--coati-border-light); 
   font-weight: 600;
-  color: var(--coati-dark);
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: 12px 16px;
+}
+.card .card-body {
+  padding: 16px;
 }
 
-/* Botones */
+/* Botones - empresariales y compactos */
 .btn{ 
   border-radius: var(--radius); 
-  padding: 10px 20px;
+  padding: 6px 14px;
   font-weight: 500;
+  font-size: 12px;
   transition: all var(--transition);
+  border: 1px solid transparent;
+}
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 11px;
 }
 .btn-primary{ 
-  background: var(--coati-mid); 
-  border: none; 
-  box-shadow: 0 4px 12px rgba(139,107,79,0.2);
+  background: var(--coati-primary); 
+  border-color: var(--coati-primary); 
+  color: #FFFFFF;
 }
 .btn-primary:hover {
-  background: var(--coati-dark);
-  box-shadow: 0 6px 16px rgba(74,55,40,0.25);
+  background: #8B4513;
+  border-color: #8B4513;
 }
 .btn-secondary{ 
   background: transparent; 
   border: 1px solid var(--coati-border); 
-  color: var(--coati-mid);
+  color: var(--text-secondary);
 }
 .btn-secondary:hover {
   background: var(--coati-sand);
-  border-color: var(--coati-mid);
+  border-color: var(--coati-border);
+  color: var(--text-primary);
+}
+/* Botones outline más sutiles */
+.btn-outline-primary {
+  border-color: var(--coati-border);
+  color: var(--coati-primary);
+  background: transparent;
+}
+.btn-outline-primary:hover {
+  background: rgba(160,82,45,0.08);
+  border-color: var(--coati-primary);
+  color: var(--coati-primary);
+}
+.btn-outline-danger {
+  border-color: var(--coati-border);
+  color: #dc3545;
+  background: transparent;
+}
+.btn-outline-danger:hover {
+  background: rgba(220,53,69,0.08);
+  border-color: #dc3545;
+  color: #dc3545;
 }
 
-/* Formularios */
+/* Formularios - compactos */
 input, textarea, select{ 
   border-radius: var(--radius); 
   border: 1px solid var(--coati-border); 
-  padding: 10px 14px; 
-  background: #fff;
+  padding: 6px 10px; 
+  background: var(--bg-white);
+  font-size: 13px;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: var(--coati-mid);
-  box-shadow: 0 0 0 3px rgba(139,107,79,0.1);
+  border-color: var(--coati-primary);
+  box-shadow: 0 0 0 2px rgba(160,82,45,0.1);
 }
-label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
+label{ color: var(--text-primary); font-size: 12px; font-weight: 500; }
+
+/* Tablas - compactas y empresariales */
+.table {
+  font-size: 12px;
+  margin-bottom: 0;
+}
+.table thead th {
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--coati-sand);
+  border-bottom: 1px solid var(--coati-border);
+  padding: 8px 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.table tbody td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--coati-border-light);
+  vertical-align: middle;
+  color: var(--text-primary);
+}
+.table-hover tbody tr:hover {
+  background: rgba(160,82,45,0.03);
+}
+
+/* Badges - más sutiles, texto en lugar de colores brillantes */
+.badge {
+  font-weight: 500;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+.badge.bg-success {
+  background: transparent !important;
+  color: #2E7D32 !important;
+  border: 1px solid #2E7D32;
+}
+.badge.bg-warning {
+  background: transparent !important;
+  color: #ED6C02 !important;
+  border: 1px solid #ED6C02;
+}
+.badge.bg-danger {
+  background: transparent !important;
+  color: #D32F2F !important;
+  border: 1px solid #D32F2F;
+}
+.badge.bg-primary {
+  background: transparent !important;
+  color: var(--coati-primary) !important;
+  border: 1px solid var(--coati-primary);
+}
+.badge.bg-secondary {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--coati-border);
+}
+.badge.bg-light {
+  background: var(--coati-sand) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--coati-border);
+}
+.badge.bg-info {
+  background: transparent !important;
+  color: #0288D1 !important;
+  border: 1px solid #0288D1;
+}
+
+/* Action buttons in tables - icon only, compact */
+.table .btn-sm {
+  padding: 4px 8px;
+  line-height: 1;
+}
+.table .btn-sm i {
+  font-size: 12px;
+}
 
 /* =====================================================
-   LOGIN PAGE STYLES
+   LOGIN PAGE STYLES - Empresarial
    ===================================================== */
 
 /* Login page body */
@@ -241,6 +429,7 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
   min-height: 100vh;
   margin: 0;
   padding: 0;
+  font-size: 13px;
 }
 
 /* Login container - split layout */
@@ -252,7 +441,7 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
 /* Left side - Branding panel */
 .login-branding {
   flex: 1;
-  background: linear-gradient(135deg, var(--coati-dark) 0%, #5c4033 50%, var(--coati-mid) 100%);
+  background: linear-gradient(135deg, var(--coati-dark) 0%, #5D4037 50%, var(--coati-primary) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,7 +457,7 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
   right: -50%;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(196,167,125,0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(160,82,45,0.1) 0%, transparent 70%);
 }
 
 .branding-content {
@@ -279,45 +468,46 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
 }
 
 .logo-container {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .logo-large {
-  width: 80px;
-  height: 80px;
-  font-size: 2rem;
+  width: 64px;
+  height: 64px;
+  font-size: 1.5rem;
 }
 
 .brand-name {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-  letter-spacing: 1px;
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
 }
 
 .brand-name span {
   font-weight: 400;
-  color: var(--coati-accent);
+  color: rgba(255,255,255,0.85);
 }
 
 .brand-tagline {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   opacity: 0.9;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .brand-features {
   text-align: left;
-  max-width: 280px;
+  max-width: 260px;
   margin: 0 auto;
 }
 
 .feature-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 0;
+  gap: 10px;
+  padding: 10px 0;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  font-size: 13px;
 }
 
 .feature-item:last-child {
@@ -325,12 +515,12 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
 }
 
 .feature-item i {
-  font-size: 1.2rem;
-  color: var(--coati-accent);
+  font-size: 1rem;
+  color: rgba(255,255,255,0.8);
 }
 
 .feature-item span {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 /* Right side - Login form */
@@ -345,54 +535,54 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
 
 .login-form-wrapper {
   width: 100%;
-  max-width: 420px;
+  max-width: 380px;
 }
 
 .login-header {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .login-header h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--coati-dark);
-  margin-bottom: 8px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
 }
 
 .login-subtitle {
-  color: var(--muted);
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: 13px;
   margin: 0;
 }
 
 /* Login form specific styles */
 .login-form-container .form-control-lg {
-  padding: 12px 16px;
-  font-size: 1rem;
+  padding: 10px 14px;
+  font-size: 13px;
   border-radius: var(--radius);
   border: 1px solid var(--coati-border);
 }
 
 .login-form-container .form-control-lg:focus {
-  border-color: var(--coati-mid);
-  box-shadow: 0 0 0 3px rgba(139,107,79,0.15);
+  border-color: var(--coati-primary);
+  box-shadow: 0 0 0 2px rgba(160,82,45,0.1);
 }
 
 .login-form-container .btn-primary {
-  padding: 14px 24px;
+  padding: 10px 20px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 .login-form-container .btn-outline-secondary {
   border-color: var(--coati-border);
-  color: var(--coati-mid);
+  color: var(--text-secondary);
 }
 
 .login-form-container .btn-outline-secondary:hover {
   background: var(--coati-sand);
-  border-color: var(--coati-mid);
-  color: var(--coati-dark);
+  border-color: var(--coati-border);
+  color: var(--text-primary);
 }
 
 .login-form-container .input-group .form-control-lg {
@@ -406,26 +596,28 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
 }
 
 .login-form-container .alert-warning {
-  background: rgba(212,165,116,0.15);
-  border: 1px solid var(--coati-amber);
-  color: var(--coati-dark);
+  background: rgba(237,108,2,0.08);
+  border: 1px solid #ED6C02;
+  color: var(--text-primary);
   border-radius: var(--radius);
+  font-size: 12px;
+  padding: 10px 14px;
 }
 
 .login-footer {
   text-align: center;
-  margin-top: 24px;
-  color: var(--muted);
-  font-size: 0.9rem;
+  margin-top: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
 .login-footer a {
-  color: var(--coati-mid);
+  color: var(--coati-primary);
   font-weight: 500;
 }
 
 .login-footer a:hover {
-  color: var(--coati-dark);
+  color: #8B4513;
 }
 
 /* Login page responsive */
@@ -435,12 +627,12 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
   }
   
   .login-branding {
-    padding: 40px 24px;
+    padding: 32px 24px;
     min-height: auto;
   }
   
   .brand-name {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
   
   .brand-features {
@@ -448,23 +640,23 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
   }
   
   .login-form-container {
-    padding: 32px 24px;
+    padding: 24px;
   }
 }
 
 @media (max-width: 575.98px) {
   .login-branding {
-    padding: 32px 20px;
+    padding: 24px 16px;
   }
   
   .logo-large {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5rem;
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
   }
   
   .brand-name {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   
   .brand-tagline {
@@ -472,11 +664,11 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
   }
   
   .login-form-container {
-    padding: 24px 20px;
+    padding: 20px 16px;
   }
   
   .login-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 }
 
@@ -485,39 +677,55 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
    ===================================================== */
 
 /* Legacy Login card specific tweaks */
-.card-login{ max-width:460px; margin: auto }
+.card-login{ max-width:400px; margin: auto }
 
 /* Footer */
-.footer{ color:var(--muted); font-size:0.95rem }
+.footer{ color:var(--text-secondary); font-size:12px }
 
 /* Sidebar mobile-only links (profile/logout) - base styles */
 .sidebar .mobile-only-links {
   display: none;
-  border-top: 1px solid var(--coati-border);
-  padding-top: 16px;
-  margin-top: 16px;
+  border-top: 1px solid var(--coati-border-light);
+  padding-top: 12px;
+  margin-top: 12px;
 }
 .sidebar .mobile-only-links .nav-link {
-  color: var(--coati-mid);
+  color: var(--text-secondary);
 }
 .sidebar .mobile-only-links .nav-link:hover {
-  color: var(--coati-dark);
+  color: var(--coati-primary);
 }
 
 /* Responsive adjustments */
 @media (max-width: 991.98px){
+  /* On mobile, sidebar is hidden by default and fully expanded when opened */
   .sidebar{ 
     position: fixed; 
-    left: -280px; 
-    top: 56px; 
+    left: -260px; 
+    top: 48px; 
     z-index: 1000;
-    width: 260px;
-    height: calc(100vh - 56px);
-    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+    width: 240px;
+    height: calc(100vh - 48px);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.08);
     overflow-y: auto;
   }
-  .sidebar.open{ left: 0; }
-  main{ padding: 20px 16px; }
+  /* Sidebar opens fully expanded on mobile (no collapse behavior) */
+  .sidebar.open{ left: 0; width: 240px; }
+  .sidebar:hover { width: 240px; }
+  .sidebar .nav-link span { opacity: 1; }
+  .sidebar .sidebar-header { 
+    opacity: 1; 
+    height: auto; 
+    padding: 10px 12px 16px 12px;
+    border-bottom: 1px solid var(--coati-border-light);
+    margin-bottom: 8px;
+  }
+  /* On mobile, main content takes full width */
+  main{ 
+    padding: 16px; 
+    margin-left: 0;
+    width: 100%;
+  }
   
   /* Show mobile-only links in sidebar when on small screens */
   .sidebar .mobile-only-links {
@@ -535,48 +743,104 @@ label{ color: var(--coati-dark); font-size: 0.9rem; font-weight: 500; }
 }
 
 /* Small helpers */
-.text-muted{ color:var(--muted) }
+.text-muted{ color:var(--text-secondary) }
 .rounded-lg{ border-radius: var(--radius) }
 
 /* Accents for links */
-a{ color: var(--coati-mid); transition: color var(--transition); }
-a:hover{ color: var(--coati-dark); }
+a{ color: var(--coati-primary); transition: color var(--transition); }
+a:hover{ color: #8B4513; }
 
 /* Utilities keeping compatibility with previous classes */
 .bg-coaty-dark{ background-color: var(--coati-dark) !important }
-.bg-coaty-light{ background-color: var(--coati-sand) !important }
+.bg-coaty-light{ background-color: var(--bg-white) !important }
 
-/* Sidebar submenus */
+/* Sidebar submenus - empresarial */
 .sidebar .submenu {
-  background: rgba(255,255,255,0.5);
+  background: rgba(250,248,246,0.5);
   border-radius: var(--radius);
-  margin-top: 4px;
-  margin-bottom: 8px;
-  border-left: 2px solid var(--coati-border);
-  margin-left: 16px;
-  padding-left: 8px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  border-left: 2px solid var(--coati-border-light);
+  margin-left: 12px;
+  padding-left: 6px;
 }
+/* Bootstrap's collapse adds .show class when expanded */
 .sidebar .submenu .nav-link {
-  font-size: 0.88rem;
-  padding: 8px 12px;
-  margin-bottom: 2px;
-  color: var(--muted);
+  font-size: 11px;
+  padding: 5px 10px;
+  margin-bottom: 1px;
+  color: var(--text-secondary);
 }
 .sidebar .submenu .nav-link:hover {
-  background: rgba(139,107,79,0.08);
-  color: var(--coati-dark);
+  background: rgba(160,82,45,0.06);
+  color: var(--coati-primary);
 }
 .sidebar .submenu .nav-link:hover::before {
   display: none;
 }
 .sidebar .submenu-arrow {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   transition: transform var(--transition);
-  color: var(--coati-mid);
+  color: var(--text-secondary);
+  opacity: 0;
+}
+.sidebar:hover .submenu-arrow {
+  opacity: 1;
 }
 .sidebar [aria-expanded="true"] .submenu-arrow {
   transform: rotate(180deg);
 }
 .sidebar .nav-link[data-bs-toggle="collapse"] {
   cursor: pointer;
+}
+
+/* Pagination - compacta */
+.pagination {
+  margin: 0;
+}
+.pagination .page-link {
+  font-size: 11px;
+  padding: 4px 10px;
+  color: var(--text-secondary);
+  border-color: var(--coati-border);
+}
+.pagination .page-item.active .page-link {
+  background-color: var(--coati-primary);
+  border-color: var(--coati-primary);
+}
+.pagination .page-link:hover {
+  background-color: var(--coati-sand);
+  border-color: var(--coati-border);
+  color: var(--coati-primary);
+}
+
+/* Alerts - empresarial */
+.alert {
+  border-radius: var(--radius);
+  font-size: 12px;
+  padding: 10px 14px;
+}
+
+/* Form-control sizing */
+.form-control, .form-select {
+  font-size: 13px;
+  padding: 6px 10px;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--coati-primary);
+  box-shadow: 0 0 0 2px rgba(160,82,45,0.1);
+}
+.form-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+/* mb classes adjustment for compact forms */
+.mb-3 {
+  margin-bottom: 12px !important;
+}
+.mb-4 {
+  margin-bottom: 16px !important;
 }

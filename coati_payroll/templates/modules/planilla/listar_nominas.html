@@ -38,13 +38,13 @@
                     <td>{{ nomina.fecha_generacion.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td>
                         {% if nomina.estado == 'generado' %}
-                        <span class="badge badge-warning">Generado</span>
+                        <span class="badge bg-warning">Generado</span>
                         {% elif nomina.estado == 'aprobado' %}
-                        <span class="badge badge-info">Aprobado</span>
+                        <span class="badge bg-info">Aprobado</span>
                         {% elif nomina.estado == 'aplicado' %}
-                        <span class="badge badge-success">Aplicado</span>
+                        <span class="badge bg-success">Aplicado</span>
                         {% else %}
-                        <span class="badge badge-secondary">{{ nomina.estado }}</span>
+                        <span class="badge bg-secondary">{{ nomina.estado }}</span>
                         {% endif %}
                     </td>
                     <td class="text-right">{{ "{:,.2f}".format(nomina.total_bruto|float) }}</td>
@@ -54,7 +54,7 @@
                     <td>
                         <a href="{{ url_for('planilla.ver_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                            class="btn btn-sm btn-outline-primary" title="Ver Detalle">
-                            <i class="fas fa-eye"></i>
+                            <i class="bi bi-eye"></i>
                         </a>
                     </td>
                 </tr>

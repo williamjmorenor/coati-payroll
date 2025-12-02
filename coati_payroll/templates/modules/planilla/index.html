@@ -62,16 +62,16 @@
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-primary">{{ planilla.planilla_empleados | length }}</span>
+                                <span class="text-muted">{{ planilla.planilla_empleados | length }}</span>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-success">{{ planilla.planilla_percepciones | length }}</span>
+                                <span class="text-muted">{{ planilla.planilla_percepciones | length }}</span>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-danger">{{ planilla.planilla_deducciones | length }}</span>
+                                <span class="text-muted">{{ planilla.planilla_deducciones | length }}</span>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-info">{{ planilla.planilla_prestaciones | length }}</span>
+                                <span class="text-muted">{{ planilla.planilla_prestaciones | length }}</span>
                             </td>
                             <td class="text-center">
                                 {% if planilla.activo %}
@@ -83,11 +83,11 @@
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
                                     <a href="{{ url_for('planilla.ejecutar_nomina', planilla_id=planilla.id) }}" 
-                                       class="btn btn-success" title="{{ _('Ejecutar Nómina') }}">
+                                       class="btn btn-outline-primary" title="{{ _('Ejecutar Nómina') }}">
                                         <i class="bi bi-play-fill"></i>
                                     </a>
                                     <a href="{{ url_for('planilla.listar_nominas', planilla_id=planilla.id) }}" 
-                                       class="btn btn-outline-info" title="{{ _('Ver Nóminas') }}">
+                                       class="btn btn-outline-primary" title="{{ _('Ver Nóminas') }}">
                                         <i class="bi bi-list-ul"></i>
                                     </a>
                                     <a href="{{ url_for('planilla.edit', planilla_id=planilla.id) }}" 

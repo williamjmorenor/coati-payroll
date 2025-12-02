@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ _('Coaty - Sistema de Planillas') }}</title>
 
-    <!-- Google Fonts - Modern Typography -->
+    <!-- Google Fonts - Enterprise Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -74,22 +74,20 @@
 
                 <li class="nav-item">
                     <a class="nav-link d-flex align-items-center" href="{{ url_for('app.index') }}">
-                        <i class="bi bi-house me-2"></i>
-                        <span>{{ _('Inicio') }}</span>
+                        <i class="bi bi-house me-2"></i><span><span>{{ _('Inicio') }}</span></span>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link d-flex align-items-center" href="{{ url_for('planilla.index') }}">
-                        <i class="bi bi-calculator me-2"></i>
-                        <span>{{ _('Planillas') }}</span>
+                        <i class="bi bi-calculator me-2"></i><span><span>{{ _('Planillas') }}</span></span>
                     </a>
                 </li>
 
                 <!-- Empleados con submenú -->
                 <li class="nav-item">
                     <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#submenuEmpleados" role="button" aria-expanded="false" aria-controls="submenuEmpleados">
-                        <span><i class="bi bi-people me-2"></i>{{ _('Empleados') }}</span>
+                        <span class="d-flex align-items-center"><i class="bi bi-people me-2"></i><span>{{ _('Empleados') }}</span></span>
                         <i class="bi bi-chevron-down submenu-arrow"></i>
                     </a>
                     <div class="collapse submenu" id="submenuEmpleados">
@@ -111,7 +109,7 @@
                 <!-- Usuarios con submenú -->
                 <li class="nav-item">
                     <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#submenuUsuarios" role="button" aria-expanded="false" aria-controls="submenuUsuarios">
-                        <span><i class="bi bi-person-gear me-2"></i>{{ _('Usuarios') }}</span>
+                        <span class="d-flex align-items-center"><i class="bi bi-person-gear me-2"></i><span>{{ _('Usuarios') }}</span></span>
                         <i class="bi bi-chevron-down submenu-arrow"></i>
                     </a>
                     <div class="collapse submenu" id="submenuUsuarios">
@@ -133,7 +131,7 @@
                 <!-- Configuración con submenú -->
                 <li class="nav-item">
                     <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#submenuConfiguracion" role="button" aria-expanded="false" aria-controls="submenuConfiguracion">
-                        <span><i class="bi bi-gear me-2"></i>{{ _('Configuración') }}</span>
+                        <span class="d-flex align-items-center"><i class="bi bi-gear me-2"></i><span>{{ _('Configuración') }}</span></span>
                         <i class="bi bi-chevron-down submenu-arrow"></i>
                     </a>
                     <div class="collapse submenu" id="submenuConfiguracion">

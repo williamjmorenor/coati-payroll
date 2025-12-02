@@ -54,11 +54,11 @@
             <div class="col-md-2">
                 <strong>Estado:</strong><br>
                 {% if nomina.estado == 'generado' %}
-                <span class="badge badge-warning">Generado</span>
+                <span class="badge bg-warning">Generado</span>
                 {% elif nomina.estado == 'aprobado' %}
-                <span class="badge badge-info">Aprobado</span>
+                <span class="badge bg-info">Aprobado</span>
                 {% elif nomina.estado == 'aplicado' %}
-                <span class="badge badge-success">Aplicado</span>
+                <span class="badge bg-success">Aplicado</span>
                 {% endif %}
             </div>
             <div class="col-md-2">
@@ -81,7 +81,7 @@
                 <div class="card bg-light">
                     <div class="card-body text-center">
                         <h6 class="text-muted mb-1">Total Bruto</h6>
-                        <h4 class="text-primary mb-0">{{ "{:,.2f}".format(nomina.total_bruto|float) }}</h4>
+                        <h4 class="text-primary mb-0">{{ planilla.moneda.simbolo if planilla.moneda else '' }} {{ "{:,.2f}".format(nomina.total_bruto|float) }}</h4>
                     </div>
                 </div>
             </div>
@@ -89,7 +89,7 @@
                 <div class="card bg-light">
                     <div class="card-body text-center">
                         <h6 class="text-muted mb-1">Total Deducciones</h6>
-                        <h4 class="text-danger mb-0">{{ "{:,.2f}".format(nomina.total_deducciones|float) }}</h4>
+                        <h4 class="text-danger mb-0">{{ planilla.moneda.simbolo if planilla.moneda else '' }} {{ "{:,.2f}".format(nomina.total_deducciones|float) }}</h4>
                     </div>
                 </div>
             </div>
@@ -97,7 +97,7 @@
                 <div class="card bg-light">
                     <div class="card-body text-center">
                         <h6 class="text-muted mb-1">Total Neto</h6>
-                        <h4 class="text-success mb-0">{{ "{:,.2f}".format(nomina.total_neto|float) }}</h4>
+                        <h4 class="text-success mb-0">{{ planilla.moneda.simbolo if planilla.moneda else '' }} {{ "{:,.2f}".format(nomina.total_neto|float) }}</h4>
                     </div>
                 </div>
             </div>
@@ -139,7 +139,7 @@
                     <td>
                         <a href="{{ url_for('planilla.ver_nomina_empleado', planilla_id=planilla.id, nomina_id=nomina.id, nomina_empleado_id=ne.id) }}"
                            class="btn btn-sm btn-outline-primary" title="Ver Detalle">
-                            <i class="fas fa-eye"></i>
+                            <i class="bi bi-eye"></i>
                         </a>
                     </td>
                 </tr>
