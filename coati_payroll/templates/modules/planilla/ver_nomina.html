@@ -39,6 +39,9 @@
                     </button>
                 </form>
                 {% endif %}
+                <a href="{{ url_for('planilla.listar_novedades', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-info">
+                    <i class="bi bi-list-check"></i> Novedades
+                </a>
             </div>
         </div>
     </div>

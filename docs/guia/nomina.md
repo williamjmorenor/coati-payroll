@@ -216,22 +216,96 @@ Para ver nóminas anteriores:
 
 ## Novedades de Nómina
 
-Las novedades son eventos que afectan la nómina de un empleado específico.
+Las novedades son eventos o ajustes que afectan la nómina de un empleado en un período específico. Permiten registrar horas extras, bonos puntuales, ausencias, comisiones y otros conceptos variables que no son recurrentes.
+
+### Acceder al Módulo de Novedades
+
+1. Navegue a **Planillas**
+2. Seleccione la planilla y haga clic en **Ver Nóminas**
+3. Seleccione la nómina deseada
+4. Haga clic en el botón **Novedades** en la barra de acciones
 
 ### Tipos de Novedades
 
 | Tipo | Ejemplo | Efecto |
 |------|---------|--------|
-| Horas | Horas extras trabajadas | Multiplica por valor hora |
-| Días | Días de ausencia | Reduce proporcionalmente |
-| Cantidad | Unidades producidas | Para bonos por producción |
-| Monto | Comisión específica | Suma el monto |
+| **Monto** | Comisión específica | Suma o resta el monto indicado |
+| **Horas** | Horas extras trabajadas | Multiplica por valor hora |
+| **Días** | Días de ausencia | Reduce proporcionalmente |
+| **Cantidad** | Unidades producidas | Para bonos por producción |
+| **Porcentaje** | Bonus del 5% | Aplica porcentaje sobre base |
 
-### Registrar Novedad
+### Asociación con Conceptos
 
-1. Antes de ejecutar la nómina
-2. Registre las novedades por empleado
-3. Al ejecutar, las novedades se aplicarán automáticamente
+Las novedades se pueden asociar a:
+
+- **Percepciones (Ingresos)**: Horas extras, bonos, comisiones
+- **Deducciones (Egresos)**: Ausencias, multas, descuentos especiales
+
+Al asociar una novedad a un concepto específico, el sistema puede aplicar las reglas de cálculo correspondientes.
+
+### Registrar Nueva Novedad
+
+1. Desde la vista de la nómina, haga clic en **Novedades**
+2. Haga clic en **Nueva Novedad**
+3. Complete el formulario:
+
+| Campo | Descripción | Requerido |
+|-------|-------------|-----------|
+| Empleado | Empleado al que se aplica | Sí |
+| Tipo de Concepto | Percepción o Deducción | Sí |
+| Percepción/Deducción | Concepto asociado | No |
+| Código del Concepto | Código identificador | Sí |
+| Tipo de Valor | Monto, Horas, Días, etc. | Sí |
+| Valor/Cantidad | Valor numérico | Sí |
+| Fecha de Novedad | Fecha del evento | No |
+
+4. Haga clic en **Guardar**
+
+### Editar Novedad
+
+1. En la lista de novedades, haga clic en el ícono de **Editar**
+2. Modifique los campos necesarios
+3. Haga clic en **Guardar**
+
+### Eliminar Novedad
+
+1. En la lista de novedades, haga clic en el ícono de **Eliminar**
+2. Confirme la eliminación
+
+!!! warning "Restricciones"
+    No es posible agregar, editar o eliminar novedades en nóminas con estado **Aplicado** (ya pagadas).
+
+### Ejemplo de Uso
+
+**Escenario**: Juan Pérez trabajó 10 horas extras en enero.
+
+1. Acceda a las novedades de la nómina de enero
+2. Haga clic en **Nueva Novedad**
+3. Complete:
+   - **Empleado**: Juan Pérez
+   - **Tipo de Concepto**: Percepción
+   - **Percepción**: Horas Extras
+   - **Código**: HRS_EXTRA
+   - **Tipo de Valor**: Horas
+   - **Valor**: 10
+   - **Fecha**: 15/01/2025
+
+4. Guarde la novedad
+5. **Recalcule** la nómina para aplicar los cambios
+
+### Aplicación de Novedades
+
+Las novedades se aplican cuando se **recalcula** la nómina. Después de agregar novedades:
+
+1. Desde la vista de la nómina, haga clic en **Recalcular**
+2. Confirme la operación
+3. El sistema recalculará todos los valores considerando las novedades
+
+!!! info "Novedades y Estado de Nómina"
+    - **Generado**: Se pueden agregar/editar novedades y recalcular
+    - **Aprobado**: Se pueden agregar/editar novedades y recalcular
+    - **Aplicado**: No se pueden modificar novedades (nómina cerrada)
 
 ## Cálculos Importantes
 

@@ -891,3 +891,72 @@ class PrestacionForm(FlaskForm):
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
+
+
+class NominaNovedadForm(FlaskForm):
+    """Form for adding novelties (novedades) to a nomina.
+
+    Novedades are adjustments or events that affect an employee's payroll
+    for a specific period. They can be associated with:
+    - Percepciones (income items like bonuses, overtime)
+    - Deducciones (deductions like absences, loans)
+
+    The novedad is linked to a specific employee and a concept (percepcion or deduccion).
+    """
+
+    empleado_id = SelectField(
+        _("Empleado"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Empleado al que se aplicará la novedad"),
+    )
+    tipo_concepto = SelectField(
+        _("Tipo de Concepto"),
+        choices=[
+            ("percepcion", _("Percepción (Ingreso)")),
+            ("deduccion", _("Deducción (Egreso)")),
+        ],
+        validators=[DataRequired()],
+        description=_("Tipo de concepto al que se asocia la novedad"),
+    )
+    percepcion_id = SelectField(
+        _("Percepción"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Percepción a la que se asocia la novedad (si aplica)"),
+    )
+    deduccion_id = SelectField(
+        _("Deducción"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Deducción a la que se asocia la novedad (si aplica)"),
+    )
+    codigo_concepto = StringField(
+        _("Código del Concepto"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código del concepto que se modifica o aplica"),
+    )
+    tipo_valor = SelectField(
+        _("Tipo de Valor"),
+        choices=[
+            ("monto", _("Monto Fijo")),
+            ("horas", _("Horas")),
+            ("dias", _("Días")),
+            ("cantidad", _("Cantidad")),
+            ("porcentaje", _("Porcentaje")),
+        ],
+        validators=[DataRequired()],
+        description=_("Tipo de valor de la novedad"),
+    )
+    valor_cantidad = DecimalField(
+        _("Valor / Cantidad"),
+        validators=[DataRequired()],
+        places=2,
+        description=_("Valor numérico de la novedad (ej: 5 horas, 1500 de bono)"),
+    )
+    fecha_novedad = DateField(
+        _("Fecha de la Novedad"),
+        validators=[Optional()],
+        description=_("Fecha en que ocurrió el evento (opcional, para auditoría)"),
+    )
+    submit = SubmitField(_("Guardar"))

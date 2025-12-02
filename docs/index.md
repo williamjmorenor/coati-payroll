@@ -94,6 +94,17 @@ graph TD
     B --> G[Nómina]
     H[Préstamos/Adelantos] --> G
     G --> I[Detalle por Empleado]
+    J[Novedades] --> G
+```
+
+### Flujo de Trabajo de Nómina
+
+```mermaid
+graph LR
+    A[Ejecutar Nómina] --> B[Agregar Novedades]
+    B --> C[Recalcular si es necesario]
+    C --> D[Revisar y Aprobar]
+    D --> E[Aplicar/Pagar]
 ```
 
 ## Licencia

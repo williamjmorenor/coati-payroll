@@ -542,13 +542,40 @@ TOTAL DEDUCCIONES:      C$  3,460.50
     - Saldo nuevo: C$ 5,000.00
     - Cuotas restantes: 5
 
-### 8.3 Aprobar la Nómina
+### 8.3 Agregar Novedades (Opcional)
+
+Si necesita ajustar la nómina con eventos específicos (horas extras, bonos puntuales, ausencias), puede registrar novedades antes de aprobar.
+
+**Ejemplo**: Registrar horas extras para María López
+
+1. Desde la vista de la nómina, haga clic en **Novedades**
+2. Haga clic en **Nueva Novedad**
+3. Complete:
+
+| Campo | Valor |
+|-------|-------|
+| Empleado | María López |
+| Tipo de Concepto | Percepción |
+| Percepción | Horas Extras |
+| Código del Concepto | HRS_EXTRA |
+| Tipo de Valor | Horas |
+| Valor/Cantidad | 8 |
+| Fecha de Novedad | 20/01/2025 |
+
+4. Haga clic en **Guardar**
+5. Regrese a la vista de la nómina
+6. Haga clic en **Recalcular** para aplicar la novedad
+
+!!! note "Recalcular Nómina"
+    Al recalcular, el sistema procesa nuevamente todos los empleados incluyendo las novedades registradas. Los valores anteriores se eliminan y se generan nuevos cálculos.
+
+### 8.4 Aprobar la Nómina
 
 1. Revise todos los detalles
 2. Verifique que los cálculos son correctos
 3. Haga clic en **Aprobar**
 
-### 8.4 Aplicar la Nómina
+### 8.5 Aplicar la Nómina
 
 1. Una vez aprobada, haga clic en **Aplicar**
 2. La nómina queda marcada como pagada
@@ -567,6 +594,7 @@ En este tutorial ha aprendido a:
 - [x] Registrar y aprobar préstamos
 - [x] Configurar una planilla completa
 - [x] Ejecutar una nómina con todos los componentes
+- [x] Agregar novedades a la nómina (horas extras, bonos, etc.)
 - [x] Revisar, aprobar y aplicar la nómina
 
 ## Siguientes Pasos
@@ -574,6 +602,7 @@ En este tutorial ha aprendido a:
 - Explore las diferentes configuraciones de percepciones y deducciones
 - Configure reglas de cálculo para el IR con tabla progresiva
 - Configure tipos de cambio si trabaja con múltiples monedas
+- Utilice las novedades para registrar eventos variables de nómina
 - Genere reportes de nómina
 - Configure campos personalizados para empleados
 
@@ -585,3 +614,4 @@ En este tutorial ha aprendido a:
 - [Prestaciones](../guia/prestaciones.md)
 - [Préstamos y Adelantos](../guia/prestamos.md)
 - [Configuración de Planillas](../guia/planillas.md)
+- [Ejecución de Nómina (incluye Novedades)](../guia/nomina.md)
