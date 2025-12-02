@@ -21,6 +21,7 @@ import pytest
 from coati_payroll.model import (
     db,
     Moneda,
+    Nomina,
     TipoCambio,
     Empleado,
     Planilla,
@@ -318,3 +319,264 @@ class TestCurrencyConversion:
 
             # The employee should not have been processed due to the error
             assert len(engine.empleados_calculo) == 0
+
+
+class TestNominaRecalculation:
+    """Tests for payroll recalculation functionality."""
+
+    def test_recalculate_nomina_in_generado_status(self, app, authenticated_client):
+        """Test that a nomina in 'generado' status can be recalculated."""
+        with app.app_context():
+            # Create currencies
+            nio = Moneda(
+                codigo="NIO_RECALC",
+                nombre="Córdoba Nicaragüense",
+                simbolo="C$",
+                activo=True,
+            )
+            db.session.add(nio)
+            db.session.flush()
+
+            # Create payroll type
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL_RECALC",
+                descripcion="Planilla Mensual Recalculo",
+                dias=30,
+                periodicidad="mensual",
+                periodos_por_anio=12,
+            )
+            db.session.add(tipo_planilla)
+            db.session.flush()
+
+            # Create planilla
+            planilla = Planilla(
+                nombre="Planilla Recalculo Test",
+                descripcion="Planilla para test de recalculo",
+                activo=True,
+                tipo_planilla_id=tipo_planilla.id,
+                moneda_id=nio.id,
+            )
+            db.session.add(planilla)
+            db.session.flush()
+
+            # Create employee
+            empleado = Empleado(
+                primer_nombre="Test",
+                primer_apellido="Recalculo",
+                identificacion_personal="001-RECALC-0001A",
+                salario_base=Decimal("15000.00"),
+                moneda_id=nio.id,
+                activo=True,
+                fecha_alta=date(2020, 1, 1),
+            )
+            db.session.add(empleado)
+            db.session.flush()
+
+            # Associate employee to planilla
+            planilla_empleado = PlanillaEmpleado(
+                planilla_id=planilla.id,
+                empleado_id=empleado.id,
+                activo=True,
+            )
+            db.session.add(planilla_empleado)
+            db.session.commit()
+
+            # Execute initial payroll
+            engine = NominaEngine(
+                planilla=planilla,
+                periodo_inicio=date(2024, 11, 1),
+                periodo_fin=date(2024, 11, 30),
+                fecha_calculo=date(2024, 11, 30),
+                usuario="test",
+            )
+            nomina = engine.ejecutar()
+
+            assert nomina is not None
+            assert nomina.estado == "generado"
+            original_nomina_id = nomina.id
+
+            # Recalculate the nomina via the route
+            response = authenticated_client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/recalcular",
+                follow_redirects=False,
+            )
+
+            # Should redirect after recalculation
+            assert response.status_code == 302
+
+            # The original nomina should no longer exist
+            old_nomina = db.session.get(Nomina, original_nomina_id)
+            assert old_nomina is None
+
+    def test_cannot_recalculate_aplicado_nomina(self, app, authenticated_client):
+        """Test that a nomina in 'aplicado' (paid) status cannot be recalculated."""
+        with app.app_context():
+            # Create currencies
+            nio = Moneda(
+                codigo="NIO_PAID",
+                nombre="Córdoba Nicaragüense",
+                simbolo="C$",
+                activo=True,
+            )
+            db.session.add(nio)
+            db.session.flush()
+
+            # Create payroll type
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL_PAID",
+                descripcion="Planilla Mensual Pagada",
+                dias=30,
+                periodicidad="mensual",
+                periodos_por_anio=12,
+            )
+            db.session.add(tipo_planilla)
+            db.session.flush()
+
+            # Create planilla
+            planilla = Planilla(
+                nombre="Planilla Pagada Test",
+                descripcion="Planilla para test de pagada",
+                activo=True,
+                tipo_planilla_id=tipo_planilla.id,
+                moneda_id=nio.id,
+            )
+            db.session.add(planilla)
+            db.session.flush()
+
+            # Create employee
+            empleado = Empleado(
+                primer_nombre="Test",
+                primer_apellido="Pagado",
+                identificacion_personal="001-PAID-0002B",
+                salario_base=Decimal("20000.00"),
+                moneda_id=nio.id,
+                activo=True,
+                fecha_alta=date(2020, 1, 1),
+            )
+            db.session.add(empleado)
+            db.session.flush()
+
+            # Associate employee to planilla
+            planilla_empleado = PlanillaEmpleado(
+                planilla_id=planilla.id,
+                empleado_id=empleado.id,
+                activo=True,
+            )
+            db.session.add(planilla_empleado)
+            db.session.commit()
+
+            # Execute payroll and set to aplicado status
+            engine = NominaEngine(
+                planilla=planilla,
+                periodo_inicio=date(2024, 11, 1),
+                periodo_fin=date(2024, 11, 30),
+                fecha_calculo=date(2024, 11, 30),
+                usuario="test",
+            )
+            nomina = engine.ejecutar()
+
+            assert nomina is not None
+            nomina.estado = "aplicado"
+            db.session.commit()
+
+            original_nomina_id = nomina.id
+
+            # Try to recalculate the applied nomina
+            response = authenticated_client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/recalcular",
+                follow_redirects=False,
+            )
+
+            # Should redirect (to ver_nomina with error message)
+            assert response.status_code == 302
+
+            # The nomina should still exist and unchanged
+            existing_nomina = db.session.get(Nomina, original_nomina_id)
+            assert existing_nomina is not None
+            assert existing_nomina.estado == "aplicado"
+
+    def test_recalculate_nomina_in_aprobado_status(self, app, authenticated_client):
+        """Test that a nomina in 'aprobado' status can be recalculated."""
+        with app.app_context():
+            # Create currencies
+            nio = Moneda(
+                codigo="NIO_APROB",
+                nombre="Córdoba Nicaragüense",
+                simbolo="C$",
+                activo=True,
+            )
+            db.session.add(nio)
+            db.session.flush()
+
+            # Create payroll type
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL_APROB",
+                descripcion="Planilla Mensual Aprobada",
+                dias=30,
+                periodicidad="mensual",
+                periodos_por_anio=12,
+            )
+            db.session.add(tipo_planilla)
+            db.session.flush()
+
+            # Create planilla
+            planilla = Planilla(
+                nombre="Planilla Aprobada Test",
+                descripcion="Planilla para test de aprobada",
+                activo=True,
+                tipo_planilla_id=tipo_planilla.id,
+                moneda_id=nio.id,
+            )
+            db.session.add(planilla)
+            db.session.flush()
+
+            # Create employee
+            empleado = Empleado(
+                primer_nombre="Test",
+                primer_apellido="Aprobado",
+                identificacion_personal="001-APROB-0003C",
+                salario_base=Decimal("18000.00"),
+                moneda_id=nio.id,
+                activo=True,
+                fecha_alta=date(2020, 1, 1),
+            )
+            db.session.add(empleado)
+            db.session.flush()
+
+            # Associate employee to planilla
+            planilla_empleado = PlanillaEmpleado(
+                planilla_id=planilla.id,
+                empleado_id=empleado.id,
+                activo=True,
+            )
+            db.session.add(planilla_empleado)
+            db.session.commit()
+
+            # Execute payroll and set to aprobado status
+            engine = NominaEngine(
+                planilla=planilla,
+                periodo_inicio=date(2024, 11, 1),
+                periodo_fin=date(2024, 11, 30),
+                fecha_calculo=date(2024, 11, 30),
+                usuario="test",
+            )
+            nomina = engine.ejecutar()
+
+            assert nomina is not None
+            nomina.estado = "aprobado"
+            db.session.commit()
+
+            original_nomina_id = nomina.id
+
+            # Recalculate the approved nomina
+            response = authenticated_client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/recalcular",
+                follow_redirects=False,
+            )
+
+            # Should redirect after recalculation
+            assert response.status_code == 302
+
+            # The original nomina should no longer exist
+            old_nomina = db.session.get(Nomina, original_nomina_id)
+            assert old_nomina is None

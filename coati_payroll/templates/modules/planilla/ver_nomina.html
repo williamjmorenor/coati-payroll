@@ -31,6 +31,14 @@
                     </button>
                 </form>
                 {% endif %}
+                {% if nomina.estado != 'aplicado' %}
+                <form action="{{ url_for('planilla.recalcular_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
+                      method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-warning" onclick="return confirm('¿Recalcular esta nómina? Se eliminarán los datos actuales y se generarán nuevamente.')">
+                        <i class="fas fa-sync-alt"></i> Recalcular
+                    </button>
+                </form>
+                {% endif %}
             </div>
         </div>
     </div>

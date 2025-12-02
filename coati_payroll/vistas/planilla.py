@@ -888,6 +888,105 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
     )
 
 
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/recalcular", methods=["POST"])
+@login_required
+def recalcular_nomina(planilla_id: str, nomina_id: str):
+    """Recalculate an existing nomina.
+
+    Allows recalculation of a payroll unless it is in 'aplicado' (paid) status.
+    This is useful when errors are found during review and the payroll needs
+    to be completely recalculated.
+
+    The existing NominaEmpleado, NominaDetalle, and related AdelantoAbono records
+    are deleted and recreated during recalculation.
+    """
+    from datetime import date as date_type
+    from coati_payroll.model import (
+        Nomina,
+        NominaEmpleado,
+        NominaDetalle,
+        AdelantoAbono,
+    )
+    from coati_payroll.nomina_engine import NominaEngine
+
+    nomina = db.get_or_404(Nomina, nomina_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if nomina.estado == "aplicado":
+        flash(
+            _("No se puede recalcular una nómina en estado 'aplicado' (pagada)."),
+            "error",
+        )
+        return redirect(
+            url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id)
+        )
+
+    # Store the original period information
+    periodo_inicio = nomina.periodo_inicio
+    periodo_fin = nomina.periodo_fin
+
+    # Delete related AdelantoAbono records (payments towards loans/advances)
+    # that were created for this nomina
+    db.session.execute(
+        db.delete(AdelantoAbono).where(AdelantoAbono.nomina_id == nomina_id)
+    )
+
+    # Delete NominaDetalle records for all NominaEmpleado of this nomina
+    # using a subquery for efficiency
+    db.session.execute(
+        db.delete(NominaDetalle).where(
+            NominaDetalle.nomina_empleado_id.in_(
+                db.select(NominaEmpleado.id).where(
+                    NominaEmpleado.nomina_id == nomina_id
+                )
+            )
+        )
+    )
+
+    # Delete all NominaEmpleado records
+    db.session.execute(
+        db.delete(NominaEmpleado).where(NominaEmpleado.nomina_id == nomina_id)
+    )
+
+    # Delete the nomina record itself
+    db.session.delete(nomina)
+    db.session.commit()
+
+    # Re-execute the payroll with the same period
+    engine = NominaEngine(
+        planilla=planilla,
+        periodo_inicio=periodo_inicio,
+        periodo_fin=periodo_fin,
+        fecha_calculo=date_type.today(),
+        usuario=current_user.usuario,
+    )
+
+    new_nomina = engine.ejecutar()
+
+    if engine.errors:
+        for error in engine.errors:
+            flash(error, "error")
+
+    if engine.warnings:
+        for warning in engine.warnings:
+            flash(warning, "warning")
+
+    if new_nomina:
+        flash(_("Nómina recalculada exitosamente."), "success")
+        return redirect(
+            url_for(
+                "planilla.ver_nomina", planilla_id=planilla_id, nomina_id=new_nomina.id
+            )
+        )
+    else:
+        flash(_("Error al recalcular la nómina."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
