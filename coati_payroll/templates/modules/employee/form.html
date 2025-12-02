@@ -75,35 +75,41 @@
                 
                 <div class="row">
                     <div class="col-md-4">
+                        {{ render_field(form.codigo_empleado) }}
+                    </div>
+                    <div class="col-md-4">
                         {{ render_field(form.fecha_alta) }}
                     </div>
                     <div class="col-md-4">
                         {{ render_field(form.fecha_baja) }}
                     </div>
-                    <div class="col-md-4">
-                        {{ render_field(form.tipo_contrato) }}
-                    </div>
                 </div>
                 
                 <div class="row">
+                    <div class="col-md-4">
+                        {{ render_field(form.tipo_contrato) }}
+                    </div>
                     <div class="col-md-4">
                         {{ render_field(form.cargo) }}
                     </div>
                     <div class="col-md-4">
                         {{ render_field(form.area) }}
                     </div>
-                    <div class="col-md-4">
-                        {{ render_field(form.centro_costos) }}
-                    </div>
                 </div>
                 
                 <div class="row">
+                    <div class="col-md-4">
+                        {{ render_field(form.centro_costos) }}
+                    </div>
                     <div class="col-md-4">
                         {{ render_field(form.salario_base) }}
                     </div>
                     <div class="col-md-4">
                         {{ render_field(form.moneda_id) }}
                     </div>
+                </div>
+                
+                <div class="row">
                     <div class="col-md-4">
                         {{ render_field(form.activo) }}
                     </div>

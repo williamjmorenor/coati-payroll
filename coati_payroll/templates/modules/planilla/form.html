@@ -7,9 +7,16 @@
             <i class="bi bi-calculator me-2"></i>
             {% if is_edit %}{{ _('Editar Planilla') }}{% else %}{{ _('Nueva Planilla') }}{% endif %}
         </h2>
-        <a href="{{ url_for('planilla.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i>{{ _('Volver') }}
-        </a>
+        <div>
+            {% if is_edit %}
+            <a href="{{ url_for('planilla.config', planilla_id=planilla.id) }}" class="btn btn-outline-primary me-2">
+                <i class="bi bi-gear me-1"></i>{{ _('Ver Configuración') }}
+            </a>
+            {% endif %}
+            <a href="{{ url_for('planilla.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>{{ _('Volver') }}
+            </a>
+        </div>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -25,7 +32,7 @@
 
     <div class="row">
         <!-- Main Form Column -->
-        <div class="col-lg-{% if is_edit %}5{% else %}8{% endif %}">
+        <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-coaty-light">
                     <h5 class="mb-0"><i class="bi bi-gear me-2"></i>{{ _('Configuración General') }}</h5>
@@ -137,377 +144,40 @@
         </div>
 
         {% if is_edit %}
-        <!-- Associations Column -->
-        <div class="col-lg-7">
-            <!-- Nav Tabs for Associations -->
-            <ul class="nav nav-tabs" id="associationTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab">
-                        <i class="bi bi-people me-1"></i>{{ _('Empleados') }}
-                        <span class="badge bg-primary ms-1">{{ empleados_asignados | length }}</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="percepciones-tab" data-bs-toggle="tab" data-bs-target="#percepciones" type="button" role="tab">
-                        <i class="bi bi-plus-circle me-1"></i>{{ _('Percepciones') }}
-                        <span class="badge bg-success ms-1">{{ percepciones_asignadas | length }}</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="deducciones-tab" data-bs-toggle="tab" data-bs-target="#deducciones" type="button" role="tab">
-                        <i class="bi bi-dash-circle me-1"></i>{{ _('Deducciones') }}
-                        <span class="badge bg-danger ms-1">{{ deducciones_asignadas | length }}</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="prestaciones-tab" data-bs-toggle="tab" data-bs-target="#prestaciones" type="button" role="tab">
-                        <i class="bi bi-gift me-1"></i>{{ _('Prestaciones') }}
-                        <span class="badge bg-info ms-1">{{ prestaciones_asignadas | length }}</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="reglas-tab" data-bs-toggle="tab" data-bs-target="#reglas" type="button" role="tab">
-                        <i class="bi bi-code-square me-1"></i>{{ _('Reglas') }}
-                        <span class="badge bg-warning text-dark ms-1">{{ reglas_asignadas | length }}</span>
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content border border-top-0 p-3 bg-white" id="associationTabsContent">
-                <!-- Empleados Tab -->
-                <div class="tab-pane fade show active" id="empleados" role="tabpanel">
-                    <!-- Add Employee Form -->
-                    <form action="{{ url_for('planilla.add_empleado', planilla_id=planilla.id) }}" method="POST" class="mb-3">
-                        <div class="input-group">
-                            <select name="empleado_id" class="form-select" required>
-                                <option value="">{{ _('-- Seleccionar Empleado --') }}</option>
-                                {% for emp in empleados_disponibles %}
-                                    {% set is_assigned = emp.id in (empleados_asignados | map(attribute='empleado_id') | list) %}
-                                    {% if not is_assigned %}
-                                    <option value="{{ emp.id }}">{{ emp.primer_apellido }} {{ emp.segundo_apellido or '' }}, {{ emp.primer_nombre }} - {{ emp.identificacion_personal }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                            <button type="submit" class="btn btn-coaty">
-                                <i class="bi bi-plus"></i> {{ _('Agregar') }}
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- Employee List -->
-                    {% if empleados_asignados %}
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{{ _('Empleado') }}</th>
-                                    <th>{{ _('Desde') }}</th>
-                                    <th class="text-center">{{ _('Activo') }}</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for assoc in empleados_asignados %}
-                                <tr>
-                                    <td>
-                                        <strong>{{ assoc.empleado.primer_apellido }} {{ assoc.empleado.segundo_apellido or '' }}</strong>, {{ assoc.empleado.primer_nombre }}
-                                        <br><small class="text-muted">{{ assoc.empleado.identificacion_personal }}</small>
-                                    </td>
-                                    <td>{{ assoc.fecha_inicio.strftime('%d/%m/%Y') if assoc.fecha_inicio else '-' }}</td>
-                                    <td class="text-center">
-                                        {% if assoc.activo %}
-                                        <span class="badge bg-success">{{ _('Sí') }}</span>
-                                        {% else %}
-                                        <span class="badge bg-secondary">{{ _('No') }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-end">
-                                        <form action="{{ url_for('planilla.remove_empleado', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Remover') }}" onclick="return confirm('{{ _('¿Remover este empleado?') }}')">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted py-3">
-                        <i class="bi bi-people display-6"></i>
-                        <p class="mt-2">{{ _('No hay empleados asignados') }}</p>
-                    </div>
-                    {% endif %}
+        <!-- Associations Summary Column -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-coaty-light">
+                    <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>{{ _('Componentes Asignados') }}</h5>
                 </div>
-
-                <!-- Percepciones Tab -->
-                <div class="tab-pane fade" id="percepciones" role="tabpanel">
-                    <!-- Add Perception Form -->
-                    <form action="{{ url_for('planilla.add_percepcion', planilla_id=planilla.id) }}" method="POST" class="mb-3">
-                        <div class="input-group">
-                            <select name="percepcion_id" class="form-select" required>
-                                <option value="">{{ _('-- Seleccionar Percepción --') }}</option>
-                                {% for perc in percepciones_disponibles %}
-                                    {% set is_assigned = perc.id in (percepciones_asignadas | map(attribute='percepcion_id') | list) %}
-                                    {% if not is_assigned %}
-                                    <option value="{{ perc.id }}">{{ perc.codigo }} - {{ perc.nombre }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                            <input type="number" name="orden" class="form-control" placeholder="{{ _('Orden') }}" style="max-width: 80px;" value="0">
-                            <button type="submit" class="btn btn-coaty">
-                                <i class="bi bi-plus"></i> {{ _('Agregar') }}
-                            </button>
-                        </div>
-                    </form>
-
-                    {% if percepciones_asignadas %}
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{{ _('Código') }}</th>
-                                    <th>{{ _('Nombre') }}</th>
-                                    <th>{{ _('Tipo') }}</th>
-                                    <th class="text-center">{{ _('Orden') }}</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for assoc in percepciones_asignadas %}
-                                <tr>
-                                    <td><code>{{ assoc.percepcion.codigo }}</code></td>
-                                    <td>{{ assoc.percepcion.nombre }}</td>
-                                    <td><small class="text-muted">{{ assoc.percepcion.formula_tipo }}</small></td>
-                                    <td class="text-center">{{ assoc.orden }}</td>
-                                    <td class="text-end">
-                                        <form action="{{ url_for('planilla.remove_percepcion', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Remover') }}" onclick="return confirm('{{ _('¿Remover esta percepción?') }}')">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-people me-2 text-primary"></i>{{ _('Empleados') }}</span>
+                            <span class="badge bg-primary rounded-pill">{{ empleados_count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-plus-circle me-2 text-success"></i>{{ _('Percepciones') }}</span>
+                            <span class="badge bg-success rounded-pill">{{ percepciones_count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-dash-circle me-2 text-danger"></i>{{ _('Deducciones') }}</span>
+                            <span class="badge bg-danger rounded-pill">{{ deducciones_count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-gift me-2 text-info"></i>{{ _('Prestaciones') }}</span>
+                            <span class="badge bg-info rounded-pill">{{ prestaciones_count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-code-square me-2 text-warning"></i>{{ _('Reglas') }}</span>
+                            <span class="badge bg-warning text-dark rounded-pill">{{ reglas_count }}</span>
+                        </li>
+                    </ul>
+                    <div class="d-grid mt-3">
+                        <a href="{{ url_for('planilla.config', planilla_id=planilla.id) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-gear me-1"></i>{{ _('Gestionar Componentes') }}
+                        </a>
                     </div>
-                    {% else %}
-                    <div class="text-center text-muted py-3">
-                        <i class="bi bi-plus-circle display-6"></i>
-                        <p class="mt-2">{{ _('No hay percepciones asignadas') }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Deducciones Tab -->
-                <div class="tab-pane fade" id="deducciones" role="tabpanel">
-                    <!-- Add Deduction Form -->
-                    <form action="{{ url_for('planilla.add_deduccion', planilla_id=planilla.id) }}" method="POST" class="mb-3">
-                        <div class="row g-2">
-                            <div class="col">
-                                <select name="deduccion_id" class="form-select" required>
-                                    <option value="">{{ _('-- Seleccionar Deducción --') }}</option>
-                                    {% for ded in deducciones_disponibles %}
-                                        {% set is_assigned = ded.id in (deducciones_asignadas | map(attribute='deduccion_id') | list) %}
-                                        {% if not is_assigned %}
-                                        <option value="{{ ded.id }}">{{ ded.codigo }} - {{ ded.nombre }}</option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <input type="number" name="prioridad" class="form-control" placeholder="{{ _('Prioridad') }}" style="width: 100px;" value="100" min="1" max="999">
-                            </div>
-                            <div class="col-auto">
-                                <div class="form-check mt-2">
-                                    <input type="checkbox" name="es_obligatoria" class="form-check-input" id="esObligatoria">
-                                    <label class="form-check-label" for="esObligatoria">{{ _('Obligatoria') }}</label>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <button type="submit" class="btn btn-coaty">
-                                    <i class="bi bi-plus"></i> {{ _('Agregar') }}
-                                </button>
-                            </div>
-                        </div>
-                        <small class="text-muted">{{ _('Prioridad: menor número = se aplica primero (1-100 impuestos, 101-200 embargos, 201-300 préstamos)') }}</small>
-                    </form>
-
-                    {% if deducciones_asignadas %}
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{{ _('Prioridad') }}</th>
-                                    <th>{{ _('Código') }}</th>
-                                    <th>{{ _('Nombre') }}</th>
-                                    <th>{{ _('Tipo') }}</th>
-                                    <th class="text-center">{{ _('Obligatoria') }}</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for assoc in deducciones_asignadas %}
-                                <tr>
-                                    <td>
-                                        <form action="{{ url_for('planilla.update_deduccion_priority', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
-                                            <input type="number" name="prioridad" value="{{ assoc.prioridad }}" class="form-control form-control-sm" style="width: 70px;" min="1" max="999" onchange="this.form.submit()">
-                                        </form>
-                                    </td>
-                                    <td><code>{{ assoc.deduccion.codigo }}</code></td>
-                                    <td>{{ assoc.deduccion.nombre }}</td>
-                                    <td><small class="text-muted">{{ assoc.deduccion.tipo }}</small></td>
-                                    <td class="text-center">
-                                        {% if assoc.es_obligatoria %}
-                                        <span class="badge bg-danger">{{ _('Sí') }}</span>
-                                        {% else %}
-                                        <span class="badge bg-secondary">{{ _('No') }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-end">
-                                        <form action="{{ url_for('planilla.remove_deduccion', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Remover') }}" onclick="return confirm('{{ _('¿Remover esta deducción?') }}')">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted py-3">
-                        <i class="bi bi-dash-circle display-6"></i>
-                        <p class="mt-2">{{ _('No hay deducciones asignadas') }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Prestaciones Tab -->
-                <div class="tab-pane fade" id="prestaciones" role="tabpanel">
-                    <!-- Add Benefit Form -->
-                    <form action="{{ url_for('planilla.add_prestacion', planilla_id=planilla.id) }}" method="POST" class="mb-3">
-                        <div class="input-group">
-                            <select name="prestacion_id" class="form-select" required>
-                                <option value="">{{ _('-- Seleccionar Prestación --') }}</option>
-                                {% for prest in prestaciones_disponibles %}
-                                    {% set is_assigned = prest.id in (prestaciones_asignadas | map(attribute='prestacion_id') | list) %}
-                                    {% if not is_assigned %}
-                                    <option value="{{ prest.id }}">{{ prest.codigo }} - {{ prest.nombre }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                            <input type="number" name="orden" class="form-control" placeholder="{{ _('Orden') }}" style="max-width: 80px;" value="0">
-                            <button type="submit" class="btn btn-coaty">
-                                <i class="bi bi-plus"></i> {{ _('Agregar') }}
-                            </button>
-                        </div>
-                        <small class="text-muted">{{ _('Las prestaciones son costos patronales que NO afectan el salario neto del empleado.') }}</small>
-                    </form>
-
-                    {% if prestaciones_asignadas %}
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{{ _('Código') }}</th>
-                                    <th>{{ _('Nombre') }}</th>
-                                    <th>{{ _('Tipo') }}</th>
-                                    <th class="text-center">{{ _('Orden') }}</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for assoc in prestaciones_asignadas %}
-                                <tr>
-                                    <td><code>{{ assoc.prestacion.codigo }}</code></td>
-                                    <td>{{ assoc.prestacion.nombre }}</td>
-                                    <td><small class="text-muted">{{ assoc.prestacion.tipo }}</small></td>
-                                    <td class="text-center">{{ assoc.orden }}</td>
-                                    <td class="text-end">
-                                        <form action="{{ url_for('planilla.remove_prestacion', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Remover') }}" onclick="return confirm('{{ _('¿Remover esta prestación?') }}')">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted py-3">
-                        <i class="bi bi-gift display-6"></i>
-                        <p class="mt-2">{{ _('No hay prestaciones asignadas') }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Reglas de Cálculo Tab -->
-                <div class="tab-pane fade" id="reglas" role="tabpanel">
-                    <!-- Add Calculation Rule Form -->
-                    <form action="{{ url_for('planilla.add_regla', planilla_id=planilla.id) }}" method="POST" class="mb-3">
-                        <div class="input-group">
-                            <select name="regla_calculo_id" class="form-select" required>
-                                <option value="">{{ _('-- Seleccionar Regla de Cálculo --') }}</option>
-                                {% for regla in reglas_disponibles %}
-                                    {% set is_assigned = regla.id in (reglas_asignadas | map(attribute='regla_calculo_id') | list) %}
-                                    {% if not is_assigned %}
-                                    <option value="{{ regla.id }}">{{ regla.codigo }} v{{ regla.version }} - {{ regla.nombre }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                            <input type="number" name="orden" class="form-control" placeholder="{{ _('Orden') }}" style="max-width: 80px;" value="0">
-                            <button type="submit" class="btn btn-coaty">
-                                <i class="bi bi-plus"></i> {{ _('Agregar') }}
-                            </button>
-                        </div>
-                        <small class="text-muted">{{ _('Las reglas de cálculo definen fórmulas complejas como IR, INSS, etc.') }}</small>
-                    </form>
-
-                    {% if reglas_asignadas %}
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{{ _('Orden') }}</th>
-                                    <th>{{ _('Código') }}</th>
-                                    <th>{{ _('Nombre') }}</th>
-                                    <th>{{ _('Tipo') }}</th>
-                                    <th>{{ _('Versión') }}</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for assoc in reglas_asignadas %}
-                                <tr>
-                                    <td>{{ assoc.orden }}</td>
-                                    <td><code>{{ assoc.regla_calculo.codigo }}</code></td>
-                                    <td>{{ assoc.regla_calculo.nombre }}</td>
-                                    <td><small class="text-muted">{{ assoc.regla_calculo.tipo_regla }}</small></td>
-                                    <td><span class="badge bg-secondary">v{{ assoc.regla_calculo.version }}</span></td>
-                                    <td class="text-end">
-                                        <form action="{{ url_for('planilla.remove_regla', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Remover') }}" onclick="return confirm('{{ _('¿Remover esta regla?') }}')">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted py-3">
-                        <i class="bi bi-code-square display-6"></i>
-                        <p class="mt-2">{{ _('No hay reglas de cálculo asignadas') }}</p>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>

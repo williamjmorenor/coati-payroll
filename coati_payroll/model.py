@@ -48,6 +48,17 @@ def generador_de_codigos_unicos() -> str:
     return id_unico
 
 
+def generador_codigo_empleado() -> str:
+    """Genera código único de empleado.
+
+    Formato: EMP-XXXXXX donde X es alfanumérico.
+    Usa los últimos 6 caracteres del ULID para unicidad.
+    """
+    codigo_aleatorio = ULID()
+    sufijo = str(codigo_aleatorio)[-6:].upper()
+    return f"EMP-{sufijo}"
+
+
 def utc_now() -> datetime:
     """Generate timezone-aware UTC datetime.
 
@@ -157,6 +168,16 @@ class Empleado(database.Model, BaseTabla):
         database.UniqueConstraint(
             "identificacion_personal", name="uq_empleado_identificacion"
         ),
+        database.UniqueConstraint("codigo_empleado", name="uq_empleado_codigo"),
+    )
+
+    # Código único de empleado (auto-generado si no se proporciona)
+    codigo_empleado = database.Column(
+        database.String(20),
+        unique=True,
+        nullable=False,
+        index=True,
+        default=generador_codigo_empleado,
     )
 
     primer_nombre = database.Column(database.String(100), nullable=False)

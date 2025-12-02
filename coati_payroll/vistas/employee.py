@@ -144,6 +144,9 @@ def new():
 
     if form.validate_on_submit():
         employee = Empleado()
+        # Set codigo_empleado only if provided (otherwise default will be used)
+        if form.codigo_empleado.data and form.codigo_empleado.data.strip():
+            employee.codigo_empleado = form.codigo_empleado.data.strip()
         employee.primer_nombre = form.primer_nombre.data
         employee.segundo_nombre = form.segundo_nombre.data
         employee.primer_apellido = form.primer_apellido.data
@@ -219,6 +222,9 @@ def edit(id: str):
     custom_fields = get_custom_fields()
 
     if form.validate_on_submit():
+        # Update codigo_empleado only if provided
+        if form.codigo_empleado.data and form.codigo_empleado.data.strip():
+            employee.codigo_empleado = form.codigo_empleado.data.strip()
         employee.primer_nombre = form.primer_nombre.data
         employee.segundo_nombre = form.segundo_nombre.data
         employee.primer_apellido = form.primer_apellido.data

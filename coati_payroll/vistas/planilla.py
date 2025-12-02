@@ -95,7 +95,7 @@ def new():
 @planilla_bp.route("/<planilla_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit(planilla_id: str):
-    """Edit a planilla and manage its associations."""
+    """Edit basic planilla configuration."""
     planilla = db.get_or_404(Planilla, planilla_id)
     form = PlanillaForm(obj=planilla)
     _populate_form_choices(form)
@@ -115,9 +115,47 @@ def edit(planilla_id: str):
         planilla.modificado_por = current_user.usuario
         db.session.commit()
         flash(_("Planilla actualizada exitosamente."), "success")
-        return redirect(url_for("planilla.edit", planilla_id=planilla.id))
+        return redirect(url_for("planilla.config", planilla_id=planilla.id))
 
-    # Get current associations for display
+    # Get association counts for the summary
+    counts = _get_planilla_component_counts(planilla_id)
+
+    return render_template(
+        "modules/planilla/form.html",
+        form=form,
+        planilla=planilla,
+        is_edit=True,
+        **counts,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config")
+@login_required
+def config(planilla_id: str):
+    """Configuration overview page for a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    # Get association counts for the summary
+    counts = _get_planilla_component_counts(planilla_id)
+
+    return render_template(
+        "modules/planilla/config.html",
+        planilla=planilla,
+        **counts,
+    )
+
+
+# ============================================================================
+# CONFIGURATION PAGES FOR ASSOCIATIONS
+# ============================================================================
+
+
+@planilla_bp.route("/<planilla_id>/config/empleados")
+@login_required
+def config_empleados(planilla_id: str):
+    """Manage employees associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
     empleados_asignados = (
         db.session.execute(
             db.select(PlanillaEmpleado).filter_by(planilla_id=planilla_id)
@@ -125,6 +163,31 @@ def edit(planilla_id: str):
         .scalars()
         .all()
     )
+
+    empleados_disponibles = (
+        db.session.execute(
+            db.select(Empleado)
+            .filter_by(activo=True)
+            .order_by(Empleado.primer_apellido)
+        )
+        .scalars()
+        .all()
+    )
+
+    return render_template(
+        "modules/planilla/config_empleados.html",
+        planilla=planilla,
+        empleados_asignados=empleados_asignados,
+        empleados_disponibles=empleados_disponibles,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config/percepciones")
+@login_required
+def config_percepciones(planilla_id: str):
+    """Manage perceptions associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
     percepciones_asignadas = (
         db.session.execute(
             db.select(PlanillaIngreso).filter_by(planilla_id=planilla_id)
@@ -132,6 +195,29 @@ def edit(planilla_id: str):
         .scalars()
         .all()
     )
+
+    percepciones_disponibles = (
+        db.session.execute(
+            db.select(Percepcion).filter_by(activo=True).order_by(Percepcion.nombre)
+        )
+        .scalars()
+        .all()
+    )
+
+    return render_template(
+        "modules/planilla/config_percepciones.html",
+        planilla=planilla,
+        percepciones_asignadas=percepciones_asignadas,
+        percepciones_disponibles=percepciones_disponibles,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config/deducciones")
+@login_required
+def config_deducciones(planilla_id: str):
+    """Manage deductions associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
     deducciones_asignadas = (
         db.session.execute(
             db.select(PlanillaDeduccion)
@@ -141,6 +227,29 @@ def edit(planilla_id: str):
         .scalars()
         .all()
     )
+
+    deducciones_disponibles = (
+        db.session.execute(
+            db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)
+        )
+        .scalars()
+        .all()
+    )
+
+    return render_template(
+        "modules/planilla/config_deducciones.html",
+        planilla=planilla,
+        deducciones_asignadas=deducciones_asignadas,
+        deducciones_disponibles=deducciones_disponibles,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config/prestaciones")
+@login_required
+def config_prestaciones(planilla_id: str):
+    """Manage benefits associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
     prestaciones_asignadas = (
         db.session.execute(
             db.select(PlanillaPrestacion).filter_by(planilla_id=planilla_id)
@@ -148,6 +257,29 @@ def edit(planilla_id: str):
         .scalars()
         .all()
     )
+
+    prestaciones_disponibles = (
+        db.session.execute(
+            db.select(Prestacion).filter_by(activo=True).order_by(Prestacion.nombre)
+        )
+        .scalars()
+        .all()
+    )
+
+    return render_template(
+        "modules/planilla/config_prestaciones.html",
+        planilla=planilla,
+        prestaciones_asignadas=prestaciones_asignadas,
+        prestaciones_disponibles=prestaciones_disponibles,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config/reglas")
+@login_required
+def config_reglas(planilla_id: str):
+    """Manage calculation rules associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
     reglas_asignadas = (
         db.session.execute(
             db.select(PlanillaReglaCalculo)
@@ -158,37 +290,6 @@ def edit(planilla_id: str):
         .all()
     )
 
-    # Get available items for adding
-    empleados_disponibles = (
-        db.session.execute(
-            db.select(Empleado)
-            .filter_by(activo=True)
-            .order_by(Empleado.primer_apellido)
-        )
-        .scalars()
-        .all()
-    )
-    percepciones_disponibles = (
-        db.session.execute(
-            db.select(Percepcion).filter_by(activo=True).order_by(Percepcion.nombre)
-        )
-        .scalars()
-        .all()
-    )
-    deducciones_disponibles = (
-        db.session.execute(
-            db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)
-        )
-        .scalars()
-        .all()
-    )
-    prestaciones_disponibles = (
-        db.session.execute(
-            db.select(Prestacion).filter_by(activo=True).order_by(Prestacion.nombre)
-        )
-        .scalars()
-        .all()
-    )
     reglas_disponibles = (
         db.session.execute(
             db.select(ReglaCalculo).filter_by(activo=True).order_by(ReglaCalculo.nombre)
@@ -198,19 +299,9 @@ def edit(planilla_id: str):
     )
 
     return render_template(
-        "modules/planilla/form.html",
-        form=form,
+        "modules/planilla/config_reglas.html",
         planilla=planilla,
-        is_edit=True,
-        empleados_asignados=empleados_asignados,
-        percepciones_asignadas=percepciones_asignadas,
-        deducciones_asignadas=deducciones_asignadas,
-        prestaciones_asignadas=prestaciones_asignadas,
         reglas_asignadas=reglas_asignadas,
-        empleados_disponibles=empleados_disponibles,
-        percepciones_disponibles=percepciones_disponibles,
-        deducciones_disponibles=deducciones_disponibles,
-        prestaciones_disponibles=prestaciones_disponibles,
         reglas_disponibles=reglas_disponibles,
     )
 
@@ -247,7 +338,7 @@ def add_empleado(planilla_id: str):
 
     if not empleado_id:
         flash(_("Debe seleccionar un empleado."), "error")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
 
     # Check if already exists
     existing = db.session.execute(
@@ -258,7 +349,7 @@ def add_empleado(planilla_id: str):
 
     if existing:
         flash(_("El empleado ya está asignado a esta planilla."), "warning")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
 
     association = PlanillaEmpleado(
         planilla_id=planilla_id,
@@ -270,7 +361,7 @@ def add_empleado(planilla_id: str):
     db.session.add(association)
     db.session.commit()
     flash(_("Empleado agregado exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/empleado/<association_id>/remove", methods=["POST"])
@@ -281,7 +372,7 @@ def remove_empleado(planilla_id: str, association_id: str):
     db.session.delete(association)
     db.session.commit()
     flash(_("Empleado removido exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
 
 
 # ============================================================================
@@ -299,7 +390,9 @@ def add_percepcion(planilla_id: str):
 
     if not percepcion_id:
         flash(_("Debe seleccionar una percepción."), "error")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(
+            url_for("planilla.config_percepciones", planilla_id=planilla_id)
+        )
 
     existing = db.session.execute(
         db.select(PlanillaIngreso).filter_by(
@@ -309,7 +402,9 @@ def add_percepcion(planilla_id: str):
 
     if existing:
         flash(_("La percepción ya está asignada a esta planilla."), "warning")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(
+            url_for("planilla.config_percepciones", planilla_id=planilla_id)
+        )
 
     orden = request.form.get("orden", 0, type=int)
 
@@ -324,7 +419,7 @@ def add_percepcion(planilla_id: str):
     db.session.add(association)
     db.session.commit()
     flash(_("Percepción agregada exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_percepciones", planilla_id=planilla_id))
 
 
 @planilla_bp.route(
@@ -337,7 +432,7 @@ def remove_percepcion(planilla_id: str, association_id: str):
     db.session.delete(association)
     db.session.commit()
     flash(_("Percepción removida exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_percepciones", planilla_id=planilla_id))
 
 
 # ============================================================================
@@ -355,7 +450,7 @@ def add_deduccion(planilla_id: str):
 
     if not deduccion_id:
         flash(_("Debe seleccionar una deducción."), "error")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
 
     existing = db.session.execute(
         db.select(PlanillaDeduccion).filter_by(
@@ -365,7 +460,7 @@ def add_deduccion(planilla_id: str):
 
     if existing:
         flash(_("La deducción ya está asignada a esta planilla."), "warning")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
 
     prioridad = request.form.get("prioridad", 100, type=int)
     es_obligatoria = request.form.get("es_obligatoria") == "on"
@@ -382,7 +477,7 @@ def add_deduccion(planilla_id: str):
     db.session.add(association)
     db.session.commit()
     flash(_("Deducción agregada exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/deduccion/<association_id>/remove", methods=["POST"])
@@ -393,7 +488,7 @@ def remove_deduccion(planilla_id: str, association_id: str):
     db.session.delete(association)
     db.session.commit()
     flash(_("Deducción removida exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
 
 
 @planilla_bp.route(
@@ -411,7 +506,7 @@ def update_deduccion_priority(planilla_id: str, association_id: str):
         db.session.commit()
         flash(_("Prioridad actualizada."), "success")
 
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
 
 
 # ============================================================================
@@ -429,7 +524,9 @@ def add_prestacion(planilla_id: str):
 
     if not prestacion_id:
         flash(_("Debe seleccionar una prestación."), "error")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(
+            url_for("planilla.config_prestaciones", planilla_id=planilla_id)
+        )
 
     existing = db.session.execute(
         db.select(PlanillaPrestacion).filter_by(
@@ -439,7 +536,9 @@ def add_prestacion(planilla_id: str):
 
     if existing:
         flash(_("La prestación ya está asignada a esta planilla."), "warning")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(
+            url_for("planilla.config_prestaciones", planilla_id=planilla_id)
+        )
 
     orden = request.form.get("orden", 0, type=int)
 
@@ -454,7 +553,7 @@ def add_prestacion(planilla_id: str):
     db.session.add(association)
     db.session.commit()
     flash(_("Prestación agregada exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_prestaciones", planilla_id=planilla_id))
 
 
 @planilla_bp.route(
@@ -467,7 +566,7 @@ def remove_prestacion(planilla_id: str, association_id: str):
     db.session.delete(association)
     db.session.commit()
     flash(_("Prestación removida exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_prestaciones", planilla_id=planilla_id))
 
 
 # ============================================================================
@@ -485,7 +584,7 @@ def add_regla(planilla_id: str):
 
     if not regla_calculo_id:
         flash(_("Debe seleccionar una regla de cálculo."), "error")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(url_for("planilla.config_reglas", planilla_id=planilla_id))
 
     existing = db.session.execute(
         db.select(PlanillaReglaCalculo).filter_by(
@@ -495,7 +594,7 @@ def add_regla(planilla_id: str):
 
     if existing:
         flash(_("La regla ya está asignada a esta planilla."), "warning")
-        return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+        return redirect(url_for("planilla.config_reglas", planilla_id=planilla_id))
 
     orden = request.form.get("orden", 0, type=int)
 
@@ -509,7 +608,7 @@ def add_regla(planilla_id: str):
     db.session.add(association)
     db.session.commit()
     flash(_("Regla de cálculo agregada exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_reglas", planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/regla/<association_id>/remove", methods=["POST"])
@@ -520,7 +619,7 @@ def remove_regla(planilla_id: str, association_id: str):
     db.session.delete(association)
     db.session.commit()
     flash(_("Regla de cálculo removida exitosamente."), "success")
-    return redirect(url_for("planilla.edit", planilla_id=planilla_id))
+    return redirect(url_for("planilla.config_reglas", planilla_id=planilla_id))
 
 
 # ============================================================================
@@ -792,6 +891,31 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
+
+def _get_planilla_component_counts(planilla_id: str) -> dict:
+    """Get counts of all components associated with a planilla.
+
+    Returns a dictionary with counts for empleados, percepciones, deducciones,
+    prestaciones, and reglas.
+    """
+    return {
+        "empleados_count": db.session.query(PlanillaEmpleado)
+        .filter_by(planilla_id=planilla_id)
+        .count(),
+        "percepciones_count": db.session.query(PlanillaIngreso)
+        .filter_by(planilla_id=planilla_id)
+        .count(),
+        "deducciones_count": db.session.query(PlanillaDeduccion)
+        .filter_by(planilla_id=planilla_id)
+        .count(),
+        "prestaciones_count": db.session.query(PlanillaPrestacion)
+        .filter_by(planilla_id=planilla_id)
+        .count(),
+        "reglas_count": db.session.query(PlanillaReglaCalculo)
+        .filter_by(planilla_id=planilla_id)
+        .count(),
+    }
 
 
 def _populate_form_choices(form: PlanillaForm):

@@ -15,9 +15,11 @@
 
 from datetime import datetime, timezone
 
-import pytest
-
-from coati_payroll.model import generador_de_codigos_unicos, utc_now
+from coati_payroll.model import (
+    generador_codigo_empleado,
+    generador_de_codigos_unicos,
+    utc_now,
+)
 
 
 class TestGeneradorDeCodigosUnicos:
@@ -42,6 +44,45 @@ class TestGeneradorDeCodigosUnicos:
         """Test ULID contains only alphanumeric characters."""
         result = generador_de_codigos_unicos()
         assert result.isalnum()
+
+
+class TestGeneradorCodigoEmpleado:
+    """Tests for employee code generator."""
+
+    def test_returns_string(self):
+        """Test generator returns a string."""
+        result = generador_codigo_empleado()
+        assert isinstance(result, str)
+
+    def test_has_correct_prefix(self):
+        """Test employee code has EMP- prefix."""
+        result = generador_codigo_empleado()
+        assert result.startswith("EMP-")
+
+    def test_has_correct_format(self):
+        """Test employee code has format EMP-XXXXXX."""
+        result = generador_codigo_empleado()
+        parts = result.split("-")
+        assert len(parts) == 2
+        assert parts[0] == "EMP"
+        assert len(parts[1]) == 6
+
+    def test_suffix_is_uppercase(self):
+        """Test suffix is uppercase alphanumeric."""
+        result = generador_codigo_empleado()
+        suffix = result.split("-")[1]
+        assert suffix.isupper()
+        assert suffix.isalnum()
+
+    def test_unique_codes(self):
+        """Test multiple calls produce unique codes."""
+        codes = [generador_codigo_empleado() for _ in range(100)]
+        assert len(codes) == len(set(codes))
+
+    def test_total_length(self):
+        """Test total length is 10 characters (EMP- + 6)."""
+        result = generador_codigo_empleado()
+        assert len(result) == 10
 
 
 class TestUtcNow:

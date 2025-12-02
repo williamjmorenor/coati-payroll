@@ -20,11 +20,13 @@ import sys
 sys.modules["pytest"]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def app():
-    """Create and configure a new app instance for each test module.
+    """Create and configure a new app instance for the entire test session.
 
-    Using module scope to avoid SQLAlchemy metadata conflicts with session table.
+    Using session scope to avoid SQLAlchemy metadata conflicts with session table.
+    The Flask-Session extension creates a Session model that maps to the 'sessions'
+    table, which would cause conflicts if multiple apps were created across modules.
     """
     import os
     from coati_payroll import create_app

@@ -256,6 +256,13 @@ class NominaEngine:
         # Get exchange rate if currencies differ
         emp_calculo.tipo_cambio = self._obtener_tipo_cambio(empleado)
 
+        # Apply exchange rate to convert employee salary to planilla currency
+        # Only convert when employee currency differs from planilla currency
+        if emp_calculo.tipo_cambio != Decimal("1.00"):
+            emp_calculo.salario_base = (
+                emp_calculo.salario_base * emp_calculo.tipo_cambio
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
         # Load employee novelties for this period
         emp_calculo.novedades = self._cargar_novedades(empleado)
 
@@ -330,12 +337,12 @@ class NominaEngine:
         if tipo_cambio:
             return Decimal(str(tipo_cambio.tasa))
 
-        self.warnings.append(
+        raise CalculationError(
             f"No se encontró tipo de cambio para empleado "
             f"{empleado.primer_nombre} {empleado.primer_apellido}. "
-            f"Usando 1.00"
+            f"Se requiere un tipo de cambio de {empleado.moneda.codigo if empleado.moneda else 'desconocido'} "
+            f"a {self.planilla.moneda.codigo if self.planilla.moneda else 'desconocido'}."
         )
-        return Decimal("1.00")
 
     def _cargar_novedades(self, empleado: Empleado) -> dict[str, Decimal]:
         """Load novelties for the employee in this period.

@@ -18,6 +18,7 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th>{{ _('Código') }}</th>
                             <th>{{ _('Identificación') }}</th>
                             <th>{{ _('Nombre Completo') }}</th>
                             <th>{{ _('Cargo') }}</th>
@@ -30,6 +31,7 @@
                     <tbody>
                         {% for employee in employees %}
                         <tr>
+                            <td>{{ employee.codigo_empleado }}</td>
                             <td>{{ employee.identificacion_personal }}</td>
                             <td>{{ employee.primer_nombre }} {{ employee.segundo_nombre or '' }} {{ employee.primer_apellido }} {{ employee.segundo_apellido or '' }}</td>
                             <td>{{ employee.cargo or '-' }}</td>
@@ -61,7 +63,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="7" class="text-center text-muted">{{ _('No hay empleados registrados.') }}</td>
+                            <td colspan="8" class="text-center text-muted">{{ _('No hay empleados registrados.') }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

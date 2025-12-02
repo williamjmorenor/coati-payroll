@@ -31,7 +31,14 @@ from wtforms import (
     StringField,
     SubmitField,
 )
-from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional
+from wtforms.validators import (
+    DataRequired,
+    Email,
+    Length,
+    NumberRange,
+    Optional,
+    Regexp,
+)
 from coati_payroll.i18n import _
 
 
@@ -110,6 +117,20 @@ class ExchangeRateForm(FlaskForm):
 class EmployeeForm(FlaskForm):
     """Form for creating and editing employees."""
 
+    codigo_empleado = StringField(
+        _("Código de empleado"),
+        validators=[
+            Optional(),
+            Length(max=20),
+            Regexp(
+                r"^[A-Za-z0-9\-]+$",
+                message=_("El código solo puede contener letras, números y guiones."),
+            ),
+        ],
+        description=_(
+            "Código único del empleado. Si no se proporciona, se genera automáticamente."
+        ),
+    )
     primer_nombre = StringField(
         _("Primer nombre"), validators=[DataRequired(), Length(max=100)]
     )
