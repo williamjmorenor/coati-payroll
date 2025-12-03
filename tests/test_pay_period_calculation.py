@@ -21,7 +21,6 @@ monthly, biweekly (quincenal), bimonthly (catorcenal), and weekly payrolls.
 from datetime import date
 from decimal import Decimal
 
-import pytest
 
 from coati_payroll.model import (
     db,

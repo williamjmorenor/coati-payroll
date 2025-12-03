@@ -13,7 +13,6 @@
 # limitations under the License.
 """Unit tests for the authentication module."""
 
-import pytest
 
 from coati_payroll.auth import proteger_passwd, ph
 

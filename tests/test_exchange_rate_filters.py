@@ -222,7 +222,7 @@ class TestExchangeRateFilters:
             nio = db.session.execute(
                 db.select(Moneda).filter_by(codigo="NIO")
             ).scalar_one()
-            
+
             usd_id = usd.id
             nio_id = nio.id
 
@@ -230,14 +230,16 @@ class TestExchangeRateFilters:
             db.session.execute(
                 db.delete(TipoCambio).where(
                     TipoCambio.moneda_origen_id == usd_id,
-                    TipoCambio.moneda_destino_id == nio_id
+                    TipoCambio.moneda_destino_id == nio_id,
                 )
             )
             db.session.commit()
 
             for day in range(1, 20):
                 tc = TipoCambio()
-                tc.fecha = date(2025, 3, day)  # Use March to avoid conflict with existing data
+                tc.fecha = date(
+                    2025, 3, day
+                )  # Use March to avoid conflict with existing data
                 tc.moneda_origen_id = usd_id
                 tc.moneda_destino_id = nio_id
                 tc.tasa = 36.0 + day * 0.1

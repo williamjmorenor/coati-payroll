@@ -16,7 +16,6 @@
 from datetime import date
 from decimal import Decimal
 
-import pytest
 
 from coati_payroll.model import (
     db,
@@ -683,9 +682,9 @@ class TestNominaRecalculation:
             db.session.commit()
 
             # Verify novedades were created
-            novedades_count = db.session.query(NominaNovedad).filter_by(
-                nomina_id=nomina.id
-            ).count()
+            novedades_count = (
+                db.session.query(NominaNovedad).filter_by(nomina_id=nomina.id).count()
+            )
             assert novedades_count == 2
 
             # Recalculate the nomina (this should not fail with IntegrityError)
@@ -702,14 +701,16 @@ class TestNominaRecalculation:
             assert old_nomina is None
 
             # The old novedades should no longer exist
-            old_novedades_count = db.session.query(NominaNovedad).filter_by(
-                nomina_id=original_nomina_id
-            ).count()
+            old_novedades_count = (
+                db.session.query(NominaNovedad)
+                .filter_by(nomina_id=original_nomina_id)
+                .count()
+            )
             assert old_novedades_count == 0
 
             # A new nomina should have been created
-            new_nomina = db.session.query(Nomina).filter_by(
-                planilla_id=planilla.id
-            ).first()
+            new_nomina = (
+                db.session.query(Nomina).filter_by(planilla_id=planilla.id).first()
+            )
             assert new_nomina is not None
             assert new_nomina.id != original_nomina_id

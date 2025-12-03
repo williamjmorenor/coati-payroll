@@ -20,8 +20,6 @@ template rendering errors like TemplateNotFound.
 """
 
 import re
-import pytest
-from flask import url_for
 
 
 class TestRouteRendering:
@@ -165,7 +163,10 @@ class TestRouteRendering:
                 ("/exchange_rate/edit/nonexistent-id-12345", "exchange_rate.edit"),
                 ("/employee/edit/nonexistent-id-12345", "employee.edit"),
                 ("/custom_field/edit/nonexistent-id-12345", "custom_field.edit"),
-                ("/calculation-rule/edit/nonexistent-id-12345", "calculation_rule.edit"),
+                (
+                    "/calculation-rule/edit/nonexistent-id-12345",
+                    "calculation_rule.edit",
+                ),
                 ("/percepciones/edit/nonexistent-id-12345", "percepcion.edit"),
                 ("/deducciones/edit/nonexistent-id-12345", "deduccion.edit"),
                 ("/prestaciones/edit/nonexistent-id-12345", "prestacion.edit"),
@@ -209,10 +210,9 @@ class TestRouteRendering:
                     )
 
             # Report all errors at once for better debugging
-            assert not errors, (
-                f"The following routes returned 500 server errors:\n"
-                + "\n".join(errors)
-            )
+            assert (
+                not errors
+            ), "The following routes returned 500 server errors:\n" + "\n".join(errors)
 
 
 class TestTemplateRendering:
@@ -250,12 +250,12 @@ class TestTemplateRendering:
 
                 # Check for common error messages in response
                 response_text = response.data.decode("utf-8", errors="ignore").lower()
-                assert "templatenotfound" not in response_text, (
-                    f"Route {url} has TemplateNotFound error in response"
-                )
-                assert "jinja2.exceptions" not in response_text, (
-                    f"Route {url} has Jinja2 exception in response"
-                )
+                assert (
+                    "templatenotfound" not in response_text
+                ), f"Route {url} has TemplateNotFound error in response"
+                assert (
+                    "jinja2.exceptions" not in response_text
+                ), f"Route {url} has Jinja2 exception in response"
 
 
 class TestProfileRoute:
@@ -275,7 +275,7 @@ class TestProfileRoute:
 
     def test_profile_route_requires_authentication(self, app):
         """Test that unauthenticated users are redirected to login.
-        
+
         Note: This test is covered by test_unauthenticated_routes_redirect_to_login
         which tests all protected routes including /user/profile.
         """
