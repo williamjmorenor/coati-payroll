@@ -22,6 +22,7 @@ from coati_payroll.model import (
     db,
     Moneda,
     Nomina,
+    NominaNovedad,
     TipoCambio,
     Empleado,
     Planilla,
@@ -580,3 +581,135 @@ class TestNominaRecalculation:
             # The original nomina should no longer exist
             old_nomina = db.session.get(Nomina, original_nomina_id)
             assert old_nomina is None
+
+    def test_recalculate_nomina_with_novedades(self, app, authenticated_client):
+        """Test that recalculating a nomina with novedades works correctly.
+
+        This test verifies the fix for the IntegrityError when recalculating
+        a nomina that has associated NominaNovedad records. Previously, the
+        recalculation would fail with:
+        sqlite3.IntegrityError: NOT NULL constraint failed: nomina_novedad.nomina_id
+
+        The fix ensures that NominaNovedad records are deleted before the nomina
+        is deleted and recreated.
+        """
+        with app.app_context():
+            # Create currencies
+            nio = Moneda(
+                codigo="NIO_NOV",
+                nombre="Córdoba Nicaragüense",
+                simbolo="C$",
+                activo=True,
+            )
+            db.session.add(nio)
+            db.session.flush()
+
+            # Create payroll type
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL_NOV",
+                descripcion="Planilla Mensual con Novedades",
+                dias=30,
+                periodicidad="mensual",
+                periodos_por_anio=12,
+            )
+            db.session.add(tipo_planilla)
+            db.session.flush()
+
+            # Create planilla
+            planilla = Planilla(
+                nombre="Planilla con Novedades Test",
+                descripcion="Planilla para test de novedades",
+                activo=True,
+                tipo_planilla_id=tipo_planilla.id,
+                moneda_id=nio.id,
+            )
+            db.session.add(planilla)
+            db.session.flush()
+
+            # Create employee
+            empleado = Empleado(
+                primer_nombre="Test",
+                primer_apellido="Novedades",
+                identificacion_personal="001-NOV-0001A",
+                salario_base=Decimal("15000.00"),
+                moneda_id=nio.id,
+                activo=True,
+            )
+            db.session.add(empleado)
+            db.session.flush()
+
+            # Associate employee with planilla
+            planilla_empleado = PlanillaEmpleado(
+                planilla_id=planilla.id,
+                empleado_id=empleado.id,
+                activo=True,
+            )
+            db.session.add(planilla_empleado)
+            db.session.commit()
+
+            # Execute the payroll
+            engine = NominaEngine(
+                planilla=planilla,
+                periodo_inicio=date(2024, 11, 1),
+                periodo_fin=date(2024, 11, 30),
+                fecha_calculo=date(2024, 11, 30),
+                usuario="test",
+            )
+            nomina = engine.ejecutar()
+
+            assert nomina is not None
+            assert nomina.estado == "generado"
+            original_nomina_id = nomina.id
+
+            # Create novedades (novelties) for this nomina
+            novedad1 = NominaNovedad(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                codigo_concepto="HORAS_EXTRA",
+                tipo_valor="horas",
+                valor_cantidad=Decimal("10.00"),
+                fecha_novedad=date(2024, 11, 15),
+            )
+            novedad2 = NominaNovedad(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                codigo_concepto="BONO_ESPECIAL",
+                tipo_valor="monto",
+                valor_cantidad=Decimal("2000.00"),
+                fecha_novedad=date(2024, 11, 20),
+            )
+            db.session.add(novedad1)
+            db.session.add(novedad2)
+            db.session.commit()
+
+            # Verify novedades were created
+            novedades_count = db.session.query(NominaNovedad).filter_by(
+                nomina_id=nomina.id
+            ).count()
+            assert novedades_count == 2
+
+            # Recalculate the nomina (this should not fail with IntegrityError)
+            response = authenticated_client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/recalcular",
+                follow_redirects=False,
+            )
+
+            # Should redirect after successful recalculation
+            assert response.status_code == 302
+
+            # The original nomina should no longer exist
+            old_nomina = db.session.get(Nomina, original_nomina_id)
+            assert old_nomina is None
+
+            # The old novedades should no longer exist
+            old_novedades_count = db.session.query(NominaNovedad).filter_by(
+                nomina_id=original_nomina_id
+            ).count()
+            assert old_novedades_count == 0
+
+            # A new nomina should have been created
+            new_nomina = db.session.query(Nomina).filter_by(
+                planilla_id=planilla.id
+            ).first()
+            assert new_nomina is not None
+            assert new_nomina.id != original_nomina_id

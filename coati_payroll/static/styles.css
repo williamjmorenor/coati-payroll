@@ -10,6 +10,7 @@
   --coati-dark: #5D4037;      /* Marrón Mocha Oscuro - navegación */
   --coati-navbar: #5D4037;    /* Marrón Mocha Oscuro - navbar */
   --coati-primary: #A0522D;   /* Terracota / Naranja Quemado - acciones primarias */
+  --coati-primary-hover: #8B4513; /* Saddle Brown - hover state for primary */
   --coati-mid:  #5D4037;      /* Marrón para acentos */
   --coati-sand: #FAF8F6;      /* Blanco cálido/crudo - fondo sidebar */
   --coati-light: #FAF8F6;     /* Blanco cálido/crudo */
@@ -292,8 +293,8 @@ main h2 {
   color: #FFFFFF;
 }
 .btn-primary:hover {
-  background: #8B4513;
-  border-color: #8B4513;
+  background: var(--coati-primary-hover);
+  border-color: var(--coati-primary-hover);
 }
 .btn-secondary{ 
   background: transparent; 
@@ -325,6 +326,27 @@ main h2 {
   background: rgba(220,53,69,0.08);
   border-color: #dc3545;
   color: #dc3545;
+}
+.btn-outline-secondary {
+  border-color: var(--coati-border);
+  color: var(--text-secondary);
+  background: transparent;
+}
+.btn-outline-secondary:hover {
+  background: var(--coati-sand);
+  border-color: var(--coati-border);
+  color: var(--text-primary);
+}
+/* Custom Coati primary button */
+.btn-coaty {
+  background: var(--coati-primary);
+  border-color: var(--coati-primary);
+  color: #FFFFFF;
+}
+.btn-coaty:hover {
+  background: var(--coati-primary-hover);
+  border-color: var(--coati-primary-hover);
+  color: #FFFFFF;
 }
 
 /* Formularios - compactos */
@@ -617,7 +639,7 @@ label{ color: var(--text-primary); font-size: 12px; font-weight: 500; }
 }
 
 .login-footer a:hover {
-  color: #8B4513;
+  color: var(--coati-primary-hover);
 }
 
 /* Login page responsive */
@@ -754,7 +776,7 @@ label{ color: var(--text-primary); font-size: 12px; font-weight: 500; }
 
 /* Accents for links */
 a{ color: var(--coati-primary); transition: color var(--transition); }
-a:hover{ color: #8B4513; }
+a:hover{ color: var(--coati-primary-hover); }
 
 /* Utilities keeping compatibility with previous classes */
 .bg-coaty-dark{ background-color: var(--coati-dark) !important }

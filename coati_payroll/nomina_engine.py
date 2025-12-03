@@ -264,6 +264,13 @@ class NominaEngine:
                 emp_calculo.salario_base * emp_calculo.tipo_cambio
             ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
+        # Calculate salary for the pay period based on actual days worked
+        # The employee's salario_base is always the monthly salary
+        # We need to convert it to the actual period salary based on days
+        emp_calculo.salario_base = self._calcular_salario_periodo(
+            emp_calculo.salario_base
+        )
+
         # Load employee novelties for this period
         emp_calculo.novedades = self._cargar_novedades(empleado)
 
@@ -308,6 +315,53 @@ class NominaEngine:
         self._actualizar_acumulados(emp_calculo, nomina_empleado)
 
         return emp_calculo
+
+    def _calcular_salario_periodo(self, salario_mensual: Decimal) -> Decimal:
+        """Calculate the salary for the pay period based on actual days.
+
+        The employee's base salary is always monthly. This method converts it
+        to the actual period salary by calculating the daily salary and
+        multiplying by the number of days in the current payroll period.
+
+        Formula:
+        - Daily salary = Monthly salary / dias_base (typically 30)
+        - Period salary = Daily salary × actual days in period
+
+        Args:
+            salario_mensual: The monthly salary (already in planilla currency)
+
+        Returns:
+            The prorated salary for this pay period
+        """
+        if not self.planilla or not self.planilla.tipo_planilla:
+            return salario_mensual
+
+        # Validate period dates
+        if not self.periodo_fin or not self.periodo_inicio:
+            return salario_mensual
+
+        # Get the base days for calculating daily salary (usually 30 for monthly)
+        dias_base = Decimal(str(self.planilla.tipo_planilla.dias or 30))
+
+        # Calculate actual days in this pay period
+        dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
+
+        # If the period days equals the base days, return the full salary
+        # to avoid rounding issues (e.g., for monthly payrolls)
+        if dias_periodo == int(dias_base):
+            return salario_mensual
+
+        # Calculate daily salary
+        salario_diario = (salario_mensual / dias_base).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+        # Calculate period salary
+        salario_periodo = (salario_diario * Decimal(str(dias_periodo))).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+        return salario_periodo
 
     def _obtener_tipo_cambio(self, empleado: Empleado) -> Decimal:
         """Get the exchange rate for the employee's salary currency.

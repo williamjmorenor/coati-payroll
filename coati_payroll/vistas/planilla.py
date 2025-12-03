@@ -909,6 +909,7 @@ def recalcular_nomina(planilla_id: str, nomina_id: str):
         Nomina,
         NominaEmpleado,
         NominaDetalle,
+        NominaNovedad,
         AdelantoAbono,
     )
     from coati_payroll.nomina_engine import NominaEngine
@@ -937,6 +938,11 @@ def recalcular_nomina(planilla_id: str, nomina_id: str):
     # that were created for this nomina
     db.session.execute(
         db.delete(AdelantoAbono).where(AdelantoAbono.nomina_id == nomina_id)
+    )
+
+    # Delete NominaNovedad records (novelties) associated with this nomina
+    db.session.execute(
+        db.delete(NominaNovedad).where(NominaNovedad.nomina_id == nomina_id)
     )
 
     # Delete NominaDetalle records for all NominaEmpleado of this nomina
