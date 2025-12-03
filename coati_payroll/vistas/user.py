@@ -18,8 +18,8 @@ from __future__ import annotations
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from coati_payroll.auth import proteger_passwd
-from coati_payroll.forms import UserForm
+from coati_payroll.auth import proteger_passwd, validar_acceso
+from coati_payroll.forms import UserForm, ProfileForm
 from coati_payroll.i18n import _
 from coati_payroll.model import Usuario, db
 from coati_payroll.vistas.constants import PER_PAGE
@@ -127,3 +127,56 @@ def delete(id: str):
     db.session.commit()
     flash(_("Usuario eliminado exitosamente."), "success")
     return redirect(url_for("user.index"))
+
+
+@user_bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    """Edit current user's profile and password."""
+    form = ProfileForm(obj=current_user)
+
+    if form.validate_on_submit():
+        # Update basic profile information
+        current_user.nombre = form.nombre.data
+        current_user.apellido = form.apellido.data
+        current_user.correo_electronico = form.correo_electronico.data
+
+        # Handle password change if any password field has data
+        password_change_attempted = (
+            form.current_password.data
+            or form.new_password.data
+            or form.confirm_password.data
+        )
+
+        if password_change_attempted:
+            # Validate password change
+            error_message = None
+
+            if not form.current_password.data:
+                error_message = _("Debe ingresar la contraseña actual.")
+            elif not validar_acceso(current_user.usuario, form.current_password.data):
+                error_message = _("La contraseña actual es incorrecta.")
+            elif not form.new_password.data:
+                error_message = _("Debe ingresar una nueva contraseña.")
+            elif form.new_password.data != form.confirm_password.data:
+                error_message = _("Las contraseñas no coinciden.")
+
+            if error_message:
+                flash(error_message, "error")
+                return render_template("modules/user/profile.html", form=form)
+
+            # Update password
+            current_user.acceso = proteger_passwd(form.new_password.data)
+            flash(_("Contraseña actualizada exitosamente."), "success")
+
+        current_user.modificado_por = current_user.usuario
+        db.session.commit()
+        flash(_("Perfil actualizado exitosamente."), "success")
+        return redirect(url_for("user.profile"))
+
+    # Clear password fields
+    form.current_password.data = ""
+    form.new_password.data = ""
+    form.confirm_password.data = ""
+
+    return render_template("modules/user/profile.html", form=form)

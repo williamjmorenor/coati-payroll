@@ -35,6 +35,8 @@ import operator
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
+from coati_payroll.enums import StepType
+
 
 # Safe operators for expression evaluation
 SAFE_OPERATORS = {
@@ -67,7 +69,10 @@ SAFE_FUNCTIONS = {
 
 
 class FormulaEngineError(Exception):
-    """Base exception for formula engine errors."""
+    """Base exception for formula engine errors.
+
+    Python 3.11+ enhancement: Supports exception notes via add_note() method.
+    """
 
     pass
 
@@ -77,13 +82,19 @@ TaxEngineError = FormulaEngineError
 
 
 class ValidationError(FormulaEngineError):
-    """Exception for validation errors in schema or data."""
+    """Exception for validation errors in schema or data.
+
+    Python 3.11+ enhancement: Can use add_note() to append contextual information.
+    """
 
     pass
 
 
 class CalculationError(FormulaEngineError):
-    """Exception for calculation errors during execution."""
+    """Exception for calculation errors during execution.
+
+    Python 3.11+ enhancement: Supports add_note() for additional context.
+    """
 
     pass
 
@@ -487,14 +498,14 @@ class FormulaEngine:
         step_name = step.get("name")
 
         match step_type:
-            case "calculation":
+            case StepType.CALCULATION:
                 formula = step.get("formula", "")
                 result = self._evaluate_expression(formula)
                 self.variables[step_name] = result
                 self.results[step_name] = result
                 return result
 
-            case "conditional":
+            case StepType.CONDITIONAL:
                 condition = step.get("condition", {})
                 if_true = step.get("if_true", "0")
                 if_false = step.get("if_false", "0")
@@ -508,7 +519,7 @@ class FormulaEngine:
                 self.results[step_name] = result
                 return result
 
-            case "tax_lookup":
+            case StepType.TAX_LOOKUP:
                 table_name = step.get("table", "")
                 input_var = step.get("input", "")
                 input_value = self.variables.get(input_var, Decimal("0"))
@@ -518,7 +529,7 @@ class FormulaEngine:
                 self.results[step_name] = tax_result
                 return tax_result
 
-            case "assignment":
+            case StepType.ASSIGNMENT:
                 value = step.get("value")
                 result = self._resolve_value(value)
                 self.variables[step_name] = result
@@ -561,7 +572,12 @@ class FormulaEngine:
                 self._execute_step(step)
             except Exception as e:
                 step_name = step.get("name", "unknown")
-                raise CalculationError(f"Error in step '{step_name}': {e}") from e
+                step_type = step.get("type", "unknown")
+                error = CalculationError(f"Error in step '{step_name}': {e}")
+                # Python 3.11+ feature: add_note() for additional context
+                error.add_note(f"Step type: {step_type}")
+                error.add_note(f"Available variables: {list(self.variables.keys())}")
+                raise error from e
 
         # Get the final output
         output_name = self.schema.get("output", "")

@@ -380,6 +380,12 @@ class Planilla(database.Model, BaseTabla):
         database.Boolean(), default=True, nullable=False
     )
 
+    # Accounting control for base salary
+    # Base salary is the foundation of payroll calculation and needs its own
+    # accounting accounts to generate proper accounting vouchers
+    codigo_cuenta_debe_salario = database.Column(database.String(64), nullable=True)
+    codigo_cuenta_haber_salario = database.Column(database.String(64), nullable=True)
+
     # relaciones con componentes configurados
     planilla_percepciones = database.relationship(
         "PlanillaIngreso",

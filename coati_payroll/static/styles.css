@@ -713,6 +713,7 @@ label{ color: var(--text-primary); font-size: 12px; font-weight: 500; }
   .sidebar.open{ left: 0; width: 240px; }
   .sidebar:hover { width: 240px; }
   .sidebar .nav-link span { opacity: 1; }
+  .sidebar .nav-link span span { opacity: 1; }
   .sidebar .sidebar-header { 
     opacity: 1; 
     height: auto; 
@@ -730,6 +731,11 @@ label{ color: var(--text-primary); font-size: 12px; font-weight: 500; }
   /* Show mobile-only links in sidebar when on small screens */
   .sidebar .mobile-only-links {
     display: block;
+  }
+  
+  /* Show submenu arrows on mobile */
+  .sidebar .submenu-arrow {
+    opacity: 1;
   }
   
   /* Center logo in navbar on small screens */

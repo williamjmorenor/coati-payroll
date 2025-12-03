@@ -256,3 +256,125 @@ class TestTemplateRendering:
                 assert "jinja2.exceptions" not in response_text, (
                     f"Route {url} has Jinja2 exception in response"
                 )
+
+
+class TestProfileRoute:
+    """Tests for the user profile functionality."""
+
+    def test_profile_route_renders_for_authenticated_users(
+        self, app, authenticated_client
+    ):
+        """Test that the profile route renders correctly for authenticated users."""
+        response = authenticated_client.get("/user/profile")
+        assert response.status_code == 200
+
+        response_text = response.data.decode("utf-8", errors="ignore")
+        # Check for profile-related content
+        assert "Mi Perfil" in response_text or "perfil" in response_text.lower()
+        assert "Contraseña" in response_text or "contraseña" in response_text.lower()
+
+    def test_profile_route_requires_authentication(self, app):
+        """Test that unauthenticated users are redirected to login.
+        
+        Note: This test is covered by test_unauthenticated_routes_redirect_to_login
+        which tests all protected routes including /user/profile.
+        """
+        # Create a fresh client with a new session
+        with app.test_client() as fresh_client:
+            # First, explicitly logout by visiting logout URL
+            fresh_client.get("/auth/logout", follow_redirects=False)
+            # Now test that profile requires auth
+            response = fresh_client.get("/user/profile", follow_redirects=False)
+            # Should redirect to login (302)
+            assert response.status_code == 302
+            assert "/auth/login" in response.location
+
+    def test_profile_update_basic_info(self, app, authenticated_client):
+        """Test updating basic profile information without password change."""
+        response = authenticated_client.post(
+            "/user/profile",
+            data={
+                "nombre": "Updated Name",
+                "apellido": "Updated Lastname",
+                "correo_electronico": "updated@example.com",
+                "current_password": "",
+                "new_password": "",
+                "confirm_password": "",
+                "submit": "Actualizar Perfil",
+            },
+            follow_redirects=True,
+        )
+
+        assert response.status_code == 200
+        response_text = response.data.decode("utf-8", errors="ignore").lower()
+        # Should show success message or profile page
+        assert "actualizado" in response_text or "updated name" in response_text
+
+    def test_profile_password_change_requires_current_password(
+        self, app, authenticated_client
+    ):
+        """Test that password change requires correct current password."""
+        response = authenticated_client.post(
+            "/user/profile",
+            data={
+                "nombre": "Test",
+                "apellido": "User",
+                "correo_electronico": "test@example.com",
+                "current_password": "wrong-password",
+                "new_password": "newpass123",
+                "confirm_password": "newpass123",
+                "submit": "Actualizar Perfil",
+            },
+            follow_redirects=True,
+        )
+
+        assert response.status_code == 200
+        response_text = response.data.decode("utf-8", errors="ignore").lower()
+        # Should show error about incorrect current password
+        assert "incorrecta" in response_text or "incorrect" in response_text
+
+    def test_profile_password_change_requires_matching_passwords(
+        self, app, authenticated_client
+    ):
+        """Test that new password and confirmation must match."""
+        response = authenticated_client.post(
+            "/user/profile",
+            data={
+                "nombre": "Test",
+                "apellido": "User",
+                "correo_electronico": "test@example.com",
+                "current_password": "testpassword",
+                "new_password": "newpass123",
+                "confirm_password": "different123",
+                "submit": "Actualizar Perfil",
+            },
+            follow_redirects=True,
+        )
+
+        assert response.status_code == 200
+        response_text = response.data.decode("utf-8", errors="ignore").lower()
+        # Should show error about passwords not matching
+        assert "coinciden" in response_text or "match" in response_text
+
+    def test_profile_password_change_requires_current_password_when_new_provided(
+        self, app, authenticated_client
+    ):
+        """Test that providing new password without current password shows error."""
+        response = authenticated_client.post(
+            "/user/profile",
+            data={
+                "nombre": "Test",
+                "apellido": "User",
+                "correo_electronico": "test@example.com",
+                "current_password": "",
+                "new_password": "newpass123",
+                "confirm_password": "newpass123",
+                "submit": "Actualizar Perfil",
+            },
+            follow_redirects=True,
+        )
+
+        assert response.status_code == 200
+        response_text = response.data.decode("utf-8", errors="ignore").lower()
+        # Should show error about current password being required
+        assert "actual" in response_text or "current" in response_text

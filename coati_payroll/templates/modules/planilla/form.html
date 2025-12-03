@@ -134,6 +134,26 @@
                             </div>
                         </div>
 
+                        <hr class="my-4">
+                        <h6 class="text-muted mb-3"><i class="bi bi-book me-2"></i>{{ _('Cuentas Contables del Salario Base') }}</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.codigo_cuenta_debe_salario.label(class="form-label") }}
+                                {{ form.codigo_cuenta_debe_salario(class="form-control", placeholder="ej: 610-001") }}
+                                {% if form.codigo_cuenta_debe_salario.description %}
+                                <div class="form-text">{{ form.codigo_cuenta_debe_salario.description }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.codigo_cuenta_haber_salario.label(class="form-label") }}
+                                {{ form.codigo_cuenta_haber_salario(class="form-control", placeholder="ej: 210-001") }}
+                                {% if form.codigo_cuenta_haber_salario.description %}
+                                <div class="form-text">{{ form.codigo_cuenta_haber_salario.description }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <a href="{{ url_for('planilla.index') }}" class="btn btn-outline-secondary">{{ _('Cancelar') }}</a>
                             {{ form.submit(class="btn btn-coaty") }}

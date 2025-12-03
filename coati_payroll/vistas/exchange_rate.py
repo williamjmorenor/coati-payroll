@@ -43,18 +43,56 @@ def get_currency_choices():
 @exchange_rate_bp.route("/")
 @login_required
 def index():
-    """List all exchange rates with pagination."""
+    """List all exchange rates with pagination and filters."""
     page = request.args.get("page", 1, type=int)
+
+    # Get filter parameters
+    fecha_desde = request.args.get("fecha_desde", type=str)
+    fecha_hasta = request.args.get("fecha_hasta", type=str)
+    moneda_origen_id = (
+        request.args.get("moneda_origen_id", type=str)
+        if request.args.get("moneda_origen_id")
+        else None
+    )
+    moneda_destino_id = (
+        request.args.get("moneda_destino_id", type=str)
+        if request.args.get("moneda_destino_id")
+        else None
+    )
+
+    # Build query with filters
+    query = db.select(TipoCambio)
+
+    if fecha_desde:
+        query = query.filter(TipoCambio.fecha >= fecha_desde)
+    if fecha_hasta:
+        query = query.filter(TipoCambio.fecha <= fecha_hasta)
+    if moneda_origen_id:
+        query = query.filter(TipoCambio.moneda_origen_id == moneda_origen_id)
+    if moneda_destino_id:
+        query = query.filter(TipoCambio.moneda_destino_id == moneda_destino_id)
+
+    query = query.order_by(TipoCambio.fecha.desc())
+
     pagination = db.paginate(
-        db.select(TipoCambio).order_by(TipoCambio.fecha.desc()),
+        query,
         page=page,
         per_page=PER_PAGE,
         error_out=False,
     )
+
+    # Get currencies for filter dropdowns
+    currencies = get_currency_choices()
+
     return render_template(
         "modules/exchange_rate/index.html",
         exchange_rates=pagination.items,
         pagination=pagination,
+        currencies=currencies,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        moneda_origen_id=moneda_origen_id,
+        moneda_destino_id=moneda_destino_id,
     )
 
 

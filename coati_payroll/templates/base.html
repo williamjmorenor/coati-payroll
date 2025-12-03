@@ -41,7 +41,7 @@
         <div class="navbar-collapse justify-content-end d-none d-lg-flex" id="topNav">
             <ul class="navbar-nav flex-row gap-2 mb-0">
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link" href="{{ url_for('user.profile') }}">
                         <i class="bi bi-person-circle"></i>
                         {{ _('Mi Perfil') }}
                     </a>
@@ -186,7 +186,7 @@
             <div class="mobile-only-links">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="#">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('user.profile') }}">
                             <i class="bi bi-person-circle me-2"></i>
                             <span>{{ _('Mi Perfil') }}</span>
                         </a>

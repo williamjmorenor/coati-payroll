@@ -81,6 +81,8 @@ def new():
             prioridad_adelantos=form.prioridad_adelantos.data or 251,
             aplicar_prestamos_automatico=form.aplicar_prestamos_automatico.data,
             aplicar_adelantos_automatico=form.aplicar_adelantos_automatico.data,
+            codigo_cuenta_debe_salario=form.codigo_cuenta_debe_salario.data,
+            codigo_cuenta_haber_salario=form.codigo_cuenta_haber_salario.data,
             activo=form.activo.data,
             creado_por=current_user.usuario,
         )
@@ -111,6 +113,8 @@ def edit(planilla_id: str):
         planilla.prioridad_adelantos = form.prioridad_adelantos.data or 251
         planilla.aplicar_prestamos_automatico = form.aplicar_prestamos_automatico.data
         planilla.aplicar_adelantos_automatico = form.aplicar_adelantos_automatico.data
+        planilla.codigo_cuenta_debe_salario = form.codigo_cuenta_debe_salario.data
+        planilla.codigo_cuenta_haber_salario = form.codigo_cuenta_haber_salario.data
         planilla.activo = form.activo.data
         planilla.modificado_por = current_user.usuario
         db.session.commit()

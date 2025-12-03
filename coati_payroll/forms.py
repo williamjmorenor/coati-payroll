@@ -21,6 +21,8 @@ from __future__ import annotations
 
 # Terceros
 from flask_wtf import FlaskForm
+
+from coati_payroll.enums import TipoUsuario
 from wtforms import (
     BooleanField,
     DateField,
@@ -80,14 +82,35 @@ class UserForm(FlaskForm):
     tipo = SelectField(
         _("Tipo de usuario"),
         choices=[
-            ("admin", _("Administrador")),
-            ("hhrr", _("Recursos Humanos")),
-            ("audit", _("Auditoría")),
+            (TipoUsuario.ADMIN, _("Administrador")),
+            (TipoUsuario.HHRR, _("Recursos Humanos")),
+            (TipoUsuario.AUDIT, _("Auditoría")),
         ],
         validators=[DataRequired()],
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
+
+
+class ProfileForm(FlaskForm):
+    """Form for editing user profile and password."""
+
+    nombre = StringField(_("Nombre"), validators=[Optional(), Length(max=100)])
+    apellido = StringField(_("Apellido"), validators=[Optional(), Length(max=100)])
+    correo_electronico = StringField(
+        _("Correo electrónico"),
+        validators=[Optional(), Email(), Length(max=150)],
+    )
+    current_password = PasswordField(
+        _("Contraseña actual"), validators=[Optional(), Length(min=6)]
+    )
+    new_password = PasswordField(
+        _("Nueva contraseña"), validators=[Optional(), Length(min=6)]
+    )
+    confirm_password = PasswordField(
+        _("Confirmar nueva contraseña"), validators=[Optional(), Length(min=6)]
+    )
+    submit = SubmitField(_("Actualizar Perfil"))
 
 
 class CurrencyForm(FlaskForm):
@@ -691,6 +714,17 @@ class PlanillaForm(FlaskForm):
         _("Aplicar Adelantos Automáticamente"),
         default=True,
         description=_("¿Deducir automáticamente los adelantos salariales?"),
+    )
+    # Accounting fields for base salary
+    codigo_cuenta_debe_salario = StringField(
+        _("Cuenta Débito (Salario Base)"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta de débito para contabilizar el salario base (gasto)"),
+    )
+    codigo_cuenta_haber_salario = StringField(
+        _("Cuenta Crédito (Salario Base)"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta de crédito para contabilizar el salario base (pasivo)"),
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))

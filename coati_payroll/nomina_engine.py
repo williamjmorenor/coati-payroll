@@ -32,6 +32,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
 
+from coati_payroll.enums import AdelantoEstado, FormulaType, NominaEstado
 from coati_payroll.model import (
     db,
     Planilla,
@@ -201,7 +202,7 @@ class NominaEngine:
             periodo_inicio=self.periodo_inicio,
             periodo_fin=self.periodo_fin,
             generado_por=self.usuario,
-            estado="generado",
+            estado=NominaEstado.GENERADO,
             total_bruto=Decimal("0.00"),
             total_deducciones=Decimal("0.00"),
             total_neto=Decimal("0.00"),
@@ -630,7 +631,7 @@ class NominaEngine:
             db.session.execute(
                 db.select(Adelanto).filter(
                     Adelanto.empleado_id == empleado.id,
-                    Adelanto.estado == "aprobado",
+                    Adelanto.estado == AdelantoEstado.APROBADO,
                     Adelanto.saldo_pendiente > 0,
                 )
             )
@@ -719,7 +720,7 @@ class NominaEngine:
         # Update adelanto balance
         adelanto.saldo_pendiente = max(saldo_posterior, Decimal("0.00"))
         if adelanto.saldo_pendiente <= 0:
-            adelanto.estado = "pagado"
+            adelanto.estado = AdelantoEstado.PAGADO
 
     def _procesar_prestaciones(self, emp_calculo: EmpleadoCalculo) -> None:
         """Process employer benefits for an employee.
@@ -811,10 +812,10 @@ class NominaEngine:
             ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         match formula_tipo:
-            case "fijo":
+            case FormulaType.FIJO:
                 return Decimal(str(monto_default or 0))
 
-            case "porcentaje_salario" | "porcentaje":
+            case FormulaType.PORCENTAJE_SALARIO | FormulaType.PORCENTAJE:
                 if porcentaje:
                     return (
                         emp_calculo.salario_base
@@ -823,7 +824,7 @@ class NominaEngine:
                     ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 return Decimal("0.00")
 
-            case "porcentaje_bruto":
+            case FormulaType.PORCENTAJE_BRUTO:
                 if porcentaje:
                     return (
                         emp_calculo.salario_bruto
@@ -832,7 +833,7 @@ class NominaEngine:
                     ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 return Decimal("0.00")
 
-            case "formula":
+            case FormulaType.FORMULA:
                 if formula and isinstance(formula, dict):
                     try:
                         # Merge variables with formula inputs
