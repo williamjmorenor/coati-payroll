@@ -125,7 +125,9 @@ class TestNovedadesCalculation:
 
             # Expected: 10,000 / 30 = 333.33... (rounded to 333.33), then 333.33 * 15 = 4,999.95
             # This is correct behavior as daily salary is rounded before multiplying by days
-            salario_diario = (Decimal("10000.00") / Decimal("30")).quantize(Decimal("0.01"))
+            salario_diario = (Decimal("10000.00") / Decimal("30")).quantize(
+                Decimal("0.01")
+            )
             expected_salary = (salario_diario * Decimal("15")).quantize(Decimal("0.01"))
 
             assert emp_calculo.salario_base == expected_salary, (
@@ -240,9 +242,9 @@ class TestNovedadesCalculation:
 
             # First calculation without novedad should have no perceptions
             emp_calculo_1 = engine.empleados_calculo[0]
-            assert emp_calculo_1.total_percepciones == Decimal("0.00"), (
-                "Without novedad, overtime should be 0"
-            )
+            assert emp_calculo_1.total_percepciones == Decimal(
+                "0.00"
+            ), "Without novedad, overtime should be 0"
 
             # Now add a novedad for 8 overtime hours
             novedad = NominaNovedad(
@@ -411,9 +413,9 @@ class TestNovedadesCalculation:
             # Verify the bonus perception was still calculated (without novedad)
             # Base salary for 16 days: 10,000 / 30 * 16 = 5,333.33
             # The perception should be calculated based on default value, not novedad
-            assert emp_calculo2.total_percepciones == Decimal("500.00"), (
-                "Second nomina should calculate perception without first nomina's novedad"
-            )
+            assert emp_calculo2.total_percepciones == Decimal(
+                "500.00"
+            ), "Second nomina should calculate perception without first nomina's novedad"
 
     def test_novedad_estado_changes_when_nomina_applied(self, app):
         """Test that novedad estado changes to 'ejecutada' when nomina is applied.
@@ -536,27 +538,33 @@ class TestNovedadesCalculation:
             # Now simulate applying the nomina (mark as aplicado)
             # This would normally be done through the view, but we'll do it directly
             nomina.estado = NominaEstado.APLICADO
-            
+
             # Update novedades estado (simulating what the view does)
             from coati_payroll.enums import NovedadEstado
-            
-            empleado_ids = [pe.empleado_id for pe in planilla.planilla_empleados if pe.activo]
-            novedades = db.session.execute(
-                db.select(NominaNovedad).filter(
-                    NominaNovedad.empleado_id.in_(empleado_ids),
-                    NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
-                    NominaNovedad.fecha_novedad <= nomina.periodo_fin,
-                    NominaNovedad.estado == NovedadEstado.PENDIENTE,
+
+            empleado_ids = [
+                pe.empleado_id for pe in planilla.planilla_empleados if pe.activo
+            ]
+            novedades = (
+                db.session.execute(
+                    db.select(NominaNovedad).filter(
+                        NominaNovedad.empleado_id.in_(empleado_ids),
+                        NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
+                        NominaNovedad.fecha_novedad <= nomina.periodo_fin,
+                        NominaNovedad.estado == NovedadEstado.PENDIENTE,
+                    )
                 )
-            ).scalars().all()
-            
+                .scalars()
+                .all()
+            )
+
             for nov in novedades:
                 nov.estado = NovedadEstado.EJECUTADA
-            
+
             db.session.commit()
 
             # Verify novedad is now ejecutada
             db.session.refresh(novedad)
-            assert novedad.estado == NovedadEstado.EJECUTADA, (
-                "Novedad should be marked as ejecutada when nomina is aplicado"
-            )
+            assert (
+                novedad.estado == NovedadEstado.EJECUTADA
+            ), "Novedad should be marked as ejecutada when nomina is aplicado"

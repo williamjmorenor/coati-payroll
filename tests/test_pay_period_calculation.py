@@ -79,7 +79,7 @@ class TestPayPeriodCalculation:
 
             # Create biweekly payroll type (quincenal)
             tipo_planilla = TipoPlanilla(
-                codigo="QUINCENAL",
+                codigo="QUINCENAL_PAY",
                 descripcion="Planilla Quincenal",
                 dias=30,  # Base days for daily salary calculation
                 periodicidad="quincenal",

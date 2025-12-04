@@ -16,7 +16,6 @@
 from pathlib import Path
 
 
-
 class TestConfigurationDirectories:
     """Tests for configuration directory constants."""
 

@@ -50,8 +50,7 @@ class TestRouteRendering:
         # Matches: <type:name>, <name>, etc.
         param_pattern = re.compile(r"<(?:\w+:)?(\w+)>")
 
-        def replace_param(match):
-            param_name = match.group(1)
+        def replace_param(match):  # pylint: disable=unused-argument
             # Use a placeholder test ID for all dynamic parameters
             # Using 'test-id-12345' as a non-existent ID to test 404 handling
             return "test-id-12345"

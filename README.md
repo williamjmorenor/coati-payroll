@@ -128,6 +128,8 @@ El sistema soporta:
 - **PostgreSQL**: Recomendado para producción
 - **MySQL/MariaDB**: Alternativa para producción
 
+El sistema está diseñado para ser **agnóstico al motor de base de datos**. Para más detalles sobre compatibilidad y configuración, consulte la [Guía de Compatibilidad de Base de Datos](docs/database-compatibility.md).
+
 ## 📊 Flujo de Trabajo
 
 ```mermaid

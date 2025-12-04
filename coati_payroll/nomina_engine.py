@@ -51,7 +51,9 @@ from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
 
 
 # Constants for payroll calculations
-HORAS_TRABAJO_DIA = Decimal("8.00")  # Standard 8-hour workday for hourly rate calculations
+HORAS_TRABAJO_DIA = Decimal(
+    "8.00"
+)  # Standard 8-hour workday for hourly rate calculations
 
 
 class NominaEngineError(Exception):
@@ -266,15 +268,15 @@ class NominaEngine:
         # Only convert when employee currency differs from planilla currency
         salario_mensual = emp_calculo.salario_base
         if emp_calculo.tipo_cambio != Decimal("1.00"):
-            salario_mensual = (
-                salario_mensual * emp_calculo.tipo_cambio
-            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            salario_mensual = (salario_mensual * emp_calculo.tipo_cambio).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
 
         # Calculate salary for the pay period based on actual days worked
         # The employee's salario_base is always the monthly salary
         # We need to convert it to the actual period salary based on days
         emp_calculo.salario_base = self._calcular_salario_periodo(salario_mensual)
-        
+
         # Store the monthly salary for use in calculations (e.g., hourly rate)
         emp_calculo.salario_mensual = salario_mensual
 
@@ -412,11 +414,11 @@ class NominaEngine:
         Novedades are loaded based on:
         1. Employee ID
         2. Date range (fecha_novedad falls within the payroll period)
-        
+
         This ensures novedades are correctly applied to the period they occur in,
-        regardless of which specific nomina execution they were originally 
+        regardless of which specific nomina execution they were originally
         associated with.
-        
+
         Note: Each novedad still maintains a relationship (nomina_id) with the
         nomina where it was created for audit trail purposes. However, for
         calculation purposes, we filter by period dates to ensure consistent

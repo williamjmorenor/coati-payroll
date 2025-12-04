@@ -884,32 +884,41 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
     nomina.estado = "aplicado"
     nomina.modificado_por = current_user.usuario
-    
+
     # Actualizar estado de todas las novedades asociadas a "ejecutada"
     from coati_payroll.model import NominaNovedad
     from coati_payroll.enums import NovedadEstado
-    
+
     # Obtener empleados de la planilla para filtrar novedades
     planilla = db.get_or_404(Planilla, planilla_id)
     empleado_ids = [pe.empleado_id for pe in planilla.planilla_empleados if pe.activo]
-    
+
     # Actualizar novedades que corresponden a este período
-    novedades = db.session.execute(
-        db.select(NominaNovedad).filter(
-            NominaNovedad.empleado_id.in_(empleado_ids),
-            NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
-            NominaNovedad.fecha_novedad <= nomina.periodo_fin,
-            NominaNovedad.estado == NovedadEstado.PENDIENTE,
+    novedades = (
+        db.session.execute(
+            db.select(NominaNovedad).filter(
+                NominaNovedad.empleado_id.in_(empleado_ids),
+                NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
+                NominaNovedad.fecha_novedad <= nomina.periodo_fin,
+                NominaNovedad.estado == NovedadEstado.PENDIENTE,
+            )
         )
-    ).scalars().all()
-    
+        .scalars()
+        .all()
+    )
+
     for novedad in novedades:
         novedad.estado = NovedadEstado.EJECUTADA
         novedad.modificado_por = current_user.usuario
-    
+
     db.session.commit()
 
-    flash(_("Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas.").format(len(novedades)), "success")
+    flash(
+        _(
+            "Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas."
+        ).format(len(novedades)),
+        "success",
+    )
     return redirect(
         url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id)
     )
@@ -1031,22 +1040,34 @@ def _get_planilla_component_counts(planilla_id: str) -> dict:
     Returns a dictionary with counts for empleados, percepciones, deducciones,
     prestaciones, and reglas.
     """
+    from sqlalchemy import func, select
+
     return {
-        "empleados_count": db.session.query(PlanillaEmpleado)
-        .filter_by(planilla_id=planilla_id)
-        .count(),
-        "percepciones_count": db.session.query(PlanillaIngreso)
-        .filter_by(planilla_id=planilla_id)
-        .count(),
-        "deducciones_count": db.session.query(PlanillaDeduccion)
-        .filter_by(planilla_id=planilla_id)
-        .count(),
-        "prestaciones_count": db.session.query(PlanillaPrestacion)
-        .filter_by(planilla_id=planilla_id)
-        .count(),
-        "reglas_count": db.session.query(PlanillaReglaCalculo)
-        .filter_by(planilla_id=planilla_id)
-        .count(),
+        "empleados_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaEmpleado)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "percepciones_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaIngreso)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "deducciones_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaDeduccion)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "prestaciones_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaPrestacion)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "reglas_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaReglaCalculo)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
     }
 
 
@@ -1084,7 +1105,7 @@ def _populate_form_choices(form: PlanillaForm):
 @login_required
 def listar_novedades(planilla_id: str, nomina_id: str):
     """List all novedades (novelties) for a specific nomina.
-    
+
     Shows novedades that fall within the nomina's period dates,
     regardless of which nomina_id they were originally associated with.
     This ensures that recalculations show the correct novedades.
@@ -1110,7 +1131,9 @@ def listar_novedades(planilla_id: str, nomina_id: str):
                 NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
                 NominaNovedad.fecha_novedad <= nomina.periodo_fin,
             )
-            .order_by(NominaNovedad.fecha_novedad.desc(), NominaNovedad.timestamp.desc())
+            .order_by(
+                NominaNovedad.fecha_novedad.desc(), NominaNovedad.timestamp.desc()
+            )
         )
         .scalars()
         .all()
@@ -1157,15 +1180,19 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
     if form.validate_on_submit():
         # Validate that fecha_novedad falls within the nomina period
         if form.fecha_novedad.data:
-            if (form.fecha_novedad.data < nomina.periodo_inicio or 
-                form.fecha_novedad.data > nomina.periodo_fin):
+            if (
+                form.fecha_novedad.data < nomina.periodo_inicio
+                or form.fecha_novedad.data > nomina.periodo_fin
+            ):
                 flash(
-                    _("La fecha de la novedad debe estar dentro del período de la nómina "
-                      "({} a {}).").format(
-                          nomina.periodo_inicio.strftime('%d/%m/%Y'),
-                          nomina.periodo_fin.strftime('%d/%m/%Y')
-                      ),
-                    "error"
+                    _(
+                        "La fecha de la novedad debe estar dentro del período de la nómina "
+                        "({} a {})."
+                    ).format(
+                        nomina.periodo_inicio.strftime("%d/%m/%Y"),
+                        nomina.periodo_fin.strftime("%d/%m/%Y"),
+                    ),
+                    "error",
                 )
                 return render_template(
                     "modules/planilla/novedades/form.html",
@@ -1262,15 +1289,19 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     if form.validate_on_submit():
         # Validate that fecha_novedad falls within the nomina period
         if form.fecha_novedad.data:
-            if (form.fecha_novedad.data < nomina.periodo_inicio or 
-                form.fecha_novedad.data > nomina.periodo_fin):
+            if (
+                form.fecha_novedad.data < nomina.periodo_inicio
+                or form.fecha_novedad.data > nomina.periodo_fin
+            ):
                 flash(
-                    _("La fecha de la novedad debe estar dentro del período de la nómina "
-                      "({} a {}).").format(
-                          nomina.periodo_inicio.strftime('%d/%m/%Y'),
-                          nomina.periodo_fin.strftime('%d/%m/%Y')
-                      ),
-                    "error"
+                    _(
+                        "La fecha de la novedad debe estar dentro del período de la nómina "
+                        "({} a {})."
+                    ).format(
+                        nomina.periodo_inicio.strftime("%d/%m/%Y"),
+                        nomina.periodo_fin.strftime("%d/%m/%Y"),
+                    ),
+                    "error",
                 )
                 return render_template(
                     "modules/planilla/novedades/form.html",
