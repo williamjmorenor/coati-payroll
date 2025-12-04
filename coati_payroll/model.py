@@ -932,6 +932,12 @@ class NominaNovedad(database.Model, BaseTabla):
         database.String(26), database.ForeignKey("deduccion.id"), nullable=True
     )
 
+    # Estado de la novedad: 'pendiente' | 'ejecutada'
+    # Se marca como 'ejecutada' cuando la nómina cambia a estado 'aplicado'
+    estado = database.Column(
+        database.String(20), nullable=False, default="pendiente"
+    )  # Use NovedadEstado enum values
+
     nomina = database.relationship("Nomina", back_populates="novedades")
     empleado = database.relationship("Empleado", back_populates="novedades_registradas")
 

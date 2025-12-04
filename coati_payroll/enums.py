@@ -121,3 +121,13 @@ class Periodicidad(StrEnum):
     QUINCENAL = "quincenal"  # Biweekly
     SEMANAL = "semanal"  # Weekly
     DIARIO = "diario"  # Daily
+
+
+class NovedadEstado(StrEnum):
+    """States of a payroll novelty (novedad).
+
+    Python 3.11+ StrEnum for type-safe novedad status handling.
+    """
+
+    PENDIENTE = "pendiente"  # Pending - not yet executed
+    EJECUTADA = "ejecutada"  # Executed - nomina has been applied

@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["cargo", "fontconfig", "gh", "ghostscript", "glib", "harfbuzz", "libiconv", "libxcrypt", "openssl", "pango", "pkg-config", "rustc"]
+packages = ["cargo", "fontconfig", "gh", "ghostscript", "glib", "harfbuzz", "libiconv", "libxcrypt", "openssl", "pango", "pkg-config", "rustc", "gti"]
 
 [[ports]]
 localPort = 5000
