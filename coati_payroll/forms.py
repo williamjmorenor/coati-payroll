@@ -225,6 +225,7 @@ class EmployeeForm(FlaskForm):
         _("Salario base"), validators=[DataRequired()], places=2
     )
     moneda_id = SelectField(_("Moneda"), validators=[Optional()], coerce=str)
+    empresa_id = SelectField(_("Empresa"), validators=[Optional()], coerce=str)
     correo = StringField(
         _("Correo electrónico"), validators=[Optional(), Email(), Length(max=150)]
     )
@@ -681,6 +682,12 @@ class PlanillaForm(FlaskForm):
         validators=[DataRequired()],
         coerce=str,
         description=_("Moneda en la que se pagarán los salarios"),
+    )
+    empresa_id = SelectField(
+        _("Empresa"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Empresa a la que pertenece esta planilla"),
     )
     periodo_fiscal_inicio = DateField(
         _("Inicio Período Fiscal"),
@@ -1244,3 +1251,50 @@ class PagoExtraordinarioForm(FlaskForm):
         description=_("Cuenta contable para el crédito (opcional)"),
     )
     submit = SubmitField(_("Registrar Pago"))
+
+
+class EmpresaForm(FlaskForm):
+    """Form for creating and editing companies/entities."""
+
+    codigo = StringField(
+        _("Código"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código único de la empresa"),
+    )
+    razon_social = StringField(
+        _("Razón Social"),
+        validators=[DataRequired(), Length(max=200)],
+        description=_("Nombre legal de la empresa"),
+    )
+    nombre_comercial = StringField(
+        _("Nombre Comercial"),
+        validators=[Optional(), Length(max=200)],
+        description=_("Nombre comercial (opcional)"),
+    )
+    ruc = StringField(
+        _("RUC"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Número de identificación fiscal"),
+    )
+    direccion = StringField(
+        _("Dirección"),
+        validators=[Optional(), Length(max=255)],
+    )
+    telefono = StringField(
+        _("Teléfono"),
+        validators=[Optional(), Length(max=50)],
+    )
+    correo = StringField(
+        _("Correo Electrónico"),
+        validators=[Optional(), Email(), Length(max=150)],
+    )
+    sitio_web = StringField(
+        _("Sitio Web"),
+        validators=[Optional(), Length(max=200)],
+    )
+    representante_legal = StringField(
+        _("Representante Legal"),
+        validators=[Optional(), Length(max=150)],
+    )
+    activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))

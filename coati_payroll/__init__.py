@@ -144,6 +144,7 @@ def create_app(config) -> Flask:
         planilla_bp,
         tipo_planilla_bp,
         prestamo_bp,
+        empresa_bp,
     )
 
     app.register_blueprint(user_bp)
@@ -158,6 +159,7 @@ def create_app(config) -> Flask:
     app.register_blueprint(planilla_bp)
     app.register_blueprint(tipo_planilla_bp)
     app.register_blueprint(prestamo_bp)
+    app.register_blueprint(empresa_bp)
 
     return app
 

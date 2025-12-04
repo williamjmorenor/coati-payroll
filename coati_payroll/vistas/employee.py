@@ -43,6 +43,22 @@ def get_currency_choices():
     ]
 
 
+def get_empresa_choices():
+    """Get list of companies for select fields."""
+    from coati_payroll.model import Empresa
+    
+    empresas = (
+        db.session.execute(
+            db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)
+        )
+        .scalars()
+        .all()
+    )
+    return [("", _("Seleccionar..."))] + [
+        (e.id, f"{e.codigo} - {e.razon_social}") for e in empresas
+    ]
+
+
 def get_custom_fields():
     """Get all active custom fields ordered by 'orden'."""
     return (
@@ -140,6 +156,7 @@ def new():
     """Create a new employee."""
     form = EmployeeForm()
     form.moneda_id.choices = get_currency_choices()
+    form.empresa_id.choices = get_empresa_choices()
     custom_fields = get_custom_fields()
 
     if form.validate_on_submit():
@@ -167,6 +184,7 @@ def new():
         employee.centro_costos = form.centro_costos.data
         employee.salario_base = form.salario_base.data or Decimal("0.00")
         employee.moneda_id = form.moneda_id.data or None
+        employee.empresa_id = form.empresa_id.data or None
         employee.correo = form.correo.data
         employee.telefono = form.telefono.data
         employee.direccion = form.direccion.data
@@ -219,6 +237,7 @@ def edit(id: str):
 
     form = EmployeeForm(obj=employee)
     form.moneda_id.choices = get_currency_choices()
+    form.empresa_id.choices = get_empresa_choices()
     custom_fields = get_custom_fields()
 
     if form.validate_on_submit():
@@ -245,6 +264,7 @@ def edit(id: str):
         employee.centro_costos = form.centro_costos.data
         employee.salario_base = form.salario_base.data or Decimal("0.00")
         employee.moneda_id = form.moneda_id.data or None
+        employee.empresa_id = form.empresa_id.data or None
         employee.correo = form.correo.data
         employee.telefono = form.telefono.data
         employee.direccion = form.direccion.data

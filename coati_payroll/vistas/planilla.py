@@ -75,6 +75,7 @@ def new():
             descripcion=form.descripcion.data,
             tipo_planilla_id=form.tipo_planilla_id.data,
             moneda_id=form.moneda_id.data,
+            empresa_id=form.empresa_id.data or None,
             periodo_fiscal_inicio=form.periodo_fiscal_inicio.data,
             periodo_fiscal_fin=form.periodo_fiscal_fin.data,
             prioridad_prestamos=form.prioridad_prestamos.data or 250,
@@ -107,6 +108,7 @@ def edit(planilla_id: str):
         planilla.descripcion = form.descripcion.data
         planilla.tipo_planilla_id = form.tipo_planilla_id.data
         planilla.moneda_id = form.moneda_id.data
+        planilla.empresa_id = form.empresa_id.data or None
         planilla.periodo_fiscal_inicio = form.periodo_fiscal_inicio.data
         planilla.periodo_fiscal_fin = form.periodo_fiscal_fin.data
         planilla.prioridad_prestamos = form.prioridad_prestamos.data or 250
@@ -168,11 +170,16 @@ def config_empleados(planilla_id: str):
         .all()
     )
 
+    # Filter employees to only show those from the same company as the planilla
+    query = db.select(Empleado).filter_by(activo=True)
+    if planilla.empresa_id:
+        # If planilla has a company, only show employees from that company or without company
+        query = query.filter(
+            (Empleado.empresa_id == planilla.empresa_id) | Empleado.empresa_id.is_(None)
+        )
     empleados_disponibles = (
         db.session.execute(
-            db.select(Empleado)
-            .filter_by(activo=True)
-            .order_by(Empleado.primer_apellido)
+            query.order_by(Empleado.primer_apellido)
         )
         .scalars()
         .all()
@@ -353,6 +360,15 @@ def add_empleado(planilla_id: str):
 
     if existing:
         flash(_("El empleado ya está asignado a esta planilla."), "warning")
+        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+
+    # Validate that employee and planilla belong to the same company
+    empleado = db.get_or_404(Empleado, empleado_id)
+    if planilla.empresa_id and empleado.empresa_id and planilla.empresa_id != empleado.empresa_id:
+        flash(
+            _("El empleado y la planilla deben pertenecer a la misma empresa."),
+            "error"
+        )
         return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
 
     association = PlanillaEmpleado(
@@ -1073,6 +1089,8 @@ def _get_planilla_component_counts(planilla_id: str) -> dict:
 
 def _populate_form_choices(form: PlanillaForm):
     """Populate form select choices from database."""
+    from coati_payroll.model import Empresa
+    
     tipos = (
         db.session.execute(
             db.select(TipoPlanilla).filter_by(activo=True).order_by(TipoPlanilla.codigo)
@@ -1093,6 +1111,17 @@ def _populate_form_choices(form: PlanillaForm):
     )
     form.moneda_id.choices = [("", _("-- Seleccionar --"))] + [
         (m.id, f"{m.codigo} - {m.nombre}") for m in monedas
+    ]
+    
+    empresas = (
+        db.session.execute(
+            db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)
+        )
+        .scalars()
+        .all()
+    )
+    form.empresa_id.choices = [("", _("-- Seleccionar --"))] + [
+        (e.id, f"{e.codigo} - {e.razon_social}") for e in empresas
     ]
 
 

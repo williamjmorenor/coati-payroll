@@ -144,6 +144,11 @@
                     <div class="collapse submenu" id="submenuConfiguracion">
                         <ul class="nav flex-column">
                             <li class="nav-item">
+                                <a class="nav-link py-2" href="{{ url_for('empresa.index') }}">
+                                    <i class="bi bi-building me-2"></i>{{ _('Empresas') }}
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link py-2" href="{{ url_for('currency.index') }}">
                                     <i class="bi bi-currency-exchange me-2"></i>{{ _('Monedas') }}
                                 </a>

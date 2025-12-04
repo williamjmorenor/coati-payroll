@@ -11,6 +11,7 @@ Coati Payroll es una aplicación web diseñada para facilitar la gestión comple
 
 ### Características Principales
 
+- **Multi-empresa**: Gestione nóminas para múltiples empresas o entidades desde un solo sistema
 - **Gestión de Empleados**: Registro completo de información personal, laboral y salarial
 - **Percepciones Configurables**: Bonos, comisiones, horas extras y otros ingresos
 - **Deducciones con Prioridad**: INSS, IR, préstamos y otras deducciones en orden configurable

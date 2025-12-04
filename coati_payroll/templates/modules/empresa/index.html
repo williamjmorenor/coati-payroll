@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import render_messages, render_pagination %}
+
+{% block content %}
+<div class="container">
+    {{ render_messages() }}
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ _('Empresas') }}</h2>
+        <a href="{{ url_for('empresa.new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>{{ _('Nueva Empresa') }}
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Código') }}</th>
+                            <th>{{ _('Razón Social') }}</th>
+                            <th>{{ _('Nombre Comercial') }}</th>
+                            <th>{{ _('RUC') }}</th>
+                            <th>{{ _('Estado') }}</th>
+                            <th>{{ _('Acciones') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for empresa in empresas %}
+                        <tr>
+                            <td><strong>{{ empresa.codigo }}</strong></td>
+                            <td>{{ empresa.razon_social }}</td>
+                            <td>{{ empresa.nombre_comercial or '-' }}</td>
+                            <td>{{ empresa.ruc }}</td>
+                            <td>
+                                {% if empresa.activo %}
+                                    <span class="badge bg-success">{{ _('Activa') }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ _('Inactiva') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('empresa.edit', empresa_id=empresa.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form action="{{ url_for('empresa.toggle_active', empresa_id=empresa.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ _('Activar/Desactivar') }}">
+                                        <i class="bi bi-toggle-on"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('empresa.delete', empresa_id=empresa.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar esta empresa?') }}');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Eliminar') }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">{{ _('No hay empresas registradas.') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {{ render_pagination(pagination, 'empresa.index') }}
+        </div>
+    </div>
+</div>
+{% endblock %}

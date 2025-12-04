@@ -67,10 +67,11 @@ flowchart TB
 
 Antes de usar el sistema, configure los catálogos base:
 
-1. **Crear monedas** - Las monedas en las que pagará salarios
-2. **Crear percepciones** - Los conceptos de ingresos (bonos, comisiones, etc.)
-3. **Crear deducciones** - Los conceptos de descuentos (INSS, IR, etc.)
-4. **Crear prestaciones** - Los aportes patronales (INSS patronal, vacaciones, etc.)
+1. **Crear empresas** - Las entidades o razones sociales que gestionará el sistema (opcional, para multi-empresa)
+2. **Crear monedas** - Las monedas en las que pagará salarios
+3. **Crear percepciones** - Los conceptos de ingresos (bonos, comisiones, etc.)
+4. **Crear deducciones** - Los conceptos de descuentos (INSS, IR, etc.)
+5. **Crear prestaciones** - Los aportes patronales (INSS patronal, vacaciones, etc.)
 
 ### 2. Gestión de Personal (Continuo)
 
@@ -177,14 +178,15 @@ flowchart LR
 Continúe con la configuración de cada módulo:
 
 1. [Gestión de Usuarios](usuarios.md)
-2. [Monedas y Tipos de Cambio](monedas.md)
-3. [Gestión de Empleados](empleados.md)
-4. [Percepciones](percepciones.md)
-5. [Deducciones](deducciones.md)
-6. [Prestaciones](prestaciones.md)
-7. [Préstamos y Adelantos](prestamos.md)
-8. [Configuración de Planillas](planillas.md)
-9. [Ejecución de Nómina](nomina.md)
+2. [Gestión de Empresas](empresas.md) *(opcional, para multi-empresa)*
+3. [Monedas y Tipos de Cambio](monedas.md)
+4. [Gestión de Empleados](empleados.md)
+5. [Percepciones](percepciones.md)
+6. [Deducciones](deducciones.md)
+7. [Prestaciones](prestaciones.md)
+8. [Préstamos y Adelantos](prestamos.md)
+9. [Configuración de Planillas](planillas.md)
+10. [Ejecución de Nómina](nomina.md)
 
 !!! tip "Tutorial Completo"
     Para un ejemplo práctico paso a paso, consulte el [Tutorial: Nómina Completa](../tutorial/nomina-completa.md).

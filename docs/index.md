@@ -4,8 +4,9 @@ Bienvenido a la documentación oficial de **Coati Payroll**, un sistema de admin
 
 ## ¿Qué es Coati Payroll?
 
-Coati Payroll es una aplicación web diseñada para facilitar la gestión completa del proceso de nómina de una empresa. El sistema permite:
+Coati Payroll es una aplicación web diseñada para facilitar la gestión completa del proceso de nómina de una o múltiples empresas. El sistema permite:
 
+- **Multi-empresa**: Gestione nóminas para múltiples empresas o entidades desde una sola instalación.
 - **Gestión de Empleados**: Registro y administración completa de la información del personal.
 - **Configuración de Conceptos de Nómina**: Percepciones (ingresos), deducciones y prestaciones patronales.
 - **Planillas Flexibles**: Configuración de diferentes tipos de planilla (mensual, quincenal, semanal).
@@ -86,7 +87,9 @@ El siguiente diagrama muestra cómo se relacionan los componentes principales de
 
 ```mermaid
 graph TD
-    A[Empleados] --> B[Planilla]
+    EMP[Empresa] --> A[Empleados]
+    EMP --> B[Planilla]
+    A --> B
     C[Percepciones] --> B
     D[Deducciones] --> B
     E[Prestaciones] --> B

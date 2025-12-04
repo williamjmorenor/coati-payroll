@@ -105,6 +105,52 @@ class Usuario(database.Model, BaseTabla, UserMixin):
     activo = database.Column(database.Boolean(), default=True)
 
 
+# Gestión de empresas/entidades
+class Empresa(database.Model, BaseTabla):
+    """Company/Entity model for multi-company support.
+    
+    Allows the payroll system to handle multiple companies/entities.
+    Employees and Payrolls are associated with a company.
+    Deductions, Benefits, and Perceptions remain independent and can be used
+    across multiple companies.
+    """
+    __tablename__ = "empresa"
+    __table_args__ = (
+        database.UniqueConstraint("codigo", name="uq_empresa_codigo"),
+        database.UniqueConstraint("ruc", name="uq_empresa_ruc"),
+    )
+
+    # Unique company code
+    codigo = database.Column(
+        database.String(50), unique=True, nullable=False, index=True
+    )
+    
+    # Company legal name
+    razon_social = database.Column(database.String(200), nullable=False)
+    
+    # Commercial/trade name
+    nombre_comercial = database.Column(database.String(200), nullable=True)
+    
+    # Tax identification number (RUC in Nicaragua)
+    ruc = database.Column(database.String(50), unique=True, nullable=False)
+    
+    # Contact information
+    direccion = database.Column(database.String(255), nullable=True)
+    telefono = database.Column(database.String(50), nullable=True)
+    correo = database.Column(database.String(150), nullable=True)
+    sitio_web = database.Column(database.String(200), nullable=True)
+    
+    # Legal representative
+    representante_legal = database.Column(database.String(150), nullable=True)
+    
+    # Status
+    activo = database.Column(database.Boolean(), default=True, nullable=False)
+    
+    # Relationships
+    empleados = database.relationship("Empleado", back_populates="empresa")
+    planillas = database.relationship("Planilla", back_populates="empresa")
+
+
 # Gestión de monedas y tipos de cambio
 class Moneda(database.Model, BaseTabla):
     __tablename__ = "moneda"
@@ -213,6 +259,12 @@ class Empleado(database.Model, BaseTabla):
         database.String(26), database.ForeignKey("moneda.id"), nullable=True
     )
     moneda = database.relationship("Moneda", back_populates="empleados")
+
+    # Empresa a la que pertenece el empleado
+    empresa_id = database.Column(
+        database.String(26), database.ForeignKey("empresa.id"), nullable=True
+    )
+    empresa = database.relationship("Empresa", back_populates="empleados")
 
     correo = database.Column(database.String(150), nullable=True, index=True)
     telefono = database.Column(database.String(50), nullable=True)
@@ -354,6 +406,12 @@ class Planilla(database.Model, BaseTabla):
         database.String(26), database.ForeignKey("moneda.id"), nullable=False
     )
     moneda = database.relationship("Moneda", back_populates="planillas")
+
+    # Empresa a la que pertenece la planilla
+    empresa_id = database.Column(
+        database.String(26), database.ForeignKey("empresa.id"), nullable=True
+    )
+    empresa = database.relationship("Empresa", back_populates="planillas")
 
     # Período Fiscal
     periodo_fiscal_inicio = database.Column(database.Date, nullable=True)
