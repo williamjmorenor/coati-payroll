@@ -1092,8 +1092,14 @@ class TablaImpuesto(database.Model, BaseTabla):
     deduccion = database.relationship("Deduccion", back_populates="tablas_impuesto")
 
 
-# Adelantos de salario
+# Adelantos de salario y préstamos
 class Adelanto(database.Model, BaseTabla):
+    """Loan and salary advance management.
+
+    Supports both loans (préstamos) with interest rates and salary advances (adelantos).
+    Can handle multi-currency loans with automatic conversion tracking.
+    """
+
     __tablename__ = "adelanto"
 
     empleado_id = database.Column(
@@ -1105,8 +1111,18 @@ class Adelanto(database.Model, BaseTabla):
     deduccion_id = database.Column(
         database.String(26), database.ForeignKey("deduccion.id"), nullable=True
     )
+
+    # Tipo: prestamo o adelanto
+    tipo = database.Column(
+        database.String(20), nullable=False, default="adelanto"
+    )  # adelanto, prestamo
+
+    # Fechas
     fecha_solicitud = database.Column(database.Date, nullable=False, default=date.today)
     fecha_aprobacion = database.Column(database.Date, nullable=True)
+    fecha_desembolso = database.Column(database.Date, nullable=True)
+
+    # Montos
     monto_solicitado = database.Column(
         database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
     )
@@ -1116,16 +1132,47 @@ class Adelanto(database.Model, BaseTabla):
     saldo_pendiente = database.Column(
         database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
     )
+
+    # Currency support - loan can be in different currency than payroll
+    moneda_id = database.Column(
+        database.String(26), database.ForeignKey("moneda.id"), nullable=True
+    )
+    # Track amounts in both loan currency and payroll currency
+    monto_deducido_moneda_planilla = database.Column(
+        database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
+    )
+    monto_aplicado_moneda_prestamo = database.Column(
+        database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
+    )
+
+    # Cuotas
     cuotas_pactadas = database.Column(database.Integer, nullable=True)
     monto_por_cuota = database.Column(
         database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
     )
-    estado = database.Column(database.String(30), nullable=False, default="pendiente")
+
+    # Interest rates (for loans)
+    tasa_interes = database.Column(
+        database.Numeric(5, 4), nullable=True, default=Decimal("0.0000")
+    )  # e.g., 0.0500 = 5%
+    tipo_interes = database.Column(
+        database.String(20), nullable=True, default="ninguno"
+    )  # ninguno, simple, compuesto
+
+    # Accounting fields for initial disbursement
+    cuenta_debe = database.Column(database.String(64), nullable=True)
+    cuenta_haber = database.Column(database.String(64), nullable=True)
+
+    # Estado: borrador, pendiente, aprobado, aplicado (pagado), rechazado, cancelado
+    estado = database.Column(database.String(30), nullable=False, default="borrador")
     motivo = database.Column(database.String(500), nullable=True)
     aprobado_por = database.Column(database.String(150), nullable=True)
+    rechazado_por = database.Column(database.String(150), nullable=True)
+    motivo_rechazo = database.Column(database.String(500), nullable=True)
 
     empleado = database.relationship("Empleado", back_populates="adelantos")
     deduccion = database.relationship("Deduccion", back_populates="adelantos")
+    moneda = database.relationship("Moneda")
     abonos = database.relationship(
         "AdelantoAbono", back_populates="adelanto", cascade="all,delete-orphan"
     )
@@ -1133,6 +1180,13 @@ class Adelanto(database.Model, BaseTabla):
 
 # Control de abonos/pagos a adelantos
 class AdelantoAbono(database.Model, BaseTabla):
+    """Payment record for loans and advances.
+
+    Tracks all payments made against a loan, whether automatic (from payroll)
+    or manual (cash, bank transfer, etc.). For manual payments, includes
+    comprehensive audit trail information.
+    """
+
     __tablename__ = "adelanto_abono"
 
     adelanto_id = database.Column(
@@ -1154,8 +1208,46 @@ class AdelantoAbono(database.Model, BaseTabla):
     saldo_posterior = database.Column(
         database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
     )
-    tipo_abono = database.Column(database.String(30), nullable=False, default="nomina")
-    observaciones = database.Column(database.String(255), nullable=True)
+    tipo_abono = database.Column(
+        database.String(30), nullable=False, default="nomina"
+    )  # nomina, manual, condonacion
+    observaciones = database.Column(database.String(500), nullable=True)
+
+    # Audit trail fields for manual payments
+    # These fields ensure compliance and traceability for financial audits
+    tipo_comprobante = database.Column(
+        database.String(50), nullable=True
+    )  # recibo_caja, minuta_deposito, transferencia, cheque, otro
+    numero_comprobante = database.Column(
+        database.String(100), nullable=True
+    )  # Receipt/document number
+    referencia_bancaria = database.Column(
+        database.String(100), nullable=True
+    )  # Bank reference for electronic payments
+
+    # Accounting entries for manual payments/deductions
+    # Optional for payments/forgiveness, but useful for financial reconciliation
+    cuenta_debe = database.Column(
+        database.String(64), nullable=True
+    )  # Debit account for payment/deduction
+    cuenta_haber = database.Column(
+        database.String(64), nullable=True
+    )  # Credit account for payment/deduction
+
+    # Loan forgiveness/write-off fields (condonación)
+    # Used when company decides not to collect part or all of the loan
+    autorizado_por = database.Column(
+        database.String(150), nullable=True
+    )  # Name/title of authorizing person
+    documento_soporte = database.Column(
+        database.String(50), nullable=True
+    )  # Type: correo, memorandum, acta, resolucion, carta, otro
+    referencia_documento = database.Column(
+        database.String(200), nullable=True
+    )  # Document reference (date, number, etc.)
+    justificacion = database.Column(
+        database.Text, nullable=True
+    )  # Full justification text for audit trail
 
     adelanto = database.relationship("Adelanto", back_populates="abonos")
     nomina = database.relationship("Nomina")

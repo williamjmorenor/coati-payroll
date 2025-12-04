@@ -70,11 +70,34 @@ class AdelantoEstado(StrEnum):
     Using Python 3.11+ StrEnum for better type checking.
     """
 
+    BORRADOR = "borrador"  # Draft - not yet submitted
     PENDIENTE = "pendiente"  # Pending approval
     APROBADO = "aprobado"  # Approved and active
-    PAGADO = "pagado"  # Fully paid off
+    APLICADO = "aplicado"  # Applied/disbursed (paid out to employee)
+    PAGADO = "pagado"  # Fully paid off (all installments completed)
     RECHAZADO = "rechazado"  # Rejected
     CANCELADO = "cancelado"  # Cancelled
+
+
+class AdelantoTipo(StrEnum):
+    """Types of advances/loans.
+
+    Using Python 3.11+ StrEnum for type safety.
+    """
+
+    ADELANTO = "adelanto"  # Salary advance
+    PRESTAMO = "prestamo"  # Loan with optional interest
+
+
+class TipoInteres(StrEnum):
+    """Interest rate types for loans.
+
+    Using Python 3.11+ StrEnum for type safety.
+    """
+
+    NINGUNO = "ninguno"  # No interest
+    SIMPLE = "simple"  # Simple interest
+    COMPUESTO = "compuesto"  # Compound interest
 
 
 class VacacionEstado(StrEnum):

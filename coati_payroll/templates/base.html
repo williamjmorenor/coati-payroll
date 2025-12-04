@@ -84,6 +84,13 @@
                     </a>
                 </li>
 
+                <!-- Préstamos -->
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="{{ url_for('prestamo.index') }}">
+                        <i class="bi bi-cash-coin me-2"></i><span><span>{{ _('Préstamos') }}</span></span>
+                    </a>
+                </li>
+
                 <!-- Empleados con submenú -->
                 <li class="nav-item">
                     <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#submenuEmpleados" role="button" aria-expanded="false" aria-controls="submenuEmpleados">

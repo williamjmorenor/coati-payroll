@@ -14,7 +14,9 @@ flask-sqlalchemy
 flask_weasyprint
 flask-wtf
 mysql-connector-python
+openpyxl
 pg8000
+python-dateutil
 python-ulid
 sqlalchemy
 redis
