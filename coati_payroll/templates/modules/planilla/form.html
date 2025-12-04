@@ -32,7 +32,7 @@
 
     <div class="row">
         <!-- Main Form Column -->
-        <div class="{% if is_edit %}col-lg-8{% else %}col-lg-10 offset-lg-1{% endif %}">
+        <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-coaty-light">
                     <h5 class="mb-0"><i class="bi bi-gear me-2"></i>{{ _('Configuración General') }}</h5>
@@ -90,19 +90,6 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-12 mb-3">
-                                {{ form.empresa_id.label(class="form-label") }}
-                                {{ form.empresa_id(class="form-select" + (" is-invalid" if form.empresa_id.errors else "")) }}
-                                {% if form.empresa_id.description %}
-                                <div class="form-text">{{ form.empresa_id.description }}</div>
-                                {% endif %}
-                                {% for error in form.empresa_id.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ form.periodo_fiscal_inicio.label(class="form-label") }}
                                 {{ form.periodo_fiscal_inicio(class="form-control", type="date") }}
@@ -143,26 +130,6 @@
                                 {{ form.prioridad_adelantos(class="form-control", placeholder="251") }}
                                 {% if form.prioridad_adelantos.description %}
                                 <div class="form-text">{{ form.prioridad_adelantos.description }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <hr class="my-4">
-                        <h6 class="text-muted mb-3"><i class="bi bi-book me-2"></i>{{ _('Cuentas Contables del Salario Base') }}</h6>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ form.codigo_cuenta_debe_salario.label(class="form-label") }}
-                                {{ form.codigo_cuenta_debe_salario(class="form-control", placeholder="ej: 610-001") }}
-                                {% if form.codigo_cuenta_debe_salario.description %}
-                                <div class="form-text">{{ form.codigo_cuenta_debe_salario.description }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ form.codigo_cuenta_haber_salario.label(class="form-label") }}
-                                {{ form.codigo_cuenta_haber_salario(class="form-control", placeholder="ej: 210-001") }}
-                                {% if form.codigo_cuenta_haber_salario.description %}
-                                <div class="form-text">{{ form.codigo_cuenta_haber_salario.description }}</div>
                                 {% endif %}
                             </div>
                         </div>
