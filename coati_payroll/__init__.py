@@ -68,6 +68,23 @@ def no_autorizado():
 
 
 # ---------------------------------------------------------------------------------------
+# Locale selector for Flask-Babel
+# ---------------------------------------------------------------------------------------
+def get_locale():
+    """Determine the locale for the current request.
+    
+    Returns the language configured in the database (with caching).
+    Falls back to English if database is not available.
+    """
+    try:
+        from coati_payroll.locale_config import get_language_from_db
+        return get_language_from_db()
+    except Exception:
+        # Fallback to default if database not available (e.g., during initialization)
+        return "en"
+
+
+# ---------------------------------------------------------------------------------------
 # app factory.
 # ---------------------------------------------------------------------------------------
 def create_app(config) -> Flask:
@@ -123,7 +140,11 @@ def create_app(config) -> Flask:
         app.config["SESSION_PERMANENT"] = False
         app.config["SESSION_USE_SIGNER"] = True
 
-    babel.init_app(app)
+    # Configure Flask-Babel
+    app.config["BABEL_DEFAULT_LOCALE"] = "en"
+    app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
+    babel.init_app(app, locale_selector=get_locale)
+    
     session_manager.init_app(app)
     login_manager.init_app(app)
 
@@ -145,6 +166,7 @@ def create_app(config) -> Flask:
         tipo_planilla_bp,
         prestamo_bp,
         empresa_bp,
+        configuracion_bp,
     )
 
     app.register_blueprint(user_bp)
@@ -160,6 +182,7 @@ def create_app(config) -> Flask:
     app.register_blueprint(tipo_planilla_bp)
     app.register_blueprint(prestamo_bp)
     app.register_blueprint(empresa_bp)
+    app.register_blueprint(configuracion_bp)
 
     return app
 
@@ -239,3 +262,10 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
 
             _db.session.add(nuevo)
             _db.session.commit()
+        
+        # Initialize language from environment variable if provided
+        try:
+            from coati_payroll.locale_config import initialize_language_from_env
+            initialize_language_from_env()
+        except Exception as exc:
+            log.trace(f"Could not initialize language from environment: {exc}")

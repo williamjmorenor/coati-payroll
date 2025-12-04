@@ -47,21 +47,30 @@ class TestCurrencyConversion:
         - Expected salary in planilla: 36624.30 NIO
         """
         with app.app_context():
-            # Create currencies
-            usd = Moneda(
-                codigo="USD",
-                nombre="Dólar Estadounidense",
-                simbolo="$",
-                activo=True,
-            )
-            nio = Moneda(
-                codigo="NIO",
-                nombre="Córdoba Nicaragüense",
-                simbolo="C$",
-                activo=True,
-            )
-            db.session.add(usd)
-            db.session.add(nio)
+            # Create currencies - check if they already exist
+            usd = db.session.execute(
+                db.select(Moneda).filter_by(codigo="USD")
+            ).scalar_one_or_none()
+            if not usd:
+                usd = Moneda(
+                    codigo="USD",
+                    nombre="Dólar Estadounidense",
+                    simbolo="$",
+                    activo=True,
+                )
+                db.session.add(usd)
+            
+            nio = db.session.execute(
+                db.select(Moneda).filter_by(codigo="NIO")
+            ).scalar_one_or_none()
+            if not nio:
+                nio = Moneda(
+                    codigo="NIO",
+                    nombre="Córdoba Nicaragüense",
+                    simbolo="C$",
+                    activo=True,
+                )
+                db.session.add(nio)
             db.session.flush()
 
             # Create exchange rate: USD to NIO
@@ -74,15 +83,19 @@ class TestCurrencyConversion:
             db.session.add(tipo_cambio)
             db.session.flush()
 
-            # Create payroll type
-            tipo_planilla = TipoPlanilla(
-                codigo="MENSUAL",
-                descripcion="Planilla Mensual",
-                dias=30,
-                periodicidad="mensual",
-                periodos_por_anio=12,
-            )
-            db.session.add(tipo_planilla)
+            # Create payroll type - check if it already exists
+            tipo_planilla = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
+            ).scalar_one_or_none()
+            if not tipo_planilla:
+                tipo_planilla = TipoPlanilla(
+                    codigo="MENSUAL",
+                    descripcion="Planilla Mensual",
+                    dias=30,
+                    periodicidad="mensual",
+                    periodos_por_anio=12,
+                )
+                db.session.add(tipo_planilla)
             db.session.flush()
 
             # Create planilla in NIO

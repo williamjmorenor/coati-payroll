@@ -344,7 +344,7 @@ def delete(planilla_id: str):
 def add_empleado(planilla_id: str):
     """Add an employee to the planilla."""
     # Verify planilla exists (raises 404 if not found)
-    db.get_or_404(Planilla, planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     empleado_id = request.form.get("empleado_id")
 
     if not empleado_id:

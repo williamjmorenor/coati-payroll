@@ -1492,3 +1492,23 @@ class AcumuladoAnual(database.Model, BaseTabla):
 
     empleado = database.relationship("Empleado", backref="acumulados_anuales")
     tipo_planilla = database.relationship("TipoPlanilla", back_populates="acumulados")
+
+
+# Global configuration settings
+class ConfiguracionGlobal(database.Model, BaseTabla):
+    """Global configuration settings for the application.
+    
+    Stores system-wide settings like default language, theme preferences, etc.
+    Only one record should exist in this table (singleton pattern).
+    """
+    __tablename__ = "configuracion_global"
+    
+    # Language setting: 'en' for English, 'es' for Spanish
+    idioma = database.Column(
+        database.String(10), nullable=False, default="en"
+    )
+    
+    # Additional global settings can be stored as JSON
+    configuracion_adicional = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )

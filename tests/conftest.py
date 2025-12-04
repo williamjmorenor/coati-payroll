@@ -34,6 +34,9 @@ def app():
 
     # Set environment variable to use filesystem session before app creation
     os.environ["SESSION_REDIS_URL"] = ""
+    
+    # Set default language to Spanish for tests
+    os.environ["COATI_LANG"] = "es"
 
     test_config = {
         "TESTING": True,

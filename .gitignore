@@ -207,3 +207,9 @@ marimo/_lsp/
 __marimo__/
 
 *.db
+
+# Translation template (regenerated from source)
+messages.pot
+
+# SQLite database files
+*.db

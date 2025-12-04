@@ -152,23 +152,31 @@ class TestEmpresaPlanillaRelationship:
             )
             db.session.add(empresa)
 
-            # Create tipo_planilla
-            tipo = TipoPlanilla(
-                codigo="MENSUAL",
-                descripcion="Planilla Mensual",
-                dias=30,
-                periodicidad="mensual",
-            )
-            db.session.add(tipo)
+            # Create tipo_planilla - check if it already exists
+            tipo = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
+            ).scalar_one_or_none()
+            if not tipo:
+                tipo = TipoPlanilla(
+                    codigo="MENSUAL",
+                    descripcion="Planilla Mensual",
+                    dias=30,
+                    periodicidad="mensual",
+                )
+                db.session.add(tipo)
 
-            # Create moneda
-            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
-            db.session.add(moneda)
+            # Create moneda - check if it already exists
+            moneda = db.session.execute(
+                db.select(Moneda).filter_by(codigo="NIO")
+            ).scalar_one_or_none()
+            if not moneda:
+                moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
+                db.session.add(moneda)
             db.session.commit()
 
             # Create planilla
             planilla = Planilla(
-                nombre="Planilla Test",
+                nombre="Planilla Test EMP_PLANILLA_REL_1",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -183,23 +191,31 @@ class TestEmpresaPlanillaRelationship:
     def test_planilla_without_empresa(self, app):
         """Test that a planilla can exist without a company."""
         with app.app_context():
-            # Create tipo_planilla
-            tipo = TipoPlanilla(
-                codigo="MENSUAL",
-                descripcion="Planilla Mensual",
-                dias=30,
-                periodicidad="mensual",
-            )
-            db.session.add(tipo)
+            # Create tipo_planilla - check if it already exists
+            tipo = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
+            ).scalar_one_or_none()
+            if not tipo:
+                tipo = TipoPlanilla(
+                    codigo="MENSUAL",
+                    descripcion="Planilla Mensual",
+                    dias=30,
+                    periodicidad="mensual",
+                )
+                db.session.add(tipo)
 
-            # Create moneda
-            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
-            db.session.add(moneda)
+            # Create moneda - check if it already exists
+            moneda = db.session.execute(
+                db.select(Moneda).filter_by(codigo="NIO")
+            ).scalar_one_or_none()
+            if not moneda:
+                moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
+                db.session.add(moneda)
             db.session.commit()
 
             # Create planilla
             planilla = Planilla(
-                nombre="Planilla Test",
+                nombre="Planilla Test Without Empresa",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
             )
@@ -229,20 +245,31 @@ class TestCrossCompanyValidation:
             )
             db.session.add_all([empresa1, empresa2])
 
-            # Create tipo_planilla and moneda
-            tipo = TipoPlanilla(
-                codigo="MENSUAL",
-                descripcion="Planilla Mensual",
-                dias=30,
-                periodicidad="mensual",
-            )
-            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
-            db.session.add_all([tipo, moneda])
+            # Create tipo_planilla - check if it already exists
+            tipo = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
+            ).scalar_one_or_none()
+            if not tipo:
+                tipo = TipoPlanilla(
+                    codigo="MENSUAL",
+                    descripcion="Planilla Mensual",
+                    dias=30,
+                    periodicidad="mensual",
+                )
+                db.session.add(tipo)
+            
+            # Check if moneda already exists
+            moneda = db.session.execute(
+                db.select(Moneda).filter_by(codigo="NIO")
+            ).scalar_one_or_none()
+            if not moneda:
+                moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
+                db.session.add(moneda)
             db.session.commit()
 
             # Create planilla for company 1
             planilla = Planilla(
-                nombre="Planilla Company 1",
+                nombre="Planilla Company EMP_CROSS_1A",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
                 empresa_id=empresa1.id,
@@ -253,7 +280,7 @@ class TestCrossCompanyValidation:
             empleado = Empleado(
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
-                identificacion_personal="001-010101-0001A",
+                identificacion_personal="001-010101-0001A-CROSS_1",
                 fecha_alta=date.today(),
                 salario_base=Decimal("10000.00"),
                 empresa_id=empresa2.id,
@@ -291,20 +318,31 @@ class TestCrossCompanyValidation:
             )
             db.session.add(empresa)
 
-            # Create tipo_planilla and moneda
-            tipo = TipoPlanilla(
-                codigo="MENSUAL",
-                descripcion="Planilla Mensual",
-                dias=30,
-                periodicidad="mensual",
-            )
-            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
-            db.session.add_all([tipo, moneda])
+            # Create tipo_planilla - check if it already exists
+            tipo = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
+            ).scalar_one_or_none()
+            if not tipo:
+                tipo = TipoPlanilla(
+                    codigo="MENSUAL",
+                    descripcion="Planilla Mensual",
+                    dias=30,
+                    periodicidad="mensual",
+                )
+                db.session.add(tipo)
+            
+            # Check if moneda already exists
+            moneda = db.session.execute(
+                db.select(Moneda).filter_by(codigo="NIO")
+            ).scalar_one_or_none()
+            if not moneda:
+                moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
+                db.session.add(moneda)
             db.session.commit()
 
             # Create planilla for company
             planilla = Planilla(
-                nombre="Planilla Company 1",
+                nombre="Planilla Company EMP_CROSS_2",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -315,7 +353,7 @@ class TestCrossCompanyValidation:
             empleado = Empleado(
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
-                identificacion_personal="001-010101-0001A",
+                identificacion_personal="001-010101-0001A-CROSS_2",
                 fecha_alta=date.today(),
                 salario_base=Decimal("10000.00"),
                 empresa_id=empresa.id,
@@ -353,20 +391,31 @@ class TestCrossCompanyValidation:
             )
             db.session.add(empresa)
 
-            # Create tipo_planilla and moneda
-            tipo = TipoPlanilla(
-                codigo="MENSUAL",
-                descripcion="Planilla Mensual",
-                dias=30,
-                periodicidad="mensual",
-            )
-            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
-            db.session.add_all([tipo, moneda])
+            # Create tipo_planilla - check if it already exists
+            tipo = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
+            ).scalar_one_or_none()
+            if not tipo:
+                tipo = TipoPlanilla(
+                    codigo="MENSUAL",
+                    descripcion="Planilla Mensual",
+                    dias=30,
+                    periodicidad="mensual",
+                )
+                db.session.add(tipo)
+            
+            # Check if moneda already exists
+            moneda = db.session.execute(
+                db.select(Moneda).filter_by(codigo="NIO")
+            ).scalar_one_or_none()
+            if not moneda:
+                moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
+                db.session.add(moneda)
             db.session.commit()
 
             # Create planilla with company
             planilla = Planilla(
-                nombre="Planilla Company 1",
+                nombre="Planilla Company EMP_CROSS_3",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -377,7 +426,7 @@ class TestCrossCompanyValidation:
             empleado = Empleado(
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
-                identificacion_personal="001-010101-0001A",
+                identificacion_personal="001-010101-0001A-CROSS_3",
                 fecha_alta=date.today(),
                 salario_base=Decimal("10000.00"),
             )

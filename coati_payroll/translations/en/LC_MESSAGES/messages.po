@@ -1,0 +1,3969 @@
+# English translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-12-04 02:50+0000\n"
+"PO-Revision-Date: 2025-12-04 02:49+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: coati_payroll/__init__.py:66
+msgid "Favor iniciar sesión para acceder al sistema."
+msgstr "Please log in to access the system."
+
+#: coati_payroll/auth.py:67
+msgid "Usuario o contraseña incorrectos."
+msgstr "Incorrect username or password."
+
+#: coati_payroll/auth.py:76
+msgid "Sesión cerrada correctamente."
+msgstr "Session closed successfully."
+
+#: coati_payroll/forms.py:58 coati_payroll/templates/auth/login.html:73
+msgid "Usuario o correo electrónico"
+msgstr "Username or email"
+
+#: coati_payroll/forms.py:61 coati_payroll/forms.py:75
+#: coati_payroll/templates/auth/login.html:87
+msgid "Contraseña"
+msgstr "Password"
+
+#: coati_payroll/forms.py:63
+msgid "Entrar"
+msgstr "Log In"
+
+#: coati_payroll/forms.py:74 coati_payroll/templates/modules/user/index.html:21
+#: coati_payroll/templates/modules/user/profile.html:26
+msgid "Usuario"
+msgstr "User"
+
+#: coati_payroll/forms.py:76 coati_payroll/forms.py:98
+#: coati_payroll/forms.py:120 coati_payroll/forms.py:368
+#: coati_payroll/forms.py:437 coati_payroll/forms.py:542
+#: coati_payroll/forms.py:666 coati_payroll/forms.py:828
+#: coati_payroll/templates/modules/calculation_rule/index.html:22
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:359
+#: coati_payroll/templates/modules/currency/index.html:22
+#: coati_payroll/templates/modules/planilla/config.html:39
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:81
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:76
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:81
+#: coati_payroll/templates/modules/planilla/config_reglas.html:82
+#: coati_payroll/templates/modules/planilla/index.html:30
+#: coati_payroll/templates/modules/shared/concept_index.html:30
+#: coati_payroll/templates/modules/user/index.html:22
+msgid "Nombre"
+msgstr "Name"
+
+#: coati_payroll/forms.py:77 coati_payroll/forms.py:99
+msgid "Apellido"
+msgstr "Last Name"
+
+#: coati_payroll/forms.py:79 coati_payroll/forms.py:101
+#: coati_payroll/forms.py:230
+msgid "Correo electrónico"
+msgstr "Email"
+
+#: coati_payroll/forms.py:83
+#: coati_payroll/templates/modules/user/profile.html:32
+msgid "Tipo de usuario"
+msgstr "User type"
+
+#: coati_payroll/forms.py:85 coati_payroll/templates/modules/user/index.html:37
+msgid "Administrador"
+msgstr "Administrator"
+
+#: coati_payroll/forms.py:86 coati_payroll/templates/modules/user/index.html:39
+msgid "Recursos Humanos"
+msgstr "Human Resources"
+
+#: coati_payroll/forms.py:87 coati_payroll/templates/modules/user/index.html:41
+msgid "Auditoría"
+msgstr "Audit"
+
+#: coati_payroll/forms.py:91 coati_payroll/forms.py:122
+#: coati_payroll/forms.py:218 coati_payroll/forms.py:355
+#: coati_payroll/forms.py:415 coati_payroll/forms.py:529
+#: coati_payroll/forms.py:654 coati_payroll/forms.py:736
+#: coati_payroll/forms.py:811 coati_payroll/forms.py:933
+#: coati_payroll/forms.py:1299
+#: coati_payroll/templates/modules/calculation_rule/index.html:57
+#: coati_payroll/templates/modules/currency/index.html:36
+#: coati_payroll/templates/modules/custom_field/index.html:50
+#: coati_payroll/templates/modules/employee/index.html:48
+#: coati_payroll/templates/modules/planilla/config.html:59
+#: coati_payroll/templates/modules/planilla/config_empleados.html:73
+#: coati_payroll/templates/modules/planilla/index.html:37
+#: coati_payroll/templates/modules/shared/concept_index.html:66
+#: coati_payroll/templates/modules/tipo_planilla/index.html:40
+#: coati_payroll/templates/modules/user/index.html:48
+msgid "Activo"
+msgstr "Active"
+
+#: coati_payroll/forms.py:92 coati_payroll/forms.py:123
+#: coati_payroll/forms.py:137 coati_payroll/forms.py:318
+#: coati_payroll/forms.py:356 coati_payroll/forms.py:416
+#: coati_payroll/forms.py:530 coati_payroll/forms.py:655
+#: coati_payroll/forms.py:737 coati_payroll/forms.py:812
+#: coati_payroll/forms.py:934 coati_payroll/forms.py:1003
+#: coati_payroll/forms.py:1087 coati_payroll/forms.py:1300
+#: coati_payroll/templates/modules/shared/concept_form.html:192
+msgid "Guardar"
+msgstr "Save"
+
+#: coati_payroll/forms.py:105
+msgid "Contraseña actual"
+msgstr "Current password"
+
+#: coati_payroll/forms.py:108
+msgid "Nueva contraseña"
+msgstr "New password"
+
+#: coati_payroll/forms.py:111
+msgid "Confirmar nueva contraseña"
+msgstr "Confirm new password"
+
+#: coati_payroll/forms.py:113
+msgid "Actualizar Perfil"
+msgstr "Update Profile"
+
+#: coati_payroll/forms.py:119 coati_payroll/forms.py:363
+#: coati_payroll/forms.py:432 coati_payroll/forms.py:537
+#: coati_payroll/forms.py:748 coati_payroll/forms.py:823
+#: coati_payroll/forms.py:1260
+#: coati_payroll/templates/modules/calculation_rule/index.html:21
+#: coati_payroll/templates/modules/currency/index.html:21
+#: coati_payroll/templates/modules/employee/index.html:21
+#: coati_payroll/templates/modules/empresa/index.html:21
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:80
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:75
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:80
+#: coati_payroll/templates/modules/planilla/config_reglas.html:81
+#: coati_payroll/templates/modules/shared/concept_index.html:29
+#: coati_payroll/templates/modules/tipo_planilla/index.html:21
+msgid "Código"
+msgstr "Code"
+
+#: coati_payroll/forms.py:121
+#: coati_payroll/templates/modules/currency/index.html:23
+msgid "Símbolo"
+msgstr "Symbol"
+
+#: coati_payroll/forms.py:129
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:371
+#: coati_payroll/templates/modules/exchange_rate/index.html:72
+#: coati_payroll/templates/modules/planilla/novedades/index.html:68
+#: coati_payroll/templates/modules/prestamo/detail.html:288
+msgid "Fecha"
+msgstr "Date"
+
+#: coati_payroll/forms.py:131
+#: coati_payroll/templates/modules/exchange_rate/index.html:34
+msgid "Moneda origen"
+msgstr "Source currency"
+
+#: coati_payroll/forms.py:134
+#: coati_payroll/templates/modules/exchange_rate/index.html:43
+msgid "Moneda destino"
+msgstr "Destination currency"
+
+#: coati_payroll/forms.py:136
+msgid "Tasa de cambio"
+msgstr "Exchange rate"
+
+#: coati_payroll/forms.py:144
+msgid "Código de empleado"
+msgstr "Employee code"
+
+#: coati_payroll/forms.py:150
+msgid "El código solo puede contener letras, números y guiones."
+msgstr "The code can only contain letters, numbers, and hyphens."
+
+#: coati_payroll/forms.py:154
+msgid ""
+"Código único del empleado. Si no se proporciona, se genera "
+"automáticamente."
+msgstr ""
+
+#: coati_payroll/forms.py:158
+msgid "Primer nombre"
+msgstr "First name"
+
+#: coati_payroll/forms.py:161
+msgid "Segundo nombre"
+msgstr "Middle name"
+
+#: coati_payroll/forms.py:164
+msgid "Primer apellido"
+msgstr "First last name"
+
+#: coati_payroll/forms.py:167
+msgid "Segundo apellido"
+msgstr "Second last name"
+
+#: coati_payroll/forms.py:170
+msgid "Género"
+msgstr "Gender"
+
+#: coati_payroll/forms.py:172 coati_payroll/forms.py:185
+#: coati_payroll/forms.py:203 coati_payroll/forms.py:237
+#: coati_payroll/forms.py:253 coati_payroll/forms.py:270
+#: coati_payroll/vistas/employee.py:41 coati_payroll/vistas/employee.py:57
+#: coati_payroll/vistas/exchange_rate.py:104
+#: coati_payroll/vistas/exchange_rate.py:106
+#: coati_payroll/vistas/exchange_rate.py:141
+#: coati_payroll/vistas/exchange_rate.py:143
+msgid "Seleccionar..."
+msgstr "Select..."
+
+#: coati_payroll/forms.py:173
+msgid "Masculino"
+msgstr "Male"
+
+#: coati_payroll/forms.py:174
+msgid "Femenino"
+msgstr "Female"
+
+#: coati_payroll/forms.py:175 coati_payroll/forms.py:189
+#: coati_payroll/forms.py:561 coati_payroll/forms.py:845
+#: coati_payroll/forms.py:1157 coati_payroll/forms.py:1222
+msgid "Otro"
+msgstr "Other"
+
+#: coati_payroll/forms.py:180
+msgid "Nacionalidad"
+msgstr "Nationality"
+
+#: coati_payroll/forms.py:183
+msgid "Tipo de identificación"
+msgstr "Identification type"
+
+#: coati_payroll/forms.py:186
+msgid "Cédula"
+msgstr ""
+
+#: coati_payroll/forms.py:187
+msgid "Pasaporte"
+msgstr ""
+
+#: coati_payroll/forms.py:188
+msgid "Carnet de residente"
+msgstr ""
+
+#: coati_payroll/forms.py:194
+msgid "Identificación personal"
+msgstr "Personal identification"
+
+#: coati_payroll/forms.py:197
+msgid "ID Seguridad Social"
+msgstr "Social Security ID"
+
+#: coati_payroll/forms.py:199
+msgid "ID Fiscal"
+msgstr "Tax ID"
+
+#: coati_payroll/forms.py:201
+msgid "Tipo de sangre"
+msgstr "Blood type"
+
+#: coati_payroll/forms.py:215
+msgid "Fecha de nacimiento"
+msgstr "Date of birth"
+
+#: coati_payroll/forms.py:216
+msgid "Fecha de alta"
+msgstr "Hire date"
+
+#: coati_payroll/forms.py:217
+msgid "Fecha de baja"
+msgstr "Termination date"
+
+#: coati_payroll/forms.py:219
+#: coati_payroll/templates/modules/employee/index.html:24
+msgid "Cargo"
+msgstr "Position"
+
+#: coati_payroll/forms.py:220
+#: coati_payroll/templates/modules/employee/index.html:25
+msgid "Área"
+msgstr "Area"
+
+#: coati_payroll/forms.py:222
+msgid "Centro de costos"
+msgstr "Cost center"
+
+#: coati_payroll/forms.py:225
+msgid "Salario base"
+msgstr "Base salary"
+
+#: coati_payroll/forms.py:227 coati_payroll/forms.py:681
+#: coati_payroll/forms.py:1038
+#: coati_payroll/templates/modules/planilla/config.html:50
+#: coati_payroll/templates/modules/planilla/index.html:32
+msgid "Moneda"
+msgstr "Currency"
+
+#: coati_payroll/forms.py:228 coati_payroll/forms.py:687
+msgid "Empresa"
+msgstr "Company"
+
+#: coati_payroll/forms.py:232 coati_payroll/forms.py:1284
+msgid "Teléfono"
+msgstr "Phone"
+
+#: coati_payroll/forms.py:233 coati_payroll/forms.py:1280
+msgid "Dirección"
+msgstr "Address"
+
+#: coati_payroll/forms.py:235
+msgid "Estado civil"
+msgstr "Marital status"
+
+#: coati_payroll/forms.py:238
+msgid "Soltero/a"
+msgstr ""
+
+#: coati_payroll/forms.py:239
+msgid "Casado/a"
+msgstr ""
+
+#: coati_payroll/forms.py:240
+msgid "Divorciado/a"
+msgstr ""
+
+#: coati_payroll/forms.py:241
+msgid "Viudo/a"
+msgstr ""
+
+#: coati_payroll/forms.py:242
+msgid "Unión libre"
+msgstr "Common-law"
+
+#: coati_payroll/forms.py:246
+msgid "Banco"
+msgstr "Bank"
+
+#: coati_payroll/forms.py:248
+msgid "Número de cuenta bancaria"
+msgstr "Bank account number"
+
+#: coati_payroll/forms.py:251
+msgid "Tipo de contrato"
+msgstr "Contract type"
+
+#: coati_payroll/forms.py:254
+msgid "Indefinido"
+msgstr "Permanent"
+
+#: coati_payroll/forms.py:255
+msgid "Temporal"
+msgstr "Temporary"
+
+#: coati_payroll/forms.py:256
+msgid "Por obra"
+msgstr ""
+
+#: coati_payroll/forms.py:257
+msgid "Prácticas"
+msgstr ""
+
+#: coati_payroll/forms.py:263
+msgid "Año de implementación inicial"
+msgstr ""
+
+#: coati_payroll/forms.py:265
+msgid "Año fiscal cuando se implementó el sistema por primera vez"
+msgstr ""
+
+#: coati_payroll/forms.py:268
+msgid "Último mes cerrado"
+msgstr ""
+
+#: coati_payroll/forms.py:271 coati_payroll/forms.py:776
+msgid "Enero"
+msgstr "January"
+
+#: coati_payroll/forms.py:272 coati_payroll/forms.py:777
+msgid "Febrero"
+msgstr "February"
+
+#: coati_payroll/forms.py:273 coati_payroll/forms.py:778
+msgid "Marzo"
+msgstr "March"
+
+#: coati_payroll/forms.py:274 coati_payroll/forms.py:779
+msgid "Abril"
+msgstr "April"
+
+#: coati_payroll/forms.py:275 coati_payroll/forms.py:780
+msgid "Mayo"
+msgstr "May"
+
+#: coati_payroll/forms.py:276 coati_payroll/forms.py:781
+msgid "Junio"
+msgstr "June"
+
+#: coati_payroll/forms.py:277 coati_payroll/forms.py:782
+msgid "Julio"
+msgstr "July"
+
+#: coati_payroll/forms.py:278 coati_payroll/forms.py:783
+msgid "Agosto"
+msgstr "August"
+
+#: coati_payroll/forms.py:279 coati_payroll/forms.py:784
+msgid "Septiembre"
+msgstr "September"
+
+#: coati_payroll/forms.py:280 coati_payroll/forms.py:785
+msgid "Octubre"
+msgstr "October"
+
+#: coati_payroll/forms.py:281 coati_payroll/forms.py:786
+msgid "Noviembre"
+msgstr "November"
+
+#: coati_payroll/forms.py:282 coati_payroll/forms.py:787
+msgid "Diciembre"
+msgstr "December"
+
+#: coati_payroll/forms.py:286
+msgid "Último mes cerrado antes de pasar al nuevo sistema"
+msgstr ""
+
+#: coati_payroll/forms.py:289
+msgid "Salario acumulado"
+msgstr ""
+
+#: coati_payroll/forms.py:292
+msgid "Suma de salarios del año fiscal antes del sistema"
+msgstr ""
+
+#: coati_payroll/forms.py:295
+msgid "Impuesto acumulado"
+msgstr ""
+
+#: coati_payroll/forms.py:298
+msgid "Suma de impuestos pagados en el año fiscal antes del sistema"
+msgstr ""
+
+#: coati_payroll/forms.py:301
+msgid "Penúltimo salario mensual"
+msgstr ""
+
+#: coati_payroll/forms.py:304
+msgid "Salario del mes anterior al último"
+msgstr ""
+
+#: coati_payroll/forms.py:307
+msgid "Antepenúltimo salario mensual"
+msgstr ""
+
+#: coati_payroll/forms.py:310
+msgid "Salario de 2 meses antes del último"
+msgstr ""
+
+#: coati_payroll/forms.py:313
+msgid "Tercer salario anterior"
+msgstr ""
+
+#: coati_payroll/forms.py:316
+msgid "Salario de 3 meses antes del último"
+msgstr ""
+
+#: coati_payroll/forms.py:325
+msgid "Nombre del campo"
+msgstr ""
+
+#: coati_payroll/forms.py:328
+msgid "Nombre interno único del campo (sin espacios ni caracteres especiales)"
+msgstr ""
+
+#: coati_payroll/forms.py:332
+#: coati_payroll/templates/modules/custom_field/index.html:23
+msgid "Etiqueta"
+msgstr "Label"
+
+#: coati_payroll/forms.py:334
+msgid "Nombre visible del campo en el formulario"
+msgstr ""
+
+#: coati_payroll/forms.py:337
+msgid "Tipo de dato"
+msgstr "Data type"
+
+#: coati_payroll/forms.py:339
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:369
+#: coati_payroll/templates/modules/custom_field/index.html:37
+msgid "Texto"
+msgstr "Text"
+
+#: coati_payroll/forms.py:340
+#: coati_payroll/templates/modules/custom_field/index.html:39
+msgid "Número entero"
+msgstr ""
+
+#: coati_payroll/forms.py:341
+#: coati_payroll/templates/modules/custom_field/index.html:41
+msgid "Número decimal"
+msgstr ""
+
+#: coati_payroll/forms.py:342
+#: coati_payroll/templates/modules/custom_field/index.html:43
+msgid "Verdadero/Falso"
+msgstr ""
+
+#: coati_payroll/forms.py:347 coati_payroll/forms.py:373
+#: coati_payroll/forms.py:442 coati_payroll/forms.py:547
+#: coati_payroll/forms.py:671 coati_payroll/forms.py:753
+#: coati_payroll/forms.py:833
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:61
+#: coati_payroll/templates/modules/planilla/config.html:40
+#: coati_payroll/templates/modules/tipo_planilla/index.html:22
+msgid "Descripción"
+msgstr "Description"
+
+#: coati_payroll/forms.py:350
+msgid "Orden de visualización"
+msgstr ""
+
+#: coati_payroll/forms.py:365
+msgid "Código único de la regla (ej: IR_NICARAGUA)"
+msgstr ""
+
+#: coati_payroll/forms.py:370
+msgid "Nombre descriptivo de la regla"
+msgstr ""
+
+#: coati_payroll/forms.py:377
+#: coati_payroll/templates/modules/calculation_rule/index.html:24
+msgid "Jurisdicción"
+msgstr ""
+
+#: coati_payroll/forms.py:379
+msgid "País o región donde aplica (ej: Nicaragua)"
+msgstr ""
+
+#: coati_payroll/forms.py:382
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:51
+msgid "Moneda de Referencia"
+msgstr ""
+
+#: coati_payroll/forms.py:385
+msgid ""
+"Moneda base para cálculos de la regla (ej: NIO). La moneda de la planilla"
+" se define en el Tipo de Planilla."
+msgstr ""
+
+#: coati_payroll/forms.py:390
+#: coati_payroll/templates/modules/calculation_rule/index.html:25
+#: coati_payroll/templates/modules/planilla/config_reglas.html:84
+msgid "Versión"
+msgstr ""
+
+#: coati_payroll/forms.py:393
+msgid "Versión semántica (ej: 1.0.0)"
+msgstr ""
+
+#: coati_payroll/forms.py:396
+msgid "Tipo de regla"
+msgstr ""
+
+#: coati_payroll/forms.py:398 coati_payroll/forms.py:554
+#: coati_payroll/templates/modules/calculation_rule/index.html:38
+msgid "Impuesto"
+msgstr ""
+
+#: coati_payroll/forms.py:399 coati_payroll/forms.py:970
+#: coati_payroll/templates/modules/calculation_rule/index.html:40
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:36
+#: coati_payroll/templates/modules/planilla/novedades/index.html:86
+#: coati_payroll/vistas/payroll_concepts.py:72
+msgid "Deducción"
+msgstr "Deduction"
+
+#: coati_payroll/forms.py:400 coati_payroll/forms.py:964
+#: coati_payroll/templates/modules/calculation_rule/index.html:42
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:36
+#: coati_payroll/templates/modules/planilla/novedades/index.html:84
+#: coati_payroll/vistas/payroll_concepts.py:61
+msgid "Percepción"
+msgstr "Perception"
+
+#: coati_payroll/forms.py:401
+#: coati_payroll/templates/modules/calculation_rule/index.html:44
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:41
+#: coati_payroll/vistas/payroll_concepts.py:83
+msgid "Prestación"
+msgstr "Benefit"
+
+#: coati_payroll/forms.py:406
+msgid "Vigente desde"
+msgstr "Valid from"
+
+#: coati_payroll/forms.py:408
+msgid "Fecha desde la cual la regla es válida"
+msgstr ""
+
+#: coati_payroll/forms.py:411
+msgid "Vigente hasta"
+msgstr ""
+
+#: coati_payroll/forms.py:413
+msgid "Fecha hasta la cual la regla es válida (vacío = indefinido)"
+msgstr ""
+
+#: coati_payroll/forms.py:434
+msgid "Código único de la percepción (ej: SALARIO_BASE)"
+msgstr ""
+
+#: coati_payroll/forms.py:439
+msgid "Nombre descriptivo de la percepción"
+msgstr ""
+
+#: coati_payroll/forms.py:446 coati_payroll/forms.py:571
+#: coati_payroll/forms.py:850
+msgid "Tipo de Cálculo"
+msgstr ""
+
+#: coati_payroll/forms.py:448 coati_payroll/forms.py:573
+#: coati_payroll/forms.py:852 coati_payroll/forms.py:983
+#: coati_payroll/templates/modules/planilla/novedades/index.html:93
+msgid "Monto Fijo"
+msgstr ""
+
+#: coati_payroll/forms.py:449 coati_payroll/forms.py:574
+#: coati_payroll/forms.py:853
+msgid "Porcentaje del Salario Base"
+msgstr ""
+
+#: coati_payroll/forms.py:450 coati_payroll/forms.py:575
+#: coati_payroll/forms.py:854
+msgid "Porcentaje del Salario Bruto"
+msgstr ""
+
+#: coati_payroll/forms.py:451 coati_payroll/forms.py:577
+#: coati_payroll/forms.py:855
+msgid "Fórmula Personalizada"
+msgstr ""
+
+#: coati_payroll/forms.py:452
+msgid "Por Horas"
+msgstr ""
+
+#: coati_payroll/forms.py:453
+msgid "Por Días"
+msgstr ""
+
+#: coati_payroll/forms.py:458 coati_payroll/forms.py:583
+#: coati_payroll/forms.py:861
+msgid "Monto Predeterminado"
+msgstr ""
+
+#: coati_payroll/forms.py:460 coati_payroll/forms.py:585
+#: coati_payroll/forms.py:863
+msgid "Monto fijo cuando aplica"
+msgstr ""
+
+#: coati_payroll/forms.py:463 coati_payroll/forms.py:588
+#: coati_payroll/forms.py:866 coati_payroll/forms.py:987
+#: coati_payroll/templates/modules/planilla/novedades/index.html:101
+msgid "Porcentaje"
+msgstr "Percentage"
+
+#: coati_payroll/forms.py:465 coati_payroll/forms.py:590
+#: coati_payroll/forms.py:868
+msgid "Porcentaje para cálculos (0-100)"
+msgstr ""
+
+#: coati_payroll/forms.py:468 coati_payroll/forms.py:593
+#: coati_payroll/forms.py:871
+msgid "Base de Cálculo"
+msgstr ""
+
+#: coati_payroll/forms.py:470 coati_payroll/forms.py:595
+#: coati_payroll/forms.py:873 coati_payroll/vistas/planilla.py:1101
+#: coati_payroll/vistas/planilla.py:1112 coati_payroll/vistas/planilla.py:1123
+msgid "-- Seleccionar --"
+msgstr ""
+
+#: coati_payroll/forms.py:471 coati_payroll/forms.py:596
+#: coati_payroll/forms.py:874
+#: coati_payroll/templates/modules/employee/index.html:26
+msgid "Salario Base"
+msgstr ""
+
+#: coati_payroll/forms.py:472 coati_payroll/forms.py:597
+#: coati_payroll/forms.py:875
+msgid "Salario Bruto"
+msgstr ""
+
+#: coati_payroll/forms.py:473 coati_payroll/forms.py:598
+#: coati_payroll/forms.py:876
+msgid "Salario Gravable"
+msgstr ""
+
+#: coati_payroll/forms.py:474 coati_payroll/forms.py:599
+msgid "Salario Neto"
+msgstr ""
+
+#: coati_payroll/forms.py:479 coati_payroll/forms.py:604
+#: coati_payroll/forms.py:881
+msgid "Unidad de Cálculo"
+msgstr ""
+
+#: coati_payroll/forms.py:481 coati_payroll/forms.py:606
+#: coati_payroll/forms.py:883
+msgid "-- Ninguna --"
+msgstr ""
+
+#: coati_payroll/forms.py:482 coati_payroll/forms.py:607
+#: coati_payroll/forms.py:884
+msgid "Por Hora"
+msgstr ""
+
+#: coati_payroll/forms.py:483 coati_payroll/forms.py:608
+#: coati_payroll/forms.py:885
+msgid "Por Día"
+msgstr ""
+
+#: coati_payroll/forms.py:484 coati_payroll/forms.py:609
+#: coati_payroll/forms.py:886
+msgid "Por Mes"
+msgstr ""
+
+#: coati_payroll/forms.py:489
+msgid "Gravable"
+msgstr "Taxable"
+
+#: coati_payroll/forms.py:491
+msgid "¿Esta percepción está sujeta a impuestos?"
+msgstr ""
+
+#: coati_payroll/forms.py:494 coati_payroll/forms.py:619
+#: coati_payroll/forms.py:898
+#: coati_payroll/templates/modules/shared/concept_index.html:32
+msgid "Recurrente"
+msgstr "Recurring"
+
+#: coati_payroll/forms.py:496 coati_payroll/forms.py:621
+msgid "¿Se aplica automáticamente en cada nómina?"
+msgstr ""
+
+#: coati_payroll/forms.py:500 coati_payroll/forms.py:625
+#: coati_payroll/forms.py:904
+msgid "Vigente Desde"
+msgstr ""
+
+#: coati_payroll/forms.py:502
+msgid "Fecha desde la cual esta percepción es válida"
+msgstr ""
+
+#: coati_payroll/forms.py:505 coati_payroll/forms.py:630
+#: coati_payroll/forms.py:909
+msgid "Válido Hasta"
+msgstr ""
+
+#: coati_payroll/forms.py:508
+msgid "Fecha hasta la cual esta percepción es válida (vacío = indefinido)"
+msgstr ""
+
+#: coati_payroll/forms.py:513 coati_payroll/forms.py:638
+#: coati_payroll/forms.py:917
+msgid "Contabilizable"
+msgstr ""
+
+#: coati_payroll/forms.py:517 coati_payroll/forms.py:642
+#: coati_payroll/forms.py:921
+msgid "Cuenta Contable (Debe)"
+msgstr ""
+
+#: coati_payroll/forms.py:521 coati_payroll/forms.py:646
+#: coati_payroll/forms.py:925
+msgid "Cuenta Contable (Haber)"
+msgstr ""
+
+#: coati_payroll/forms.py:525 coati_payroll/forms.py:650
+#: coati_payroll/forms.py:929
+msgid "Editable en Nómina"
+msgstr ""
+
+#: coati_payroll/forms.py:527 coati_payroll/forms.py:652
+#: coati_payroll/forms.py:931
+msgid "¿Permitir modificar el monto durante la nómina?"
+msgstr ""
+
+#: coati_payroll/forms.py:539
+msgid "Código único de la deducción (ej: INSS_LABORAL)"
+msgstr ""
+
+#: coati_payroll/forms.py:544
+msgid "Nombre descriptivo de la deducción"
+msgstr ""
+
+#: coati_payroll/forms.py:551
+msgid "Tipo de Deducción"
+msgstr ""
+
+#: coati_payroll/forms.py:553
+#: coati_payroll/templates/modules/planilla/novedades/index.html:88
+msgid "General"
+msgstr ""
+
+#: coati_payroll/forms.py:555
+msgid "Seguro Social"
+msgstr ""
+
+#: coati_payroll/forms.py:556 coati_payroll/forms.py:1019
+#: coati_payroll/templates/modules/prestamo/approve.html:32
+#: coati_payroll/templates/modules/prestamo/condonacion.html:38
+#: coati_payroll/templates/modules/prestamo/detail.html:52
+#: coati_payroll/templates/modules/prestamo/index.html:35
+#: coati_payroll/templates/modules/prestamo/index.html:88
+msgid "Préstamo"
+msgstr "Loan"
+
+#: coati_payroll/forms.py:557
+#: coati_payroll/templates/modules/prestamo/index.html:34
+#: coati_payroll/templates/modules/prestamo/index.html:86
+msgid "Adelanto"
+msgstr "Advance"
+
+#: coati_payroll/forms.py:558
+msgid "Pensión Alimenticia"
+msgstr ""
+
+#: coati_payroll/forms.py:559
+msgid "Ahorro Voluntario"
+msgstr ""
+
+#: coati_payroll/forms.py:560
+msgid "Cuota Sindical"
+msgstr ""
+
+#: coati_payroll/forms.py:566
+msgid "Es Impuesto"
+msgstr ""
+
+#: coati_payroll/forms.py:568
+msgid "¿Esta deducción es un impuesto (IR, ISR)?"
+msgstr ""
+
+#: coati_payroll/forms.py:576
+msgid "Porcentaje del Salario Gravable"
+msgstr ""
+
+#: coati_payroll/forms.py:578
+msgid "Tabla de Impuestos"
+msgstr ""
+
+#: coati_payroll/forms.py:614
+msgid "Antes de Impuesto"
+msgstr ""
+
+#: coati_payroll/forms.py:616
+msgid "¿Se deduce antes de calcular impuestos?"
+msgstr ""
+
+#: coati_payroll/forms.py:627
+msgid "Fecha desde la cual esta deducción es válida"
+msgstr ""
+
+#: coati_payroll/forms.py:633
+msgid "Fecha hasta la cual esta deducción es válida (vacío = indefinido)"
+msgstr ""
+
+#: coati_payroll/forms.py:668
+msgid "Nombre único de la planilla (ej: Planilla Quincenal Córdobas)"
+msgstr ""
+
+#: coati_payroll/forms.py:675 coati_payroll/templates/base.html:163
+#: coati_payroll/templates/modules/planilla/config.html:41
+msgid "Tipo de Planilla"
+msgstr "Payroll Type"
+
+#: coati_payroll/forms.py:678
+msgid "Define periodicidad, período fiscal y configuración de cálculo"
+msgstr ""
+
+#: coati_payroll/forms.py:684
+msgid "Moneda en la que se pagarán los salarios"
+msgstr ""
+
+#: coati_payroll/forms.py:690
+msgid "Empresa a la que pertenece esta planilla"
+msgstr ""
+
+#: coati_payroll/forms.py:693
+msgid "Inicio Período Fiscal"
+msgstr ""
+
+#: coati_payroll/forms.py:695
+msgid "Fecha de inicio del período fiscal actual"
+msgstr ""
+
+#: coati_payroll/forms.py:698
+msgid "Fin Período Fiscal"
+msgstr ""
+
+#: coati_payroll/forms.py:700
+msgid "Fecha de fin del período fiscal actual"
+msgstr ""
+
+#: coati_payroll/forms.py:704
+msgid "Prioridad Préstamos"
+msgstr ""
+
+#: coati_payroll/forms.py:707
+msgid "Prioridad para deducir cuotas de préstamos (menor = primero)"
+msgstr ""
+
+#: coati_payroll/forms.py:710
+msgid "Prioridad Adelantos"
+msgstr ""
+
+#: coati_payroll/forms.py:713
+msgid "Prioridad para deducir adelantos salariales (menor = primero)"
+msgstr ""
+
+#: coati_payroll/forms.py:716
+msgid "Aplicar Préstamos Automáticamente"
+msgstr ""
+
+#: coati_payroll/forms.py:718
+msgid "¿Deducir automáticamente las cuotas de préstamos?"
+msgstr ""
+
+#: coati_payroll/forms.py:721
+msgid "Aplicar Adelantos Automáticamente"
+msgstr ""
+
+#: coati_payroll/forms.py:723
+msgid "¿Deducir automáticamente los adelantos salariales?"
+msgstr ""
+
+#: coati_payroll/forms.py:727
+msgid "Cuenta Débito (Salario Base)"
+msgstr ""
+
+#: coati_payroll/forms.py:729
+msgid "Cuenta de débito para contabilizar el salario base (gasto)"
+msgstr ""
+
+#: coati_payroll/forms.py:732
+msgid "Cuenta Crédito (Salario Base)"
+msgstr ""
+
+#: coati_payroll/forms.py:734
+msgid "Cuenta de crédito para contabilizar el salario base (pasivo)"
+msgstr ""
+
+#: coati_payroll/forms.py:750
+msgid "Código único del tipo de planilla (ej: MENSUAL)"
+msgstr ""
+
+#: coati_payroll/forms.py:755
+msgid "Descripción del tipo de planilla"
+msgstr ""
+
+#: coati_payroll/forms.py:758
+#: coati_payroll/templates/modules/tipo_planilla/index.html:23
+msgid "Periodicidad"
+msgstr ""
+
+#: coati_payroll/forms.py:760
+msgid "Mensual"
+msgstr "Monthly"
+
+#: coati_payroll/forms.py:761
+msgid "Quincenal"
+msgstr "Biweekly"
+
+#: coati_payroll/forms.py:762
+msgid "Semanal"
+msgstr "Weekly"
+
+#: coati_payroll/forms.py:765
+msgid "Frecuencia de pago de la planilla"
+msgstr ""
+
+#: coati_payroll/forms.py:768 coati_payroll/forms.py:985
+#: coati_payroll/templates/modules/planilla/novedades/index.html:97
+#: coati_payroll/templates/modules/tipo_planilla/index.html:24
+msgid "Días"
+msgstr ""
+
+#: coati_payroll/forms.py:771
+msgid "Número de días usados para prorrateos"
+msgstr ""
+
+#: coati_payroll/forms.py:774
+msgid "Mes Inicio Fiscal"
+msgstr ""
+
+#: coati_payroll/forms.py:792
+msgid "Mes en que inicia el año fiscal"
+msgstr ""
+
+#: coati_payroll/forms.py:795
+msgid "Día Inicio Fiscal"
+msgstr ""
+
+#: coati_payroll/forms.py:798
+msgid "Día del mes en que inicia el año fiscal"
+msgstr ""
+
+#: coati_payroll/forms.py:801
+msgid "Acumula Anual"
+msgstr ""
+
+#: coati_payroll/forms.py:803
+msgid "¿Los valores se acumulan anualmente?"
+msgstr ""
+
+#: coati_payroll/forms.py:806
+msgid "Períodos por Año"
+msgstr ""
+
+#: coati_payroll/forms.py:809
+msgid "Número de períodos de nómina por año fiscal"
+msgstr ""
+
+#: coati_payroll/forms.py:825
+msgid "Código único de la prestación (ej: INSS_PATRONAL)"
+msgstr ""
+
+#: coati_payroll/forms.py:830
+msgid "Nombre descriptivo de la prestación"
+msgstr ""
+
+#: coati_payroll/forms.py:837
+msgid "Tipo de Prestación"
+msgstr ""
+
+#: coati_payroll/forms.py:839
+msgid "Aporte Patronal"
+msgstr ""
+
+#: coati_payroll/forms.py:840
+msgid "Seguro Social Patronal"
+msgstr ""
+
+#: coati_payroll/forms.py:841
+msgid "Vacaciones"
+msgstr ""
+
+#: coati_payroll/forms.py:842
+msgid "Aguinaldo / Treceavo Mes"
+msgstr ""
+
+#: coati_payroll/forms.py:843
+msgid "Indemnización"
+msgstr ""
+
+#: coati_payroll/forms.py:844
+msgid "Capacitación"
+msgstr ""
+
+#: coati_payroll/forms.py:856
+msgid "Provisión Mensual"
+msgstr ""
+
+#: coati_payroll/forms.py:891
+msgid "Tope de Aplicación"
+msgstr ""
+
+#: coati_payroll/forms.py:894
+msgid "Monto máximo sobre el cual se aplica el cálculo (ej: techo salarial INSS)"
+msgstr ""
+
+#: coati_payroll/forms.py:900
+msgid "¿Se provisiona automáticamente en cada nómina?"
+msgstr ""
+
+#: coati_payroll/forms.py:906
+msgid "Fecha desde la cual esta prestación es válida"
+msgstr ""
+
+#: coati_payroll/forms.py:912
+msgid "Fecha hasta la cual esta prestación es válida (vacío = indefinido)"
+msgstr ""
+
+#: coati_payroll/forms.py:949 coati_payroll/forms.py:1010
+#: coati_payroll/templates/modules/planilla/config_empleados.html:36
+#: coati_payroll/templates/modules/planilla/config_empleados.html:70
+#: coati_payroll/templates/modules/planilla/novedades/index.html:63
+#: coati_payroll/templates/modules/prestamo/index.html:20
+#: coati_payroll/templates/modules/prestamo/index.html:67
+msgid "Empleado"
+msgstr "Employee"
+
+#: coati_payroll/forms.py:952
+msgid "Empleado al que se aplicará la novedad"
+msgstr ""
+
+#: coati_payroll/forms.py:955
+msgid "Tipo de Concepto"
+msgstr ""
+
+#: coati_payroll/forms.py:957
+msgid "Percepción (Ingreso)"
+msgstr ""
+
+#: coati_payroll/forms.py:958
+msgid "Deducción (Egreso)"
+msgstr ""
+
+#: coati_payroll/forms.py:961
+msgid "Tipo de concepto al que se asocia la novedad"
+msgstr ""
+
+#: coati_payroll/forms.py:967
+msgid "Percepción a la que se asocia la novedad (si aplica)"
+msgstr ""
+
+#: coati_payroll/forms.py:973
+msgid "Deducción a la que se asocia la novedad (si aplica)"
+msgstr ""
+
+#: coati_payroll/forms.py:976
+msgid "Código del Concepto"
+msgstr ""
+
+#: coati_payroll/forms.py:978
+msgid "Código del concepto que se modifica o aplica"
+msgstr ""
+
+#: coati_payroll/forms.py:981
+msgid "Tipo de Valor"
+msgstr ""
+
+#: coati_payroll/forms.py:984
+#: coati_payroll/templates/modules/planilla/novedades/index.html:95
+msgid "Horas"
+msgstr ""
+
+#: coati_payroll/forms.py:986
+#: coati_payroll/templates/modules/planilla/novedades/index.html:99
+msgid "Cantidad"
+msgstr ""
+
+#: coati_payroll/forms.py:990
+msgid "Tipo de valor de la novedad"
+msgstr ""
+
+#: coati_payroll/forms.py:993
+msgid "Valor / Cantidad"
+msgstr ""
+
+#: coati_payroll/forms.py:996
+msgid "Valor numérico de la novedad (ej: 5 horas, 1500 de bono)"
+msgstr ""
+
+#: coati_payroll/forms.py:999
+msgid "Fecha de la Novedad"
+msgstr ""
+
+#: coati_payroll/forms.py:1001
+msgid "Fecha en que ocurrió el evento (opcional, para auditoría)"
+msgstr ""
+
+#: coati_payroll/forms.py:1013
+msgid "Seleccione el empleado que solicita el préstamo o adelanto"
+msgstr ""
+
+#: coati_payroll/forms.py:1016
+#: coati_payroll/templates/modules/calculation_rule/index.html:23
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:365
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:82
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:77
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:82
+#: coati_payroll/templates/modules/planilla/config_reglas.html:83
+#: coati_payroll/templates/modules/planilla/index.html:31
+#: coati_payroll/templates/modules/planilla/novedades/index.html:65
+#: coati_payroll/templates/modules/prestamo/detail.html:289
+#: coati_payroll/templates/modules/prestamo/index.html:31
+#: coati_payroll/templates/modules/prestamo/index.html:68
+#: coati_payroll/templates/modules/user/index.html:24
+msgid "Tipo"
+msgstr "Type"
+
+#: coati_payroll/forms.py:1018
+#: coati_payroll/templates/modules/prestamo/approve.html:30
+#: coati_payroll/templates/modules/prestamo/condonacion.html:36
+#: coati_payroll/templates/modules/prestamo/detail.html:50
+msgid "Adelanto de Salario"
+msgstr ""
+
+#: coati_payroll/forms.py:1023
+msgid "Adelanto: se descuenta rápidamente; Préstamo: cuotas a largo plazo"
+msgstr ""
+
+#: coati_payroll/forms.py:1027
+msgid "Fecha de Solicitud"
+msgstr ""
+
+#: coati_payroll/forms.py:1029
+msgid "Fecha en que se realiza la solicitud"
+msgstr ""
+
+#: coati_payroll/forms.py:1032
+msgid "Monto Solicitado"
+msgstr ""
+
+#: coati_payroll/forms.py:1035
+msgid "Monto que solicita el empleado"
+msgstr ""
+
+#: coati_payroll/forms.py:1041
+msgid "Moneda del préstamo (puede ser diferente a la de la planilla)"
+msgstr ""
+
+#: coati_payroll/forms.py:1044
+msgid "Número de Cuotas"
+msgstr ""
+
+#: coati_payroll/forms.py:1046
+msgid "Número de cuotas (nóminas) para pagar el préstamo"
+msgstr ""
+
+#: coati_payroll/forms.py:1049
+msgid "Tasa de Interés (%)"
+msgstr ""
+
+#: coati_payroll/forms.py:1053
+msgid "Tasa de interés anual (ej: 5.0000 para 5%)"
+msgstr ""
+
+#: coati_payroll/forms.py:1056
+msgid "Tipo de Interés"
+msgstr ""
+
+#: coati_payroll/forms.py:1058
+msgid "Sin Interés"
+msgstr ""
+
+#: coati_payroll/forms.py:1059
+msgid "Interés Simple"
+msgstr ""
+
+#: coati_payroll/forms.py:1060
+msgid "Interés Compuesto"
+msgstr ""
+
+#: coati_payroll/forms.py:1064
+msgid "Tipo de cálculo de interés"
+msgstr ""
+
+#: coati_payroll/forms.py:1067 coati_payroll/forms.py:1176
+#: coati_payroll/forms.py:1244
+msgid "Cuenta Contable Débito"
+msgstr ""
+
+#: coati_payroll/forms.py:1069
+msgid "Cuenta contable para el débito del desembolso"
+msgstr ""
+
+#: coati_payroll/forms.py:1072 coati_payroll/forms.py:1181
+#: coati_payroll/forms.py:1249
+msgid "Cuenta Contable Crédito"
+msgstr ""
+
+#: coati_payroll/forms.py:1074
+msgid "Cuenta contable para el crédito del desembolso"
+msgstr ""
+
+#: coati_payroll/forms.py:1077
+msgid "Deducción Asociada"
+msgstr ""
+
+#: coati_payroll/forms.py:1080
+msgid "Deducción para aplicar en nómina (opcional para adelantos)"
+msgstr ""
+
+#: coati_payroll/forms.py:1083
+msgid "Motivo"
+msgstr "Reason"
+
+#: coati_payroll/forms.py:1085
+msgid "Motivo o razón del préstamo"
+msgstr ""
+
+#: coati_payroll/forms.py:1094
+msgid "Monto Aprobado"
+msgstr ""
+
+#: coati_payroll/forms.py:1097
+msgid "Monto aprobado (puede ser diferente al solicitado)"
+msgstr ""
+
+#: coati_payroll/forms.py:1100
+msgid "Fecha de Aprobación"
+msgstr ""
+
+#: coati_payroll/forms.py:1102
+msgid "Fecha de aprobación del préstamo"
+msgstr ""
+
+#: coati_payroll/forms.py:1105
+msgid "Fecha de Desembolso"
+msgstr ""
+
+#: coati_payroll/forms.py:1107
+msgid "Fecha en que se realizó el pago al empleado"
+msgstr ""
+
+#: coati_payroll/forms.py:1110
+msgid "Monto por Cuota"
+msgstr ""
+
+#: coati_payroll/forms.py:1113
+msgid "Monto a deducir por cada cuota (se calcula automáticamente)"
+msgstr ""
+
+#: coati_payroll/forms.py:1115
+msgid "Aprobar"
+msgstr "Approve"
+
+#: coati_payroll/forms.py:1116
+msgid "Rechazar"
+msgstr "Reject"
+
+#: coati_payroll/forms.py:1118
+msgid "Motivo de Rechazo"
+msgstr ""
+
+#: coati_payroll/forms.py:1120
+msgid "Razón del rechazo (requerido si se rechaza)"
+msgstr ""
+
+#: coati_payroll/forms.py:1128
+msgid "Fecha de Condonación"
+msgstr ""
+
+#: coati_payroll/forms.py:1130
+msgid "Fecha en que se autoriza la condonación"
+msgstr ""
+
+#: coati_payroll/forms.py:1133
+msgid "Monto a Condonar"
+msgstr ""
+
+#: coati_payroll/forms.py:1136
+msgid "Monto del saldo que se perdona al empleado"
+msgstr ""
+
+#: coati_payroll/forms.py:1139
+msgid "Porcentaje a Condonar (%)"
+msgstr ""
+
+#: coati_payroll/forms.py:1142
+msgid "Porcentaje del saldo a condonar (opcional, para referencia)"
+msgstr ""
+
+#: coati_payroll/forms.py:1145
+msgid "Autorizado Por"
+msgstr ""
+
+#: coati_payroll/forms.py:1147
+msgid "Nombre/cargo de quien autoriza la condonación"
+msgstr ""
+
+#: coati_payroll/forms.py:1150
+msgid "Tipo de Documento Soporte"
+msgstr ""
+
+#: coati_payroll/forms.py:1152 coati_payroll/forms.py:1288
+msgid "Correo Electrónico"
+msgstr ""
+
+#: coati_payroll/forms.py:1153
+msgid "Memorándum"
+msgstr ""
+
+#: coati_payroll/forms.py:1154
+msgid "Acta de Junta"
+msgstr ""
+
+#: coati_payroll/forms.py:1155
+msgid "Resolución Administrativa"
+msgstr ""
+
+#: coati_payroll/forms.py:1156
+msgid "Carta Formal"
+msgstr ""
+
+#: coati_payroll/forms.py:1160
+msgid "Tipo de documento que autoriza la condonación"
+msgstr ""
+
+#: coati_payroll/forms.py:1163
+msgid "Referencia del Documento"
+msgstr ""
+
+#: coati_payroll/forms.py:1165
+msgid "Número, fecha u otra referencia del documento de autorización"
+msgstr ""
+
+#: coati_payroll/forms.py:1168
+msgid "Justificación Completa"
+msgstr ""
+
+#: coati_payroll/forms.py:1171
+msgid "Descripción detallada de la razón y autorización de la condonación"
+msgstr ""
+
+#: coati_payroll/forms.py:1178 coati_payroll/forms.py:1246
+msgid "Cuenta contable para el débito (opcional)"
+msgstr ""
+
+#: coati_payroll/forms.py:1183 coati_payroll/forms.py:1251
+msgid "Cuenta contable para el crédito (opcional)"
+msgstr ""
+
+#: coati_payroll/forms.py:1185
+#: coati_payroll/templates/modules/prestamo/detail.html:181
+msgid "Condonar Deuda"
+msgstr ""
+
+#: coati_payroll/forms.py:1192
+msgid "Fecha de Pago"
+msgstr ""
+
+#: coati_payroll/forms.py:1194
+msgid "Fecha en que se realiza el pago extraordinario"
+msgstr ""
+
+#: coati_payroll/forms.py:1197
+msgid "Monto del Pago"
+msgstr ""
+
+#: coati_payroll/forms.py:1200
+msgid "Monto del pago extraordinario"
+msgstr ""
+
+#: coati_payroll/forms.py:1203
+msgid "Aplicación del Pago"
+msgstr ""
+
+#: coati_payroll/forms.py:1207
+msgid "Reducir número de cuotas (mantener monto por cuota)"
+msgstr ""
+
+#: coati_payroll/forms.py:1209
+msgid "Reducir monto de cuotas (mantener número de cuotas)"
+msgstr ""
+
+#: coati_payroll/forms.py:1212
+msgid "Cómo aplicar el pago extraordinario según la ley"
+msgstr ""
+
+#: coati_payroll/forms.py:1216
+msgid "Tipo de Comprobante"
+msgstr ""
+
+#: coati_payroll/forms.py:1218
+msgid "Recibo Oficial de Caja"
+msgstr ""
+
+#: coati_payroll/forms.py:1219
+msgid "Minuta Bancaria de Depósito"
+msgstr ""
+
+#: coati_payroll/forms.py:1220
+msgid "Transferencia Bancaria"
+msgstr ""
+
+#: coati_payroll/forms.py:1221
+msgid "Cheque"
+msgstr ""
+
+#: coati_payroll/forms.py:1225
+msgid "Tipo de documento que respalda el pago"
+msgstr ""
+
+#: coati_payroll/forms.py:1228
+msgid "Número de Comprobante"
+msgstr ""
+
+#: coati_payroll/forms.py:1230
+msgid "Número de recibo, minuta, transferencia o cheque"
+msgstr ""
+
+#: coati_payroll/forms.py:1233
+msgid "Referencia Bancaria"
+msgstr ""
+
+#: coati_payroll/forms.py:1235
+msgid "Número de referencia bancaria o autorización (opcional)"
+msgstr ""
+
+#: coati_payroll/forms.py:1238
+#: coati_payroll/templates/modules/prestamo/detail.html:294
+msgid "Observaciones"
+msgstr "Observations"
+
+#: coati_payroll/forms.py:1240
+msgid "Notas adicionales sobre este pago"
+msgstr ""
+
+#: coati_payroll/forms.py:1253
+msgid "Registrar Pago"
+msgstr ""
+
+#: coati_payroll/forms.py:1262
+msgid "Código único de la empresa"
+msgstr ""
+
+#: coati_payroll/forms.py:1265
+#: coati_payroll/templates/modules/empresa/index.html:22
+msgid "Razón Social"
+msgstr ""
+
+#: coati_payroll/forms.py:1267
+msgid "Nombre legal de la empresa"
+msgstr ""
+
+#: coati_payroll/forms.py:1270
+#: coati_payroll/templates/modules/empresa/index.html:23
+msgid "Nombre Comercial"
+msgstr ""
+
+#: coati_payroll/forms.py:1272
+msgid "Nombre comercial (opcional)"
+msgstr ""
+
+#: coati_payroll/forms.py:1275
+#: coati_payroll/templates/modules/empresa/index.html:24
+msgid "RUC"
+msgstr "Tax ID"
+
+#: coati_payroll/forms.py:1277
+msgid "Número de identificación fiscal"
+msgstr ""
+
+#: coati_payroll/forms.py:1292
+msgid "Sitio Web"
+msgstr ""
+
+#: coati_payroll/forms.py:1296
+msgid "Representante Legal"
+msgstr ""
+
+#: coati_payroll/templates/base.html:7
+msgid "Coaty - Sistema de Planillas"
+msgstr "Coati - Payroll System"
+
+#: coati_payroll/templates/base.html:37
+msgid "Coati"
+msgstr "Coati"
+
+#: coati_payroll/templates/base.html:46 coati_payroll/templates/base.html:208
+#: coati_payroll/templates/modules/user/profile.html:10
+msgid "Mi Perfil"
+msgstr "My Profile"
+
+#: coati_payroll/templates/base.html:52 coati_payroll/templates/base.html:214
+msgid "Cerrar Sesión"
+msgstr "Log Out"
+
+#: coati_payroll/templates/base.html:68
+msgid "Coati Payroll"
+msgstr "Coati Payroll"
+
+#: coati_payroll/templates/auth/login.html:33
+#: coati_payroll/templates/base.html:70
+msgid "Sistema de Planillas"
+msgstr "Payroll System"
+
+#: coati_payroll/templates/base.html:77
+msgid "Inicio"
+msgstr "Home"
+
+#: coati_payroll/templates/base.html:83
+#: coati_payroll/templates/modules/planilla/index.html:6
+msgid "Planillas"
+msgstr "Payrolls"
+
+#: coati_payroll/templates/base.html:90
+msgid "Préstamos"
+msgstr "Loans"
+
+#: coati_payroll/templates/base.html:97
+#: coati_payroll/templates/modules/employee/index.html:9
+#: coati_payroll/templates/modules/planilla/config.html:83
+#: coati_payroll/templates/modules/planilla/config_empleados.html:8
+#: coati_payroll/templates/modules/planilla/form.html:189
+#: coati_payroll/templates/modules/planilla/index.html:33
+msgid "Empleados"
+msgstr "Employees"
+
+#: coati_payroll/templates/base.html:104
+msgid "Lista de Empleados"
+msgstr "Employee List"
+
+#: coati_payroll/templates/base.html:109
+#: coati_payroll/templates/modules/employee/index.html:11
+#: coati_payroll/vistas/employee.py:223
+msgid "Nuevo Empleado"
+msgstr "New Employee"
+
+#: coati_payroll/templates/base.html:119
+#: coati_payroll/templates/modules/user/index.html:9
+msgid "Usuarios"
+msgstr "Users"
+
+#: coati_payroll/templates/base.html:126
+msgid "Lista de Usuarios"
+msgstr "User List"
+
+#: coati_payroll/templates/base.html:131
+#: coati_payroll/templates/modules/user/index.html:11
+#: coati_payroll/vistas/user.py:60 coati_payroll/vistas/user.py:76
+msgid "Nuevo Usuario"
+msgstr "New User"
+
+#: coati_payroll/templates/base.html:141
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:39
+msgid "Configuración"
+msgstr "Settings"
+
+#: coati_payroll/templates/base.html:148
+#: coati_payroll/templates/modules/empresa/index.html:9
+msgid "Empresas"
+msgstr "Companies"
+
+#: coati_payroll/templates/base.html:153
+#: coati_payroll/templates/modules/currency/index.html:9
+msgid "Monedas"
+msgstr "Currencies"
+
+#: coati_payroll/templates/base.html:158
+#: coati_payroll/templates/modules/exchange_rate/index.html:9
+msgid "Tipos de Cambio"
+msgstr "Exchange Rates"
+
+#: coati_payroll/templates/base.html:168
+#: coati_payroll/templates/modules/planilla/config.html:102
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:8
+#: coati_payroll/templates/modules/planilla/form.html:193
+#: coati_payroll/templates/modules/planilla/index.html:34
+#: coati_payroll/vistas/payroll_concepts.py:62
+msgid "Percepciones"
+msgstr "Perceptions"
+
+#: coati_payroll/templates/base.html:173
+#: coati_payroll/templates/modules/planilla/config.html:121
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:8
+#: coati_payroll/templates/modules/planilla/form.html:197
+#: coati_payroll/templates/modules/planilla/index.html:35
+#: coati_payroll/vistas/payroll_concepts.py:73
+msgid "Deducciones"
+msgstr "Deductions"
+
+#: coati_payroll/templates/base.html:178
+#: coati_payroll/templates/modules/planilla/config.html:140
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:8
+#: coati_payroll/templates/modules/planilla/form.html:201
+#: coati_payroll/templates/modules/planilla/index.html:36
+#: coati_payroll/vistas/payroll_concepts.py:84
+msgid "Prestaciones"
+msgstr "Benefits"
+
+#: coati_payroll/templates/base.html:183
+#: coati_payroll/templates/modules/calculation_rule/index.html:9
+#: coati_payroll/templates/modules/planilla/config.html:159
+#: coati_payroll/templates/modules/planilla/config_reglas.html:8
+msgid "Reglas de Cálculo"
+msgstr "Calculation Rules"
+
+#: coati_payroll/templates/base.html:188
+#: coati_payroll/templates/modules/employee/form.html:191
+msgid "Campos Personalizados"
+msgstr "Custom Fields"
+
+#: coati_payroll/templates/base.html:193
+#: coati_payroll/templates/modules/configuracion/index.html:7
+msgid "Configuración Global"
+msgstr "Global Settings"
+
+#: coati_payroll/templates/base.html:224
+msgid "Bienvenido a Coaty"
+msgstr "Welcome to Coati"
+
+#: coati_payroll/templates/base.html:225
+msgid "Sistema de Planillas (Payroll)"
+msgstr "Payroll System"
+
+#: coati_payroll/templates/index.html:5
+msgid "Panel principal"
+msgstr ""
+
+#: coati_payroll/templates/index.html:6
+msgid ""
+"Bienvenido al sistema Coaty Payroll. Usa el menú de la izquierda para "
+"navegar."
+msgstr ""
+
+#: coati_payroll/templates/macros.html:68
+msgid "Por favor corrija los siguientes errores:"
+msgstr ""
+
+#: coati_payroll/templates/macros.html:83
+msgid "Navegación de páginas"
+msgstr ""
+
+#: coati_payroll/templates/macros.html:86
+msgid "Mostrando"
+msgstr "Showing"
+
+#: coati_payroll/templates/macros.html:88
+msgid "de"
+msgstr "of"
+
+#: coati_payroll/templates/macros.html:88
+msgid "registros"
+msgstr "records"
+
+#: coati_payroll/templates/macros.html:94
+#: coati_payroll/templates/macros.html:100
+msgid "Anterior"
+msgstr "Previous"
+
+#: coati_payroll/templates/macros.html:128
+#: coati_payroll/templates/macros.html:134
+msgid "Siguiente"
+msgstr "Next"
+
+#: coati_payroll/templates/auth/login.html:7
+#: coati_payroll/templates/auth/login.html:55
+msgid "Iniciar sesión"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:37
+msgid "Seguro y confiable"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:41
+msgid "Rápido y eficiente"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:45
+msgid "Gestión de empleados"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:56
+msgid "Introduce tus credenciales para acceder a tu cuenta."
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:75
+msgid "usuario o correo"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:80
+msgid "Usa el correo o el nombre de usuario asociado a tu cuenta."
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:92
+msgid "Mostrar u ocultar contraseña"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:108
+msgid "¿No tienes cuenta?"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:109
+msgid "Regístrate"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:117
+msgid "Mostrar"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:118
+msgid "Ocultar"
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:119
+msgid "Por favor introduce tu correo."
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:120
+msgid "La contraseña debe tener al menos 6 caracteres."
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:121
+msgid "No se pudo conectar al servidor."
+msgstr ""
+
+#: coati_payroll/templates/auth/login.html:122
+msgid "Error al iniciar sesión"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/form.html:12
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:23
+#: coati_payroll/templates/modules/currency/form.html:12
+#: coati_payroll/templates/modules/custom_field/form.html:12
+#: coati_payroll/templates/modules/employee/form.html:12
+#: coati_payroll/templates/modules/empresa/form.html:12
+#: coati_payroll/templates/modules/exchange_rate/form.html:12
+#: coati_payroll/templates/modules/planilla/form.html:17
+#: coati_payroll/templates/modules/planilla/novedades/form.html:18
+#: coati_payroll/templates/modules/prestamo/approve.html:14
+#: coati_payroll/templates/modules/prestamo/condonacion.html:14
+#: coati_payroll/templates/modules/prestamo/detail.html:14
+#: coati_payroll/templates/modules/prestamo/form.html:18
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:14
+#: coati_payroll/templates/modules/tipo_planilla/form.html:12
+#: coati_payroll/templates/modules/user/form.html:12
+#: coati_payroll/templates/modules/user/profile.html:12
+msgid "Volver"
+msgstr "Back"
+
+#: coati_payroll/templates/modules/calculation_rule/form.html:67
+#: coati_payroll/templates/modules/configuracion/index.html:53
+#: coati_payroll/templates/modules/currency/form.html:41
+#: coati_payroll/templates/modules/custom_field/form.html:56
+#: coati_payroll/templates/modules/employee/form.html:248
+#: coati_payroll/templates/modules/empresa/form.html:68
+#: coati_payroll/templates/modules/exchange_rate/form.html:41
+#: coati_payroll/templates/modules/planilla/form.html:171
+#: coati_payroll/templates/modules/planilla/index.html:118
+#: coati_payroll/templates/modules/planilla/novedades/form.html:109
+#: coati_payroll/templates/modules/prestamo/approve.html:134
+#: coati_payroll/templates/modules/prestamo/condonacion.html:228
+#: coati_payroll/templates/modules/prestamo/form.html:195
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:203
+#: coati_payroll/templates/modules/shared/concept_form.html:189
+#: coati_payroll/templates/modules/tipo_planilla/form.html:64
+#: coati_payroll/templates/modules/user/form.html:59
+#: coati_payroll/templates/modules/user/profile.html:75
+msgid "Cancelar"
+msgstr "Cancel"
+
+#: coati_payroll/templates/modules/calculation_rule/form.html:70
+#: coati_payroll/templates/modules/calculation_rule/index.html:65
+msgid "Editar Esquema"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:11
+msgid "Nueva Regla"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:26
+#: coati_payroll/templates/modules/shared/concept_form.html:148
+msgid "Vigencia"
+msgstr "Validity"
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:27
+#: coati_payroll/templates/modules/currency/index.html:24
+#: coati_payroll/templates/modules/custom_field/index.html:25
+#: coati_payroll/templates/modules/employee/index.html:27
+#: coati_payroll/templates/modules/empresa/index.html:25
+#: coati_payroll/templates/modules/planilla/config.html:57
+#: coati_payroll/templates/modules/planilla/novedades/index.html:69
+#: coati_payroll/templates/modules/prestamo/index.html:39
+#: coati_payroll/templates/modules/prestamo/index.html:73
+#: coati_payroll/templates/modules/shared/concept_index.html:33
+#: coati_payroll/templates/modules/tipo_planilla/index.html:26
+#: coati_payroll/templates/modules/user/index.html:25
+msgid "Estado"
+msgstr "Status"
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:28
+#: coati_payroll/templates/modules/currency/index.html:25
+#: coati_payroll/templates/modules/custom_field/index.html:26
+#: coati_payroll/templates/modules/employee/index.html:28
+#: coati_payroll/templates/modules/empresa/index.html:26
+#: coati_payroll/templates/modules/exchange_rate/index.html:76
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:84
+#: coati_payroll/templates/modules/planilla/config_empleados.html:74
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:79
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:84
+#: coati_payroll/templates/modules/planilla/config_reglas.html:85
+#: coati_payroll/templates/modules/planilla/index.html:38
+#: coati_payroll/templates/modules/planilla/novedades/index.html:70
+#: coati_payroll/templates/modules/prestamo/index.html:74
+#: coati_payroll/templates/modules/shared/concept_index.html:34
+#: coati_payroll/templates/modules/tipo_planilla/index.html:27
+#: coati_payroll/templates/modules/user/index.html:26
+msgid "Acciones"
+msgstr "Actions"
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:59
+#: coati_payroll/templates/modules/currency/index.html:38
+#: coati_payroll/templates/modules/custom_field/index.html:52
+#: coati_payroll/templates/modules/employee/index.html:50
+#: coati_payroll/templates/modules/planilla/config.html:61
+#: coati_payroll/templates/modules/shared/concept_index.html:68
+#: coati_payroll/templates/modules/tipo_planilla/index.html:42
+#: coati_payroll/templates/modules/user/index.html:50
+msgid "Inactivo"
+msgstr "Inactive"
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:69
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:20
+msgid "Editar Metadatos"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:74
+msgid "Duplicar"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:80
+msgid "¿Está seguro de eliminar esta regla?"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:81
+#: coati_payroll/templates/modules/currency/index.html:46
+#: coati_payroll/templates/modules/custom_field/index.html:60
+#: coati_payroll/templates/modules/employee/index.html:58
+#: coati_payroll/templates/modules/empresa/index.html:53
+#: coati_payroll/templates/modules/exchange_rate/index.html:91
+#: coati_payroll/templates/modules/planilla/index.html:98
+#: coati_payroll/templates/modules/planilla/index.html:120
+#: coati_payroll/templates/modules/planilla/novedades/index.html:124
+#: coati_payroll/templates/modules/shared/concept_index.html:80
+#: coati_payroll/templates/modules/tipo_planilla/index.html:50
+#: coati_payroll/templates/modules/user/index.html:58
+msgid "Eliminar"
+msgstr "Delete"
+
+#: coati_payroll/templates/modules/calculation_rule/index.html:91
+msgid "No hay reglas de cálculo registradas."
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:12
+msgid "Editor de Esquema"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:15
+msgid "Sin jurisdicción"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:33
+msgid "Editor Visual"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:44
+msgid "Nombre de la regla"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:46
+msgid "Ej: IR Laboral Nicaragua"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:53
+msgid "Ej: NIO, USD"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:55
+msgid ""
+"Moneda base para los cálculos. La moneda de la planilla se define en el "
+"Tipo de Planilla."
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:63
+msgid "Descripción de lo que calcula esta regla"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:71
+msgid "Variables de Entrada"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:74
+msgid "Agregar"
+msgstr "Add"
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:82
+msgid ""
+"Las variables de entrada pueden venir de la base de datos "
+"(empleado.salario_base) o ser valores estáticos."
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:90
+msgid "Pasos de Cálculo"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:94
+msgid "Agregar Paso"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:98
+msgid "Cálculo"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:101
+msgid "Condicional"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:104
+msgid "Búsqueda en Tabla"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:107
+msgid "Asignación"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:121
+msgid "Tablas de Impuestos"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:124
+msgid "Agregar Tabla"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:135
+msgid "Resultado Final"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:138
+msgid "Variable de salida"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:140
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:643
+msgid "Seleccionar variable de resultado..."
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:143
+msgid "Seleccione la variable que contiene el resultado final del cálculo."
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:156
+msgid "Vista Previa JSON"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:175
+msgid "Probar Cálculo"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:182
+msgid "Ejecutar Prueba"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:185
+msgid "Resultado:"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:196
+msgid "Guardar Esquema"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:199
+msgid "Cargar Ejemplo IR Nicaragua"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:334
+msgid "Seleccionar origen o escribir valor..."
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:361
+msgid "Ej: salario_mensual"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:367
+msgid "Decimal"
+msgstr "Decimal"
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:368
+msgid "Entero"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:370
+msgid "Booleano"
+msgstr "Boolean"
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:375
+msgid "Origen de Datos"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:379
+msgid "Valor personalizado..."
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:387
+msgid "Origen (empleado.campo) o valor default"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:394
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:546
+msgid "Descripción (opcional)"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:448
+msgid "Fórmula"
+msgstr "Formula"
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:451
+msgid "Ej: salario_mensual * 12"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:460
+msgid "Condición"
+msgstr "Condition"
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:464
+msgid "Variable"
+msgstr "Variable"
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:479
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:523
+#: coati_payroll/templates/modules/planilla/novedades/index.html:67
+msgid "Valor"
+msgstr "Value"
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:486
+msgid "Si verdadero"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:488
+msgid "Fórmula si cumple"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:492
+msgid "Si falso"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:494
+msgid "Fórmula si no cumple"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:505
+msgid "Tabla de impuestos"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:507
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:570
+msgid "Nombre de la tabla"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:511
+msgid "Variable de entrada"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:513
+msgid "Variable a buscar"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:525
+msgid "Variable o valor a asignar"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:540
+msgid "Nombre del paso"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:572
+msgid "Ej: tabla_ir_nicaragua"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:579
+msgid "Agregar Tramo"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:605
+msgid "Mín"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:610
+msgid "Máx"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:615
+#: coati_payroll/templates/modules/exchange_rate/index.html:75
+msgid "Tasa"
+msgstr "Rate"
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:620
+msgid "Fijo"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:625
+msgid "Sobre"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:805
+msgid "JSON copiado al portapapeles"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:814
+msgid "JSON inválido"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:819
+msgid "¿Cargar el ejemplo de IR Nicaragua? Esto reemplazará el esquema actual."
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:841
+msgid "Esquema guardado exitosamente"
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:843
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:880
+msgid "Error: "
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:846
+msgid "Error al guardar: "
+msgstr ""
+
+#: coati_payroll/templates/modules/calculation_rule/schema_editor.html:885
+msgid "Error al probar: "
+msgstr ""
+
+#: coati_payroll/templates/modules/configuracion/index.html:8
+msgid "Configure las opciones generales del sistema"
+msgstr "Configure general system options"
+
+#: coati_payroll/templates/modules/configuracion/index.html:28
+msgid "Idioma del Sistema"
+msgstr "System Language"
+
+#: coati_payroll/templates/modules/configuracion/index.html:31
+msgid "Seleccione el idioma predeterminado para la aplicación"
+msgstr "Select the default language for the application"
+
+#: coati_payroll/templates/modules/configuracion/index.html:35
+msgid "Idioma"
+msgstr "Language"
+
+#: coati_payroll/templates/modules/configuracion/index.html:44
+msgid "Los cambios se aplicarán inmediatamente"
+msgstr "Changes will be applied immediately"
+
+#: coati_payroll/templates/modules/configuracion/index.html:50
+msgid "Guardar Cambios"
+msgstr "Save Changes"
+
+#: coati_payroll/templates/modules/configuracion/index.html:64
+msgid "Información"
+msgstr "Information"
+
+#: coati_payroll/templates/modules/configuracion/index.html:67
+msgid "Idioma Actual"
+msgstr "Current Language"
+
+#: coati_payroll/templates/modules/configuracion/index.html:72
+msgid "Idiomas Disponibles"
+msgstr "Available Languages"
+
+#: coati_payroll/templates/modules/configuracion/index.html:74
+msgid "Inglés"
+msgstr "English"
+
+#: coati_payroll/templates/modules/configuracion/index.html:75
+msgid "Español"
+msgstr "Spanish"
+
+#: coati_payroll/templates/modules/configuracion/index.html:80
+msgid "Variable de Entorno"
+msgstr "Environment Variable"
+
+#: coati_payroll/templates/modules/configuracion/index.html:82
+msgid "Puede configurar el idioma inicial usando la variable de entorno"
+msgstr "You can configure the initial language using the environment variable"
+
+#: coati_payroll/templates/modules/configuracion/index.html:83
+msgid "valores: en, es"
+msgstr "values: en, es"
+
+#: coati_payroll/templates/modules/currency/index.html:11
+#: coati_payroll/vistas/currency.py:67
+msgid "Nueva Moneda"
+msgstr ""
+
+#: coati_payroll/templates/modules/currency/index.html:42
+#: coati_payroll/templates/modules/custom_field/index.html:56
+#: coati_payroll/templates/modules/employee/index.html:54
+#: coati_payroll/templates/modules/empresa/index.html:44
+#: coati_payroll/templates/modules/exchange_rate/index.html:87
+#: coati_payroll/templates/modules/planilla/index.html:94
+#: coati_payroll/templates/modules/planilla/novedades/index.html:118
+#: coati_payroll/templates/modules/prestamo/detail.html:161
+#: coati_payroll/templates/modules/prestamo/index.html:131
+#: coati_payroll/templates/modules/shared/concept_index.html:74
+#: coati_payroll/templates/modules/tipo_planilla/index.html:46
+#: coati_payroll/templates/modules/user/index.html:54
+msgid "Editar"
+msgstr "Edit"
+
+#: coati_payroll/templates/modules/currency/index.html:45
+msgid "¿Está seguro de eliminar esta moneda?"
+msgstr ""
+
+#: coati_payroll/templates/modules/currency/index.html:54
+msgid "No hay monedas registradas."
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/form.html:24
+msgid ""
+"Use un nombre único sin espacios ni caracteres especiales (ej: "
+"numero_hijos)"
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/form.html:28
+msgid ""
+"Este nombre será visible en el formulario de empleados (ej: Número de "
+"hijos)"
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/form.html:38
+msgid "Los campos se mostrarán ordenados de menor a mayor"
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/index.html:9
+msgid "Campos Personalizados de Empleado"
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/index.html:11
+msgid "Nuevo Campo"
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/index.html:21
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:48
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:78
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:53
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:83
+#: coati_payroll/templates/modules/planilla/config_reglas.html:53
+#: coati_payroll/templates/modules/planilla/config_reglas.html:80
+msgid "Orden"
+msgstr "Order"
+
+#: coati_payroll/templates/modules/custom_field/index.html:22
+msgid "Nombre del Campo"
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/index.html:24
+msgid "Tipo de Dato"
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/index.html:59
+msgid "¿Está seguro de eliminar este campo personalizado?"
+msgstr ""
+
+#: coati_payroll/templates/modules/custom_field/index.html:68
+msgid "No hay campos personalizados registrados."
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/form.html:21
+#: coati_payroll/templates/modules/user/profile.html:21
+msgid "Información Personal"
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/form.html:74
+msgid "Información Laboral"
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/form.html:122
+msgid "Información de Contacto"
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/form.html:140
+msgid "Información Bancaria"
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/form.html:153
+msgid "Datos Iniciales de Implementación"
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/form.html:155
+msgid ""
+"Estos campos almacenan saldos acumulados cuando el sistema se implementa "
+"a mitad de un período fiscal."
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/form.html:175
+msgid "Últimos tres salarios mensuales antes de la implementación:"
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/form.html:193
+msgid ""
+"Estos campos son personalizados y pueden ser configurados desde el menú "
+"de Configuración."
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/index.html:22
+#: coati_payroll/templates/modules/planilla/config_empleados.html:71
+msgid "Identificación"
+msgstr "Identification"
+
+#: coati_payroll/templates/modules/employee/index.html:23
+msgid "Nombre Completo"
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/index.html:57
+msgid "¿Está seguro de eliminar este empleado?"
+msgstr ""
+
+#: coati_payroll/templates/modules/employee/index.html:66
+msgid "No hay empleados registrados."
+msgstr ""
+
+#: coati_payroll/templates/modules/empresa/index.html:11
+#: coati_payroll/vistas/empresa.py:67
+msgid "Nueva Empresa"
+msgstr ""
+
+#: coati_payroll/templates/modules/empresa/index.html:38
+msgid "Activa"
+msgstr ""
+
+#: coati_payroll/templates/modules/empresa/index.html:40
+msgid "Inactiva"
+msgstr ""
+
+#: coati_payroll/templates/modules/empresa/index.html:48
+msgid "Activar/Desactivar"
+msgstr ""
+
+#: coati_payroll/templates/modules/empresa/index.html:52
+msgid "¿Está seguro de eliminar esta empresa?"
+msgstr ""
+
+#: coati_payroll/templates/modules/empresa/index.html:61
+msgid "No hay empresas registradas."
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:11
+#: coati_payroll/vistas/exchange_rate.py:127
+msgid "Nuevo Tipo de Cambio"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:19
+msgid "Filtros"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:26
+msgid "Fecha desde"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:30
+msgid "Fecha hasta"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:36
+#: coati_payroll/templates/modules/exchange_rate/index.html:45
+msgid "Todas"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:55
+msgid "Buscar"
+msgstr "Search"
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:58
+msgid "Limpiar"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:73
+msgid "Moneda Origen"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:74
+msgid "Moneda Destino"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:90
+msgid "¿Está seguro de eliminar este tipo de cambio?"
+msgstr ""
+
+#: coati_payroll/templates/modules/exchange_rate/index.html:99
+msgid "No hay tipos de cambio registrados."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:8
+msgid "Configuración de Planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:12
+#: coati_payroll/templates/modules/planilla/index.html:86
+msgid "Ejecutar Nómina"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:15
+msgid "Volver a Planillas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:34
+msgid "Resumen de la Planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:68
+msgid "Editar Configuración General"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:86
+msgid "empleados asignados"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:89
+#: coati_payroll/templates/modules/planilla/config.html:108
+#: coati_payroll/templates/modules/planilla/config.html:127
+#: coati_payroll/templates/modules/planilla/config.html:146
+#: coati_payroll/templates/modules/planilla/config.html:165
+msgid "Gestionar"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:105
+msgid "percepciones asignadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:124
+msgid "deducciones asignadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:143
+msgid "prestaciones asignadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:162
+msgid "reglas asignadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:178
+msgid "Historial de Nóminas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:180
+msgid "Ver nóminas generadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config.html:183
+msgid "Ver Historial"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:11
+#: coati_payroll/templates/modules/planilla/config_empleados.html:11
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:11
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:11
+#: coati_payroll/templates/modules/planilla/config_reglas.html:11
+msgid "Volver a Configuración"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:31
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:57
+msgid "Agregar Deducción"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:38
+#: coati_payroll/vistas/planilla.py:1459
+msgid "-- Seleccionar Deducción --"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:48
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:79
+msgid "Prioridad"
+msgstr "Priority"
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:50
+msgid ""
+"Menor número = se aplica primero (1-100 impuestos, 101-200 embargos, "
+"201-300 préstamos)"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:54
+msgid "Es obligatoria"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:69
+msgid "Deducciones Asignadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:83
+msgid "Obligatoria"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:100
+#: coati_payroll/templates/modules/planilla/config_empleados.html:87
+#: coati_payroll/templates/modules/planilla/index.html:78
+msgid "Sí"
+msgstr "Yes"
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:102
+#: coati_payroll/templates/modules/planilla/config_empleados.html:89
+#: coati_payroll/templates/modules/planilla/index.html:80
+msgid "No"
+msgstr "No"
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:107
+#: coati_payroll/templates/modules/planilla/config_empleados.html:94
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:91
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:96
+#: coati_payroll/templates/modules/planilla/config_reglas.html:98
+msgid "Remover"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:107
+msgid "¿Remover esta deducción de la planilla?"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:120
+msgid "No hay deducciones asignadas a esta planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_deducciones.html:121
+msgid "Seleccione deducciones del formulario para agregarlas."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_empleados.html:31
+#: coati_payroll/templates/modules/planilla/config_empleados.html:48
+msgid "Agregar Empleado"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_empleados.html:38
+#: coati_payroll/vistas/planilla.py:1431
+msgid "-- Seleccionar Empleado --"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_empleados.html:60
+msgid "Empleados Asignados"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_empleados.html:72
+msgid "Desde"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_empleados.html:94
+msgid "¿Remover este empleado de la planilla?"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_empleados.html:107
+msgid "No hay empleados asignados a esta planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_empleados.html:108
+msgid "Seleccione empleados del formulario para agregarlos."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:31
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:53
+msgid "Agregar Percepción"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:38
+#: coati_payroll/vistas/planilla.py:1447
+msgid "-- Seleccionar Percepción --"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:50
+msgid "Orden de aplicación de la percepción"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:65
+msgid "Percepciones Asignadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:91
+msgid "¿Remover esta percepción de la planilla?"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:104
+msgid "No hay percepciones asignadas a esta planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_percepciones.html:105
+msgid "Seleccione percepciones del formulario para agregarlas."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:28
+msgid ""
+"Las prestaciones son costos patronales que NO afectan el salario neto del"
+" empleado."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:36
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:58
+msgid "Agregar Prestación"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:43
+msgid "-- Seleccionar Prestación --"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:55
+msgid "Orden de aplicación de la prestación"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:70
+msgid "Prestaciones Asignadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:96
+msgid "¿Remover esta prestación de la planilla?"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:109
+msgid "No hay prestaciones asignadas a esta planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_prestaciones.html:110
+msgid "Seleccione prestaciones del formulario para agregarlas."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:28
+msgid "Las reglas de cálculo definen fórmulas complejas como IR, INSS, etc."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:36
+#: coati_payroll/templates/modules/planilla/config_reglas.html:58
+msgid "Agregar Regla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:41
+msgid "Regla de Cálculo"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:43
+msgid "-- Seleccionar Regla de Cálculo --"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:55
+msgid "Orden de ejecución de la regla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:70
+msgid "Reglas Asignadas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:98
+msgid "¿Remover esta regla de la planilla?"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:111
+msgid "No hay reglas de cálculo asignadas a esta planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/config_reglas.html:112
+msgid "Seleccione reglas del formulario para agregarlas."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:8
+msgid "Editar Planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:8
+#: coati_payroll/templates/modules/planilla/index.html:8
+msgid "Nueva Planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:13
+msgid "Ver Configuración"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:38
+msgid "Configuración General"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:123
+msgid "Deducciones Automáticas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:151
+msgid "Cuentas Contables del Salario Base"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:184
+msgid "Componentes Asignados"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:205
+msgid "Reglas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/form.html:211
+msgid "Gestionar Componentes"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/index.html:90
+msgid "Ver Nóminas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/index.html:110
+msgid "Confirmar eliminación"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/index.html:114
+msgid "¿Está seguro que desea eliminar la planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/index.html:115
+msgid "Esta acción no se puede deshacer."
+msgstr "This action cannot be undone."
+
+#: coati_payroll/templates/modules/planilla/index.html:135
+msgid "No hay planillas registradas"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/index.html:137
+msgid "Crear Primera Planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:12
+msgid "Editar Novedad"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:14
+#: coati_payroll/templates/modules/planilla/novedades/index.html:18
+msgid "Nueva Novedad"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:26
+#: coati_payroll/templates/modules/planilla/novedades/index.html:28
+msgid "Planilla:"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:29
+#: coati_payroll/templates/modules/planilla/novedades/index.html:31
+msgid "Período:"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:32
+#: coati_payroll/templates/modules/planilla/novedades/index.html:34
+#: coati_payroll/templates/modules/prestamo/detail.html:27
+msgid "Estado:"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:34
+#: coati_payroll/templates/modules/planilla/novedades/index.html:36
+msgid "Generado"
+msgstr "Generated"
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:36
+#: coati_payroll/templates/modules/planilla/novedades/index.html:38
+#: coati_payroll/templates/modules/prestamo/detail.html:34
+#: coati_payroll/templates/modules/prestamo/index.html:44
+#: coati_payroll/templates/modules/prestamo/index.html:111
+msgid "Aprobado"
+msgstr "Approved"
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:45
+msgid "Datos de la Novedad"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:80
+msgid ""
+"Este código identifica el concepto en el sistema. Se actualizará "
+"automáticamente al seleccionar una percepción o deducción."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/form.html:95
+msgid ""
+"Ingrese el valor según el tipo seleccionado (ej: 5 para 5 horas, 1500 "
+"para un monto fijo)."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:10
+msgid "Novedades de la Nómina"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:14
+msgid "Volver a la Nómina"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:40
+#: coati_payroll/templates/modules/prestamo/detail.html:36
+#: coati_payroll/templates/modules/prestamo/index.html:45
+#: coati_payroll/templates/modules/prestamo/index.html:113
+msgid "Aplicado"
+msgstr "Applied"
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:50
+msgid ""
+"Esta nómina ya ha sido aplicada. No se pueden agregar, editar o eliminar "
+"novedades."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:56
+msgid "Lista de Novedades"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:64
+msgid "Código Concepto"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:66
+msgid "Tipo Valor"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:110
+msgid "Ejecutada"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:112
+#: coati_payroll/templates/modules/prestamo/detail.html:32
+#: coati_payroll/templates/modules/prestamo/index.html:43
+#: coati_payroll/templates/modules/prestamo/index.html:109
+msgid "Pendiente"
+msgstr "Pending"
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:125
+msgid "¿Está seguro de eliminar esta novedad?"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:140
+msgid "No hay novedades registradas para esta nómina."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:143
+msgid "Agregar Primera Novedad"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:153
+msgid "¿Qué son las Novedades?"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:157
+msgid ""
+"Las novedades son eventos o ajustes que afectan la nómina de un empleado "
+"en un período específico. Pueden incluir:"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:160
+msgid "Percepciones (Ingresos):"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:160
+msgid "Horas extras, bonos, comisiones, etc."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:161
+msgid "Deducciones (Egresos):"
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:161
+msgid "Ausencias, descuentos, préstamos, etc."
+msgstr ""
+
+#: coati_payroll/templates/modules/planilla/novedades/index.html:165
+msgid ""
+"Nota: Las novedades se aplican automáticamente a cualquier nómina cuyo "
+"período incluya la fecha de la novedad. Después de agregar novedades, use"
+" el botón \"Recalcular\" en la vista de la nómina para aplicar los "
+"cambios."
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:11
+msgid "Aprobar/Rechazar Préstamo"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:21
+#: coati_payroll/templates/modules/prestamo/condonacion.html:27
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:21
+msgid "Información del Préstamo"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:26
+#: coati_payroll/templates/modules/prestamo/condonacion.html:32
+#: coati_payroll/templates/modules/prestamo/detail.html:57
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:26
+msgid "Empleado:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:27
+#: coati_payroll/templates/modules/prestamo/condonacion.html:33
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:27
+msgid "Código:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:28
+#: coati_payroll/templates/modules/prestamo/condonacion.html:34
+#: coati_payroll/templates/modules/prestamo/detail.html:47
+msgid "Tipo:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:37
+#: coati_payroll/templates/modules/prestamo/detail.html:97
+msgid "Monto Solicitado:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:43
+msgid "Cuotas:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:44
+#: coati_payroll/templates/modules/prestamo/detail.html:64
+msgid "Fecha de Solicitud:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:50
+#: coati_payroll/templates/modules/prestamo/detail.html:81
+msgid "Motivo:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/approve.html:136
+msgid "¿Está seguro de rechazar este préstamo?"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:11
+msgid "Condonación de Deuda"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:21
+msgid "Advertencia:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:21
+msgid ""
+"La condonación de deuda es una operación irreversible que reduce el saldo"
+" pendiente del préstamo sin que el empleado realice un pago. Esta acción "
+"requiere autorización gerencial y documentación completa para auditoría."
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:43
+msgid "Monto Original:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:49
+msgid "Saldo Pendiente Actual:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:59
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:46
+msgid "Cuotas Pactadas:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:60
+#: coati_payroll/templates/modules/prestamo/detail.html:130
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:40
+msgid "Monto por Cuota:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:74
+msgid "Registro de Condonación"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:80
+msgid "Datos de la Condonación"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:129
+msgid "Autorización y Documentación"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:191
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:171
+msgid "Información Contable (Opcional)"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:223
+msgid "Importante:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:223
+msgid ""
+"Esta información quedará registrada permanentemente en el sistema para "
+"fines de auditoría. Asegúrese de que toda la documentación esté completa "
+"y correcta."
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/condonacion.html:230
+msgid "¿Está seguro de condonar esta deuda? Esta acción no se puede deshacer."
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:11
+msgid "Detalle de Préstamo/Adelanto"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:23
+msgid "Información General"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:30
+#: coati_payroll/templates/modules/prestamo/index.html:42
+#: coati_payroll/templates/modules/prestamo/index.html:107
+msgid "Borrador"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:38
+#: coati_payroll/templates/modules/prestamo/index.html:46
+#: coati_payroll/templates/modules/prestamo/index.html:115
+msgid "Pagado"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:40
+#: coati_payroll/templates/modules/prestamo/index.html:47
+#: coati_payroll/templates/modules/prestamo/index.html:117
+msgid "Rechazado"
+msgstr "Rejected"
+
+#: coati_payroll/templates/modules/prestamo/detail.html:42
+#: coati_payroll/templates/modules/prestamo/index.html:48
+#: coati_payroll/templates/modules/prestamo/index.html:119
+msgid "Cancelado"
+msgstr "Canceled"
+
+#: coati_payroll/templates/modules/prestamo/detail.html:69
+msgid "Fecha de Aprobación:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:75
+msgid "Fecha de Desembolso:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:93
+msgid "Información Financiera"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:107
+msgid "Monto Aprobado:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:117
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:30
+msgid "Saldo Pendiente:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:126
+msgid "Número de Cuotas:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:140
+msgid "Tasa de Interés:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:144
+msgid "Tipo de Interés:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:165
+msgid "Enviar para Aprobación"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:172
+msgid "Aprobar/Rechazar"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:178
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:11
+msgid "Registrar Pago Extraordinario"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:187
+msgid "¿Está seguro de cancelar este préstamo?"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:189
+msgid "Cancelar Préstamo"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:196
+msgid "Exportar Excel"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:199
+msgid "Exportar PDF"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:214
+msgid "Tabla de Pagos"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:222
+msgid "Fecha Estimada"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:223
+msgid "Cuota"
+msgstr "Installment"
+
+#: coati_payroll/templates/modules/prestamo/detail.html:224
+msgid "Interés"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:225
+msgid "Capital"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:226
+msgid "Saldo"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:280
+msgid "Historial de Pagos"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:290
+msgid "Monto Abonado"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:291
+msgid "Saldo Anterior"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:292
+msgid "Saldo Posterior"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:293
+msgid "Comprobante"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/detail.html:303
+msgid "Manual"
+msgstr "Manual"
+
+#: coati_payroll/templates/modules/prestamo/detail.html:305
+msgid "Nómina"
+msgstr "Payroll Run"
+
+#: coati_payroll/templates/modules/prestamo/detail.html:344
+msgid "No hay pagos registrados."
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/form.html:12
+msgid "Editar Préstamo/Adelanto"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/form.html:14
+#: coati_payroll/templates/modules/prestamo/index.html:11
+msgid "Nuevo Préstamo/Adelanto"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/index.html:9
+msgid "Préstamos y Adelantos"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/index.html:22
+msgid "-- Todos los empleados --"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/index.html:33
+#: coati_payroll/templates/modules/prestamo/index.html:41
+msgid "-- Todos --"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/index.html:53
+msgid "Filtrar"
+msgstr "Filter"
+
+#: coati_payroll/templates/modules/prestamo/index.html:69
+msgid "Fecha Solicitud"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/index.html:70
+msgid "Monto"
+msgstr "Amount"
+
+#: coati_payroll/templates/modules/prestamo/index.html:71
+msgid "Cuotas"
+msgstr "Installments"
+
+#: coati_payroll/templates/modules/prestamo/index.html:72
+msgid "Saldo Pendiente"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/index.html:125
+msgid "Ver Detalle"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/index.html:140
+msgid "No hay préstamos o adelantos registrados."
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:55
+msgid "Datos del Pago Extraordinario"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:63
+msgid "Nota:"
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:63
+msgid ""
+"Los pagos extraordinarios permiten al empleado adelantar el pago de su "
+"préstamo. Debe indicar cómo desea aplicar este pago según la legislación "
+"laboral."
+msgstr ""
+
+#: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:112
+msgid "Documentación de Auditoría"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_form.html:34
+msgid "Información Básica"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_form.html:70
+msgid "Configuración de Cálculo"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_form.html:106
+msgid "Opciones"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_form.html:166
+msgid "Configuración Contable"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_index.html:14
+#: coati_payroll/templates/modules/shared/concept_index.html:136
+#: coati_payroll/vistas/payroll_concepts.py:135
+#, python-format
+msgid "Nueva %(type)s"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_index.html:31
+msgid "Tipo Cálculo"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_index.html:79
+#, python-format
+msgid "¿Está seguro de eliminar esta %(type)s?"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_index.html:133
+#, python-format
+msgid "No hay %(type)s registradas"
+msgstr ""
+
+#: coati_payroll/templates/modules/shared/concept_index.html:134
+#, python-format
+msgid "Comience creando una nueva %(type)s"
+msgstr ""
+
+#: coati_payroll/templates/modules/tipo_planilla/form.html:42
+msgid "Configuración Fiscal"
+msgstr ""
+
+#: coati_payroll/templates/modules/tipo_planilla/index.html:9
+msgid "Tipos de Planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/tipo_planilla/index.html:11
+#: coati_payroll/vistas/tipo_planilla.py:74
+msgid "Nuevo Tipo de Planilla"
+msgstr ""
+
+#: coati_payroll/templates/modules/tipo_planilla/index.html:25
+msgid "Períodos/Año"
+msgstr ""
+
+#: coati_payroll/templates/modules/tipo_planilla/index.html:49
+msgid "¿Está seguro de eliminar este tipo de planilla?"
+msgstr ""
+
+#: coati_payroll/templates/modules/tipo_planilla/index.html:58
+msgid "No hay tipos de planilla registrados."
+msgstr ""
+
+#: coati_payroll/templates/modules/user/form.html:28
+msgid "Dejar en blanco para mantener la contraseña actual."
+msgstr ""
+
+#: coati_payroll/templates/modules/user/index.html:23
+msgid "Correo"
+msgstr "Email"
+
+#: coati_payroll/templates/modules/user/index.html:57
+msgid "¿Está seguro de eliminar este usuario?"
+msgstr ""
+
+#: coati_payroll/templates/modules/user/index.html:66
+msgid "No hay usuarios registrados."
+msgstr ""
+
+#: coati_payroll/templates/modules/user/profile.html:55
+msgid "Cambiar Contraseña"
+msgstr ""
+
+#: coati_payroll/templates/modules/user/profile.html:56
+msgid "Deja estos campos en blanco si no deseas cambiar tu contraseña."
+msgstr ""
+
+#: coati_payroll/vistas/calculation_rule.py:106
+msgid "Regla de cálculo creada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/calculation_rule.py:112
+msgid "Nueva Regla de Cálculo"
+msgstr ""
+
+#: coati_payroll/vistas/calculation_rule.py:122
+#: coati_payroll/vistas/calculation_rule.py:158
+#: coati_payroll/vistas/calculation_rule.py:231
+#: coati_payroll/vistas/calculation_rule.py:246
+msgid "Regla de cálculo no encontrada."
+msgstr ""
+
+#: coati_payroll/vistas/calculation_rule.py:141
+msgid "Regla de cálculo actualizada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/calculation_rule.py:147
+msgid "Editar Regla de Cálculo"
+msgstr ""
+
+#: coati_payroll/vistas/calculation_rule.py:236
+msgid "Regla de cálculo eliminada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/calculation_rule.py:273
+msgid "Regla de cálculo duplicada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/configuracion.py:68
+msgid "Por favor seleccione un idioma."
+msgstr "Please select a language."
+
+#: coati_payroll/vistas/configuracion.py:72
+msgid "Idioma no soportado."
+msgstr "Unsupported language."
+
+#: coati_payroll/vistas/configuracion.py:84
+#, python-format
+msgid "Idioma actualizado a %(language)s."
+msgstr "Language updated to %(language)s."
+
+#: coati_payroll/vistas/configuracion.py:88
+#, python-format
+msgid "Error al actualizar el idioma: %(error)s"
+msgstr "Error updating language: %(error)s"
+
+#: coati_payroll/vistas/currency.py:63
+msgid "Moneda creada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/currency.py:77 coati_payroll/vistas/currency.py:107
+msgid "Moneda no encontrada."
+msgstr ""
+
+#: coati_payroll/vistas/currency.py:90
+msgid "Moneda actualizada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/currency.py:96
+msgid "Editar Moneda"
+msgstr ""
+
+#: coati_payroll/vistas/currency.py:112
+msgid "Moneda eliminada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/custom_field.py:65
+msgid "Campo personalizado creado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/custom_field.py:71
+msgid "Nuevo Campo Personalizado"
+msgstr ""
+
+#: coati_payroll/vistas/custom_field.py:81
+#: coati_payroll/vistas/custom_field.py:113
+msgid "Campo personalizado no encontrado."
+msgstr ""
+
+#: coati_payroll/vistas/custom_field.py:96
+msgid "Campo personalizado actualizado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/custom_field.py:102
+msgid "Editar Campo Personalizado"
+msgstr ""
+
+#: coati_payroll/vistas/custom_field.py:118
+msgid "Campo personalizado eliminado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/employee.py:211
+msgid "Empleado creado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/employee.py:235 coati_payroll/vistas/employee.py:322
+msgid "Empleado no encontrado."
+msgstr ""
+
+#: coati_payroll/vistas/employee.py:290
+msgid "Empleado actualizado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/employee.py:309
+msgid "Editar Empleado"
+msgstr ""
+
+#: coati_payroll/vistas/employee.py:327
+msgid "Empleado eliminado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:61
+msgid "Empresa creada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:65
+#, python-brace-format
+msgid "Error al crear la empresa: {}"
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:78 coati_payroll/vistas/empresa.py:109
+#: coati_payroll/vistas/empresa.py:137
+msgid "Empresa no encontrada."
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:89
+msgid "Empresa actualizada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:93
+#, python-brace-format
+msgid "Error al actualizar la empresa: {}"
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:99
+msgid "Editar Empresa"
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:115
+msgid ""
+"No se puede eliminar la empresa porque tiene empleados o planillas "
+"asociadas."
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:123
+msgid "Empresa eliminada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:126
+#, python-brace-format
+msgid "Error al eliminar la empresa: {}"
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:145
+msgid "activada"
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:145
+msgid "desactivada"
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:146
+#, python-brace-format
+msgid "Empresa {} exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/empresa.py:149
+#, python-brace-format
+msgid "Error al cambiar el estado de la empresa: {}"
+msgstr ""
+
+#: coati_payroll/vistas/exchange_rate.py:119
+msgid "Tipo de cambio creado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/exchange_rate.py:137
+#: coati_payroll/vistas/exchange_rate.py:171
+msgid "Tipo de cambio no encontrado."
+msgstr ""
+
+#: coati_payroll/vistas/exchange_rate.py:154
+msgid "Tipo de cambio actualizado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/exchange_rate.py:160
+msgid "Editar Tipo de Cambio"
+msgstr ""
+
+#: coati_payroll/vistas/exchange_rate.py:176
+msgid "Tipo de cambio eliminado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/payroll_concepts.py:129
+#, python-format
+msgid "%(type)s creada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/payroll_concepts.py:148
+#: coati_payroll/vistas/payroll_concepts.py:179
+#, python-format
+msgid "%(type)s no encontrada."
+msgstr ""
+
+#: coati_payroll/vistas/payroll_concepts.py:159
+#, python-format
+msgid "%(type)s actualizada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/payroll_concepts.py:166
+#, python-format
+msgid "Editar %(type)s"
+msgstr ""
+
+#: coati_payroll/vistas/payroll_concepts.py:186
+#, python-format
+msgid "No se puede eliminar: %(type)s está asociada a una o más planillas."
+msgstr ""
+
+#: coati_payroll/vistas/payroll_concepts.py:195
+#, python-format
+msgid "%(type)s eliminada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:92
+msgid "Planilla creada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:123
+msgid "Planilla actualizada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:328
+msgid "No se puede eliminar una planilla con nóminas generadas."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:333
+msgid "Planilla eliminada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:351
+msgid "Debe seleccionar un empleado."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:362
+msgid "El empleado ya está asignado a esta planilla."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:369
+msgid "El empleado y la planilla deben pertenecer a la misma empresa."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:383
+msgid "Empleado agregado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:394
+msgid "Empleado removido exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:412
+msgid "Debe seleccionar una percepción."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:424
+msgid "La percepción ya está asignada a esta planilla."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:441
+msgid "Percepción agregada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:454
+msgid "Percepción removida exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:472
+msgid "Debe seleccionar una deducción."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:482
+msgid "La deducción ya está asignada a esta planilla."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:499
+msgid "Deducción agregada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:510
+msgid "Deducción removida exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:527
+msgid "Prioridad actualizada."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:546
+msgid "Debe seleccionar una prestación."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:558
+msgid "La prestación ya está asignada a esta planilla."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:575
+msgid "Prestación agregada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:588
+msgid "Prestación removida exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:606
+msgid "Debe seleccionar una regla de cálculo."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:616
+msgid "La regla ya está asignada a esta planilla."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:630
+msgid "Regla de cálculo agregada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:641
+msgid "Regla de cálculo removida exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:666
+msgid "Debe especificar el período de la nómina."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:679
+msgid "Formato de fecha inválido."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:704
+msgid "Nómina generada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:796 coati_payroll/vistas/planilla.py:864
+#: coati_payroll/vistas/planilla.py:892 coati_payroll/vistas/planilla.py:969
+#: coati_payroll/vistas/planilla.py:1148 coati_payroll/vistas/planilla.py:1193
+#: coati_payroll/vistas/planilla.py:1283 coati_payroll/vistas/planilla.py:1388
+msgid "La nómina no pertenece a esta planilla."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:824
+msgid "El detalle no pertenece a esta nómina."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:868
+msgid "Solo se pueden aprobar nóminas en estado 'generado'."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:877
+msgid "Nómina aprobada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:896
+msgid "Solo se pueden aplicar nóminas en estado 'aprobado'."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:934
+#, python-brace-format
+msgid "Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:974
+msgid "No se puede recalcular una nómina en estado 'aplicado' (pagada)."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1037
+msgid "Nómina recalculada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1044
+msgid "Error al recalcular la nómina."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1197
+msgid "No se pueden agregar novedades a una nómina aplicada."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1218 coati_payroll/vistas/planilla.py:1327
+#, python-brace-format
+msgid ""
+"La fecha de la novedad debe estar dentro del período de la nómina ({} a "
+"{})."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1249
+msgid "Novedad agregada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1287 coati_payroll/vistas/planilla.py:1392
+msgid "La novedad no pertenece a esta nómina."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1297
+msgid "No se pueden editar novedades de una nómina aplicada."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1356
+msgid "Novedad actualizada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1402
+msgid "No se pueden eliminar novedades de una nómina aplicada."
+msgstr ""
+
+#: coati_payroll/vistas/planilla.py:1413
+msgid "Novedad eliminada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:147 coati_payroll/vistas/prestamo.py:275
+msgid "-- Sin deducción asociada --"
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:176
+msgid "Préstamo/Adelanto creado exitosamente. Estado: Borrador."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:196 coati_payroll/vistas/prestamo.py:227
+#: coati_payroll/vistas/prestamo.py:313 coati_payroll/vistas/prestamo.py:334
+#: coati_payroll/vistas/prestamo.py:400 coati_payroll/vistas/prestamo.py:421
+#: coati_payroll/vistas/prestamo.py:555 coati_payroll/vistas/prestamo.py:657
+#: coati_payroll/vistas/prestamo.py:742
+msgid "Préstamo no encontrado."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:234
+#, python-brace-format
+msgid "No se puede editar un préstamo en estado '{estado}'."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:301
+msgid "Préstamo/Adelanto actualizado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:317
+msgid "Solo los préstamos en borrador pueden ser enviados."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:324
+msgid "Préstamo enviado para aprobación."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:338
+msgid "Este préstamo no puede ser aprobado en su estado actual."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:370
+msgid "Préstamo aprobado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:380
+msgid "Préstamo rechazado."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:404
+msgid "Este préstamo ya está finalizado."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:411
+msgid "Préstamo cancelado."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:427
+msgid "Solo se pueden registrar pagos en préstamos aprobados o aplicados."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:433 coati_payroll/vistas/prestamo.py:567
+msgid "Este préstamo ya está totalmente pagado."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:445
+#, python-brace-format
+msgid "El monto del pago ({monto}) excede el saldo pendiente ({saldo})."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:531
+msgid "Pago extraordinario registrado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:561
+msgid "Solo se pueden condonar préstamos aprobados o aplicados."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:579
+#, python-brace-format
+msgid "El monto a condonar ({monto}) excede el saldo pendiente ({saldo})."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:633
+#, python-brace-format
+msgid "Condonación de deuda registrada exitosamente. Monto condonado: {monto}"
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:665
+msgid "Excel export no disponible. Instale openpyxl."
+msgstr ""
+
+#: coati_payroll/vistas/prestamo.py:771
+msgid "PDF export no disponible. Instale WeasyPrint."
+msgstr ""
+
+#: coati_payroll/vistas/tipo_planilla.py:68
+msgid "Tipo de planilla creado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/tipo_planilla.py:84
+#: coati_payroll/vistas/tipo_planilla.py:119
+msgid "Tipo de planilla no encontrado."
+msgstr ""
+
+#: coati_payroll/vistas/tipo_planilla.py:102
+msgid "Tipo de planilla actualizado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/tipo_planilla.py:108
+msgid "Editar Tipo de Planilla"
+msgstr ""
+
+#: coati_payroll/vistas/tipo_planilla.py:125
+msgid "No se puede eliminar un tipo de planilla que está siendo usado."
+msgstr ""
+
+#: coati_payroll/vistas/tipo_planilla.py:132
+msgid "Tipo de planilla eliminado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:58
+msgid "La contraseña es requerida para nuevos usuarios."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:72
+msgid "Usuario creado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:86 coati_payroll/vistas/user.py:119
+msgid "Usuario no encontrado."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:103
+msgid "Usuario actualizado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:109
+msgid "Editar Usuario"
+msgstr ""
+
+#: coati_payroll/vistas/user.py:123
+msgid "No puedes eliminar tu propio usuario."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:128
+msgid "Usuario eliminado exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:156
+msgid "Debe ingresar la contraseña actual."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:158
+msgid "La contraseña actual es incorrecta."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:160
+msgid "Debe ingresar una nueva contraseña."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:162
+msgid "Las contraseñas no coinciden."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:170
+msgid "Contraseña actualizada exitosamente."
+msgstr ""
+
+#: coati_payroll/vistas/user.py:174
+msgid "Perfil actualizado exitosamente."
+msgstr ""
+

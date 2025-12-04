@@ -28,6 +28,7 @@ from coati_payroll.vistas.planilla import planilla_bp
 from coati_payroll.vistas.tipo_planilla import tipo_planilla_bp
 from coati_payroll.vistas.prestamo import prestamo_bp
 from coati_payroll.vistas.empresa import empresa_bp
+from coati_payroll.vistas.configuracion import configuracion_bp
 
 __all__ = [
     "user_bp",
@@ -43,4 +44,5 @@ __all__ = [
     "tipo_planilla_bp",
     "prestamo_bp",
     "empresa_bp",
+    "configuracion_bp",
 ]
