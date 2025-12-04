@@ -152,7 +152,7 @@ class TestEmpresaPlanillaRelationship:
             )
             db.session.add(empresa)
 
-            # Create tipo_planilla - check if it already exists
+            # Create tipo_planilla - check if already exists
             tipo = db.session.execute(
                 db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
             ).scalar_one_or_none()
@@ -165,7 +165,7 @@ class TestEmpresaPlanillaRelationship:
                 )
                 db.session.add(tipo)
 
-            # Create moneda - check if it already exists
+            # Create moneda - check if already exists
             moneda = db.session.execute(
                 db.select(Moneda).filter_by(codigo="NIO")
             ).scalar_one_or_none()
@@ -176,7 +176,7 @@ class TestEmpresaPlanillaRelationship:
 
             # Create planilla
             planilla = Planilla(
-                nombre="Planilla Test EMP_PLANILLA_REL_1",
+                nombre="Planilla Test EMP_REL_1",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -191,7 +191,7 @@ class TestEmpresaPlanillaRelationship:
     def test_planilla_without_empresa(self, app):
         """Test that a planilla can exist without a company."""
         with app.app_context():
-            # Create tipo_planilla - check if it already exists
+            # Create tipo_planilla - check if already exists
             tipo = db.session.execute(
                 db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
             ).scalar_one_or_none()
@@ -204,7 +204,7 @@ class TestEmpresaPlanillaRelationship:
                 )
                 db.session.add(tipo)
 
-            # Create moneda - check if it already exists
+            # Create moneda - check if already exists
             moneda = db.session.execute(
                 db.select(Moneda).filter_by(codigo="NIO")
             ).scalar_one_or_none()
@@ -215,7 +215,7 @@ class TestEmpresaPlanillaRelationship:
 
             # Create planilla
             planilla = Planilla(
-                nombre="Planilla Test Without Empresa",
+                nombre="Planilla Test WITHOUT_EMP",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
             )
@@ -245,7 +245,7 @@ class TestCrossCompanyValidation:
             )
             db.session.add_all([empresa1, empresa2])
 
-            # Create tipo_planilla - check if it already exists
+            # Create tipo_planilla and moneda - check if already exists
             tipo = db.session.execute(
                 db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
             ).scalar_one_or_none()
@@ -258,7 +258,6 @@ class TestCrossCompanyValidation:
                 )
                 db.session.add(tipo)
             
-            # Check if moneda already exists
             moneda = db.session.execute(
                 db.select(Moneda).filter_by(codigo="NIO")
             ).scalar_one_or_none()
@@ -269,7 +268,7 @@ class TestCrossCompanyValidation:
 
             # Create planilla for company 1
             planilla = Planilla(
-                nombre="Planilla Company EMP_CROSS_1A",
+                nombre="Planilla Company 1A",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
                 empresa_id=empresa1.id,
@@ -280,7 +279,7 @@ class TestCrossCompanyValidation:
             empleado = Empleado(
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
-                identificacion_personal="001-010101-0001A-CROSS_1",
+                identificacion_personal="001-010101-0001A-CROSS1",
                 fecha_alta=date.today(),
                 salario_base=Decimal("10000.00"),
                 empresa_id=empresa2.id,
@@ -318,7 +317,7 @@ class TestCrossCompanyValidation:
             )
             db.session.add(empresa)
 
-            # Create tipo_planilla - check if it already exists
+            # Create tipo_planilla and moneda - check if already exists
             tipo = db.session.execute(
                 db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
             ).scalar_one_or_none()
@@ -331,7 +330,6 @@ class TestCrossCompanyValidation:
                 )
                 db.session.add(tipo)
             
-            # Check if moneda already exists
             moneda = db.session.execute(
                 db.select(Moneda).filter_by(codigo="NIO")
             ).scalar_one_or_none()
@@ -342,7 +340,7 @@ class TestCrossCompanyValidation:
 
             # Create planilla for company
             planilla = Planilla(
-                nombre="Planilla Company EMP_CROSS_2",
+                nombre="Planilla Company 1B",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -353,7 +351,7 @@ class TestCrossCompanyValidation:
             empleado = Empleado(
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
-                identificacion_personal="001-010101-0001A-CROSS_2",
+                identificacion_personal="001-010101-0001A-CROSS2",
                 fecha_alta=date.today(),
                 salario_base=Decimal("10000.00"),
                 empresa_id=empresa.id,
@@ -391,7 +389,7 @@ class TestCrossCompanyValidation:
             )
             db.session.add(empresa)
 
-            # Create tipo_planilla - check if it already exists
+            # Create tipo_planilla and moneda - check if already exists
             tipo = db.session.execute(
                 db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
             ).scalar_one_or_none()
@@ -404,7 +402,6 @@ class TestCrossCompanyValidation:
                 )
                 db.session.add(tipo)
             
-            # Check if moneda already exists
             moneda = db.session.execute(
                 db.select(Moneda).filter_by(codigo="NIO")
             ).scalar_one_or_none()
@@ -415,7 +412,7 @@ class TestCrossCompanyValidation:
 
             # Create planilla with company
             planilla = Planilla(
-                nombre="Planilla Company EMP_CROSS_3",
+                nombre="Planilla Company 1C",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -426,7 +423,7 @@ class TestCrossCompanyValidation:
             empleado = Empleado(
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
-                identificacion_personal="001-010101-0001A-CROSS_3",
+                identificacion_personal="001-010101-0001A-CROSS3",
                 fecha_alta=date.today(),
                 salario_base=Decimal("10000.00"),
             )

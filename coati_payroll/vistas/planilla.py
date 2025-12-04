@@ -75,12 +75,15 @@ def new():
             descripcion=form.descripcion.data,
             tipo_planilla_id=form.tipo_planilla_id.data,
             moneda_id=form.moneda_id.data,
+            empresa_id=form.empresa_id.data or None,
             periodo_fiscal_inicio=form.periodo_fiscal_inicio.data,
             periodo_fiscal_fin=form.periodo_fiscal_fin.data,
             prioridad_prestamos=form.prioridad_prestamos.data or 250,
             prioridad_adelantos=form.prioridad_adelantos.data or 251,
             aplicar_prestamos_automatico=form.aplicar_prestamos_automatico.data,
             aplicar_adelantos_automatico=form.aplicar_adelantos_automatico.data,
+            codigo_cuenta_debe_salario=form.codigo_cuenta_debe_salario.data,
+            codigo_cuenta_haber_salario=form.codigo_cuenta_haber_salario.data,
             activo=form.activo.data,
             creado_por=current_user.usuario,
         )
@@ -105,12 +108,15 @@ def edit(planilla_id: str):
         planilla.descripcion = form.descripcion.data
         planilla.tipo_planilla_id = form.tipo_planilla_id.data
         planilla.moneda_id = form.moneda_id.data
+        planilla.empresa_id = form.empresa_id.data or None
         planilla.periodo_fiscal_inicio = form.periodo_fiscal_inicio.data
         planilla.periodo_fiscal_fin = form.periodo_fiscal_fin.data
         planilla.prioridad_prestamos = form.prioridad_prestamos.data or 250
         planilla.prioridad_adelantos = form.prioridad_adelantos.data or 251
         planilla.aplicar_prestamos_automatico = form.aplicar_prestamos_automatico.data
         planilla.aplicar_adelantos_automatico = form.aplicar_adelantos_automatico.data
+        planilla.codigo_cuenta_debe_salario = form.codigo_cuenta_debe_salario.data
+        planilla.codigo_cuenta_haber_salario = form.codigo_cuenta_haber_salario.data
         planilla.activo = form.activo.data
         planilla.modificado_por = current_user.usuario
         db.session.commit()
@@ -164,11 +170,16 @@ def config_empleados(planilla_id: str):
         .all()
     )
 
+    # Filter employees to only show those from the same company as the planilla
+    query = db.select(Empleado).filter_by(activo=True)
+    if planilla.empresa_id:
+        # If planilla has a company, only show employees from that company or without company
+        query = query.filter(
+            (Empleado.empresa_id == planilla.empresa_id) | Empleado.empresa_id.is_(None)
+        )
     empleados_disponibles = (
         db.session.execute(
-            db.select(Empleado)
-            .filter_by(activo=True)
-            .order_by(Empleado.primer_apellido)
+            query.order_by(Empleado.primer_apellido)
         )
         .scalars()
         .all()
@@ -333,7 +344,7 @@ def delete(planilla_id: str):
 def add_empleado(planilla_id: str):
     """Add an employee to the planilla."""
     # Verify planilla exists (raises 404 if not found)
-    db.get_or_404(Planilla, planilla_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
     empleado_id = request.form.get("empleado_id")
 
     if not empleado_id:
@@ -349,6 +360,15 @@ def add_empleado(planilla_id: str):
 
     if existing:
         flash(_("El empleado ya está asignado a esta planilla."), "warning")
+        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+
+    # Validate that employee and planilla belong to the same company
+    empleado = db.get_or_404(Empleado, empleado_id)
+    if planilla.empresa_id and empleado.empresa_id and planilla.empresa_id != empleado.empresa_id:
+        flash(
+            _("El empleado y la planilla deben pertenecer a la misma empresa."),
+            "error"
+        )
         return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
 
     association = PlanillaEmpleado(
@@ -390,7 +410,9 @@ def add_percepcion(planilla_id: str):
 
     if not percepcion_id:
         flash(_("Debe seleccionar una percepción."), "error")
-        return redirect(url_for("planilla.config_percepciones", planilla_id=planilla_id))
+        return redirect(
+            url_for("planilla.config_percepciones", planilla_id=planilla_id)
+        )
 
     existing = db.session.execute(
         db.select(PlanillaIngreso).filter_by(
@@ -400,7 +422,9 @@ def add_percepcion(planilla_id: str):
 
     if existing:
         flash(_("La percepción ya está asignada a esta planilla."), "warning")
-        return redirect(url_for("planilla.config_percepciones", planilla_id=planilla_id))
+        return redirect(
+            url_for("planilla.config_percepciones", planilla_id=planilla_id)
+        )
 
     orden = request.form.get("orden", 0, type=int)
 
@@ -520,7 +544,9 @@ def add_prestacion(planilla_id: str):
 
     if not prestacion_id:
         flash(_("Debe seleccionar una prestación."), "error")
-        return redirect(url_for("planilla.config_prestaciones", planilla_id=planilla_id))
+        return redirect(
+            url_for("planilla.config_prestaciones", planilla_id=planilla_id)
+        )
 
     existing = db.session.execute(
         db.select(PlanillaPrestacion).filter_by(
@@ -530,7 +556,9 @@ def add_prestacion(planilla_id: str):
 
     if existing:
         flash(_("La prestación ya está asignada a esta planilla."), "warning")
-        return redirect(url_for("planilla.config_prestaciones", planilla_id=planilla_id))
+        return redirect(
+            url_for("planilla.config_prestaciones", planilla_id=planilla_id)
+        )
 
     orden = request.form.get("orden", 0, type=int)
 
@@ -872,12 +900,149 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
     nomina.estado = "aplicado"
     nomina.modificado_por = current_user.usuario
+
+    # Actualizar estado de todas las novedades asociadas a "ejecutada"
+    from coati_payroll.model import NominaNovedad
+    from coati_payroll.enums import NovedadEstado
+
+    # Obtener empleados de la planilla para filtrar novedades
+    planilla = db.get_or_404(Planilla, planilla_id)
+    empleado_ids = [pe.empleado_id for pe in planilla.planilla_empleados if pe.activo]
+
+    # Actualizar novedades que corresponden a este período
+    novedades = (
+        db.session.execute(
+            db.select(NominaNovedad).filter(
+                NominaNovedad.empleado_id.in_(empleado_ids),
+                NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
+                NominaNovedad.fecha_novedad <= nomina.periodo_fin,
+                NominaNovedad.estado == NovedadEstado.PENDIENTE,
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    for novedad in novedades:
+        novedad.estado = NovedadEstado.EJECUTADA
+        novedad.modificado_por = current_user.usuario
+
     db.session.commit()
 
-    flash(_("Nómina aplicada exitosamente."), "success")
+    flash(
+        _(
+            "Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas."
+        ).format(len(novedades)),
+        "success",
+    )
     return redirect(
         url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id)
     )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/recalcular", methods=["POST"])
+@login_required
+def recalcular_nomina(planilla_id: str, nomina_id: str):
+    """Recalculate an existing nomina.
+
+    Allows recalculation of a payroll unless it is in 'aplicado' (paid) status.
+    This is useful when errors are found during review and the payroll needs
+    to be completely recalculated.
+
+    The existing NominaEmpleado, NominaDetalle, and related AdelantoAbono records
+    are deleted and recreated during recalculation.
+    """
+    from datetime import date as date_type
+    from coati_payroll.model import (
+        Nomina,
+        NominaEmpleado,
+        NominaDetalle,
+        NominaNovedad,
+        AdelantoAbono,
+    )
+    from coati_payroll.nomina_engine import NominaEngine
+
+    nomina = db.get_or_404(Nomina, nomina_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if nomina.estado == "aplicado":
+        flash(
+            _("No se puede recalcular una nómina en estado 'aplicado' (pagada)."),
+            "error",
+        )
+        return redirect(
+            url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id)
+        )
+
+    # Store the original period information
+    periodo_inicio = nomina.periodo_inicio
+    periodo_fin = nomina.periodo_fin
+
+    # Delete related AdelantoAbono records (payments towards loans/advances)
+    # that were created for this nomina
+    db.session.execute(
+        db.delete(AdelantoAbono).where(AdelantoAbono.nomina_id == nomina_id)
+    )
+
+    # Delete NominaNovedad records (novelties) associated with this nomina
+    db.session.execute(
+        db.delete(NominaNovedad).where(NominaNovedad.nomina_id == nomina_id)
+    )
+
+    # Delete NominaDetalle records for all NominaEmpleado of this nomina
+    # using a subquery for efficiency
+    db.session.execute(
+        db.delete(NominaDetalle).where(
+            NominaDetalle.nomina_empleado_id.in_(
+                db.select(NominaEmpleado.id).where(
+                    NominaEmpleado.nomina_id == nomina_id
+                )
+            )
+        )
+    )
+
+    # Delete all NominaEmpleado records
+    db.session.execute(
+        db.delete(NominaEmpleado).where(NominaEmpleado.nomina_id == nomina_id)
+    )
+
+    # Delete the nomina record itself
+    db.session.delete(nomina)
+    db.session.commit()
+
+    # Re-execute the payroll with the same period
+    engine = NominaEngine(
+        planilla=planilla,
+        periodo_inicio=periodo_inicio,
+        periodo_fin=periodo_fin,
+        fecha_calculo=date_type.today(),
+        usuario=current_user.usuario,
+    )
+
+    new_nomina = engine.ejecutar()
+
+    if engine.errors:
+        for error in engine.errors:
+            flash(error, "error")
+
+    if engine.warnings:
+        for warning in engine.warnings:
+            flash(warning, "warning")
+
+    if new_nomina:
+        flash(_("Nómina recalculada exitosamente."), "success")
+        return redirect(
+            url_for(
+                "planilla.ver_nomina", planilla_id=planilla_id, nomina_id=new_nomina.id
+            )
+        )
+    else:
+        flash(_("Error al recalcular la nómina."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
 
 
 # ============================================================================
@@ -887,31 +1052,45 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
 def _get_planilla_component_counts(planilla_id: str) -> dict:
     """Get counts of all components associated with a planilla.
-    
+
     Returns a dictionary with counts for empleados, percepciones, deducciones,
     prestaciones, and reglas.
     """
+    from sqlalchemy import func, select
+
     return {
-        "empleados_count": db.session.query(PlanillaEmpleado).filter_by(
-            planilla_id=planilla_id
-        ).count(),
-        "percepciones_count": db.session.query(PlanillaIngreso).filter_by(
-            planilla_id=planilla_id
-        ).count(),
-        "deducciones_count": db.session.query(PlanillaDeduccion).filter_by(
-            planilla_id=planilla_id
-        ).count(),
-        "prestaciones_count": db.session.query(PlanillaPrestacion).filter_by(
-            planilla_id=planilla_id
-        ).count(),
-        "reglas_count": db.session.query(PlanillaReglaCalculo).filter_by(
-            planilla_id=planilla_id
-        ).count(),
+        "empleados_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaEmpleado)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "percepciones_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaIngreso)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "deducciones_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaDeduccion)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "prestaciones_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaPrestacion)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "reglas_count": db.session.execute(
+            select(func.count())
+            .select_from(PlanillaReglaCalculo)
+            .filter_by(planilla_id=planilla_id)
+        ).scalar(),
     }
 
 
 def _populate_form_choices(form: PlanillaForm):
     """Populate form select choices from database."""
+    from coati_payroll.model import Empresa
+    
     tipos = (
         db.session.execute(
             db.select(TipoPlanilla).filter_by(activo=True).order_by(TipoPlanilla.codigo)
@@ -933,3 +1112,370 @@ def _populate_form_choices(form: PlanillaForm):
     form.moneda_id.choices = [("", _("-- Seleccionar --"))] + [
         (m.id, f"{m.codigo} - {m.nombre}") for m in monedas
     ]
+    
+    empresas = (
+        db.session.execute(
+            db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)
+        )
+        .scalars()
+        .all()
+    )
+    form.empresa_id.choices = [("", _("-- Seleccionar --"))] + [
+        (e.id, f"{e.codigo} - {e.razon_social}") for e in empresas
+    ]
+
+
+# ============================================================================
+# NOMINA NOVEDADES (NOVELTIES)
+# ============================================================================
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/novedades")
+@login_required
+def listar_novedades(planilla_id: str, nomina_id: str):
+    """List all novedades (novelties) for a specific nomina.
+
+    Shows novedades that fall within the nomina's period dates,
+    regardless of which nomina_id they were originally associated with.
+    This ensures that recalculations show the correct novedades.
+    """
+    from coati_payroll.model import Nomina, NominaNovedad
+
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    # Get all employees in this planilla
+    empleado_ids = [pe.empleado_id for pe in planilla.planilla_empleados if pe.activo]
+
+    # Query novedades that fall within the nomina period and are for employees in this planilla
+    novedades = (
+        db.session.execute(
+            db.select(NominaNovedad)
+            .filter(
+                NominaNovedad.empleado_id.in_(empleado_ids),
+                NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
+                NominaNovedad.fecha_novedad <= nomina.periodo_fin,
+            )
+            .order_by(
+                NominaNovedad.fecha_novedad.desc(), NominaNovedad.timestamp.desc()
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    return render_template(
+        "modules/planilla/novedades/index.html",
+        planilla=planilla,
+        nomina=nomina,
+        novedades=novedades,
+    )
+
+
+@planilla_bp.route(
+    "/<planilla_id>/nomina/<nomina_id>/novedades/new", methods=["GET", "POST"]
+)
+@login_required
+def nueva_novedad(planilla_id: str, nomina_id: str):
+    """Add a new novedad to a nomina."""
+    from decimal import Decimal
+    from coati_payroll.model import Nomina, NominaNovedad
+    from coati_payroll.forms import NominaNovedadForm
+
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if nomina.estado == "aplicado":
+        flash(_("No se pueden agregar novedades a una nómina aplicada."), "error")
+        return redirect(
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
+        )
+
+    form = NominaNovedadForm()
+    _populate_novedad_form_choices(form, nomina_id)
+
+    if form.validate_on_submit():
+        # Validate that fecha_novedad falls within the nomina period
+        if form.fecha_novedad.data:
+            if (
+                form.fecha_novedad.data < nomina.periodo_inicio
+                or form.fecha_novedad.data > nomina.periodo_fin
+            ):
+                flash(
+                    _(
+                        "La fecha de la novedad debe estar dentro del período de la nómina "
+                        "({} a {})."
+                    ).format(
+                        nomina.periodo_inicio.strftime("%d/%m/%Y"),
+                        nomina.periodo_fin.strftime("%d/%m/%Y"),
+                    ),
+                    "error",
+                )
+                return render_template(
+                    "modules/planilla/novedades/form.html",
+                    form=form,
+                    planilla=planilla,
+                    nomina=nomina,
+                )
+
+        # Determine percepcion_id or deduccion_id based on tipo_concepto
+        percepcion_id, deduccion_id = _get_concepto_ids_from_form(form)
+
+        novedad = NominaNovedad(
+            nomina_id=nomina_id,
+            empleado_id=form.empleado_id.data,
+            codigo_concepto=form.codigo_concepto.data,
+            tipo_valor=form.tipo_valor.data,
+            valor_cantidad=Decimal(str(form.valor_cantidad.data)),
+            fecha_novedad=form.fecha_novedad.data,
+            percepcion_id=percepcion_id,
+            deduccion_id=deduccion_id,
+            creado_por=current_user.usuario,
+        )
+        db.session.add(novedad)
+        db.session.commit()
+        flash(_("Novedad agregada exitosamente."), "success")
+        return redirect(
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
+        )
+
+    return render_template(
+        "modules/planilla/novedades/form.html",
+        planilla=planilla,
+        nomina=nomina,
+        form=form,
+        is_edit=False,
+    )
+
+
+@planilla_bp.route(
+    "/<planilla_id>/nomina/<nomina_id>/novedades/<novedad_id>/edit",
+    methods=["GET", "POST"],
+)
+@login_required
+def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
+    """Edit an existing novedad."""
+    from decimal import Decimal
+    from coati_payroll.model import Nomina, NominaNovedad
+    from coati_payroll.forms import NominaNovedadForm
+
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+    novedad = db.get_or_404(NominaNovedad, novedad_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if novedad.nomina_id != nomina_id:
+        flash(_("La novedad no pertenece a esta nómina."), "error")
+        return redirect(
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
+        )
+
+    if nomina.estado == "aplicado":
+        flash(_("No se pueden editar novedades de una nómina aplicada."), "error")
+        return redirect(
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
+        )
+
+    form = NominaNovedadForm(obj=novedad)
+    _populate_novedad_form_choices(form, nomina_id)
+
+    # Set tipo_concepto based on existing data
+    if request.method == "GET":
+        if novedad.percepcion_id:
+            form.tipo_concepto.data = "percepcion"
+            form.percepcion_id.data = novedad.percepcion_id
+        elif novedad.deduccion_id:
+            form.tipo_concepto.data = "deduccion"
+            form.deduccion_id.data = novedad.deduccion_id
+
+    if form.validate_on_submit():
+        # Validate that fecha_novedad falls within the nomina period
+        if form.fecha_novedad.data:
+            if (
+                form.fecha_novedad.data < nomina.periodo_inicio
+                or form.fecha_novedad.data > nomina.periodo_fin
+            ):
+                flash(
+                    _(
+                        "La fecha de la novedad debe estar dentro del período de la nómina "
+                        "({} a {})."
+                    ).format(
+                        nomina.periodo_inicio.strftime("%d/%m/%Y"),
+                        nomina.periodo_fin.strftime("%d/%m/%Y"),
+                    ),
+                    "error",
+                )
+                return render_template(
+                    "modules/planilla/novedades/form.html",
+                    form=form,
+                    planilla=planilla,
+                    nomina=nomina,
+                    novedad=novedad,
+                )
+
+        novedad.empleado_id = form.empleado_id.data
+        novedad.codigo_concepto = form.codigo_concepto.data
+        novedad.tipo_valor = form.tipo_valor.data
+        novedad.valor_cantidad = Decimal(str(form.valor_cantidad.data))
+        novedad.fecha_novedad = form.fecha_novedad.data
+
+        # Update percepcion_id or deduccion_id based on tipo_concepto
+        percepcion_id, deduccion_id = _get_concepto_ids_from_form(form)
+        novedad.percepcion_id = percepcion_id
+        novedad.deduccion_id = deduccion_id
+
+        novedad.modificado_por = current_user.usuario
+        db.session.commit()
+        flash(_("Novedad actualizada exitosamente."), "success")
+        return redirect(
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
+        )
+
+    return render_template(
+        "modules/planilla/novedades/form.html",
+        planilla=planilla,
+        nomina=nomina,
+        form=form,
+        novedad=novedad,
+        is_edit=True,
+    )
+
+
+@planilla_bp.route(
+    "/<planilla_id>/nomina/<nomina_id>/novedades/<novedad_id>/delete",
+    methods=["POST"],
+)
+@login_required
+def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
+    """Delete a novedad from a nomina."""
+    from coati_payroll.model import Nomina, NominaNovedad
+
+    nomina = db.get_or_404(Nomina, nomina_id)
+    novedad = db.get_or_404(NominaNovedad, novedad_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if novedad.nomina_id != nomina_id:
+        flash(_("La novedad no pertenece a esta nómina."), "error")
+        return redirect(
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
+        )
+
+    if nomina.estado == "aplicado":
+        flash(_("No se pueden eliminar novedades de una nómina aplicada."), "error")
+        return redirect(
+            url_for(
+                "planilla.listar_novedades",
+                planilla_id=planilla_id,
+                nomina_id=nomina_id,
+            )
+        )
+
+    db.session.delete(novedad)
+    db.session.commit()
+    flash(_("Novedad eliminada exitosamente."), "success")
+    return redirect(
+        url_for(
+            "planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id
+        )
+    )
+
+
+def _populate_novedad_form_choices(form, nomina_id: str):
+    """Populate form select choices for novedad form."""
+    from coati_payroll.model import NominaEmpleado, Percepcion, Deduccion
+
+    # Get employees associated with this nomina
+    nomina_empleados = (
+        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id))
+        .scalars()
+        .all()
+    )
+    form.empleado_id.choices = [("", _("-- Seleccionar Empleado --"))] + [
+        (
+            ne.empleado.id,
+            f"{ne.empleado.primer_nombre} {ne.empleado.primer_apellido} ({ne.empleado.codigo_empleado})",
+        )
+        for ne in nomina_empleados
+    ]
+
+    # Get active percepciones
+    percepciones = (
+        db.session.execute(
+            db.select(Percepcion).filter_by(activo=True).order_by(Percepcion.nombre)
+        )
+        .scalars()
+        .all()
+    )
+    form.percepcion_id.choices = [("", _("-- Seleccionar Percepción --"))] + [
+        (p.id, f"{p.codigo} - {p.nombre}") for p in percepciones
+    ]
+
+    # Get active deducciones
+    deducciones = (
+        db.session.execute(
+            db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)
+        )
+        .scalars()
+        .all()
+    )
+    form.deduccion_id.choices = [("", _("-- Seleccionar Deducción --"))] + [
+        (d.id, f"{d.codigo} - {d.nombre}") for d in deducciones
+    ]
+
+
+def _get_concepto_ids_from_form(form) -> tuple[str | None, str | None]:
+    """Extract percepcion_id and deduccion_id from form based on tipo_concepto.
+
+    Args:
+        form: The NominaNovedadForm with submitted data
+
+    Returns:
+        Tuple of (percepcion_id, deduccion_id) - one will be set, other will be None
+    """
+    percepcion_id = None
+    deduccion_id = None
+
+    if form.tipo_concepto.data == "percepcion":
+        percepcion_id = form.percepcion_id.data if form.percepcion_id.data else None
+    else:
+        deduccion_id = form.deduccion_id.data if form.deduccion_id.data else None
+
+    return percepcion_id, deduccion_id

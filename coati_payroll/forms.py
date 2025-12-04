@@ -21,6 +21,8 @@ from __future__ import annotations
 
 # Terceros
 from flask_wtf import FlaskForm
+
+from coati_payroll.enums import TipoUsuario
 from wtforms import (
     BooleanField,
     DateField,
@@ -31,7 +33,14 @@ from wtforms import (
     StringField,
     SubmitField,
 )
-from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional, Regexp
+from wtforms.validators import (
+    DataRequired,
+    Email,
+    Length,
+    NumberRange,
+    Optional,
+    Regexp,
+)
 from coati_payroll.i18n import _
 
 
@@ -73,14 +82,35 @@ class UserForm(FlaskForm):
     tipo = SelectField(
         _("Tipo de usuario"),
         choices=[
-            ("admin", _("Administrador")),
-            ("hhrr", _("Recursos Humanos")),
-            ("audit", _("Auditoría")),
+            (TipoUsuario.ADMIN, _("Administrador")),
+            (TipoUsuario.HHRR, _("Recursos Humanos")),
+            (TipoUsuario.AUDIT, _("Auditoría")),
         ],
         validators=[DataRequired()],
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
+
+
+class ProfileForm(FlaskForm):
+    """Form for editing user profile and password."""
+
+    nombre = StringField(_("Nombre"), validators=[Optional(), Length(max=100)])
+    apellido = StringField(_("Apellido"), validators=[Optional(), Length(max=100)])
+    correo_electronico = StringField(
+        _("Correo electrónico"),
+        validators=[Optional(), Email(), Length(max=150)],
+    )
+    current_password = PasswordField(
+        _("Contraseña actual"), validators=[Optional(), Length(min=6)]
+    )
+    new_password = PasswordField(
+        _("Nueva contraseña"), validators=[Optional(), Length(min=6)]
+    )
+    confirm_password = PasswordField(
+        _("Confirmar nueva contraseña"), validators=[Optional(), Length(min=6)]
+    )
+    submit = SubmitField(_("Actualizar Perfil"))
 
 
 class CurrencyForm(FlaskForm):
@@ -116,11 +146,13 @@ class EmployeeForm(FlaskForm):
             Optional(),
             Length(max=20),
             Regexp(
-                r'^[A-Za-z0-9\-]+$',
-                message=_("El código solo puede contener letras, números y guiones.")
+                r"^[A-Za-z0-9\-]+$",
+                message=_("El código solo puede contener letras, números y guiones."),
             ),
         ],
-        description=_("Código único del empleado. Si no se proporciona, se genera automáticamente."),
+        description=_(
+            "Código único del empleado. Si no se proporciona, se genera automáticamente."
+        ),
     )
     primer_nombre = StringField(
         _("Primer nombre"), validators=[DataRequired(), Length(max=100)]
@@ -193,6 +225,7 @@ class EmployeeForm(FlaskForm):
         _("Salario base"), validators=[DataRequired()], places=2
     )
     moneda_id = SelectField(_("Moneda"), validators=[Optional()], coerce=str)
+    empresa_id = SelectField(_("Empresa"), validators=[Optional()], coerce=str)
     correo = StringField(
         _("Correo electrónico"), validators=[Optional(), Email(), Length(max=150)]
     )
@@ -650,6 +683,12 @@ class PlanillaForm(FlaskForm):
         coerce=str,
         description=_("Moneda en la que se pagarán los salarios"),
     )
+    empresa_id = SelectField(
+        _("Empresa"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Empresa a la que pertenece esta planilla"),
+    )
     periodo_fiscal_inicio = DateField(
         _("Inicio Período Fiscal"),
         validators=[Optional()],
@@ -682,6 +721,17 @@ class PlanillaForm(FlaskForm):
         _("Aplicar Adelantos Automáticamente"),
         default=True,
         description=_("¿Deducir automáticamente los adelantos salariales?"),
+    )
+    # Accounting fields for base salary
+    codigo_cuenta_debe_salario = StringField(
+        _("Cuenta Débito (Salario Base)"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta de débito para contabilizar el salario base (gasto)"),
+    )
+    codigo_cuenta_haber_salario = StringField(
+        _("Cuenta Crédito (Salario Base)"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta de crédito para contabilizar el salario base (pasivo)"),
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
@@ -879,6 +929,372 @@ class PrestacionForm(FlaskForm):
         _("Editable en Nómina"),
         default=False,
         description=_("¿Permitir modificar el monto durante la nómina?"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))
+
+
+class NominaNovedadForm(FlaskForm):
+    """Form for adding novelties (novedades) to a nomina.
+
+    Novedades are adjustments or events that affect an employee's payroll
+    for a specific period. They can be associated with:
+    - Percepciones (income items like bonuses, overtime)
+    - Deducciones (deductions like absences, loans)
+
+    The novedad is linked to a specific employee and a concept (percepcion or deduccion).
+    """
+
+    empleado_id = SelectField(
+        _("Empleado"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Empleado al que se aplicará la novedad"),
+    )
+    tipo_concepto = SelectField(
+        _("Tipo de Concepto"),
+        choices=[
+            ("percepcion", _("Percepción (Ingreso)")),
+            ("deduccion", _("Deducción (Egreso)")),
+        ],
+        validators=[DataRequired()],
+        description=_("Tipo de concepto al que se asocia la novedad"),
+    )
+    percepcion_id = SelectField(
+        _("Percepción"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Percepción a la que se asocia la novedad (si aplica)"),
+    )
+    deduccion_id = SelectField(
+        _("Deducción"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Deducción a la que se asocia la novedad (si aplica)"),
+    )
+    codigo_concepto = StringField(
+        _("Código del Concepto"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código del concepto que se modifica o aplica"),
+    )
+    tipo_valor = SelectField(
+        _("Tipo de Valor"),
+        choices=[
+            ("monto", _("Monto Fijo")),
+            ("horas", _("Horas")),
+            ("dias", _("Días")),
+            ("cantidad", _("Cantidad")),
+            ("porcentaje", _("Porcentaje")),
+        ],
+        validators=[DataRequired()],
+        description=_("Tipo de valor de la novedad"),
+    )
+    valor_cantidad = DecimalField(
+        _("Valor / Cantidad"),
+        validators=[DataRequired()],
+        places=2,
+        description=_("Valor numérico de la novedad (ej: 5 horas, 1500 de bono)"),
+    )
+    fecha_novedad = DateField(
+        _("Fecha de la Novedad"),
+        validators=[Optional()],
+        description=_("Fecha en que ocurrió el evento (opcional, para auditoría)"),
+    )
+    submit = SubmitField(_("Guardar"))
+
+
+class PrestamoForm(FlaskForm):
+    """Form for creating and managing loans and salary advances."""
+
+    empleado_id = SelectField(
+        _("Empleado"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Seleccione el empleado que solicita el préstamo o adelanto"),
+    )
+    tipo = SelectField(
+        _("Tipo"),
+        choices=[
+            ("adelanto", _("Adelanto de Salario")),
+            ("prestamo", _("Préstamo")),
+        ],
+        validators=[DataRequired()],
+        description=_(
+            "Adelanto: se descuenta rápidamente; Préstamo: cuotas a largo plazo"
+        ),
+    )
+    fecha_solicitud = DateField(
+        _("Fecha de Solicitud"),
+        validators=[DataRequired()],
+        description=_("Fecha en que se realiza la solicitud"),
+    )
+    monto_solicitado = DecimalField(
+        _("Monto Solicitado"),
+        validators=[DataRequired(), NumberRange(min=0.01)],
+        places=2,
+        description=_("Monto que solicita el empleado"),
+    )
+    moneda_id = SelectField(
+        _("Moneda"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Moneda del préstamo (puede ser diferente a la de la planilla)"),
+    )
+    cuotas_pactadas = IntegerField(
+        _("Número de Cuotas"),
+        validators=[DataRequired(), NumberRange(min=1)],
+        description=_("Número de cuotas (nóminas) para pagar el préstamo"),
+    )
+    tasa_interes = DecimalField(
+        _("Tasa de Interés (%)"),
+        validators=[Optional(), NumberRange(min=0, max=100)],
+        places=4,
+        default=0,
+        description=_("Tasa de interés anual (ej: 5.0000 para 5%)"),
+    )
+    tipo_interes = SelectField(
+        _("Tipo de Interés"),
+        choices=[
+            ("ninguno", _("Sin Interés")),
+            ("simple", _("Interés Simple")),
+            ("compuesto", _("Interés Compuesto")),
+        ],
+        validators=[Optional()],
+        default="ninguno",
+        description=_("Tipo de cálculo de interés"),
+    )
+    cuenta_debe = StringField(
+        _("Cuenta Contable Débito"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta contable para el débito del desembolso"),
+    )
+    cuenta_haber = StringField(
+        _("Cuenta Contable Crédito"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta contable para el crédito del desembolso"),
+    )
+    deduccion_id = SelectField(
+        _("Deducción Asociada"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Deducción para aplicar en nómina (opcional para adelantos)"),
+    )
+    motivo = StringField(
+        _("Motivo"),
+        validators=[Optional(), Length(max=500)],
+        description=_("Motivo o razón del préstamo"),
+    )
+    submit = SubmitField(_("Guardar"))
+
+
+class PrestamoApprovalForm(FlaskForm):
+    """Form for approving or rejecting a loan."""
+
+    monto_aprobado = DecimalField(
+        _("Monto Aprobado"),
+        validators=[DataRequired(), NumberRange(min=0.01)],
+        places=2,
+        description=_("Monto aprobado (puede ser diferente al solicitado)"),
+    )
+    fecha_aprobacion = DateField(
+        _("Fecha de Aprobación"),
+        validators=[DataRequired()],
+        description=_("Fecha de aprobación del préstamo"),
+    )
+    fecha_desembolso = DateField(
+        _("Fecha de Desembolso"),
+        validators=[Optional()],
+        description=_("Fecha en que se realizó el pago al empleado"),
+    )
+    monto_por_cuota = DecimalField(
+        _("Monto por Cuota"),
+        validators=[Optional(), NumberRange(min=0)],
+        places=2,
+        description=_("Monto a deducir por cada cuota (se calcula automáticamente)"),
+    )
+    aprobar = SubmitField(_("Aprobar"))
+    rechazar = SubmitField(_("Rechazar"))
+    motivo_rechazo = StringField(
+        _("Motivo de Rechazo"),
+        validators=[Optional(), Length(max=500)],
+        description=_("Razón del rechazo (requerido si se rechaza)"),
+    )
+
+
+class CondonacionForm(FlaskForm):
+    """Form for loan forgiveness/write-off (condonación de deuda)."""
+
+    fecha_condonacion = DateField(
+        _("Fecha de Condonación"),
+        validators=[DataRequired()],
+        description=_("Fecha en que se autoriza la condonación"),
+    )
+    monto_condonado = DecimalField(
+        _("Monto a Condonar"),
+        validators=[DataRequired(), NumberRange(min=0.01)],
+        places=2,
+        description=_("Monto del saldo que se perdona al empleado"),
+    )
+    porcentaje_condonado = DecimalField(
+        _("Porcentaje a Condonar (%)"),
+        validators=[Optional(), NumberRange(min=0, max=100)],
+        places=2,
+        description=_("Porcentaje del saldo a condonar (opcional, para referencia)"),
+    )
+    autorizado_por = StringField(
+        _("Autorizado Por"),
+        validators=[DataRequired(), Length(max=150)],
+        description=_("Nombre/cargo de quien autoriza la condonación"),
+    )
+    documento_soporte = SelectField(
+        _("Tipo de Documento Soporte"),
+        choices=[
+            ("correo", _("Correo Electrónico")),
+            ("memorandum", _("Memorándum")),
+            ("acta", _("Acta de Junta")),
+            ("resolucion", _("Resolución Administrativa")),
+            ("carta", _("Carta Formal")),
+            ("otro", _("Otro")),
+        ],
+        validators=[DataRequired()],
+        description=_("Tipo de documento que autoriza la condonación"),
+    )
+    referencia_documento = StringField(
+        _("Referencia del Documento"),
+        validators=[DataRequired(), Length(max=200)],
+        description=_("Número, fecha u otra referencia del documento de autorización"),
+    )
+    justificacion = StringField(
+        _("Justificación Completa"),
+        validators=[DataRequired(), Length(min=20, max=1000)],
+        description=_(
+            "Descripción detallada de la razón y autorización de la condonación"
+        ),
+    )
+    # Optional accounting fields
+    cuenta_debe = StringField(
+        _("Cuenta Contable Débito"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta contable para el débito (opcional)"),
+    )
+    cuenta_haber = StringField(
+        _("Cuenta Contable Crédito"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta contable para el crédito (opcional)"),
+    )
+    submit = SubmitField(_("Condonar Deuda"))
+
+
+class PagoExtraordinarioForm(FlaskForm):
+    """Form for recording extraordinary/manual loan payments."""
+
+    fecha_abono = DateField(
+        _("Fecha de Pago"),
+        validators=[DataRequired()],
+        description=_("Fecha en que se realiza el pago extraordinario"),
+    )
+    monto_abonado = DecimalField(
+        _("Monto del Pago"),
+        validators=[DataRequired(), NumberRange(min=0.01)],
+        places=2,
+        description=_("Monto del pago extraordinario"),
+    )
+    tipo_aplicacion = SelectField(
+        _("Aplicación del Pago"),
+        choices=[
+            (
+                "reducir_cuotas",
+                _("Reducir número de cuotas (mantener monto por cuota)"),
+            ),
+            ("reducir_monto", _("Reducir monto de cuotas (mantener número de cuotas)")),
+        ],
+        validators=[DataRequired()],
+        description=_("Cómo aplicar el pago extraordinario según la ley"),
+    )
+    # Audit trail fields
+    tipo_comprobante = SelectField(
+        _("Tipo de Comprobante"),
+        choices=[
+            ("recibo_caja", _("Recibo Oficial de Caja")),
+            ("minuta_deposito", _("Minuta Bancaria de Depósito")),
+            ("transferencia", _("Transferencia Bancaria")),
+            ("cheque", _("Cheque")),
+            ("otro", _("Otro")),
+        ],
+        validators=[DataRequired()],
+        description=_("Tipo de documento que respalda el pago"),
+    )
+    numero_comprobante = StringField(
+        _("Número de Comprobante"),
+        validators=[DataRequired(), Length(max=100)],
+        description=_("Número de recibo, minuta, transferencia o cheque"),
+    )
+    referencia_bancaria = StringField(
+        _("Referencia Bancaria"),
+        validators=[Optional(), Length(max=100)],
+        description=_("Número de referencia bancaria o autorización (opcional)"),
+    )
+    observaciones = StringField(
+        _("Observaciones"),
+        validators=[Optional(), Length(max=500)],
+        description=_("Notas adicionales sobre este pago"),
+    )
+    # Optional accounting fields
+    cuenta_debe = StringField(
+        _("Cuenta Contable Débito"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta contable para el débito (opcional)"),
+    )
+    cuenta_haber = StringField(
+        _("Cuenta Contable Crédito"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta contable para el crédito (opcional)"),
+    )
+    submit = SubmitField(_("Registrar Pago"))
+
+
+class EmpresaForm(FlaskForm):
+    """Form for creating and editing companies/entities."""
+
+    codigo = StringField(
+        _("Código"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código único de la empresa"),
+    )
+    razon_social = StringField(
+        _("Razón Social"),
+        validators=[DataRequired(), Length(max=200)],
+        description=_("Nombre legal de la empresa"),
+    )
+    nombre_comercial = StringField(
+        _("Nombre Comercial"),
+        validators=[Optional(), Length(max=200)],
+        description=_("Nombre comercial (opcional)"),
+    )
+    ruc = StringField(
+        _("RUC"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Número de identificación fiscal"),
+    )
+    direccion = StringField(
+        _("Dirección"),
+        validators=[Optional(), Length(max=255)],
+    )
+    telefono = StringField(
+        _("Teléfono"),
+        validators=[Optional(), Length(max=50)],
+    )
+    correo = StringField(
+        _("Correo Electrónico"),
+        validators=[Optional(), Email(), Length(max=150)],
+    )
+    sitio_web = StringField(
+        _("Sitio Web"),
+        validators=[Optional(), Length(max=200)],
+    )
+    representante_legal = StringField(
+        _("Representante Legal"),
+        validators=[Optional(), Length(max=150)],
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))

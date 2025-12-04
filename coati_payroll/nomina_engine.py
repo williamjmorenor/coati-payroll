@@ -32,6 +32,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
 
+from coati_payroll.enums import AdelantoEstado, FormulaType, NominaEstado
 from coati_payroll.model import (
     db,
     Planilla,
@@ -47,6 +48,12 @@ from coati_payroll.model import (
     TipoCambio,
 )
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
+
+
+# Constants for payroll calculations
+HORAS_TRABAJO_DIA = Decimal(
+    "8.00"
+)  # Standard 8-hour workday for hourly rate calculations
 
 
 class NominaEngineError(Exception):
@@ -107,6 +114,7 @@ class EmpleadoCalculo:
         self.empleado = empleado
         self.planilla = planilla
         self.salario_base = Decimal(str(empleado.salario_base or 0))
+        self.salario_mensual = Decimal(str(empleado.salario_base or 0))
         self.percepciones: list[PercepcionItem] = []
         self.deducciones: list[DeduccionItem] = []
         self.prestaciones: list[PrestacionItem] = []
@@ -201,7 +209,7 @@ class NominaEngine:
             periodo_inicio=self.periodo_inicio,
             periodo_fin=self.periodo_fin,
             generado_por=self.usuario,
-            estado="generado",
+            estado=NominaEstado.GENERADO,
             total_bruto=Decimal("0.00"),
             total_deducciones=Decimal("0.00"),
             total_neto=Decimal("0.00"),
@@ -258,10 +266,19 @@ class NominaEngine:
 
         # Apply exchange rate to convert employee salary to planilla currency
         # Only convert when employee currency differs from planilla currency
+        salario_mensual = emp_calculo.salario_base
         if emp_calculo.tipo_cambio != Decimal("1.00"):
-            emp_calculo.salario_base = (
-                emp_calculo.salario_base * emp_calculo.tipo_cambio
-            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            salario_mensual = (salario_mensual * emp_calculo.tipo_cambio).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+
+        # Calculate salary for the pay period based on actual days worked
+        # The employee's salario_base is always the monthly salary
+        # We need to convert it to the actual period salary based on days
+        emp_calculo.salario_base = self._calcular_salario_periodo(salario_mensual)
+
+        # Store the monthly salary for use in calculations (e.g., hourly rate)
+        emp_calculo.salario_mensual = salario_mensual
 
         # Load employee novelties for this period
         emp_calculo.novedades = self._cargar_novedades(empleado)
@@ -308,6 +325,53 @@ class NominaEngine:
 
         return emp_calculo
 
+    def _calcular_salario_periodo(self, salario_mensual: Decimal) -> Decimal:
+        """Calculate the salary for the pay period based on actual days.
+
+        The employee's base salary is always monthly. This method converts it
+        to the actual period salary by calculating the daily salary and
+        multiplying by the number of days in the current payroll period.
+
+        Formula:
+        - Daily salary = Monthly salary / dias_base (typically 30)
+        - Period salary = Daily salary × actual days in period
+
+        Args:
+            salario_mensual: The monthly salary (already in planilla currency)
+
+        Returns:
+            The prorated salary for this pay period
+        """
+        if not self.planilla or not self.planilla.tipo_planilla:
+            return salario_mensual
+
+        # Validate period dates
+        if not self.periodo_fin or not self.periodo_inicio:
+            return salario_mensual
+
+        # Get the base days for calculating daily salary (usually 30 for monthly)
+        dias_base = Decimal(str(self.planilla.tipo_planilla.dias or 30))
+
+        # Calculate actual days in this pay period
+        dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
+
+        # If the period days equals the base days, return the full salary
+        # to avoid rounding issues (e.g., for monthly payrolls)
+        if dias_periodo == int(dias_base):
+            return salario_mensual
+
+        # Calculate daily salary
+        salario_diario = (salario_mensual / dias_base).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+        # Calculate period salary
+        salario_periodo = (salario_diario * Decimal(str(dias_periodo))).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+        return salario_periodo
+
     def _obtener_tipo_cambio(self, empleado: Empleado) -> Decimal:
         """Get the exchange rate for the employee's salary currency.
 
@@ -347,6 +411,19 @@ class NominaEngine:
     def _cargar_novedades(self, empleado: Empleado) -> dict[str, Decimal]:
         """Load novelties for the employee in this period.
 
+        Novedades are loaded based on:
+        1. Employee ID
+        2. Date range (fecha_novedad falls within the payroll period)
+
+        This ensures novedades are correctly applied to the period they occur in,
+        regardless of which specific nomina execution they were originally
+        associated with.
+
+        Note: Each novedad still maintains a relationship (nomina_id) with the
+        nomina where it was created for audit trail purposes. However, for
+        calculation purposes, we filter by period dates to ensure consistent
+        results when recalculating payrolls.
+
         Args:
             empleado: The employee
 
@@ -355,15 +432,14 @@ class NominaEngine:
         """
         novedades: dict[str, Decimal] = {}
 
-        if not self.nomina:
-            return novedades
-
-        # Query novelties for this employee in this nomina period
+        # Query novelties for this employee within the payroll period dates
+        # We filter by fecha_novedad to ensure the novedad falls within the period
         nomina_novedades = (
             db.session.execute(
                 db.select(NominaNovedad).filter(
                     NominaNovedad.empleado_id == empleado.id,
-                    NominaNovedad.nomina_id == self.nomina.id,
+                    NominaNovedad.fecha_novedad >= self.periodo_inicio,
+                    NominaNovedad.fecha_novedad <= self.periodo_fin,
                 )
             )
             .scalars()
@@ -410,7 +486,7 @@ class NominaEngine:
         variables = {
             # Employee base data
             "salario_base": emp_calculo.salario_base,
-            "salario_mensual": emp_calculo.salario_base,
+            "salario_mensual": emp_calculo.salario_mensual,
             "tipo_cambio": emp_calculo.tipo_cambio,
             # Period data
             "fecha_calculo": self.fecha_calculo,
@@ -528,6 +604,9 @@ class NominaEngine:
                 percepcion.formula,
                 planilla_percepcion.monto_predeterminado,
                 planilla_percepcion.porcentaje,
+                codigo_concepto=percepcion.codigo,
+                base_calculo=getattr(percepcion, "base_calculo", None),
+                unidad_calculo=getattr(percepcion, "unidad_calculo", None),
             )
 
             if monto > 0:
@@ -573,6 +652,9 @@ class NominaEngine:
                 deduccion.formula,
                 planilla_deduccion.monto_predeterminado,
                 planilla_deduccion.porcentaje,
+                codigo_concepto=deduccion.codigo,
+                base_calculo=getattr(deduccion, "base_calculo", None),
+                unidad_calculo=getattr(deduccion, "unidad_calculo", None),
             )
 
             if monto > 0:
@@ -630,7 +712,7 @@ class NominaEngine:
             db.session.execute(
                 db.select(Adelanto).filter(
                     Adelanto.empleado_id == empleado.id,
-                    Adelanto.estado == "aprobado",
+                    Adelanto.estado == AdelantoEstado.APROBADO,
                     Adelanto.saldo_pendiente > 0,
                 )
             )
@@ -719,7 +801,7 @@ class NominaEngine:
         # Update adelanto balance
         adelanto.saldo_pendiente = max(saldo_posterior, Decimal("0.00"))
         if adelanto.saldo_pendiente <= 0:
-            adelanto.estado = "pagado"
+            adelanto.estado = AdelantoEstado.PAGADO
 
     def _procesar_prestaciones(self, emp_calculo: EmpleadoCalculo) -> None:
         """Process employer benefits for an employee.
@@ -756,6 +838,9 @@ class NominaEngine:
                 prestacion.formula,
                 planilla_prestacion.monto_predeterminado,
                 planilla_prestacion.porcentaje,
+                codigo_concepto=prestacion.codigo,
+                base_calculo=getattr(prestacion, "base_calculo", None),
+                unidad_calculo=getattr(prestacion, "unidad_calculo", None),
             )
 
             # Apply ceiling if defined
@@ -784,6 +869,9 @@ class NominaEngine:
         formula: dict | None,
         monto_override: Decimal | None,
         porcentaje_override: Decimal | None,
+        codigo_concepto: str | None = None,
+        base_calculo: str | None = None,
+        unidad_calculo: str | None = None,
     ) -> Decimal:
         """Calculate the amount for a perception, deduction, or benefit.
 
@@ -795,6 +883,9 @@ class NominaEngine:
             formula: JSON formula definition
             monto_override: Override amount from planilla association
             porcentaje_override: Override percentage from planilla association
+            codigo_concepto: Code of the concept (for loading novedades)
+            base_calculo: Base for calculation (salario_base, salario_bruto, etc.)
+            unidad_calculo: Unit of calculation (horas, dias, etc.)
 
         Returns:
             Calculated amount
@@ -811,10 +902,10 @@ class NominaEngine:
             ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         match formula_tipo:
-            case "fijo":
+            case FormulaType.FIJO:
                 return Decimal(str(monto_default or 0))
 
-            case "porcentaje_salario" | "porcentaje":
+            case FormulaType.PORCENTAJE_SALARIO | FormulaType.PORCENTAJE:
                 if porcentaje:
                     return (
                         emp_calculo.salario_base
@@ -823,7 +914,7 @@ class NominaEngine:
                     ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 return Decimal("0.00")
 
-            case "porcentaje_bruto":
+            case FormulaType.PORCENTAJE_BRUTO:
                 if porcentaje:
                     return (
                         emp_calculo.salario_bruto
@@ -832,7 +923,78 @@ class NominaEngine:
                     ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 return Decimal("0.00")
 
-            case "formula":
+            case FormulaType.HORAS:
+                # Calculate based on hours from novedades
+                # Formula: (base_salary / dias_base / horas_dia) * percentage * hours
+                if not codigo_concepto or codigo_concepto not in emp_calculo.novedades:
+                    return Decimal("0.00")
+
+                horas = emp_calculo.novedades[codigo_concepto]
+                if horas <= 0:
+                    return Decimal("0.00")
+
+                # Determine base for calculation
+                if base_calculo == "salario_bruto":
+                    base = emp_calculo.salario_bruto
+                else:
+                    # Use monthly salary for hourly rate calculation
+                    # salario_mensual is the full monthly salary before period proration
+                    base = emp_calculo.salario_mensual
+
+                # Calculate hourly rate
+                # Default: 30 days/month, 8 hours/day (HORAS_TRABAJO_DIA constant)
+                dias_base = Decimal(str(self.planilla.tipo_planilla.dias or 30))
+                tasa_hora = (base / dias_base / HORAS_TRABAJO_DIA).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+
+                # Apply percentage (e.g., 100% for normal overtime, 200% for special)
+                if porcentaje:
+                    tasa_hora = (
+                        tasa_hora * Decimal(str(porcentaje)) / Decimal("100")
+                    ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+                # Calculate total for hours
+                return (tasa_hora * horas).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+
+            case FormulaType.DIAS:
+                # Calculate based on days from novedades
+                # Formula: (base_salary / dias_base) * percentage * days
+                if not codigo_concepto or codigo_concepto not in emp_calculo.novedades:
+                    return Decimal("0.00")
+
+                dias = emp_calculo.novedades[codigo_concepto]
+                if dias <= 0:
+                    return Decimal("0.00")
+
+                # Determine base for calculation
+                if base_calculo == "salario_bruto":
+                    base = emp_calculo.salario_bruto
+                else:
+                    # Use monthly salary for daily rate calculation
+                    # salario_mensual is the full monthly salary before period proration
+                    base = emp_calculo.salario_mensual
+
+                # Calculate daily rate
+                dias_base = Decimal(str(self.planilla.tipo_planilla.dias or 30))
+                tasa_dia = (base / dias_base).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+
+                # Apply percentage
+                if porcentaje:
+                    tasa_dia = (
+                        tasa_dia * Decimal(str(porcentaje)) / Decimal("100")
+                    ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+                # Calculate total for days
+                return (tasa_dia * dias).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+
+            case FormulaType.FORMULA:
                 if formula and isinstance(formula, dict):
                     try:
                         # Merge variables with formula inputs
