@@ -170,9 +170,7 @@ class TestRouteRendering:
                     f"expected 200. Response data: {response.data[:500]}"
                 )
 
-    def test_edit_routes_with_nonexistent_id_handle_gracefully(
-        self, app, authenticated_client
-    ):
+    def test_edit_routes_with_nonexistent_id_handle_gracefully(self, app, authenticated_client):
         """Test that edit routes handle non-existent IDs gracefully.
 
         When accessing an edit route with a non-existent ID, the application
@@ -200,13 +198,11 @@ class TestRouteRendering:
                 # Should redirect (302) to index or show not found gracefully
                 # Should NOT return 500 (server error)
                 assert response.status_code != 500, (
-                    f"Route {endpoint} ({url}) returned 500 server error. "
-                    f"Response data: {response.data[:500]}"
+                    f"Route {endpoint} ({url}) returned 500 server error. " f"Response data: {response.data[:500]}"
                 )
                 # Accept 200 (if form shown with error), 302 (redirect), or 404
                 assert response.status_code in (200, 302, 404), (
-                    f"Route {endpoint} ({url}) returned {response.status_code}, "
-                    f"expected 200, 302, or 404"
+                    f"Route {endpoint} ({url}) returned {response.status_code}, " f"expected 200, 302, or 404"
                 )
 
     def test_all_get_routes_no_server_errors(self, app, authenticated_client):
@@ -228,14 +224,10 @@ class TestRouteRendering:
 
                 # 500 server error indicates template or code errors
                 if response.status_code == 500:
-                    errors.append(
-                        f"{endpoint} ({url}): returned 500 - {response.data[:200]}"
-                    )
+                    errors.append(f"{endpoint} ({url}): returned 500 - {response.data[:200]}")
 
             # Report all errors at once for better debugging
-            assert (
-                not errors
-            ), "The following routes returned 500 server errors:\n" + "\n".join(errors)
+            assert not errors, "The following routes returned 500 server errors:\n" + "\n".join(errors)
 
 
 class TestTemplateRendering:
@@ -267,26 +259,19 @@ class TestTemplateRendering:
 
                 # Check that the response doesn't contain template error indicators
                 assert response.status_code != 500, (
-                    f"Route {url} returned 500, possible template error. "
-                    f"Response: {response.data[:500]}"
+                    f"Route {url} returned 500, possible template error. " f"Response: {response.data[:500]}"
                 )
 
                 # Check for common error messages in response
                 response_text = response.data.decode("utf-8", errors="ignore").lower()
-                assert (
-                    "templatenotfound" not in response_text
-                ), f"Route {url} has TemplateNotFound error in response"
-                assert (
-                    "jinja2.exceptions" not in response_text
-                ), f"Route {url} has Jinja2 exception in response"
+                assert "templatenotfound" not in response_text, f"Route {url} has TemplateNotFound error in response"
+                assert "jinja2.exceptions" not in response_text, f"Route {url} has Jinja2 exception in response"
 
 
 class TestProfileRoute:
     """Tests for the user profile functionality."""
 
-    def test_profile_route_renders_for_authenticated_users(
-        self, app, authenticated_client
-    ):
+    def test_profile_route_renders_for_authenticated_users(self, app, authenticated_client):
         """Test that the profile route renders correctly for authenticated users."""
         response = authenticated_client.get("/user/profile")
         assert response.status_code == 200
@@ -333,16 +318,14 @@ class TestProfileRoute:
         # Should show success message or profile page
         assert "actualizado" in response_text or "updated name" in response_text
 
-    def test_profile_password_change_requires_current_password(
-        self, app, authenticated_client
-    ):
+    def test_profile_password_change_requires_current_password(self, app, authenticated_client):
         """Test that password change requires correct current password."""
         response = authenticated_client.post(
             "/user/profile",
             data={
                 "nombre": "Test",
                 "apellido": "User",
-                "correo_electronico": "test@example.com",
+                "correo_electronico": "testuser@example.com",
                 "current_password": "wrong-password",
                 "new_password": "newpass123",
                 "confirm_password": "newpass123",
@@ -356,16 +339,14 @@ class TestProfileRoute:
         # Should show error about incorrect current password
         assert "incorrecta" in response_text or "incorrect" in response_text
 
-    def test_profile_password_change_requires_matching_passwords(
-        self, app, authenticated_client
-    ):
+    def test_profile_password_change_requires_matching_passwords(self, app, authenticated_client):
         """Test that new password and confirmation must match."""
         response = authenticated_client.post(
             "/user/profile",
             data={
                 "nombre": "Test",
                 "apellido": "User",
-                "correo_electronico": "test@example.com",
+                "correo_electronico": "testuser@example.com",
                 "current_password": "testpassword",
                 "new_password": "newpass123",
                 "confirm_password": "different123",
@@ -379,16 +360,14 @@ class TestProfileRoute:
         # Should show error about passwords not matching
         assert "coinciden" in response_text or "match" in response_text
 
-    def test_profile_password_change_requires_current_password_when_new_provided(
-        self, app, authenticated_client
-    ):
+    def test_profile_password_change_requires_current_password_when_new_provided(self, app, authenticated_client):
         """Test that providing new password without current password shows error."""
         response = authenticated_client.post(
             "/user/profile",
             data={
                 "nombre": "Test",
                 "apellido": "User",
-                "correo_electronico": "test@example.com",
+                "correo_electronico": "testuser@example.com",
                 "current_password": "",
                 "new_password": "newpass123",
                 "confirm_password": "newpass123",

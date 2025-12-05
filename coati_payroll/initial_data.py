@@ -42,7 +42,6 @@ CURRENCIES = [
     {"codigo": "USD", "nombre": _("US Dollar"), "simbolo": "$"},
     {"codigo": "CAD", "nombre": _("Canadian Dollar"), "simbolo": "C$"},
     {"codigo": "MXN", "nombre": _("Mexican Peso"), "simbolo": "$"},
-    
     # Central America
     {"codigo": "BZD", "nombre": _("Belize Dollar"), "simbolo": "BZ$"},
     {"codigo": "CRC", "nombre": _("Costa Rican Colón"), "simbolo": "₡"},
@@ -51,7 +50,6 @@ CURRENCIES = [
     {"codigo": "NIO", "nombre": _("Nicaraguan Córdoba"), "simbolo": "C$"},
     {"codigo": "PAB", "nombre": _("Panamanian Balboa"), "simbolo": "B/."},
     {"codigo": "SVC", "nombre": _("Salvadoran Colón"), "simbolo": "₡"},
-    
     # South America
     {"codigo": "ARS", "nombre": _("Argentine Peso"), "simbolo": "$"},
     {"codigo": "BOB", "nombre": _("Bolivian Boliviano"), "simbolo": "Bs."},
@@ -64,7 +62,6 @@ CURRENCIES = [
     {"codigo": "SRD", "nombre": _("Surinamese Dollar"), "simbolo": "$"},
     {"codigo": "UYU", "nombre": _("Uruguayan Peso"), "simbolo": "$"},
     {"codigo": "VES", "nombre": _("Venezuelan Bolívar"), "simbolo": "Bs."},
-    
     # Caribbean
     {"codigo": "ANG", "nombre": _("Netherlands Antillean Guilder"), "simbolo": "ƒ"},
     {"codigo": "AWG", "nombre": _("Aruban Florin"), "simbolo": "ƒ"},
@@ -86,87 +83,87 @@ INCOME_CONCEPTS = [
     {
         "codigo": "OVERTIME",
         "nombre": _("Overtime"),
-        "descripcion": _("Additional hours worked beyond regular schedule")
+        "descripcion": _("Additional hours worked beyond regular schedule"),
     },
     {
         "codigo": "COMMISSIONS",
         "nombre": _("Commissions"),
-        "descripcion": _("Sales commissions and performance-based income")
+        "descripcion": _("Sales commissions and performance-based income"),
     },
     {
         "codigo": "BONUSES",
         "nombre": _("Bonuses"),
-        "descripcion": _("Performance or achievement bonuses")
+        "descripcion": _("Performance or achievement bonuses"),
     },
     {
         "codigo": "GOAL_INCENTIVES",
         "nombre": _("Goal Incentives"),
-        "descripcion": _("Incentives for meeting specific targets or goals")
+        "descripcion": _("Incentives for meeting specific targets or goals"),
     },
     {
         "codigo": "REPORTED_TIPS",
         "nombre": _("Reported Tips"),
-        "descripcion": _("Tips and gratuities reported by employee")
+        "descripcion": _("Tips and gratuities reported by employee"),
     },
     {
         "codigo": "TRANSPORT_ALLOWANCE",
         "nombre": _("Transportation Allowance"),
-        "descripcion": _("Fixed transportation allowance")
+        "descripcion": _("Fixed transportation allowance"),
     },
     {
         "codigo": "FOOD_ALLOWANCE",
         "nombre": _("Food Allowance"),
-        "descripcion": _("Fixed food or meal allowance")
+        "descripcion": _("Fixed food or meal allowance"),
     },
     {
         "codigo": "HOUSING_ALLOWANCE",
         "nombre": _("Housing Allowance"),
-        "descripcion": _("Fixed housing or rent allowance")
+        "descripcion": _("Fixed housing or rent allowance"),
     },
     {
         "codigo": "SENIORITY_BONUS",
         "nombre": _("Seniority Bonus"),
-        "descripcion": _("Additional payment based on years of service")
+        "descripcion": _("Additional payment based on years of service"),
     },
     {
         "codigo": "PAID_VACATION",
         "nombre": _("Paid Vacation"),
-        "descripcion": _("Payment for vacation time taken")
+        "descripcion": _("Payment for vacation time taken"),
     },
     {
         "codigo": "HOLIDAY_WORK",
         "nombre": _("Holiday Work"),
-        "descripcion": _("Additional payment for working on holidays")
+        "descripcion": _("Additional payment for working on holidays"),
     },
     {
         "codigo": "PAID_LEAVE",
         "nombre": _("Paid Leave"),
-        "descripcion": _("Payment for authorized paid leave")
+        "descripcion": _("Payment for authorized paid leave"),
     },
     {
         "codigo": "PAID_LICENSE",
         "nombre": _("Paid License"),
-        "descripcion": _("Payment for extended paid license periods")
+        "descripcion": _("Payment for extended paid license periods"),
     },
     {
         "codigo": "RETROACTIVE_PAYMENTS",
         "nombre": _("Retroactive Payments"),
-        "descripcion": _("Back payments for salary adjustments")
+        "descripcion": _("Back payments for salary adjustments"),
     },
     {
         "codigo": "THIRTEENTH_SALARY",
         "nombre": _("13th Month Salary"),
-        "descripcion": _("Annual bonus (13th month salary)")
+        "descripcion": _("Annual bonus (13th month salary)"),
     },
     {
         "codigo": "GRATUITIES",
         "nombre": _("Gratuities"),
-        "descripcion": _("Discretionary bonuses or gratuities")
+        "descripcion": _("Discretionary bonuses or gratuities"),
     },
     {
         "codigo": "SEVERANCE_PAY",
         "nombre": _("Severance Pay"),
-        "descripcion": _("Severance or termination compensation")
+        "descripcion": _("Severance or termination compensation"),
     },
 ]
 
@@ -178,117 +175,115 @@ DEDUCTION_CONCEPTS = [
     {
         "codigo": "SALARY_ADVANCE",
         "nombre": _("Salary Advance"),
-        "descripcion": _("Deduction for salary advance repayment (automatic from Loans/Advances module)")
+        "descripcion": _("Deduction for salary advance repayment (automatic from Loans/Advances module)"),
     },
     {
         "codigo": "VOLUNTARY_RETIREMENT",
         "nombre": _("Voluntary Retirement Plan"),
-        "descripcion": _("Voluntary retirement savings contribution")
+        "descripcion": _("Voluntary retirement savings contribution"),
     },
     {
         "codigo": "MEMBERSHIPS_SUBSCRIPTIONS",
         "nombre": _("Memberships/Subscriptions"),
-        "descripcion": _("Deduction for memberships or subscription services")
+        "descripcion": _("Deduction for memberships or subscription services"),
     },
     {
         "codigo": "CAFETERIA",
         "nombre": _("Cafeteria"),
-        "descripcion": _("Company cafeteria charges")
+        "descripcion": _("Company cafeteria charges"),
     },
     {
         "codigo": "INTERNAL_LOANS",
         "nombre": _("Internal Loans"),
-        "descripcion": _("Internal loan repayment installments")
+        "descripcion": _("Internal loan repayment installments"),
     },
     {
         "codigo": "CREDIT_UNION_LOANS",
         "nombre": _("Credit Union Loans"),
-        "descripcion": _("Credit union or cooperative loan payments")
+        "descripcion": _("Credit union or cooperative loan payments"),
     },
     {
         "codigo": "LOAN_INTEREST",
         "nombre": _("Loan Interest"),
-        "descripcion": _("Interest charges on loans")
+        "descripcion": _("Interest charges on loans"),
     },
     {
         "codigo": "ALIMONY",
         "nombre": _("Alimony"),
-        "descripcion": _("Court-ordered alimony or child support payments")
+        "descripcion": _("Court-ordered alimony or child support payments"),
     },
     {
         "codigo": "COURT_GARNISHMENTS",
         "nombre": _("Court Garnishments"),
-        "descripcion": _("Court-ordered wage garnishments")
+        "descripcion": _("Court-ordered wage garnishments"),
     },
     {
         "codigo": "UNPAID_ABSENCES",
         "nombre": _("Unpaid Absences"),
-        "descripcion": _("Deductions for unpaid absences")
+        "descripcion": _("Deductions for unpaid absences"),
     },
     {
         "codigo": "TARDINESS",
         "nombre": _("Tardiness"),
-        "descripcion": _("Deductions for late arrivals")
+        "descripcion": _("Deductions for late arrivals"),
     },
     {
         "codigo": "NONCOMPLIANCE_PENALTIES",
         "nombre": _("Non-compliance Penalties"),
-        "descripcion": _("Penalties for policy or contract violations")
+        "descripcion": _("Penalties for policy or contract violations"),
     },
     {
         "codigo": "LOSSES_DAMAGES",
         "nombre": _("Losses or Damages"),
-        "descripcion": _("Deductions for lost or damaged property")
+        "descripcion": _("Deductions for lost or damaged property"),
     },
     {
         "codigo": "UNIFORM_PENALTIES",
         "nombre": _("Uniform Penalties"),
-        "descripcion": _("Penalties for unreturned uniforms or equipment")
+        "descripcion": _("Penalties for unreturned uniforms or equipment"),
     },
     {
         "codigo": "STORE_CANTEEN_PURCHASES",
         "nombre": _("Store/Canteen Purchases"),
-        "descripcion": _("Purchases at company store or canteen")
+        "descripcion": _("Purchases at company store or canteen"),
     },
     {
         "codigo": "VOLUNTARY_DONATIONS",
         "nombre": _("Voluntary Donations"),
-        "descripcion": _("Voluntary charitable donations")
+        "descripcion": _("Voluntary charitable donations"),
     },
     {
         "codigo": "ASSOCIATION_CONTRIBUTIONS",
         "nombre": _("Association Contributions"),
-        "descripcion": _("Voluntary contributions to associations")
+        "descripcion": _("Voluntary contributions to associations"),
     },
     {
         "codigo": "UNION_DUES",
         "nombre": _("Union Dues"),
-        "descripcion": _("Voluntary union membership dues")
+        "descripcion": _("Voluntary union membership dues"),
     },
     {
         "codigo": "OVERPAYMENT_CORRECTION",
         "nombre": _("Overpayment Correction"),
-        "descripcion": _("Correction for previous overpayments")
+        "descripcion": _("Correction for previous overpayments"),
     },
 ]
 
 
 def load_currencies() -> None:
     """Load American currencies into the database.
-    
+
     Currency names are translated based on the configured language in the database.
     This function is idempotent - it will not create duplicates on repeated calls.
     """
     from coati_payroll.model import Moneda, db
     from coati_payroll.log import log
-    
+
     currencies_loaded = 0
     for currency_data in CURRENCIES:
         # Check if currency already exists
-        existing = db.session.execute(
-            db.select(Moneda).filter_by(codigo=currency_data["codigo"])
-        ).scalar_one_or_none()
-        
+        existing = db.session.execute(db.select(Moneda).filter_by(codigo=currency_data["codigo"])).scalar_one_or_none()
+
         if existing is None:
             # Create new currency - nombre will be translated by _()
             # Convert lazy string to regular string for database storage
@@ -297,10 +292,10 @@ def load_currencies() -> None:
             currency.nombre = str(currency_data["nombre"])
             currency.simbolo = currency_data["simbolo"]
             currency.activo = True
-            
+
             db.session.add(currency)
             currencies_loaded += 1
-    
+
     if currencies_loaded > 0:
         db.session.commit()
         log.info(f"Loaded {currencies_loaded} currencies")
@@ -310,20 +305,20 @@ def load_currencies() -> None:
 
 def load_income_concepts() -> None:
     """Load income concepts (percepciones) into the database.
-    
+
     Concept names and descriptions are translated based on the configured
     language in the database. This function is idempotent.
     """
     from coati_payroll.model import Percepcion, db
     from coati_payroll.log import log
-    
+
     concepts_loaded = 0
     for concept_data in INCOME_CONCEPTS:
         # Check if concept already exists
         existing = db.session.execute(
             db.select(Percepcion).filter_by(codigo=concept_data["codigo"])
         ).scalar_one_or_none()
-        
+
         if existing is None:
             # Create new income concept - strings will be translated by _()
             # Convert lazy strings to regular strings for database storage
@@ -336,10 +331,10 @@ def load_income_concepts() -> None:
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True
-            
+
             db.session.add(concept)
             concepts_loaded += 1
-    
+
     if concepts_loaded > 0:
         db.session.commit()
         log.info(f"Loaded {concepts_loaded} income concepts")
@@ -349,20 +344,20 @@ def load_income_concepts() -> None:
 
 def load_deduction_concepts() -> None:
     """Load deduction concepts (deducciones) into the database.
-    
+
     Concept names and descriptions are translated based on the configured
     language in the database. This function is idempotent.
     """
     from coati_payroll.model import Deduccion, db
     from coati_payroll.log import log
-    
+
     concepts_loaded = 0
     for concept_data in DEDUCTION_CONCEPTS:
         # Check if concept already exists
         existing = db.session.execute(
             db.select(Deduccion).filter_by(codigo=concept_data["codigo"])
         ).scalar_one_or_none()
-        
+
         if existing is None:
             # Create new deduction concept - strings will be translated by _()
             # Convert lazy strings to regular strings for database storage
@@ -377,10 +372,10 @@ def load_deduction_concepts() -> None:
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True
-            
+
             db.session.add(concept)
             concepts_loaded += 1
-    
+
     if concepts_loaded > 0:
         db.session.commit()
         log.info(f"Loaded {concepts_loaded} deduction concepts")
@@ -390,17 +385,17 @@ def load_deduction_concepts() -> None:
 
 def load_initial_data() -> None:
     """Load all initial data into the database.
-    
+
     This function loads currencies, income concepts, and deduction concepts.
     All strings are translated based on the configured language in the database.
     This function is idempotent - safe to call multiple times.
     """
     from coati_payroll.log import log
-    
+
     log.info("Loading initial data")
-    
+
     load_currencies()
     load_income_concepts()
     load_deduction_concepts()
-    
+
     log.info("Initial data loading completed")

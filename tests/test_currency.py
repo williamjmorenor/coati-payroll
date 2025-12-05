@@ -85,9 +85,7 @@ class TestCurrency:
         with app.app_context():
             from coati_payroll.model import Moneda, db
 
-            currency = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one_or_none()
+            currency = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one_or_none()
             assert currency is not None
             assert currency.nombre == "US Dollar"
             assert currency.simbolo == "$"
@@ -140,18 +138,14 @@ class TestCurrency:
         assert response.status_code == 200
 
         with app.app_context():
-            currency = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one_or_none()
+            currency = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one_or_none()
             assert currency.nombre == "United States Dollar"
             assert currency.simbolo == "US$"
             assert currency.activo is False
 
     def test_currency_edit_nonexistent_redirects(self, authenticated_client):
         """Test that editing a non-existent currency redirects."""
-        response = authenticated_client.get(
-            "/currency/edit/NONEXISTENT", follow_redirects=True
-        )
+        response = authenticated_client.get("/currency/edit/NONEXISTENT", follow_redirects=True)
         assert response.status_code == 200
 
     def test_currency_delete_removes_currency(self, authenticated_client, app):
@@ -169,20 +163,14 @@ class TestCurrency:
             db.session.commit()
             currency_id = currency.id  # Use the ULID id, not codigo
 
-        response = authenticated_client.post(
-            f"/currency/delete/{currency_id}", follow_redirects=True
-        )
+        response = authenticated_client.post(f"/currency/delete/{currency_id}", follow_redirects=True)
         assert response.status_code == 200
 
         with app.app_context():
-            currency = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one_or_none()
+            currency = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one_or_none()
             assert currency is None
 
     def test_currency_delete_nonexistent_redirects(self, authenticated_client):
         """Test that deleting a non-existent currency redirects."""
-        response = authenticated_client.post(
-            "/currency/delete/NONEXISTENT", follow_redirects=True
-        )
+        response = authenticated_client.post("/currency/delete/NONEXISTENT", follow_redirects=True)
         assert response.status_code == 200

@@ -30,13 +30,7 @@ exchange_rate_bp = Blueprint("exchange_rate", __name__, url_prefix="/exchange_ra
 
 def get_currency_choices():
     """Get list of currencies for select fields."""
-    currencies = (
-        db.session.execute(
-            db.select(Moneda).filter_by(activo=True).order_by(Moneda.codigo)
-        )
-        .scalars()
-        .all()
-    )
+    currencies = db.session.execute(db.select(Moneda).filter_by(activo=True).order_by(Moneda.codigo)).scalars().all()
     return [(c.id, f"{c.codigo} - {c.nombre}") for c in currencies]
 
 
@@ -49,15 +43,9 @@ def index():
     # Get filter parameters
     fecha_desde = request.args.get("fecha_desde", type=str)
     fecha_hasta = request.args.get("fecha_hasta", type=str)
-    moneda_origen_id = (
-        request.args.get("moneda_origen_id", type=str)
-        if request.args.get("moneda_origen_id")
-        else None
-    )
+    moneda_origen_id = request.args.get("moneda_origen_id", type=str) if request.args.get("moneda_origen_id") else None
     moneda_destino_id = (
-        request.args.get("moneda_destino_id", type=str)
-        if request.args.get("moneda_destino_id")
-        else None
+        request.args.get("moneda_destino_id", type=str) if request.args.get("moneda_destino_id") else None
     )
 
     # Build query with filters
@@ -102,9 +90,7 @@ def new():
     """Create a new exchange rate."""
     form = ExchangeRateForm()
     form.moneda_origen_id.choices = [("", _("Seleccionar..."))] + get_currency_choices()
-    form.moneda_destino_id.choices = [
-        ("", _("Seleccionar..."))
-    ] + get_currency_choices()
+    form.moneda_destino_id.choices = [("", _("Seleccionar..."))] + get_currency_choices()
 
     if form.validate_on_submit():
         exchange_rate = TipoCambio()
@@ -123,9 +109,7 @@ def new():
     if not form.fecha.data:
         form.fecha.data = date.today()
 
-    return render_template(
-        "modules/exchange_rate/form.html", form=form, title=_("Nuevo Tipo de Cambio")
-    )
+    return render_template("modules/exchange_rate/form.html", form=form, title=_("Nuevo Tipo de Cambio"))
 
 
 @exchange_rate_bp.route("/edit/<string:id>", methods=["GET", "POST"])
@@ -139,9 +123,7 @@ def edit(id: str):
 
     form = ExchangeRateForm(obj=exchange_rate)
     form.moneda_origen_id.choices = [("", _("Seleccionar..."))] + get_currency_choices()
-    form.moneda_destino_id.choices = [
-        ("", _("Seleccionar..."))
-    ] + get_currency_choices()
+    form.moneda_destino_id.choices = [("", _("Seleccionar..."))] + get_currency_choices()
 
     if form.validate_on_submit():
         exchange_rate.fecha = form.fecha.data

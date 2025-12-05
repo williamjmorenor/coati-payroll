@@ -58,12 +58,8 @@ class TestExchangeRateCRUD:
 
         with app.app_context():
             # Get currency IDs
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one()
             usd_id = usd.id
             nio_id = nio.id
 
@@ -82,9 +78,7 @@ class TestExchangeRateCRUD:
         with app.app_context():
             from coati_payroll.model import TipoCambio, db
 
-            rate = db.session.execute(
-                db.select(TipoCambio).filter_by(moneda_origen_id=usd_id)
-            ).scalar_one_or_none()
+            rate = db.session.execute(db.select(TipoCambio).filter_by(moneda_origen_id=usd_id)).scalar_one_or_none()
             assert rate is not None
             # Decimal may have many trailing zeros
             assert float(rate.tasa) == 36.5
@@ -95,12 +89,8 @@ class TestExchangeRateCRUD:
 
         with app.app_context():
             # Get currencies
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one()
 
             # Create a test exchange rate
             rate = TipoCambio()
@@ -121,12 +111,8 @@ class TestExchangeRateCRUD:
 
         with app.app_context():
             # Get currencies
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one()
 
             # Create a test exchange rate
             rate = TipoCambio()
@@ -140,12 +126,8 @@ class TestExchangeRateCRUD:
 
         with app.app_context():
             # Get fresh IDs within the context
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one()
             usd_id = usd.id
             nio_id = nio.id
 
@@ -168,9 +150,7 @@ class TestExchangeRateCRUD:
 
     def test_exchange_rate_edit_nonexistent_redirects(self, authenticated_client):
         """Test that editing a non-existent exchange rate redirects."""
-        response = authenticated_client.get(
-            "/exchange_rate/edit/NONEXISTENT", follow_redirects=True
-        )
+        response = authenticated_client.get("/exchange_rate/edit/NONEXISTENT", follow_redirects=True)
         assert response.status_code == 200
 
     def test_exchange_rate_delete_removes_rate(self, authenticated_client, app):
@@ -179,12 +159,8 @@ class TestExchangeRateCRUD:
 
         with app.app_context():
             # Get currencies
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one()
 
             # Create a test exchange rate
             rate = TipoCambio()
@@ -196,9 +172,7 @@ class TestExchangeRateCRUD:
             db.session.commit()
             rate_id = rate.id
 
-        response = authenticated_client.post(
-            f"/exchange_rate/delete/{rate_id}", follow_redirects=True
-        )
+        response = authenticated_client.post(f"/exchange_rate/delete/{rate_id}", follow_redirects=True)
         assert response.status_code == 200
 
         with app.app_context():
@@ -207,7 +181,5 @@ class TestExchangeRateCRUD:
 
     def test_exchange_rate_delete_nonexistent_redirects(self, authenticated_client):
         """Test that deleting a non-existent exchange rate redirects."""
-        response = authenticated_client.post(
-            "/exchange_rate/delete/NONEXISTENT", follow_redirects=True
-        )
+        response = authenticated_client.post("/exchange_rate/delete/NONEXISTENT", follow_redirects=True)
         assert response.status_code == 200

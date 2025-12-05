@@ -341,9 +341,7 @@ class FormulaEngine:
                 try:
                     values.append(to_decimal(token))
                 except ValidationError as exc:
-                    raise CalculationError(
-                        f"Unknown variable or invalid number: {token}"
-                    ) from exc
+                    raise CalculationError(f"Unknown variable or invalid number: {token}") from exc
 
             i += 1
 
@@ -359,9 +357,7 @@ class FormulaEngine:
                     if op == "/" and values[j + 1] == 0:
                         result = Decimal("0")
                     else:
-                        result = to_decimal(
-                            SAFE_OPERATORS[op](float(result), float(values[j + 1]))
-                        )
+                        result = to_decimal(SAFE_OPERATORS[op](float(result), float(values[j + 1])))
 
         return result
 
@@ -589,11 +585,7 @@ class FormulaEngine:
                 k: (
                     float(v)
                     if isinstance(v, Decimal)
-                    else (
-                        {kk: float(vv) for kk, vv in v.items()}
-                        if isinstance(v, dict)
-                        else v
-                    )
+                    else ({kk: float(vv) for kk, vv in v.items()} if isinstance(v, dict) else v)
                 )
                 for k, v in self.results.items()
             },

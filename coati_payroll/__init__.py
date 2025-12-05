@@ -72,12 +72,13 @@ def no_autorizado():
 # ---------------------------------------------------------------------------------------
 def get_locale():
     """Determine the locale for the current request.
-    
+
     Returns the language configured in the database (with caching).
     Falls back to English if database is not available.
     """
     try:
         from coati_payroll.locale_config import get_language_from_db
+
         return get_language_from_db()
     except Exception:
         # Fallback to default if database not available (e.g., during initialization)
@@ -144,7 +145,7 @@ def create_app(config) -> Flask:
     app.config["BABEL_DEFAULT_LOCALE"] = "en"
     app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
     babel.init_app(app, locale_selector=get_locale)
-    
+
     session_manager.init_app(app)
     login_manager.init_app(app)
 
@@ -221,13 +222,9 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
 
             try:
                 db_uri = ctx.config.get("SQLALCHEMY_DATABASE_URI")
-                log.trace(
-                    f"ensure_database_initialized: Flask SQLALCHEMY_DATABASE_URI = {db_uri}"
-                )
+                log.trace(f"ensure_database_initialized: Flask SQLALCHEMY_DATABASE_URI = {db_uri}")
             except Exception:
-                log.trace(
-                    "ensure_database_initialized: could not read SQLALCHEMY_DATABASE_URI from ctx.config"
-                )
+                log.trace("ensure_database_initialized: could not read SQLALCHEMY_DATABASE_URI from ctx.config")
 
             log.trace("ensure_database_initialized: calling create_all()")
             _db.create_all()
@@ -242,9 +239,7 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
             # Re-raise? No — dejar que el llamador decida; aquí se registra la traza.
 
         # Comprobar existencia de al menos un admin.
-        registro_admin = _db.session.execute(
-            _db.select(Usuario).filter_by(tipo="admin")
-        ).scalar_one_or_none()
+        registro_admin = _db.session.execute(_db.select(Usuario).filter_by(tipo="admin")).scalar_one_or_none()
 
         if registro_admin is None:
             # Leer credenciales de entorno o usar valores por defecto.
@@ -262,18 +257,20 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
 
             _db.session.add(nuevo)
             _db.session.commit()
-        
+
         # Initialize language from environment variable if provided
         try:
             from coati_payroll.locale_config import initialize_language_from_env
+
             initialize_language_from_env()
         except Exception as exc:
             log.trace(f"Could not initialize language from environment: {exc}")
-        
+
         # Load initial data (currencies, income concepts, deduction concepts)
         # Strings are translated automatically based on the configured language
         try:
             from coati_payroll.initial_data import load_initial_data
+
             load_initial_data()
         except Exception as exc:
             log.trace(f"Could not load initial data: {exc}")

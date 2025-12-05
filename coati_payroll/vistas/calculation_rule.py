@@ -31,9 +31,7 @@ from coati_payroll.formula_engine import (
     get_available_sources_for_ui,
 )
 
-calculation_rule_bp = Blueprint(
-    "calculation_rule", __name__, url_prefix="/calculation-rule"
-)
+calculation_rule_bp = Blueprint("calculation_rule", __name__, url_prefix="/calculation-rule")
 
 
 @calculation_rule_bp.route("/")
@@ -42,9 +40,7 @@ def index():
     """List all calculation rules with pagination."""
     page = request.args.get("page", 1, type=int)
     pagination = db.paginate(
-        db.select(ReglaCalculo).order_by(
-            ReglaCalculo.codigo, ReglaCalculo.version.desc()
-        ),
+        db.select(ReglaCalculo).order_by(ReglaCalculo.codigo, ReglaCalculo.version.desc()),
         page=page,
         per_page=PER_PAGE,
         error_out=False,

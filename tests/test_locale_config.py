@@ -132,15 +132,13 @@ class TestLocaleConfig:
 
             # Set environment variable
             os.environ["COATI_LANG"] = "en"
-            
+
             # Initialize from environment
             initialize_language_from_env()
 
             # Check that config was created
-            config = db.session.execute(
-                db.select(ConfiguracionGlobal)
-            ).scalar_one_or_none()
-            
+            config = db.session.execute(db.select(ConfiguracionGlobal)).scalar_one_or_none()
+
             # Only check if config was created (it might be None if already existed)
             if config:
                 assert config.idioma in ["en", "es"]
@@ -155,7 +153,7 @@ class TestLocaleConfig:
             with app.app_context():
                 # Set invalid language
                 os.environ["COATI_LANG"] = "invalid"
-                
+
                 # Should not raise an error, just log a warning
                 initialize_language_from_env()
         finally:

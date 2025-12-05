@@ -54,7 +54,7 @@ class TestQueueDriverSelection:
         mock_client = MagicMock()
         mock_redis.return_value = mock_client
         mock_client.ping.return_value = True
-        
+
         with patch.dict(os.environ, {"REDIS_URL": "redis://localhost:6379/0"}):
             driver = get_queue_driver()
             assert isinstance(driver, DramatiqDriver)
@@ -85,10 +85,10 @@ class TestHueyDriver:
         """Test registering a task with Huey driver."""
         with tempfile.TemporaryDirectory() as tmpdir:
             driver = HueyDriver(storage_path=tmpdir)
-            
+
             def sample_task(x: int, y: int) -> int:
                 return x + y
-            
+
             registered = driver.register_task(sample_task, name="add_numbers")
             assert registered is not None
             assert "add_numbers" in driver._tasks
@@ -99,7 +99,7 @@ class TestHueyDriver:
             driver = HueyDriver(storage_path=tmpdir)
             if driver.is_available():
                 stats = driver.get_stats()
-                
+
                 assert stats["driver"] == "huey"
                 assert stats["backend"] == "filesystem"
                 assert stats["available"] is True
@@ -109,7 +109,7 @@ class TestHueyDriver:
         """Test that enqueueing unregistered task raises error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             driver = HueyDriver(storage_path=tmpdir)
-            
+
             if driver.is_available():
                 with pytest.raises(ValueError, match="not registered"):
                     driver.enqueue("nonexistent_task", 1, 2)
@@ -123,7 +123,7 @@ class TestHueyDriver:
             driver = HueyDriver(storage_path=tmpdir)
             # Should initialize successfully with writable temp directory
             assert driver.is_available()
-            
+
             # Verify permission test file was cleaned up
             test_file = Path(tmpdir) / ".huey_permissions_test"
             assert not test_file.exists()
@@ -132,7 +132,7 @@ class TestHueyDriver:
         """Test Huey bulk results for progress feedback."""
         with tempfile.TemporaryDirectory() as tmpdir:
             driver = HueyDriver(storage_path=tmpdir)
-            
+
             if driver.is_available():
                 results = driver.get_bulk_results([])
                 assert results["total"] == 0
@@ -147,7 +147,7 @@ class TestDramatiqDriver:
     def test_dramatiq_driver_with_redis_unavailable(self, mock_redis):
         """Test Dramatiq driver when Redis is unavailable."""
         mock_redis.side_effect = ConnectionError("Redis not available")
-        
+
         driver = DramatiqDriver(redis_url="redis://localhost:6379/0")
         assert not driver.is_available()
 
@@ -157,7 +157,7 @@ class TestDramatiqDriver:
         mock_client = MagicMock()
         mock_redis.return_value = mock_client
         mock_client.ping.return_value = True
-        
+
         driver = DramatiqDriver(redis_url="redis://localhost:6379/0")
         assert driver.is_available()
 
@@ -169,7 +169,7 @@ class TestDramatiqDriver:
         mock_client.ping.return_value = True
         mock_client.keys.return_value = [b"dramatiq:default:msgs"]
         mock_client.llen.return_value = 5
-        
+
         driver = DramatiqDriver(redis_url="redis://localhost:6379/0")
         if driver.is_available():
             stats = driver.get_stats()
@@ -182,7 +182,7 @@ class TestDramatiqDriver:
         mock_client = MagicMock()
         mock_redis.return_value = mock_client
         mock_client.ping.return_value = True
-        
+
         driver = DramatiqDriver(redis_url="redis://localhost:6379/0")
         if driver.is_available():
             results = driver.get_bulk_results([1, 2, 3])
@@ -213,12 +213,12 @@ class TestQueueIntegration:
     def test_task_registration_and_stats(self):
         """Test task registration shows in stats."""
         driver = get_queue_driver()
-        
+
         def test_task(value: int) -> int:
             return value * 2
-        
+
         driver.register_task(test_task, name="multiply_by_two")
-        
+
         stats = driver.get_stats()
         assert "registered_tasks" in stats
         assert "multiply_by_two" in stats["registered_tasks"]
@@ -226,11 +226,11 @@ class TestQueueIntegration:
     def test_bulk_results_feedback(self):
         """Test bulk results for progress feedback (x of y completed)."""
         driver = get_queue_driver()
-        
+
         # Test with empty list
         results = driver.get_bulk_results([])
         assert results["total"] == 0
-        
+
         # Huey driver should provide feedback
         if isinstance(driver, HueyDriver):
             assert "progress_percentage" in results

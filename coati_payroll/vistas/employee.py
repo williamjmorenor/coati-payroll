@@ -31,42 +31,24 @@ employee_bp = Blueprint("employee", __name__, url_prefix="/employee")
 
 def get_currency_choices():
     """Get list of currencies for select fields."""
-    currencies = (
-        db.session.execute(
-            db.select(Moneda).filter_by(activo=True).order_by(Moneda.codigo)
-        )
-        .scalars()
-        .all()
-    )
-    return [("", _("Seleccionar..."))] + [
-        (c.id, f"{c.codigo} - {c.nombre}") for c in currencies
-    ]
+    currencies = db.session.execute(db.select(Moneda).filter_by(activo=True).order_by(Moneda.codigo)).scalars().all()
+    return [("", _("Seleccionar..."))] + [(c.id, f"{c.codigo} - {c.nombre}") for c in currencies]
 
 
 def get_empresa_choices():
     """Get list of companies for select fields."""
     from coati_payroll.model import Empresa
-    
+
     empresas = (
-        db.session.execute(
-            db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)
-        )
-        .scalars()
-        .all()
+        db.session.execute(db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)).scalars().all()
     )
-    return [("", _("Seleccionar..."))] + [
-        (e.id, f"{e.codigo} - {e.razon_social}") for e in empresas
-    ]
+    return [("", _("Seleccionar..."))] + [(e.id, f"{e.codigo} - {e.razon_social}") for e in empresas]
 
 
 def get_custom_fields():
     """Get all active custom fields ordered by 'orden'."""
     return (
-        db.session.execute(
-            db.select(CampoPersonalizado)
-            .filter_by(activo=True)
-            .order_by(CampoPersonalizado.orden)
-        )
+        db.session.execute(db.select(CampoPersonalizado).filter_by(activo=True).order_by(CampoPersonalizado.orden))
         .scalars()
         .all()
     )
@@ -92,16 +74,12 @@ def process_custom_fields_from_request(custom_fields):
                 datos_adicionales[field.nombre_campo] = stripped or None
             case "entero":
                 try:
-                    datos_adicionales[field.nombre_campo] = (
-                        int(raw_value) if raw_value else None
-                    )
+                    datos_adicionales[field.nombre_campo] = int(raw_value) if raw_value else None
                 except ValueError:
                     datos_adicionales[field.nombre_campo] = None
             case "decimal":
                 try:
-                    datos_adicionales[field.nombre_campo] = (
-                        float(raw_value) if raw_value else None
-                    )
+                    datos_adicionales[field.nombre_campo] = float(raw_value) if raw_value else None
                 except ValueError:
                     datos_adicionales[field.nombre_campo] = None
             case "booleano":
@@ -145,9 +123,7 @@ def index():
         per_page=PER_PAGE,
         error_out=False,
     )
-    return render_template(
-        "modules/employee/index.html", employees=pagination.items, pagination=pagination
-    )
+    return render_template("modules/employee/index.html", employees=pagination.items, pagination=pagination)
 
 
 @employee_bp.route("/new", methods=["GET", "POST"])

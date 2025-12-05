@@ -48,9 +48,7 @@ class TestCurrencyConversion:
         """
         with app.app_context():
             # Create currencies - check if they already exist
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one_or_none()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one_or_none()
             if not usd:
                 usd = Moneda(
                     codigo="USD",
@@ -59,10 +57,8 @@ class TestCurrencyConversion:
                     activo=True,
                 )
                 db.session.add(usd)
-            
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
+
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
             if not nio:
                 nio = Moneda(
                     codigo="NIO",
@@ -84,9 +80,7 @@ class TestCurrencyConversion:
             db.session.flush()
 
             # Create payroll type - check if it already exists
-            tipo_planilla = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
-            ).scalar_one_or_none()
+            tipo_planilla = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one_or_none()
             if not tipo_planilla:
                 tipo_planilla = TipoPlanilla(
                     codigo="MENSUAL",
@@ -696,6 +690,7 @@ class TestNominaRecalculation:
 
             # Verify novedades were created
             from sqlalchemy import select, func
+
             novedades_count = db.session.execute(
                 select(func.count()).select_from(NominaNovedad).filter_by(nomina_id=nomina.id)
             ).scalar()
@@ -721,8 +716,6 @@ class TestNominaRecalculation:
             assert old_novedades_count == 0
 
             # A new nomina should have been created
-            new_nomina = db.session.execute(
-                select(Nomina).filter_by(planilla_id=planilla.id)
-            ).scalar_one_or_none()
+            new_nomina = db.session.execute(select(Nomina).filter_by(planilla_id=planilla.id)).scalar_one_or_none()
             assert new_nomina is not None
             assert new_nomina.id != original_nomina_id

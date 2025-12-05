@@ -34,7 +34,7 @@ def app():
 
     # Set environment variable to use filesystem session before app creation
     os.environ["SESSION_REDIS_URL"] = ""
-    
+
     # Set default language to Spanish for tests
     os.environ["COATI_LANG"] = "es"
 
@@ -135,9 +135,7 @@ def authenticated_client(app, client):
         from coati_payroll.auth import proteger_passwd
 
         # Check if the test user already exists (from a previous test in the module)
-        existing_user = db.session.execute(
-            db.select(Usuario).filter_by(usuario="testuser")
-        ).scalar_one_or_none()
+        existing_user = db.session.execute(db.select(Usuario).filter_by(usuario="testuser")).scalar_one_or_none()
 
         if not existing_user:
             # Create a test user
@@ -146,6 +144,7 @@ def authenticated_client(app, client):
             user.acceso = proteger_passwd("testpassword")
             user.nombre = "Test"
             user.apellido = "User"
+            user.correo_electronico = "testuser@example.com"
             user.tipo = "admin"
             user.activo = True
             db.session.add(user)

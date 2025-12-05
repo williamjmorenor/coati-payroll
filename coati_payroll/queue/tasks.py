@@ -56,10 +56,10 @@ def calculate_employee_payroll(
     usuario: str | None = None,
 ) -> dict[str, str | Decimal | None]:
     """Calculate payroll for a single employee (background task).
-    
+
     This task can be enqueued for background processing to avoid
     blocking the main application when calculating large payrolls.
-    
+
     Args:
         empleado_id: Employee ID (ULID string)
         planilla_id: Planilla ID (ULID string)
@@ -67,7 +67,7 @@ def calculate_employee_payroll(
         periodo_fin: End date (ISO format: YYYY-MM-DD)
         fecha_calculo: Calculation date (ISO format, optional)
         usuario: Username executing the payroll (optional)
-        
+
     Returns:
         Dictionary with calculation results:
         {
@@ -81,14 +81,12 @@ def calculate_employee_payroll(
     """
     try:
         log.info(f"Processing payroll for employee {empleado_id}")
-        
+
         # Convert date strings to date objects
         periodo_inicio_date = date.fromisoformat(periodo_inicio)
         periodo_fin_date = date.fromisoformat(periodo_fin)
-        fecha_calculo_date = (
-            date.fromisoformat(fecha_calculo) if fecha_calculo else None
-        )
-        
+        fecha_calculo_date = date.fromisoformat(fecha_calculo) if fecha_calculo else None
+
         # Load employee and planilla
         empleado = db.session.get(Empleado, empleado_id)
         if not empleado:
@@ -97,7 +95,7 @@ def calculate_employee_payroll(
                 "success": False,
                 "error": "Employee not found",
             }
-            
+
         planilla = db.session.get(Planilla, planilla_id)
         if not planilla:
             return {
@@ -105,7 +103,7 @@ def calculate_employee_payroll(
                 "success": False,
                 "error": "Planilla not found",
             }
-        
+
         # Initialize engine for single employee
         engine = NominaEngine(
             planilla=planilla,
@@ -114,18 +112,15 @@ def calculate_employee_payroll(
             fecha_calculo=fecha_calculo_date,
             usuario=usuario,
         )
-        
+
         # Process only this employee
         emp_calculo = engine._procesar_empleado(empleado)
-        
+
         # Commit to database
         db.session.commit()
-        
-        log.info(
-            f"Employee {empleado_id} processed successfully. "
-            f"Net: {emp_calculo.salario_neto}"
-        )
-        
+
+        log.info(f"Employee {empleado_id} processed successfully. " f"Net: {emp_calculo.salario_neto}")
+
         return {
             "empleado_id": empleado_id,
             "salario_bruto": emp_calculo.salario_bruto,
@@ -133,7 +128,7 @@ def calculate_employee_payroll(
             "total_deducciones": emp_calculo.total_deducciones,
             "success": True,
         }
-        
+
     except Exception as e:
         log.error(f"Error processing employee {empleado_id}: {e}")
         db.session.rollback()
@@ -152,18 +147,18 @@ def process_payroll_parallel(
     usuario: str | None = None,
 ) -> dict[str, bool | int | list[str]]:
     """Process payroll for all employees in parallel (background task).
-    
+
     This task enqueues individual employee calculations to be processed
     concurrently by multiple workers. This is the recommended approach
     for large payrolls (1000+ employees).
-    
+
     Args:
         planilla_id: Planilla ID (ULID string)
         periodo_inicio: Start date (ISO format: YYYY-MM-DD)
         periodo_fin: End date (ISO format: YYYY-MM-DD)
         fecha_calculo: Calculation date (ISO format, optional)
         usuario: Username executing the payroll (optional)
-        
+
     Returns:
         Dictionary with enqueue status:
         {
@@ -175,7 +170,7 @@ def process_payroll_parallel(
     """
     try:
         log.info(f"Starting parallel payroll processing for planilla {planilla_id}")
-        
+
         # Load planilla
         planilla = db.session.get(Planilla, planilla_id)
         if not planilla:
@@ -183,20 +178,16 @@ def process_payroll_parallel(
                 "success": False,
                 "error": "Planilla not found",
             }
-        
+
         # Get all active employees
-        empleados = [
-            pe.empleado
-            for pe in planilla.planilla_empleados
-            if pe.activo and pe.empleado.activo
-        ]
-        
+        empleados = [pe.empleado for pe in planilla.planilla_empleados if pe.activo and pe.empleado.activo]
+
         if not empleados:
             return {
                 "success": False,
                 "error": "No active employees found",
             }
-        
+
         # Enqueue individual tasks for each employee
         enqueued_tasks = []
         for empleado in empleados:
@@ -213,17 +204,15 @@ def process_payroll_parallel(
                 enqueued_tasks.append(str(task_id))
             except Exception as e:
                 log.error(f"Failed to enqueue task for employee {empleado.id}: {e}")
-        
-        log.info(
-            f"Enqueued {len(enqueued_tasks)} tasks for planilla {planilla_id}"
-        )
-        
+
+        log.info(f"Enqueued {len(enqueued_tasks)} tasks for planilla {planilla_id}")
+
         return {
             "success": True,
             "total_employees": len(empleados),
             "enqueued_tasks": enqueued_tasks,
         }
-        
+
     except Exception as e:
         log.error(f"Error processing parallel payroll: {e}")
         return {
@@ -241,12 +230,12 @@ def process_large_payroll(
     usuario: str | None = None,
 ) -> dict[str, bool | int | list[str]]:
     """Process large payroll in background with progress tracking.
-    
+
     This task processes a payroll for all employees sequentially,
     updating progress in the database after each employee.
     Designed for large payrolls (>100 employees) to provide
     real-time feedback to users.
-    
+
     Args:
         nomina_id: Nomina ID (ULID string)
         planilla_id: Planilla ID (ULID string)
@@ -254,7 +243,7 @@ def process_large_payroll(
         periodo_fin: End date (ISO format: YYYY-MM-DD)
         fecha_calculo: Calculation date (ISO format, optional)
         usuario: Username executing the payroll (optional)
-        
+
     Returns:
         Dictionary with processing results:
         {
@@ -266,17 +255,15 @@ def process_large_payroll(
         }
     """
     from coati_payroll.enums import NominaEstado
-    
+
     try:
         log.info(f"Starting background processing for nomina {nomina_id}")
-        
+
         # Convert date strings to date objects
         periodo_inicio_date = date.fromisoformat(periodo_inicio)
         periodo_fin_date = date.fromisoformat(periodo_fin)
-        fecha_calculo_date = (
-            date.fromisoformat(fecha_calculo) if fecha_calculo else None
-        )
-        
+        fecha_calculo_date = date.fromisoformat(fecha_calculo) if fecha_calculo else None
+
         # Load nomina and planilla
         nomina = db.session.get(NominaModel, nomina_id)
         if not nomina:
@@ -285,14 +272,14 @@ def process_large_payroll(
                 "success": False,
                 "error": "Nomina not found",
             }
-            
+
         # Load planilla with eager loading of tipo_planilla and moneda
         planilla = db.session.execute(
             db.select(Planilla)
             .options(joinedload(Planilla.tipo_planilla), joinedload(Planilla.moneda))
             .filter_by(id=planilla_id)
         ).scalar_one_or_none()
-        
+
         if not planilla:
             log.error(f"Planilla {planilla_id} not found")
             nomina.estado = NominaEstado.ERROR
@@ -302,14 +289,10 @@ def process_large_payroll(
                 "success": False,
                 "error": "Planilla not found",
             }
-        
+
         # Get all active employees
-        empleados = [
-            pe.empleado
-            for pe in planilla.planilla_empleados
-            if pe.activo and pe.empleado.activo
-        ]
-        
+        empleados = [pe.empleado for pe in planilla.planilla_empleados if pe.activo and pe.empleado.activo]
+
         if not empleados:
             log.warning(f"No active employees found for planilla {planilla_id}")
             nomina.estado = NominaEstado.ERROR
@@ -319,7 +302,7 @@ def process_large_payroll(
                 "success": False,
                 "error": "No active employees found",
             }
-        
+
         # Initialize progress tracking
         nomina.total_empleados = len(empleados)
         nomina.empleados_procesados = 0
@@ -327,27 +310,29 @@ def process_large_payroll(
         nomina.errores_calculo = {}
         nomina.log_procesamiento = []
         db.session.commit()
-        
+
         # Process each employee
         errores = {}
         log_entries = []
         for idx, empleado in enumerate(empleados, 1):
             empleado_nombre = f"{empleado.primer_nombre} {empleado.primer_apellido}"
-            
+
             try:
                 # Update current employee being processed
                 nomina.empleado_actual = empleado_nombre
                 db.session.commit()
-                
-                log_entries.append({
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "empleado": empleado_nombre,
-                    "status": "processing",
-                    "message": f"Calculando empleado {idx}/{len(empleados)}: {empleado_nombre}",
-                })
+
+                log_entries.append(
+                    {
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "empleado": empleado_nombre,
+                        "status": "processing",
+                        "message": f"Calculando empleado {idx}/{len(empleados)}: {empleado_nombre}",
+                    }
+                )
                 nomina.log_procesamiento = log_entries
                 db.session.commit()
-                
+
                 # Initialize engine for single employee
                 engine = NominaEngine(
                     planilla=planilla,
@@ -356,10 +341,10 @@ def process_large_payroll(
                     fecha_calculo=fecha_calculo_date,
                     usuario=usuario,
                 )
-                
+
                 # Process this employee
                 emp_calculo = engine._procesar_empleado(empleado)
-                
+
                 # Save employee calculation to existing nomina
                 nomina_empleado = NominaEmpleadoModel(
                     nomina_id=nomina_id,
@@ -377,7 +362,7 @@ def process_large_payroll(
                 )
                 db.session.add(nomina_empleado)
                 db.session.flush()
-                
+
                 # Save details
                 for percepcion in emp_calculo.percepciones:
                     detalle = NominaDetalleModel(
@@ -390,7 +375,7 @@ def process_large_payroll(
                         percepcion_id=percepcion.percepcion_id,
                     )
                     db.session.add(detalle)
-                
+
                 for deduccion in emp_calculo.deducciones:
                     detalle = NominaDetalleModel(
                         nomina_empleado_id=nomina_empleado.id,
@@ -402,7 +387,7 @@ def process_large_payroll(
                         deduccion_id=deduccion.deduccion_id,
                     )
                     db.session.add(detalle)
-                
+
                 for prestacion in emp_calculo.prestaciones:
                     detalle = NominaDetalleModel(
                         nomina_empleado_id=nomina_empleado.id,
@@ -414,55 +399,50 @@ def process_large_payroll(
                         prestacion_id=prestacion.prestacion_id,
                     )
                     db.session.add(detalle)
-                
+
                 # Update progress with success
                 nomina.empleados_procesados = idx
-                log_entries.append({
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "empleado": empleado_nombre,
-                    "status": "success",
-                    "message": f"✓ Completado: {empleado_nombre} - Neto: {emp_calculo.salario_neto}",
-                })
+                log_entries.append(
+                    {
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "empleado": empleado_nombre,
+                        "status": "success",
+                        "message": f"✓ Completado: {empleado_nombre} - Neto: {emp_calculo.salario_neto}",
+                    }
+                )
                 nomina.log_procesamiento = log_entries
                 db.session.commit()
-                
-                log.info(
-                    f"Employee {empleado.id} processed successfully "
-                    f"({idx}/{nomina.total_empleados})"
-                )
-                
+
+                log.info(f"Employee {empleado.id} processed successfully " f"({idx}/{nomina.total_empleados})")
+
             except Exception as e:
                 error_msg = str(e)
                 log.error(f"Error processing employee {empleado.id}: {error_msg}")
                 errores[empleado.id] = error_msg
                 nomina.empleados_con_error += 1
                 nomina.empleados_procesados = idx
-                
+
                 # Log error
-                log_entries.append({
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "empleado": empleado_nombre,
-                    "status": "error",
-                    "message": f"✗ Error: {empleado_nombre} - {error_msg}",
-                })
+                log_entries.append(
+                    {
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "empleado": empleado_nombre,
+                        "status": "error",
+                        "message": f"✗ Error: {empleado_nombre} - {error_msg}",
+                    }
+                )
                 nomina.log_procesamiento = log_entries
                 db.session.commit()
-        
+
         # Calculate totals
-        total_bruto = sum(
-            ne.salario_bruto for ne in nomina.nomina_empleados
-        )
-        total_deducciones = sum(
-            ne.total_deducciones for ne in nomina.nomina_empleados
-        )
-        total_neto = sum(
-            ne.salario_neto for ne in nomina.nomina_empleados
-        )
-        
+        total_bruto = sum(ne.salario_bruto for ne in nomina.nomina_empleados)
+        total_deducciones = sum(ne.total_deducciones for ne in nomina.nomina_empleados)
+        total_neto = sum(ne.salario_neto for ne in nomina.nomina_empleados)
+
         nomina.total_bruto = total_bruto
         nomina.total_deducciones = total_deducciones
         nomina.total_neto = total_neto
-        
+
         # Update final status
         if errores:
             nomina.errores_calculo = errores
@@ -473,15 +453,15 @@ def process_large_payroll(
                 nomina.estado = NominaEstado.ERROR
         else:
             nomina.estado = NominaEstado.GENERADO
-            
+
         db.session.commit()
-        
+
         log.info(
             f"Background processing completed for nomina {nomina_id}. "
             f"Processed: {nomina.empleados_procesados}/{nomina.total_empleados}, "
             f"Errors: {nomina.empleados_con_error}"
         )
-        
+
         return {
             "success": True,
             "total_empleados": nomina.total_empleados,
@@ -489,7 +469,7 @@ def process_large_payroll(
             "empleados_con_error": nomina.empleados_con_error,
             "errores": list(errores.values()),
         }
-        
+
     except Exception as e:
         log.error(f"Critical error in background payroll processing: {e}")
         try:

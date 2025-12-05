@@ -98,9 +98,7 @@ class TestExchangeRateFilters:
 
     def test_filter_by_date_range(self, app, authenticated_client):
         """Test filtering by date range."""
-        response = authenticated_client.get(
-            "/exchange_rate/?fecha_desde=2025-01-01&fecha_hasta=2025-01-31"
-        )
+        response = authenticated_client.get("/exchange_rate/?fecha_desde=2025-01-01&fecha_hasta=2025-01-31")
         assert response.status_code == 200
         # Should show the two January rates (2025-01-15 and 2025-01-20)
         assert b"2025-01-15" in response.data
@@ -133,14 +131,10 @@ class TestExchangeRateFilters:
         from coati_payroll.model import Moneda, db
 
         with app.app_context():
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
             usd_id = usd.id
 
-        response = authenticated_client.get(
-            f"/exchange_rate/?moneda_origen_id={usd_id}"
-        )
+        response = authenticated_client.get(f"/exchange_rate/?moneda_origen_id={usd_id}")
         assert response.status_code == 200
         # Should show USD rates
         assert response.data.count(b"USD") >= 2
@@ -152,14 +146,10 @@ class TestExchangeRateFilters:
         from coati_payroll.model import Moneda, db
 
         with app.app_context():
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
             usd_id = usd.id
 
-        response = authenticated_client.get(
-            f"/exchange_rate/?moneda_destino_id={usd_id}"
-        )
+        response = authenticated_client.get(f"/exchange_rate/?moneda_destino_id={usd_id}")
         assert response.status_code == 200
         # Should show only EUR to USD rate
         assert b"EUR" in response.data
@@ -169,12 +159,8 @@ class TestExchangeRateFilters:
         from coati_payroll.model import Moneda, db
 
         with app.app_context():
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one()
             usd_id = usd.id
             nio_id = nio.id
 
@@ -197,14 +183,10 @@ class TestExchangeRateFilters:
         from coati_payroll.model import Moneda, db
 
         with app.app_context():
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
             usd_id = usd.id
 
-        response = authenticated_client.get(
-            f"/exchange_rate/?fecha_desde=2025-01-10&moneda_origen_id={usd_id}"
-        )
+        response = authenticated_client.get(f"/exchange_rate/?fecha_desde=2025-01-10&moneda_origen_id={usd_id}")
         assert response.status_code == 200
         # Check that form fields contain the filter values
         assert b'value="2025-01-10"' in response.data
@@ -216,12 +198,8 @@ class TestExchangeRateFilters:
 
         with app.app_context():
             # Create many exchange rates to trigger pagination
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one()
 
             usd_id = usd.id
             nio_id = nio.id
@@ -237,9 +215,7 @@ class TestExchangeRateFilters:
 
             for day in range(1, 20):
                 tc = TipoCambio()
-                tc.fecha = date(
-                    2025, 3, day
-                )  # Use March to avoid conflict with existing data
+                tc.fecha = date(2025, 3, day)  # Use March to avoid conflict with existing data
                 tc.moneda_origen_id = usd_id
                 tc.moneda_destino_id = nio_id
                 tc.tasa = 36.0 + day * 0.1
@@ -248,9 +224,7 @@ class TestExchangeRateFilters:
             db.session.commit()
 
         # Get first page with filter
-        response = authenticated_client.get(
-            f"/exchange_rate/?fecha_desde=2025-03-01&moneda_origen_id={usd_id}"
-        )
+        response = authenticated_client.get(f"/exchange_rate/?fecha_desde=2025-03-01&moneda_origen_id={usd_id}")
         assert response.status_code == 200
         # Check that pagination links include filter parameters
         if b"page=2" in response.data:

@@ -20,7 +20,7 @@ with automatic backend selection:
 
 Usage:
     from coati_payroll.queue import get_queue_driver
-    
+
     queue = get_queue_driver()
     queue.enqueue('calculate_employee_payroll', employee_id=123, payroll_id=456)
 """

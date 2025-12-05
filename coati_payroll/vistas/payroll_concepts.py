@@ -155,9 +155,7 @@ def edit_concept(concept_type: str, concept_id: str):
         concept.modificado_por = current_user.usuario
 
         db.session.commit()
-        flash(
-            _("%(type)s actualizada exitosamente.", type=config["singular"]), "success"
-        )
+        flash(_("%(type)s actualizada exitosamente.", type=config["singular"]), "success")
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     return render_template(

@@ -54,12 +54,8 @@ class LoginForm(FlaskForm):
 
     # Permitimos que el usuario use su nombre de usuario o su correo electrónico
     # para iniciar sesión, por eso no forzamos el validador Email.
-    email = StringField(
-        _("Usuario o correo electrónico"), validators=[DataRequired(), Length(max=150)]
-    )
-    password = PasswordField(
-        _("Contraseña"), validators=[DataRequired(), Length(min=6)]
-    )
+    email = StringField(_("Usuario o correo electrónico"), validators=[DataRequired(), Length(max=150)])
+    password = PasswordField(_("Contraseña"), validators=[DataRequired(), Length(min=6)])
     submit = SubmitField(_("Entrar"))
 
 
@@ -101,15 +97,9 @@ class ProfileForm(FlaskForm):
         _("Correo electrónico"),
         validators=[Optional(), Email(), Length(max=150)],
     )
-    current_password = PasswordField(
-        _("Contraseña actual"), validators=[Optional(), Length(min=6)]
-    )
-    new_password = PasswordField(
-        _("Nueva contraseña"), validators=[Optional(), Length(min=6)]
-    )
-    confirm_password = PasswordField(
-        _("Confirmar nueva contraseña"), validators=[Optional(), Length(min=6)]
-    )
+    current_password = PasswordField(_("Contraseña actual"), validators=[Optional(), Length(min=6)])
+    new_password = PasswordField(_("Nueva contraseña"), validators=[Optional(), Length(min=6)])
+    confirm_password = PasswordField(_("Confirmar nueva contraseña"), validators=[Optional(), Length(min=6)])
     submit = SubmitField(_("Actualizar Perfil"))
 
 
@@ -127,12 +117,8 @@ class ExchangeRateForm(FlaskForm):
     """Form for creating and editing exchange rates."""
 
     fecha = DateField(_("Fecha"), validators=[DataRequired()])
-    moneda_origen_id = SelectField(
-        _("Moneda origen"), validators=[DataRequired()], coerce=str
-    )
-    moneda_destino_id = SelectField(
-        _("Moneda destino"), validators=[DataRequired()], coerce=str
-    )
+    moneda_origen_id = SelectField(_("Moneda origen"), validators=[DataRequired()], coerce=str)
+    moneda_destino_id = SelectField(_("Moneda destino"), validators=[DataRequired()], coerce=str)
     tasa = DecimalField(_("Tasa de cambio"), validators=[DataRequired()], places=10)
     submit = SubmitField(_("Guardar"))
 
@@ -150,22 +136,12 @@ class EmployeeForm(FlaskForm):
                 message=_("El código solo puede contener letras, números y guiones."),
             ),
         ],
-        description=_(
-            "Código único del empleado. Si no se proporciona, se genera automáticamente."
-        ),
+        description=_("Código único del empleado. Si no se proporciona, se genera automáticamente."),
     )
-    primer_nombre = StringField(
-        _("Primer nombre"), validators=[DataRequired(), Length(max=100)]
-    )
-    segundo_nombre = StringField(
-        _("Segundo nombre"), validators=[Optional(), Length(max=100)]
-    )
-    primer_apellido = StringField(
-        _("Primer apellido"), validators=[DataRequired(), Length(max=100)]
-    )
-    segundo_apellido = StringField(
-        _("Segundo apellido"), validators=[Optional(), Length(max=100)]
-    )
+    primer_nombre = StringField(_("Primer nombre"), validators=[DataRequired(), Length(max=100)])
+    segundo_nombre = StringField(_("Segundo nombre"), validators=[Optional(), Length(max=100)])
+    primer_apellido = StringField(_("Primer apellido"), validators=[DataRequired(), Length(max=100)])
+    segundo_apellido = StringField(_("Segundo apellido"), validators=[Optional(), Length(max=100)])
     genero = SelectField(
         _("Género"),
         choices=[
@@ -176,9 +152,7 @@ class EmployeeForm(FlaskForm):
         ],
         validators=[Optional()],
     )
-    nacionalidad = StringField(
-        _("Nacionalidad"), validators=[Optional(), Length(max=100)]
-    )
+    nacionalidad = StringField(_("Nacionalidad"), validators=[Optional(), Length(max=100)])
     tipo_identificacion = SelectField(
         _("Tipo de identificación"),
         choices=[
@@ -190,12 +164,8 @@ class EmployeeForm(FlaskForm):
         ],
         validators=[Optional()],
     )
-    identificacion_personal = StringField(
-        _("Identificación personal"), validators=[DataRequired(), Length(max=50)]
-    )
-    id_seguridad_social = StringField(
-        _("ID Seguridad Social"), validators=[Optional(), Length(max=50)]
-    )
+    identificacion_personal = StringField(_("Identificación personal"), validators=[DataRequired(), Length(max=50)])
+    id_seguridad_social = StringField(_("ID Seguridad Social"), validators=[Optional(), Length(max=50)])
     id_fiscal = StringField(_("ID Fiscal"), validators=[Optional(), Length(max=50)])
     tipo_sangre = SelectField(
         _("Tipo de sangre"),
@@ -218,17 +188,11 @@ class EmployeeForm(FlaskForm):
     activo = BooleanField(_("Activo"), default=True)
     cargo = StringField(_("Cargo"), validators=[Optional(), Length(max=150)])
     area = StringField(_("Área"), validators=[Optional(), Length(max=150)])
-    centro_costos = StringField(
-        _("Centro de costos"), validators=[Optional(), Length(max=150)]
-    )
-    salario_base = DecimalField(
-        _("Salario base"), validators=[DataRequired()], places=2
-    )
+    centro_costos = StringField(_("Centro de costos"), validators=[Optional(), Length(max=150)])
+    salario_base = DecimalField(_("Salario base"), validators=[DataRequired()], places=2)
     moneda_id = SelectField(_("Moneda"), validators=[Optional()], coerce=str)
     empresa_id = SelectField(_("Empresa"), validators=[Optional()], coerce=str)
-    correo = StringField(
-        _("Correo electrónico"), validators=[Optional(), Email(), Length(max=150)]
-    )
+    correo = StringField(_("Correo electrónico"), validators=[Optional(), Email(), Length(max=150)])
     telefono = StringField(_("Teléfono"), validators=[Optional(), Length(max=50)])
     direccion = StringField(_("Dirección"), validators=[Optional(), Length(max=255)])
     estado_civil = SelectField(
@@ -244,9 +208,7 @@ class EmployeeForm(FlaskForm):
         validators=[Optional()],
     )
     banco = StringField(_("Banco"), validators=[Optional(), Length(max=100)])
-    numero_cuenta_bancaria = StringField(
-        _("Número de cuenta bancaria"), validators=[Optional(), Length(max=100)]
-    )
+    numero_cuenta_bancaria = StringField(_("Número de cuenta bancaria"), validators=[Optional(), Length(max=100)])
     tipo_contrato = SelectField(
         _("Tipo de contrato"),
         choices=[
@@ -324,9 +286,7 @@ class CustomFieldForm(FlaskForm):
     nombre_campo = StringField(
         _("Nombre del campo"),
         validators=[DataRequired(), Length(max=100)],
-        description=_(
-            "Nombre interno único del campo (sin espacios ni caracteres especiales)"
-        ),
+        description=_("Nombre interno único del campo (sin espacios ni caracteres especiales)"),
     )
     etiqueta = StringField(
         _("Etiqueta"),
@@ -343,9 +303,7 @@ class CustomFieldForm(FlaskForm):
         ],
         validators=[DataRequired()],
     )
-    descripcion = StringField(
-        _("Descripción"), validators=[Optional(), Length(max=255)]
-    )
+    descripcion = StringField(_("Descripción"), validators=[Optional(), Length(max=255)])
     orden = DecimalField(
         _("Orden de visualización"),
         validators=[Optional()],
@@ -504,9 +462,7 @@ class PercepcionForm(FlaskForm):
     valido_hasta = DateField(
         _("Válido Hasta"),
         validators=[Optional()],
-        description=_(
-            "Fecha hasta la cual esta percepción es válida (vacío = indefinido)"
-        ),
+        description=_("Fecha hasta la cual esta percepción es válida (vacío = indefinido)"),
     )
     # Contabilidad
     contabilizable = BooleanField(
@@ -629,9 +585,7 @@ class DeduccionForm(FlaskForm):
     valido_hasta = DateField(
         _("Válido Hasta"),
         validators=[Optional()],
-        description=_(
-            "Fecha hasta la cual esta deducción es válida (vacío = indefinido)"
-        ),
+        description=_("Fecha hasta la cual esta deducción es válida (vacío = indefinido)"),
     )
     # Contabilidad
     contabilizable = BooleanField(
@@ -890,9 +844,7 @@ class PrestacionForm(FlaskForm):
     tope_aplicacion = DecimalField(
         _("Tope de Aplicación"),
         validators=[Optional()],
-        description=_(
-            "Monto máximo sobre el cual se aplica el cálculo (ej: techo salarial INSS)"
-        ),
+        description=_("Monto máximo sobre el cual se aplica el cálculo (ej: techo salarial INSS)"),
     )
     recurrente = BooleanField(
         _("Recurrente"),
@@ -908,9 +860,7 @@ class PrestacionForm(FlaskForm):
     valido_hasta = DateField(
         _("Válido Hasta"),
         validators=[Optional()],
-        description=_(
-            "Fecha hasta la cual esta prestación es válida (vacío = indefinido)"
-        ),
+        description=_("Fecha hasta la cual esta prestación es válida (vacío = indefinido)"),
     )
     # Contabilidad
     contabilizable = BooleanField(
@@ -1019,9 +969,7 @@ class PrestamoForm(FlaskForm):
             ("prestamo", _("Préstamo")),
         ],
         validators=[DataRequired()],
-        description=_(
-            "Adelanto: se descuenta rápidamente; Préstamo: cuotas a largo plazo"
-        ),
+        description=_("Adelanto: se descuenta rápidamente; Préstamo: cuotas a largo plazo"),
     )
     fecha_solicitud = DateField(
         _("Fecha de Solicitud"),
@@ -1167,9 +1115,7 @@ class CondonacionForm(FlaskForm):
     justificacion = StringField(
         _("Justificación Completa"),
         validators=[DataRequired(), Length(min=20, max=1000)],
-        description=_(
-            "Descripción detallada de la razón y autorización de la condonación"
-        ),
+        description=_("Descripción detallada de la razón y autorización de la condonación"),
     )
     # Optional accounting fields
     cuenta_debe = StringField(

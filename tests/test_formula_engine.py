@@ -320,9 +320,7 @@ class TestCalculateWithRule:
 
     def test_calculate_with_employee_data(self, simple_formula_schema):
         """Test calculation with employee data."""
-        result = calculate_with_rule(
-            simple_formula_schema, employee_data={"base": 500, "rate": 0.2}
-        )
+        result = calculate_with_rule(simple_formula_schema, employee_data={"base": 500, "rate": 0.2})
         assert result["output"] == 100.0
 
     def test_calculate_with_accumulated_data(self):

@@ -153,9 +153,7 @@ class TestEmpresaPlanillaRelationship:
             db.session.add(empresa)
 
             # Create tipo_planilla - check if already exists
-            tipo = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
-            ).scalar_one_or_none()
+            tipo = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one_or_none()
             if not tipo:
                 tipo = TipoPlanilla(
                     codigo="MENSUAL",
@@ -166,9 +164,7 @@ class TestEmpresaPlanillaRelationship:
                 db.session.add(tipo)
 
             # Create moneda - check if already exists
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
             if not moneda:
                 moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
                 db.session.add(moneda)
@@ -192,9 +188,7 @@ class TestEmpresaPlanillaRelationship:
         """Test that a planilla can exist without a company."""
         with app.app_context():
             # Create tipo_planilla - check if already exists
-            tipo = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
-            ).scalar_one_or_none()
+            tipo = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one_or_none()
             if not tipo:
                 tipo = TipoPlanilla(
                     codigo="MENSUAL",
@@ -205,9 +199,7 @@ class TestEmpresaPlanillaRelationship:
                 db.session.add(tipo)
 
             # Create moneda - check if already exists
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
             if not moneda:
                 moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
                 db.session.add(moneda)
@@ -246,9 +238,7 @@ class TestCrossCompanyValidation:
             db.session.add_all([empresa1, empresa2])
 
             # Create tipo_planilla and moneda - check if already exists
-            tipo = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
-            ).scalar_one_or_none()
+            tipo = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one_or_none()
             if not tipo:
                 tipo = TipoPlanilla(
                     codigo="MENSUAL",
@@ -257,10 +247,8 @@ class TestCrossCompanyValidation:
                     periodicidad="mensual",
                 )
                 db.session.add(tipo)
-            
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
+
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
             if not moneda:
                 moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
                 db.session.add(moneda)
@@ -300,9 +288,7 @@ class TestCrossCompanyValidation:
 
             # Verify no association was created
             association = db.session.execute(
-                db.select(PlanillaEmpleado).filter_by(
-                    planilla_id=planilla.id, empleado_id=empleado.id
-                )
+                db.select(PlanillaEmpleado).filter_by(planilla_id=planilla.id, empleado_id=empleado.id)
             ).scalar_one_or_none()
             assert association is None
 
@@ -318,9 +304,7 @@ class TestCrossCompanyValidation:
             db.session.add(empresa)
 
             # Create tipo_planilla and moneda - check if already exists
-            tipo = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
-            ).scalar_one_or_none()
+            tipo = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one_or_none()
             if not tipo:
                 tipo = TipoPlanilla(
                     codigo="MENSUAL",
@@ -329,10 +313,8 @@ class TestCrossCompanyValidation:
                     periodicidad="mensual",
                 )
                 db.session.add(tipo)
-            
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
+
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
             if not moneda:
                 moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
                 db.session.add(moneda)
@@ -372,9 +354,7 @@ class TestCrossCompanyValidation:
 
             # Verify association was created
             association = db.session.execute(
-                db.select(PlanillaEmpleado).filter_by(
-                    planilla_id=planilla.id, empleado_id=empleado.id
-                )
+                db.select(PlanillaEmpleado).filter_by(planilla_id=planilla.id, empleado_id=empleado.id)
             ).scalar_one_or_none()
             assert association is not None
 
@@ -390,9 +370,7 @@ class TestCrossCompanyValidation:
             db.session.add(empresa)
 
             # Create tipo_planilla and moneda - check if already exists
-            tipo = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="MENSUAL")
-            ).scalar_one_or_none()
+            tipo = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one_or_none()
             if not tipo:
                 tipo = TipoPlanilla(
                     codigo="MENSUAL",
@@ -401,10 +379,8 @@ class TestCrossCompanyValidation:
                     periodicidad="mensual",
                 )
                 db.session.add(tipo)
-            
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
+
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
             if not moneda:
                 moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
                 db.session.add(moneda)
@@ -443,8 +419,6 @@ class TestCrossCompanyValidation:
 
             # Verify association was created
             association = db.session.execute(
-                db.select(PlanillaEmpleado).filter_by(
-                    planilla_id=planilla.id, empleado_id=empleado.id
-                )
+                db.select(PlanillaEmpleado).filter_by(planilla_id=planilla.id, empleado_id=empleado.id)
             ).scalar_one_or_none()
             assert association is not None

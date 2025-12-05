@@ -38,9 +38,7 @@ def index():
         per_page=PER_PAGE,
         error_out=False,
     )
-    return render_template(
-        "modules/user/index.html", users=pagination.items, pagination=pagination
-    )
+    return render_template("modules/user/index.html", users=pagination.items, pagination=pagination)
 
 
 @user_bp.route("/new", methods=["GET", "POST"])
@@ -56,9 +54,7 @@ def new():
             user.acceso = proteger_passwd(form.password.data)
         else:
             flash(_("La contraseña es requerida para nuevos usuarios."), "error")
-            return render_template(
-                "modules/user/form.html", form=form, title=_("Nuevo Usuario")
-            )
+            return render_template("modules/user/form.html", form=form, title=_("Nuevo Usuario"))
 
         user.nombre = form.nombre.data
         user.apellido = form.apellido.data
@@ -72,9 +68,7 @@ def new():
         flash(_("Usuario creado exitosamente."), "success")
         return redirect(url_for("user.index"))
 
-    return render_template(
-        "modules/user/form.html", form=form, title=_("Nuevo Usuario")
-    )
+    return render_template("modules/user/form.html", form=form, title=_("Nuevo Usuario"))
 
 
 @user_bp.route("/edit/<string:id>", methods=["GET", "POST"])
@@ -105,9 +99,7 @@ def edit(id: str):
 
     # Don't show password in form
     form.password.data = ""
-    return render_template(
-        "modules/user/form.html", form=form, title=_("Editar Usuario"), user=user
-    )
+    return render_template("modules/user/form.html", form=form, title=_("Editar Usuario"), user=user)
 
 
 @user_bp.route("/delete/<string:id>", methods=["POST"])
@@ -142,11 +134,7 @@ def profile():
         current_user.correo_electronico = form.correo_electronico.data
 
         # Handle password change if any password field has data
-        password_change_attempted = (
-            form.current_password.data
-            or form.new_password.data
-            or form.confirm_password.data
-        )
+        password_change_attempted = form.current_password.data or form.new_password.data or form.confirm_password.data
 
         if password_change_attempted:
             # Validate password change

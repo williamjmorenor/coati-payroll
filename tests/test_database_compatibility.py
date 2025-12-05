@@ -50,10 +50,8 @@ class TestDatabaseCompatibility:
         """Test ULID-based String(26) primary keys work across databases."""
         with app.app_context():
             # Use or create a currency with ULID ID
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one_or_none()
-            
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one_or_none()
+
             if moneda is None:
                 moneda = Moneda(
                     codigo="USD",
@@ -68,9 +66,7 @@ class TestDatabaseCompatibility:
             assert isinstance(moneda.id, str)
 
             # Retrieve and verify
-            retrieved = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one()
+            retrieved = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
             assert retrieved.id == moneda.id
             assert retrieved.codigo == "USD"
 
@@ -78,10 +74,8 @@ class TestDatabaseCompatibility:
         """Test Numeric/Decimal columns work consistently across databases."""
         with app.app_context():
             # Use or create currency
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
-            
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
+
             if moneda is None:
                 moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
                 db.session.add(moneda)
@@ -100,9 +94,7 @@ class TestDatabaseCompatibility:
             db.session.commit()
 
             # Retrieve and verify decimal precision
-            retrieved = db.session.execute(
-                db.select(Empleado).filter_by(codigo_empleado="TEST-001")
-            ).scalar_one()
+            retrieved = db.session.execute(db.select(Empleado).filter_by(codigo_empleado="TEST-001")).scalar_one()
             assert retrieved.salario_base == Decimal("15750.50")
             assert isinstance(retrieved.salario_base, Decimal)
 
@@ -133,9 +125,7 @@ class TestDatabaseCompatibility:
             db.session.commit()
 
             # Retrieve and verify JSON data
-            retrieved = db.session.execute(
-                db.select(Empleado).filter_by(codigo_empleado="TEST-002")
-            ).scalar_one()
+            retrieved = db.session.execute(db.select(Empleado).filter_by(codigo_empleado="TEST-002")).scalar_one()
             assert retrieved.datos_adicionales["campo1"] == "valor1"
             assert retrieved.datos_adicionales["campo2"] == 123
             assert retrieved.datos_adicionales["campo3"] is True
@@ -178,9 +168,7 @@ class TestDatabaseCompatibility:
             db.session.commit()
 
             # Verify relationship works
-            retrieved = db.session.execute(
-                db.select(Empleado).filter_by(codigo_empleado="TEST-003")
-            ).scalar_one()
+            retrieved = db.session.execute(db.select(Empleado).filter_by(codigo_empleado="TEST-003")).scalar_one()
             assert retrieved.moneda.codigo == "JPY"
             assert retrieved.moneda.nombre == "Yen"
 
@@ -188,10 +176,8 @@ class TestDatabaseCompatibility:
         """Test Date and DateTime columns work across databases."""
         with app.app_context():
             # Use or create currency
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="CAD")
-            ).scalar_one_or_none()
-            
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="CAD")).scalar_one_or_none()
+
             if moneda is None:
                 moneda = Moneda(codigo="CAD", nombre="Canadian Dollar", simbolo="C$")
                 db.session.add(moneda)
@@ -213,9 +199,7 @@ class TestDatabaseCompatibility:
             db.session.commit()
 
             # Retrieve and verify dates
-            retrieved = db.session.execute(
-                db.select(Empleado).filter_by(codigo_empleado="TEST-004")
-            ).scalar_one()
+            retrieved = db.session.execute(db.select(Empleado).filter_by(codigo_empleado="TEST-004")).scalar_one()
             assert retrieved.fecha_alta == fecha_alta
             assert retrieved.fecha_nacimiento == date(1990, 5, 20)
             assert isinstance(retrieved.creado, date)
@@ -234,12 +218,8 @@ class TestDatabaseCompatibility:
             db.session.commit()
 
             # Retrieve and verify booleans
-            active = db.session.execute(
-                db.select(Moneda).filter_by(codigo="AUD")
-            ).scalar_one()
-            inactive = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NZD")
-            ).scalar_one()
+            active = db.session.execute(db.select(Moneda).filter_by(codigo="AUD")).scalar_one()
+            inactive = db.session.execute(db.select(Moneda).filter_by(codigo="NZD")).scalar_one()
 
             assert active.activo is True
             assert inactive.activo is False
@@ -401,11 +381,13 @@ class TestDatabaseCompatibility:
             db.session.commit()
 
             # Query ordered by codigo
-            ordered = db.session.execute(
-                db.select(Moneda).filter(
-                    Moneda.codigo.in_(["AAA", "ZZZ", "MMM"])
-                ).order_by(Moneda.codigo)
-            ).scalars().all()
+            ordered = (
+                db.session.execute(
+                    db.select(Moneda).filter(Moneda.codigo.in_(["AAA", "ZZZ", "MMM"])).order_by(Moneda.codigo)
+                )
+                .scalars()
+                .all()
+            )
 
             assert len(ordered) == 3
             assert ordered[0].codigo == "AAA"
@@ -438,13 +420,17 @@ class TestDatabaseCompatibility:
             db.session.commit()
 
             # Query for January rates only
-            jan_rates = db.session.execute(
-                db.select(TipoCambio).filter(
-                    TipoCambio.fecha >= date(2025, 1, 1),
-                    TipoCambio.fecha < date(2025, 2, 1),
-                    TipoCambio.moneda_origen_id == nio.id,
+            jan_rates = (
+                db.session.execute(
+                    db.select(TipoCambio).filter(
+                        TipoCambio.fecha >= date(2025, 1, 1),
+                        TipoCambio.fecha < date(2025, 2, 1),
+                        TipoCambio.moneda_origen_id == nio.id,
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
 
             assert len(jan_rates) == 2
             assert all(rate.fecha.month == 1 for rate in jan_rates)

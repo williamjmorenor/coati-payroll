@@ -29,11 +29,11 @@ def test_version_format():
 
     # Check that version has at least one dot (e.g., "0.0.1")
     assert "." in __version__
-    
+
     # Check that version parts are numeric
     parts = __version__.split(".")
     assert len(parts) >= 2  # At least major.minor
-    
+
     # First two parts should be numeric
     assert parts[0].isdigit()
     assert parts[1].isdigit()

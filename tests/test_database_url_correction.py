@@ -31,8 +31,9 @@ class TestDatabaseURLCorrection:
             # Reload config module to pick up new env var
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url.startswith("postgresql+pg8000://")
             assert "user:pass@localhost/dbname" in corrected_url
@@ -42,8 +43,9 @@ class TestDatabaseURLCorrection:
         with patch.dict(os.environ, {"DATABASE_URL": "postgresql://user:pass@localhost/dbname"}):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url.startswith("postgresql+pg8000://")
             assert "user:pass@localhost/dbname" in corrected_url
@@ -53,8 +55,9 @@ class TestDatabaseURLCorrection:
         with patch.dict(os.environ, {"DATABASE_URL": "mysql://user:pass@localhost/dbname"}):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url.startswith("mysql+pymysql://")
             assert "user:pass@localhost/dbname" in corrected_url
@@ -64,8 +67,9 @@ class TestDatabaseURLCorrection:
         with patch.dict(os.environ, {"DATABASE_URL": "mariadb://user:pass@localhost/dbname"}):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url.startswith("mariadb+mariadbconnector://")
             assert "user:pass@localhost/dbname" in corrected_url
@@ -75,31 +79,37 @@ class TestDatabaseURLCorrection:
         with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///path/to/db.db"}):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url == "sqlite:///path/to/db.db"
 
     def test_postgres_url_removes_sslmode_unless_heroku(self):
         """Test sslmode is removed from postgres URL unless on Heroku."""
-        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://user:pass@localhost/dbname?sslmode=require"}):
+        with patch.dict(
+            os.environ,
+            {"DATABASE_URL": "postgresql://user:pass@localhost/dbname?sslmode=require"},
+        ):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert "sslmode" not in corrected_url
 
     def test_postgres_url_keeps_sslmode_on_heroku(self):
         """Test sslmode is kept in postgres URL when DYNO env var is present."""
-        with patch.dict(os.environ, {
-            "DATABASE_URL": "postgres://user:pass@localhost/dbname",
-            "DYNO": "web.1"
-        }):
+        with patch.dict(
+            os.environ,
+            {"DATABASE_URL": "postgres://user:pass@localhost/dbname", "DYNO": "web.1"},
+        ):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url.startswith("postgresql://")  # Keeps postgresql, not pg8000
             assert "sslmode=require" in corrected_url
@@ -107,11 +117,15 @@ class TestDatabaseURLCorrection:
     def test_url_with_special_characters_in_password(self):
         """Test URL correction preserves special characters in password."""
         # URL-encoded password with special chars
-        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://user:p%40ss%23word@localhost/dbname"}):
+        with patch.dict(
+            os.environ,
+            {"DATABASE_URL": "postgresql://user:p%40ss%23word@localhost/dbname"},
+        ):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url.startswith("postgresql+pg8000://")
             assert "p%40ss%23word" in corrected_url
@@ -121,19 +135,24 @@ class TestDatabaseURLCorrection:
         with patch.dict(os.environ, {"DATABASE_URL": "postgresql://user:pass@localhost:5433/dbname"}):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url.startswith("postgresql+pg8000://")
             assert ":5433" in corrected_url
 
     def test_url_with_query_parameters(self):
         """Test URL correction preserves query parameters."""
-        with patch.dict(os.environ, {"DATABASE_URL": "mysql://user:pass@localhost/dbname?charset=utf8mb4"}):
+        with patch.dict(
+            os.environ,
+            {"DATABASE_URL": "mysql://user:pass@localhost/dbname?charset=utf8mb4"},
+        ):
             import importlib
             from coati_payroll import config
+
             importlib.reload(config)
-            
+
             corrected_url = config.CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
             assert corrected_url.startswith("mysql+pymysql://")
             assert "charset=utf8mb4" in corrected_url
@@ -146,6 +165,7 @@ class TestDatabaseDrivers:
         """Test pg8000 PostgreSQL driver is available."""
         try:
             import pg8000
+
             assert pg8000 is not None
         except ImportError:
             pytest.fail("pg8000 driver not available")
@@ -154,11 +174,13 @@ class TestDatabaseDrivers:
         """Test PyMySQL driver is available."""
         try:
             import pymysql
+
             assert pymysql is not None
         except ImportError:
             # PyMySQL might not be installed, but mysql-connector-python should be
             try:
                 import mysql.connector
+
                 assert mysql.connector is not None
             except ImportError:
                 pytest.fail("No MySQL driver available")
@@ -166,4 +188,5 @@ class TestDatabaseDrivers:
     def test_sqlite3_available(self):
         """Test sqlite3 is available (built-in)."""
         import sqlite3
+
         assert sqlite3 is not None

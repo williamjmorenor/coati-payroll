@@ -41,7 +41,7 @@ class TestBackgroundPayrollProcessing:
             # Use test name to make unique codes
             test_name = request.node.name
             unique_suffix = abs(hash(test_name)) % 10000
-            
+
             # Create currency
             moneda = Moneda(
                 codigo=f"NIO{unique_suffix}",
@@ -106,9 +106,7 @@ class TestBackgroundPayrollProcessing:
 
             yield planilla, empleados
 
-    def test_process_large_payroll_creates_nomina_records(
-        self, app, planilla_con_empleados
-    ):
+    def test_process_large_payroll_creates_nomina_records(self, app, planilla_con_empleados):
         """Test that background task creates NominaEmpleado records."""
         with app.app_context():
             planilla, empleados = planilla_con_empleados

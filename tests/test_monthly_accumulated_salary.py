@@ -45,9 +45,7 @@ class TestMonthlyAccumulatedSalary:
         """Setup basic payroll components with unique employee for each test."""
         with app.app_context():
             # Create currency
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
             if not nio:
                 nio = Moneda(
                     codigo="NIO",
@@ -115,11 +113,9 @@ class TestMonthlyAccumulatedSalary:
                 "planilla_id": planilla.id,
             }
 
-    def test_first_payroll_of_month_initializes_monthly_accumulation(
-        self, app, setup_payroll_components
-    ):
+    def test_first_payroll_of_month_initializes_monthly_accumulation(self, app, setup_payroll_components):
         """Test that the first payroll of a month initializes monthly accumulation.
-        
+
         Scenario:
         - Run first biweekly payroll of January (Jan 1-15)
         - Employee salary: 10,000 NIO/month, prorated to 5,000 for 15 days
@@ -154,14 +150,13 @@ class TestMonthlyAccumulatedSalary:
             assert acumulado is not None, "AcumuladoAnual record should exist"
             assert acumulado.mes_actual == 1, "Should track January (month 1)"
             # Expected: 10000 / 30 = 333.33 per day, 333.33 * 15 = 4999.95
-            assert acumulado.salario_acumulado_mes == Decimal("4999.95"), \
-                "Monthly accumulated salary should be 4999.95 for 15-day period (with rounding)"
+            assert acumulado.salario_acumulado_mes == Decimal(
+                "4999.95"
+            ), "Monthly accumulated salary should be 4999.95 for 15-day period (with rounding)"
 
-    def test_second_payroll_of_month_adds_to_monthly_accumulation(
-        self, app, setup_payroll_components
-    ):
+    def test_second_payroll_of_month_adds_to_monthly_accumulation(self, app, setup_payroll_components):
         """Test that the second payroll of a month adds to monthly accumulation.
-        
+
         Scenario:
         - Run first biweekly payroll of January (Jan 1-15) -> 5,000
         - Run second biweekly payroll of January (Jan 16-31) -> 5,333.33
@@ -190,10 +185,9 @@ class TestMonthlyAccumulatedSalary:
                     tipo_planilla_id=planilla.tipo_planilla_id,
                 )
             ).scalar_one()
-            
+
             first_payment = acumulado.salario_acumulado_mes
-            assert first_payment == Decimal("4999.95"), \
-                "First payment should be 4999.95 for 15 days (with rounding)"
+            assert first_payment == Decimal("4999.95"), "First payment should be 4999.95 for 15 days (with rounding)"
 
             # Run second payroll of January (second fortnight: 16 days)
             engine2 = NominaEngine(
@@ -212,14 +206,13 @@ class TestMonthlyAccumulatedSalary:
             # Expected second payment: 10000 / 30 = 333.33, 333.33 * 16 = 5333.28
             # Total monthly: 4999.95 + 5333.28 = 10333.23
             assert acumulado.mes_actual == 1, "Should still be January"
-            assert acumulado.salario_acumulado_mes == Decimal("10333.23"), \
-                "Monthly accumulated should be sum of both fortnights (10333.23)"
+            assert acumulado.salario_acumulado_mes == Decimal(
+                "10333.23"
+            ), "Monthly accumulated should be sum of both fortnights (10333.23)"
 
-    def test_new_month_resets_monthly_accumulation(
-        self, app, setup_payroll_components
-    ):
+    def test_new_month_resets_monthly_accumulation(self, app, setup_payroll_components):
         """Test that starting a new month resets the monthly accumulation.
-        
+
         Scenario:
         - Run second payroll of January (Jan 16-31) -> sets accumulated to 5,333.33
         - Run first payroll of February (Feb 1-15) -> should reset and start at 5,000
@@ -251,8 +244,9 @@ class TestMonthlyAccumulatedSalary:
 
             january_accumulation = acumulado.salario_acumulado_mes
             assert acumulado.mes_actual == 1, "Should be tracking January"
-            assert january_accumulation == Decimal("5333.28"), \
-                "January accumulation should be 5333.28 for 16 days (with rounding)"
+            assert january_accumulation == Decimal(
+                "5333.28"
+            ), "January accumulation should be 5333.28 for 16 days (with rounding)"
 
             # Run first payroll of February
             engine2 = NominaEngine(
@@ -270,14 +264,13 @@ class TestMonthlyAccumulatedSalary:
 
             assert acumulado.mes_actual == 2, "Should now be tracking February"
             # February should start fresh: 10000 / 30 * 15 = 4999.95
-            assert acumulado.salario_acumulado_mes == Decimal("4999.95"), \
-                "February should start with fresh accumulation of 4999.95"
+            assert acumulado.salario_acumulado_mes == Decimal(
+                "4999.95"
+            ), "February should start with fresh accumulation of 4999.95"
 
-    def test_monthly_accumulated_salary_available_in_calculations(
-        self, app, setup_payroll_components
-    ):
+    def test_monthly_accumulated_salary_available_in_calculations(self, app, setup_payroll_components):
         """Test that salario_acumulado_mes is available for use in formula calculations.
-        
+
         This verifies requirement #4: The monthly accumulated salary must be
         available as a variable for calculations.
         """
@@ -297,24 +290,25 @@ class TestMonthlyAccumulatedSalary:
 
             # Create an employee calculation object to test variable construction
             from coati_payroll.nomina_engine import EmpleadoCalculo
+
             emp_calculo = EmpleadoCalculo(empleado, planilla)
-            
+
             # Build calculation variables
             variables = engine._construir_variables(emp_calculo)
 
             # Verify that salario_acumulado_mes is available
-            assert "salario_acumulado_mes" in variables, \
-                "salario_acumulado_mes should be available in calculation variables"
-            
-            # Initially should be 0 (before first payroll)
-            assert variables["salario_acumulado_mes"] == Decimal("0.00"), \
-                "Initial value should be 0 before any payroll processing"
+            assert (
+                "salario_acumulado_mes" in variables
+            ), "salario_acumulado_mes should be available in calculation variables"
 
-    def test_annual_accumulation_still_works(
-        self, app, setup_payroll_components
-    ):
+            # Initially should be 0 (before first payroll)
+            assert variables["salario_acumulado_mes"] == Decimal(
+                "0.00"
+            ), "Initial value should be 0 before any payroll processing"
+
+    def test_annual_accumulation_still_works(self, app, setup_payroll_components):
         """Test that annual accumulated salary still works alongside monthly accumulation.
-        
+
         Scenario:
         - Run payrolls for January and February
         - Verify both monthly and annual accumulations are tracked correctly
@@ -366,14 +360,15 @@ class TestMonthlyAccumulatedSalary:
             ).scalar_one()
 
             # Monthly should be just February's first fortnight
-            assert acumulado.salario_acumulado_mes == Decimal("4999.95"), \
-                "Monthly accumulation should be only February (4999.95)"
+            assert acumulado.salario_acumulado_mes == Decimal(
+                "4999.95"
+            ), "Monthly accumulation should be only February (4999.95)"
 
             # Annual should be sum of all three payrolls
             # Jan 1-15: 4999.95, Jan 16-31: 5333.28, Feb 1-15: 4999.95 = 15333.18
-            assert acumulado.salario_bruto_acumulado == Decimal("15333.18"), \
-                "Annual accumulation should be sum of all payrolls (15333.18)"
+            assert acumulado.salario_bruto_acumulado == Decimal(
+                "15333.18"
+            ), "Annual accumulation should be sum of all payrolls (15333.18)"
 
             # Should have processed 3 periods
-            assert acumulado.periodos_procesados == 3, \
-                "Should have processed 3 payroll periods"
+            assert acumulado.periodos_procesados == 3, "Should have processed 3 payroll periods"

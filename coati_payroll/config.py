@@ -100,8 +100,7 @@ GENERIC_VARS = ["ENV", "APP_ENV"]
 # < --------------------------------------------------------------------------------------------- >
 # Gestión de variables de entorno.
 DESARROLLO = any(
-    str(environ.get(var, "")).strip().lower() in VALORES_TRUE
-    for var in [*DEBUG_VARS, *FRAMEWORK_VARS, *GENERIC_VARS]
+    str(environ.get(var, "")).strip().lower() in VALORES_TRUE for var in [*DEBUG_VARS, *FRAMEWORK_VARS, *GENERIC_VARS]
 )
 
 # < --------------------------------------------------------------------------------------------- >
@@ -170,17 +169,13 @@ CONFIGURACION["SECRET_KEY"] = environ.get("SECRET_KEY") or "dev"  # nosec
 if not DESARROLLO and CONFIGURACION["SECRET_KEY"] == "dev":
     log.warning("Using default SECRET_KEY in production! This will can cause issues ")
 
-CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = (
-    environ.get("DATABASE_URL") or SQLITE
-)  # nosec
+CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = environ.get("DATABASE_URL") or SQLITE  # nosec
 # Opciones comunes de configuración.
 CONFIGURACION["PRESERVE_CONTEXT_ON_EXCEPTION"] = False
 
 if DESARROLLO:
     log.warning("Using default configuration.")
-    log.info(
-        "Default configuration is not recommended for use in production environments."
-    )
+    log.info("Default configuration is not recommended for use in production environments.")
     CONFIGURACION["SQLALCHEMY_TRACK_MODIFICATIONS"] = "False"
     CONFIGURACION["TEMPLATES_AUTO_RELOAD"] = True
 
@@ -191,9 +186,7 @@ if DATABASE_URL_BASE := CONFIGURACION.get("SQLALCHEMY_DATABASE_URI"):
 
     DATABASE_URL_CORREGIDA = DATABASE_URL_BASE
 
-    prefix = DATABASE_URL_BASE.split(":", 1)[
-        0
-    ]  # Extraer prefijo: "postgres", "mysql", etc.
+    prefix = DATABASE_URL_BASE.split(":", 1)[0]  # Extraer prefijo: "postgres", "mysql", etc.
 
     # Caso especial: Heroku + PostgreSQL
     if environ.get("DYNO") and prefix in (
@@ -203,9 +196,7 @@ if DATABASE_URL_BASE := CONFIGURACION.get("SQLALCHEMY_DATABASE_URI"):
         parsed = urlparse(DATABASE_URL_BASE)  # type: ignore[arg-type]
         query = parse_qs(parsed.query)
         query["sslmode"] = ["require"]
-        DATABASE_URL_CORREGIDA = urlunparse(
-            parsed._replace(scheme="postgresql", query=urlencode(query, doseq=True))
-        )
+        DATABASE_URL_CORREGIDA = urlunparse(parsed._replace(scheme="postgresql", query=urlencode(query, doseq=True)))
 
     else:
         # Corrige el esquema según el prefijo detectado
@@ -227,24 +218,25 @@ if DATABASE_URL_BASE := CONFIGURACION.get("SQLALCHEMY_DATABASE_URI"):
             case "mysql":
                 DATABASE_URL_CORREGIDA = "mysql+pymysql" + DATABASE_URL_BASE[5:]
             case "mariadb":
-                DATABASE_URL_CORREGIDA = (
-                    "mariadb+mariadbconnector" + DATABASE_URL_BASE[7:]
-                )
+                DATABASE_URL_CORREGIDA = "mariadb+mariadbconnector" + DATABASE_URL_BASE[7:]
             case _:
                 pass
 
     # Actualizar configuración si hubo cambio
     if DATABASE_URL_BASE != DATABASE_URL_CORREGIDA:
-        log.info(
-            f"Database URI corrected: {DATABASE_URL_BASE} → {DATABASE_URL_CORREGIDA}"
-        )
+        log.info(f"Database URI corrected: {DATABASE_URL_BASE} → {DATABASE_URL_CORREGIDA}")
         CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL_CORREGIDA
 
 # < --------------------------------------------------------------------------------------------- >
 # Queue configuration for background job processing
 # The system will automatically select between Dramatiq (Redis) and Huey (filesystem)
 # based on REDIS_URL availability
-CONFIGURACION["QUEUE_ENABLED"] = environ.get("QUEUE_ENABLED", "1") in ["1", "true", "True", "yes"]
+CONFIGURACION["QUEUE_ENABLED"] = environ.get("QUEUE_ENABLED", "1") in [
+    "1",
+    "true",
+    "True",
+    "yes",
+]
 CONFIGURACION["QUEUE_STORAGE_PATH"] = environ.get("COATI_QUEUE_PATH")  # For Huey filesystem
 
 # Background payroll processing configuration
@@ -253,9 +245,7 @@ CONFIGURACION["QUEUE_STORAGE_PATH"] = environ.get("COATI_QUEUE_PATH")  # For Hue
 # Default: 100 employees. Can be adjusted based on system performance:
 # - For systems with complex formulas or slow performance: lower to 50 or 25
 # - For high-performance systems: increase to 200 or 500
-CONFIGURACION["BACKGROUND_PAYROLL_THRESHOLD"] = int(
-    environ.get("BACKGROUND_PAYROLL_THRESHOLD", "100")
-)
+CONFIGURACION["BACKGROUND_PAYROLL_THRESHOLD"] = int(environ.get("BACKGROUND_PAYROLL_THRESHOLD", "100"))
 
 # < --------------------------------------------------------------------------------------------- >
 configuration = CONFIGURACION

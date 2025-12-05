@@ -93,9 +93,7 @@ def proteger_passwd(clave: str, /) -> bytes:
 def validar_acceso(usuario_id: str, acceso: str, /) -> bool:
     """Verifica el inicio de sesión del usuario."""
     log.trace(f"Verifying access for {usuario_id}")
-    registro = database.session.execute(
-        database.select(Usuario).filter_by(usuario=usuario_id)
-    ).scalar_one_or_none()
+    registro = database.session.execute(database.select(Usuario).filter_by(usuario=usuario_id)).scalar_one_or_none()
 
     if not registro:
         registro = database.session.execute(

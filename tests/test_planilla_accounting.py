@@ -115,10 +115,8 @@ class TestPlanillaAccountingFields:
         """Test that accounting fields are accessible in nomina generation context."""
         with app.app_context():
             # Use or create currency
-            moneda = db.session.execute(
-                db.select(Moneda).filter_by(codigo="CRC")
-            ).scalar_one_or_none()
-            
+            moneda = db.session.execute(db.select(Moneda).filter_by(codigo="CRC")).scalar_one_or_none()
+
             if moneda is None:
                 moneda = Moneda(
                     codigo="CRC",

@@ -31,61 +31,61 @@ from coati_payroll.model import Moneda, Percepcion, Deduccion, db
 
 class TestInitialDataConstants:
     """Test the initial data constants."""
-    
+
     def test_currencies_not_empty(self):
         """Test that currencies list is not empty."""
         assert len(CURRENCIES) > 0
-        
+
     def test_currencies_have_required_fields(self):
         """Test that all currencies have required fields."""
         for currency in CURRENCIES:
             assert "codigo" in currency
             assert "nombre" in currency
             assert "simbolo" in currency
-            
+
     def test_currencies_have_valid_codes(self):
         """Test that all currency codes are 3 characters."""
         for currency in CURRENCIES:
             assert len(currency["codigo"]) == 3
             assert currency["codigo"].isupper()
-            
+
     def test_currencies_are_unique(self):
         """Test that all currency codes are unique."""
         codes = [c["codigo"] for c in CURRENCIES]
         assert len(codes) == len(set(codes))
-        
+
     def test_income_concepts_not_empty(self):
         """Test that income concepts list is not empty."""
         assert len(INCOME_CONCEPTS) > 0
-        
+
     def test_income_concepts_have_required_fields(self):
         """Test that all income concepts have required fields."""
         for concept in INCOME_CONCEPTS:
             assert "codigo" in concept
             assert "nombre" in concept
             assert "descripcion" in concept
-            
+
     def test_income_concepts_are_unique(self):
         """Test that all income concept codes are unique."""
         codes = [c["codigo"] for c in INCOME_CONCEPTS]
         assert len(codes) == len(set(codes))
-        
+
     def test_deduction_concepts_not_empty(self):
         """Test that deduction concepts list is not empty."""
         assert len(DEDUCTION_CONCEPTS) > 0
-        
+
     def test_deduction_concepts_have_required_fields(self):
         """Test that all deduction concepts have required fields."""
         for concept in DEDUCTION_CONCEPTS:
             assert "codigo" in concept
             assert "nombre" in concept
             assert "descripcion" in concept
-            
+
     def test_deduction_concepts_are_unique(self):
         """Test that all deduction concept codes are unique."""
         codes = [c["codigo"] for c in DEDUCTION_CONCEPTS]
         assert len(codes) == len(set(codes))
-        
+
     def test_american_currencies_included(self):
         """Test that key American currencies are included."""
         codes = [c["codigo"] for c in CURRENCIES]
@@ -96,7 +96,7 @@ class TestInitialDataConstants:
         assert "BRL" in codes  # Brazil
         assert "ARS" in codes  # Argentina
         assert "NIO" in codes  # Nicaragua
-        
+
     def test_income_concepts_use_english_codes(self):
         """Test that income concept codes are in English, not Spanish."""
         codes = [c["codigo"] for c in INCOME_CONCEPTS]
@@ -116,7 +116,7 @@ class TestInitialDataConstants:
         assert "PERMISOS_REMUNERADOS" not in codes
         assert "PROPINAS" not in codes
         assert "VACACIONES_PAGADAS" not in codes
-        
+
     def test_deduction_concepts_use_english_codes(self):
         """Test that deduction concept codes are in English, not Spanish."""
         codes = [c["codigo"] for c in DEDUCTION_CONCEPTS]
@@ -138,99 +138,93 @@ class TestInitialDataConstants:
 
 class TestLoadCurrencies:
     """Test currency loading functionality."""
-    
+
     def test_load_currencies(self, app):
         """Test loading currencies."""
         with app.app_context():
             # Clear existing currencies first
             db.session.execute(db.delete(Moneda))
             db.session.commit()
-            
+
             load_currencies()
-            
+
             # Check that currencies were loaded
             currencies = db.session.execute(db.select(Moneda)).scalars().all()
             assert len(currencies) >= len(CURRENCIES)
-            
+
             # Check a specific currency
-            usd = db.session.execute(
-                db.select(Moneda).filter_by(codigo="USD")
-            ).scalar_one_or_none()
+            usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one_or_none()
             assert usd is not None
             assert usd.codigo == "USD"
             assert usd.simbolo == "$"
             assert usd.activo is True
-            
+
     def test_load_currencies_no_duplicates(self, app):
         """Test that loading currencies twice doesn't create duplicates."""
         with app.app_context():
             # Load currencies twice
             load_currencies()
             count_first = db.session.execute(db.select(Moneda)).scalars().all()
-            
+
             load_currencies()
             count_second = db.session.execute(db.select(Moneda)).scalars().all()
-            
+
             # Should have same count
             assert len(count_first) == len(count_second)
-            
+
     def test_load_currencies_nicaraguan_cordoba(self, app):
         """Test that Nicaraguan Córdoba is included."""
         with app.app_context():
             load_currencies()
-            
-            nio = db.session.execute(
-                db.select(Moneda).filter_by(codigo="NIO")
-            ).scalar_one_or_none()
+
+            nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
             assert nio is not None
             assert nio.codigo == "NIO"
 
 
 class TestLoadIncomeConcepts:
     """Test income concept loading functionality."""
-    
+
     def test_load_income_concepts(self, app):
         """Test loading income concepts."""
         with app.app_context():
             # Clear existing concepts first
             db.session.execute(db.delete(Percepcion))
             db.session.commit()
-            
+
             load_income_concepts()
-            
+
             # Check that concepts were loaded
             concepts = db.session.execute(db.select(Percepcion)).scalars().all()
             assert len(concepts) >= len(INCOME_CONCEPTS)
-            
+
             # Check a specific concept
-            overtime = db.session.execute(
-                db.select(Percepcion).filter_by(codigo="OVERTIME")
-            ).scalar_one_or_none()
+            overtime = db.session.execute(db.select(Percepcion).filter_by(codigo="OVERTIME")).scalar_one_or_none()
             assert overtime is not None
             assert overtime.codigo == "OVERTIME"
             assert overtime.activo is True
-            
+
     def test_load_income_concepts_no_duplicates(self, app):
         """Test that loading income concepts twice doesn't create duplicates."""
         with app.app_context():
             # Load concepts twice
             load_income_concepts()
             count_first = db.session.execute(db.select(Percepcion)).scalars().all()
-            
+
             load_income_concepts()
             count_second = db.session.execute(db.select(Percepcion)).scalars().all()
-            
+
             # Should have same count
             assert len(count_first) == len(count_second)
-            
+
     def test_income_concepts_have_correct_properties(self, app):
         """Test that loaded income concepts have correct properties."""
         with app.app_context():
             load_income_concepts()
-            
+
             # Get all loaded concepts
             concepts = db.session.execute(db.select(Percepcion)).scalars().all()
-            
+
             for concept in concepts:
                 # Check that they are active and editable
                 assert concept.activo is True
@@ -241,49 +235,47 @@ class TestLoadIncomeConcepts:
 
 class TestLoadDeductionConcepts:
     """Test deduction concept loading functionality."""
-    
+
     def test_load_deduction_concepts(self, app):
         """Test loading deduction concepts."""
         with app.app_context():
             # Clear existing concepts first
             db.session.execute(db.delete(Deduccion))
             db.session.commit()
-            
+
             load_deduction_concepts()
-            
+
             # Check that concepts were loaded
             concepts = db.session.execute(db.select(Deduccion)).scalars().all()
             assert len(concepts) >= len(DEDUCTION_CONCEPTS)
-            
+
             # Check a specific concept
-            advance = db.session.execute(
-                db.select(Deduccion).filter_by(codigo="SALARY_ADVANCE")
-            ).scalar_one_or_none()
+            advance = db.session.execute(db.select(Deduccion).filter_by(codigo="SALARY_ADVANCE")).scalar_one_or_none()
             assert advance is not None
             assert advance.codigo == "SALARY_ADVANCE"
             assert advance.activo is True
-            
+
     def test_load_deduction_concepts_no_duplicates(self, app):
         """Test that loading deduction concepts twice doesn't create duplicates."""
         with app.app_context():
             # Load concepts twice
             load_deduction_concepts()
             count_first = db.session.execute(db.select(Deduccion)).scalars().all()
-            
+
             load_deduction_concepts()
             count_second = db.session.execute(db.select(Deduccion)).scalars().all()
-            
+
             # Should have same count
             assert len(count_first) == len(count_second)
-            
+
     def test_deduction_concepts_have_correct_properties(self, app):
         """Test that loaded deduction concepts have correct properties."""
         with app.app_context():
             load_deduction_concepts()
-            
+
             # Get all loaded concepts
             concepts = db.session.execute(db.select(Deduccion)).scalars().all()
-            
+
             for concept in concepts:
                 # Check that they are active and editable
                 assert concept.activo is True
@@ -296,7 +288,7 @@ class TestLoadDeductionConcepts:
 
 class TestLoadInitialData:
     """Test the main load_initial_data function."""
-    
+
     def test_load_initial_data(self, app):
         """Test loading all initial data."""
         with app.app_context():
@@ -305,21 +297,21 @@ class TestLoadInitialData:
             db.session.execute(db.delete(Deduccion))
             db.session.execute(db.delete(Moneda))
             db.session.commit()
-            
+
             load_initial_data()
-            
+
             # Check currencies
             currencies = db.session.execute(db.select(Moneda)).scalars().all()
             assert len(currencies) >= len(CURRENCIES)
-            
+
             # Check income concepts
             income = db.session.execute(db.select(Percepcion)).scalars().all()
             assert len(income) >= len(INCOME_CONCEPTS)
-            
+
             # Check deduction concepts
             deductions = db.session.execute(db.select(Deduccion)).scalars().all()
             assert len(deductions) >= len(DEDUCTION_CONCEPTS)
-            
+
     def test_load_initial_data_idempotent(self, app):
         """Test that loading initial data multiple times is idempotent."""
         with app.app_context():
@@ -328,12 +320,12 @@ class TestLoadInitialData:
             currencies_1 = len(db.session.execute(db.select(Moneda)).scalars().all())
             income_1 = len(db.session.execute(db.select(Percepcion)).scalars().all())
             deductions_1 = len(db.session.execute(db.select(Deduccion)).scalars().all())
-            
+
             load_initial_data()
             currencies_2 = len(db.session.execute(db.select(Moneda)).scalars().all())
             income_2 = len(db.session.execute(db.select(Percepcion)).scalars().all())
             deductions_2 = len(db.session.execute(db.select(Deduccion)).scalars().all())
-            
+
             # Counts should be the same
             assert currencies_1 == currencies_2
             assert income_1 == income_2

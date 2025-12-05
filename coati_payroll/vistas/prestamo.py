@@ -86,11 +86,7 @@ def index():
 
     # Get all employees for filter dropdown
     empleados = (
-        db.session.execute(
-            db.select(Empleado)
-            .filter_by(activo=True)
-            .order_by(Empleado.primer_apellido)
-        )
+        db.session.execute(db.select(Empleado).filter_by(activo=True).order_by(Empleado.primer_apellido))
         .scalars()
         .all()
     )
@@ -115,38 +111,21 @@ def new():
 
     # Populate select fields
     empleados = (
-        db.session.execute(
-            db.select(Empleado)
-            .filter_by(activo=True)
-            .order_by(Empleado.primer_apellido)
-        )
+        db.session.execute(db.select(Empleado).filter_by(activo=True).order_by(Empleado.primer_apellido))
         .scalars()
         .all()
     )
     form.empleado_id.choices = [
-        (emp.id, f"{emp.primer_nombre} {emp.primer_apellido} - {emp.codigo_empleado}")
-        for emp in empleados
+        (emp.id, f"{emp.primer_nombre} {emp.primer_apellido} - {emp.codigo_empleado}") for emp in empleados
     ]
 
-    monedas = (
-        db.session.execute(
-            db.select(Moneda).filter_by(activo=True).order_by(Moneda.nombre)
-        )
-        .scalars()
-        .all()
-    )
+    monedas = db.session.execute(db.select(Moneda).filter_by(activo=True).order_by(Moneda.nombre)).scalars().all()
     form.moneda_id.choices = [(m.id, f"{m.nombre} ({m.codigo})") for m in monedas]
 
     deducciones = (
-        db.session.execute(
-            db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)
-        )
-        .scalars()
-        .all()
+        db.session.execute(db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)).scalars().all()
     )
-    form.deduccion_id.choices = [("", _("-- Sin deducción asociada --"))] + [
-        (d.id, d.nombre) for d in deducciones
-    ]
+    form.deduccion_id.choices = [("", _("-- Sin deducción asociada --"))] + [(d.id, d.nombre) for d in deducciones]
 
     if form.validate_on_submit():
         prestamo = Adelanto()
@@ -202,9 +181,7 @@ def detail(prestamo_id):
     # Get payment history
     abonos = (
         db.session.execute(
-            db.select(AdelantoAbono)
-            .filter_by(adelanto_id=prestamo_id)
-            .order_by(AdelantoAbono.fecha_abono.desc())
+            db.select(AdelantoAbono).filter_by(adelanto_id=prestamo_id).order_by(AdelantoAbono.fecha_abono.desc())
         )
         .scalars()
         .all()
@@ -230,11 +207,7 @@ def edit(prestamo_id):
     # Only allow editing in draft or pending state
     if prestamo.estado not in [AdelantoEstado.BORRADOR, AdelantoEstado.PENDIENTE]:
         flash(
-            _(
-                "No se puede editar un préstamo en estado '{estado}'.".format(
-                    estado=prestamo.estado
-                )
-            ),
+            _("No se puede editar un préstamo en estado '{estado}'.".format(estado=prestamo.estado)),
             "warning",
         )
         return redirect(url_for("prestamo.detail", prestamo_id=prestamo_id))
@@ -243,38 +216,21 @@ def edit(prestamo_id):
 
     # Populate select fields
     empleados = (
-        db.session.execute(
-            db.select(Empleado)
-            .filter_by(activo=True)
-            .order_by(Empleado.primer_apellido)
-        )
+        db.session.execute(db.select(Empleado).filter_by(activo=True).order_by(Empleado.primer_apellido))
         .scalars()
         .all()
     )
     form.empleado_id.choices = [
-        (emp.id, f"{emp.primer_nombre} {emp.primer_apellido} - {emp.codigo_empleado}")
-        for emp in empleados
+        (emp.id, f"{emp.primer_nombre} {emp.primer_apellido} - {emp.codigo_empleado}") for emp in empleados
     ]
 
-    monedas = (
-        db.session.execute(
-            db.select(Moneda).filter_by(activo=True).order_by(Moneda.nombre)
-        )
-        .scalars()
-        .all()
-    )
+    monedas = db.session.execute(db.select(Moneda).filter_by(activo=True).order_by(Moneda.nombre)).scalars().all()
     form.moneda_id.choices = [(m.id, f"{m.nombre} ({m.codigo})") for m in monedas]
 
     deducciones = (
-        db.session.execute(
-            db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)
-        )
-        .scalars()
-        .all()
+        db.session.execute(db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)).scalars().all()
     )
-    form.deduccion_id.choices = [("", _("-- Sin deducción asociada --"))] + [
-        (d.id, d.nombre) for d in deducciones
-    ]
+    form.deduccion_id.choices = [("", _("-- Sin deducción asociada --"))] + [(d.id, d.nombre) for d in deducciones]
 
     if form.validate_on_submit():
         prestamo.empleado_id = form.empleado_id.data
@@ -356,9 +312,7 @@ def approve(prestamo_id):
                 #   - French method (constant payment) for simple interest
                 #   - German method (constant principal) for alternative calculation
                 #   - Compound interest calculation based on tipo_interes field
-                prestamo.monto_por_cuota = (
-                    prestamo.monto_aprobado / prestamo.cuotas_pactadas
-                )
+                prestamo.monto_por_cuota = prestamo.monto_aprobado / prestamo.cuotas_pactadas
             else:
                 prestamo.monto_por_cuota = prestamo.monto_aprobado
 
@@ -386,9 +340,7 @@ def approve(prestamo_id):
         form.monto_aprobado.data = prestamo.monto_solicitado
         form.fecha_aprobacion.data = date.today()
 
-    return render_template(
-        "modules/prestamo/approve.html", form=form, prestamo=prestamo
-    )
+    return render_template("modules/prestamo/approve.html", form=form, prestamo=prestamo)
 
 
 @prestamo_bp.route("/<prestamo_id>/cancel", methods=["POST"])
@@ -441,9 +393,9 @@ def pago_extraordinario(prestamo_id):
         # Validate payment amount
         if monto_abonado > prestamo.saldo_pendiente:
             flash(
-                _(
-                    "El monto del pago ({monto}) excede el saldo pendiente ({saldo})."
-                ).format(monto=monto_abonado, saldo=prestamo.saldo_pendiente),
+                _("El monto del pago ({monto}) excede el saldo pendiente ({saldo}).").format(
+                    monto=monto_abonado, saldo=prestamo.saldo_pendiente
+                ),
                 "warning",
             )
             return render_template(
@@ -478,11 +430,7 @@ def pago_extraordinario(prestamo_id):
         tipo_aplicacion = form.tipo_aplicacion.data
 
         # Calculate remaining installments (those not yet paid)
-        total_abonado_previo = sum(
-            a.monto_abonado
-            for a in prestamo.abonos
-            if a.tipo_abono in ["nomina", "manual"]
-        )
+        total_abonado_previo = sum(a.monto_abonado for a in prestamo.abonos if a.tipo_abono in ["nomina", "manual"])
         cuotas_pagadas = 0
         if prestamo.monto_por_cuota and prestamo.monto_por_cuota > 0:
             cuotas_pagadas = int(total_abonado_previo / prestamo.monto_por_cuota)
@@ -496,9 +444,7 @@ def pago_extraordinario(prestamo_id):
                 # Store original values for the observation
                 cuotas_originales = prestamo.cuotas_pactadas
                 # Adjust total installments
-                nueva_cuotas_pactadas = max(
-                    cuotas_pagadas, prestamo.cuotas_pactadas - cuotas_a_eliminar
-                )
+                nueva_cuotas_pactadas = max(cuotas_pagadas, prestamo.cuotas_pactadas - cuotas_a_eliminar)
                 prestamo.cuotas_pactadas = nueva_cuotas_pactadas
 
                 abono.observaciones = (
@@ -575,9 +521,9 @@ def condonacion(prestamo_id):
         # Validate forgiveness amount
         if monto_condonado > prestamo.saldo_pendiente:
             flash(
-                _(
-                    "El monto a condonar ({monto}) excede el saldo pendiente ({saldo})."
-                ).format(monto=monto_condonado, saldo=prestamo.saldo_pendiente),
+                _("El monto a condonar ({monto}) excede el saldo pendiente ({saldo}).").format(
+                    monto=monto_condonado, saldo=prestamo.saldo_pendiente
+                ),
                 "warning",
             )
             return render_template(
@@ -629,9 +575,7 @@ def condonacion(prestamo_id):
         db.session.commit()
 
         flash(
-            _(
-                "Condonación de deuda registrada exitosamente. Monto condonado: {monto}"
-            ).format(monto=monto_condonado),
+            _("Condonación de deuda registrada exitosamente. Monto condonado: {monto}").format(monto=monto_condonado),
             "success",
         )
         return redirect(url_for("prestamo.detail", prestamo_id=prestamo_id))
@@ -683,9 +627,7 @@ def export_excel(prestamo_id):
     # Loan details
     row = 3
     ws[f"A{row}"] = "Empleado:"
-    ws[f"B{row}"] = (
-        f"{prestamo.empleado.primer_nombre} {prestamo.empleado.primer_apellido}"
-    )
+    ws[f"B{row}"] = f"{prestamo.empleado.primer_nombre} {prestamo.empleado.primer_apellido}"
     row += 1
     ws[f"A{row}"] = "Tipo:"
     ws[f"B{row}"] = prestamo.tipo
@@ -702,9 +644,7 @@ def export_excel(prestamo_id):
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=row, column=col, value=header)
         cell.font = Font(bold=True)
-        cell.fill = PatternFill(
-            start_color="366092", end_color="366092", fill_type="solid"
-        )
+        cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
         cell.font = Font(bold=True, color="FFFFFF")
 
     # Table data
@@ -757,9 +697,7 @@ def export_pdf(prestamo_id):
 
         pdf = render_pdf(HTML(string=html))
         # Use first 8 chars of ULID (26 chars total) for short filename
-        filename = (
-            f"tabla_pago_{prestamo.empleado.codigo_empleado}_{prestamo.id[:8]}.pdf"
-        )
+        filename = f"tabla_pago_{prestamo.empleado.codigo_empleado}_{prestamo.id[:8]}.pdf"
 
         return Response(
             pdf,

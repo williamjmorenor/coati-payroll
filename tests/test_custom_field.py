@@ -158,9 +158,7 @@ class TestCustomField:
 
     def test_custom_field_edit_nonexistent_redirects(self, authenticated_client):
         """Test that editing a non-existent custom field redirects."""
-        response = authenticated_client.get(
-            "/custom_field/edit/NONEXISTENT", follow_redirects=True
-        )
+        response = authenticated_client.get("/custom_field/edit/NONEXISTENT", follow_redirects=True)
         assert response.status_code == 200
 
     def test_custom_field_delete_removes_field(self, authenticated_client, app):
@@ -179,9 +177,7 @@ class TestCustomField:
             db.session.commit()
             field_id = field.id
 
-        response = authenticated_client.post(
-            f"/custom_field/delete/{field_id}", follow_redirects=True
-        )
+        response = authenticated_client.post(f"/custom_field/delete/{field_id}", follow_redirects=True)
         assert response.status_code == 200
 
         with app.app_context():
@@ -190,7 +186,5 @@ class TestCustomField:
 
     def test_custom_field_delete_nonexistent_redirects(self, authenticated_client):
         """Test that deleting a non-existent custom field redirects."""
-        response = authenticated_client.post(
-            "/custom_field/delete/NONEXISTENT", follow_redirects=True
-        )
+        response = authenticated_client.post("/custom_field/delete/NONEXISTENT", follow_redirects=True)
         assert response.status_code == 200

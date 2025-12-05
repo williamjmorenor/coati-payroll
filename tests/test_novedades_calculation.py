@@ -125,9 +125,7 @@ class TestNovedadesCalculation:
 
             # Expected: 10,000 / 30 = 333.33... (rounded to 333.33), then 333.33 * 15 = 4,999.95
             # This is correct behavior as daily salary is rounded before multiplying by days
-            salario_diario = (Decimal("10000.00") / Decimal("30")).quantize(
-                Decimal("0.01")
-            )
+            salario_diario = (Decimal("10000.00") / Decimal("30")).quantize(Decimal("0.01"))
             expected_salary = (salario_diario * Decimal("15")).quantize(Decimal("0.01"))
 
             assert emp_calculo.salario_base == expected_salary, (
@@ -242,9 +240,7 @@ class TestNovedadesCalculation:
 
             # First calculation without novedad should have no perceptions
             emp_calculo_1 = engine.empleados_calculo[0]
-            assert emp_calculo_1.total_percepciones == Decimal(
-                "0.00"
-            ), "Without novedad, overtime should be 0"
+            assert emp_calculo_1.total_percepciones == Decimal("0.00"), "Without novedad, overtime should be 0"
 
             # Now add a novedad for 8 overtime hours
             novedad = NominaNovedad(
@@ -406,8 +402,7 @@ class TestNovedadesCalculation:
             # Verify second nomina does NOT have novedad because it's dated outside the period
             emp_calculo2 = engine2.empleados_calculo[0]
             assert "BONO_TEST" not in emp_calculo2.novedades, (
-                "Second nomina should not include novedad dated Dec 10 "
-                "because the period is Dec 16-31"
+                "Second nomina should not include novedad dated Dec 10 " "because the period is Dec 16-31"
             )
 
             # Verify the bonus perception was still calculated (without novedad)
@@ -542,9 +537,7 @@ class TestNovedadesCalculation:
             # Update novedades estado (simulating what the view does)
             from coati_payroll.enums import NovedadEstado
 
-            empleado_ids = [
-                pe.empleado_id for pe in planilla.planilla_empleados if pe.activo
-            ]
+            empleado_ids = [pe.empleado_id for pe in planilla.planilla_empleados if pe.activo]
             novedades = (
                 db.session.execute(
                     db.select(NominaNovedad).filter(

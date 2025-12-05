@@ -63,9 +63,7 @@ def new():
         flash(_("Moneda creada exitosamente."), "success")
         return redirect(url_for("currency.index"))
 
-    return render_template(
-        "modules/currency/form.html", form=form, title=_("Nueva Moneda")
-    )
+    return render_template("modules/currency/form.html", form=form, title=_("Nueva Moneda"))
 
 
 @currency_bp.route("/edit/<string:id>", methods=["GET", "POST"])

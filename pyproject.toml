@@ -13,3 +13,26 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 version = {attr = "coati_payroll.version.__version__"}
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = [
+    "C0114",  # missing-module-docstring
+    "C0115",  # missing-class-docstring
+    "C0116",  # missing-function-docstring
+]
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "W503"]

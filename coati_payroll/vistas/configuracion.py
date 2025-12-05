@@ -43,13 +43,10 @@ configuracion_bp = Blueprint("configuracion", __name__, url_prefix="/configuraci
 def index():
     """Display global configuration page."""
     current_language = get_language_from_db()
-    
+
     # Language names for display
-    language_names = {
-        "en": "English",
-        "es": "Español"
-    }
-    
+    language_names = {"en": "English", "es": "Español"}
+
     return render_template(
         "modules/configuracion/index.html",
         current_language=current_language,
@@ -63,28 +60,28 @@ def index():
 def cambiar_idioma():
     """Change the application language."""
     new_language = request.form.get("idioma", "").strip()
-    
+
     if not new_language:
         flash(_("Por favor seleccione un idioma."), "warning")
         return redirect(url_for("configuracion.index"))
-    
+
     if new_language not in SUPPORTED_LANGUAGES:
         flash(_("Idioma no soportado."), "danger")
         return redirect(url_for("configuracion.index"))
-    
+
     try:
         set_language_in_db(new_language)
-        
+
         # Message will be shown in the new language after redirect
-        language_names = {
-            "en": "English",
-            "es": "Español"
-        }
+        language_names = {"en": "English", "es": "Español"}
         flash(
-            _("Idioma actualizado a %(language)s.", language=language_names[new_language]),
-            "success"
+            _(
+                "Idioma actualizado a %(language)s.",
+                language=language_names[new_language],
+            ),
+            "success",
         )
     except Exception as e:
         flash(_("Error al actualizar el idioma: %(error)s", error=str(e)), "danger")
-    
+
     return redirect(url_for("configuracion.index"))
