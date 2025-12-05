@@ -603,7 +603,7 @@ def export_excel(prestamo_id):
 
     try:
         from openpyxl import Workbook
-        from openpyxl.styles import Font, Alignment, PatternFill
+        from openpyxl.styles import Font, PatternFill
     except ImportError:
         flash(
             _("Excel export no disponible. Instale openpyxl."),

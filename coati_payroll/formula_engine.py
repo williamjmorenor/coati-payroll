@@ -1060,7 +1060,7 @@ AVAILABLE_DATA_SOURCES = {
             "salario_acumulado_mes": {
                 "type": "decimal",
                 "label": "Salario Acumulado del Mes",
-                "description": "Total de salario bruto acumulado en el mes calendario actual. Para planillas quincenales o semanales, esto suma todos los pagos del mes en curso.",
+                "description": "Total de salario bruto acumulado en el mes calendario actual.",
             },
         },
     },
