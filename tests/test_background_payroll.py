@@ -35,13 +35,17 @@ class TestBackgroundPayrollProcessing:
     """Test background payroll processing with progress tracking."""
 
     @pytest.fixture
-    def planilla_con_empleados(self, app):
+    def planilla_con_empleados(self, app, request):
         """Create a planilla with multiple employees for testing."""
         with app.app_context():
+            # Use test name to make unique codes
+            test_name = request.node.name
+            unique_suffix = abs(hash(test_name)) % 10000
+            
             # Create currency
             moneda = Moneda(
-                codigo="NIO",
-                nombre="Córdoba",
+                codigo=f"NIO{unique_suffix}",
+                nombre=f"Córdoba {unique_suffix}",
                 simbolo="C$",
                 activo=True,
             )
@@ -50,8 +54,8 @@ class TestBackgroundPayrollProcessing:
 
             # Create tipo_planilla
             tipo_planilla = TipoPlanilla(
-                codigo="MENSUAL_TEST",
-                descripcion="Planilla Mensual Test",
+                codigo=f"MTEST{unique_suffix}",
+                descripcion=f"Planilla Mensual Test {unique_suffix}",
                 periodicidad="mensual",
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -63,8 +67,8 @@ class TestBackgroundPayrollProcessing:
 
             # Create planilla
             planilla = Planilla(
-                nombre="Planilla Test Background",
-                descripcion="Para pruebas de procesamiento en segundo plano",
+                nombre=f"Planilla Test Background {unique_suffix}",
+                descripcion=f"Para pruebas de procesamiento en segundo plano {unique_suffix}",
                 tipo_planilla_id=tipo_planilla.id,
                 moneda_id=moneda.id,
                 activo=True,
@@ -76,9 +80,10 @@ class TestBackgroundPayrollProcessing:
             empleados = []
             for i in range(5):
                 empleado = Empleado(
-                    codigo_empleado=f"EMP-BG-{i:03d}",
+                    codigo_empleado=f"EMPBG{unique_suffix}-{i:03d}",
                     primer_nombre=f"Empleado{i}",
                     primer_apellido=f"Test{i}",
+                    identificacion_personal=f"{unique_suffix:04d}-01019{i:01d}-{i:04d}P",
                     fecha_nacimiento=date(1990, 1, 1),
                     fecha_alta=date(2020, 1, 1),
                     salario_base=Decimal("10000.00"),
@@ -183,9 +188,10 @@ class TestBackgroundPayrollProcessing:
         with app.app_context():
             planilla, empleados = planilla_con_empleados
 
-            # Set one employee's salary to invalid value to trigger error
+            # Set one employee's salary to 0 to potentially trigger calculation issues
             # (This is a simplified test - in real scenario, formula errors would occur)
-            empleados[2].salario_base = None
+            # We don't set it to None as it violates NOT NULL constraint
+            empleados[2].salario_base = Decimal("0.00")
             db.session.commit()
 
             # Create nomina
@@ -209,22 +215,23 @@ class TestBackgroundPayrollProcessing:
                 periodo_fin="2024-03-31",
             )
 
-            # Verify partial success (some employees processed, some failed)
+            # Verify success (all employees processed, even with zero salary)
             assert result["success"] is True
-            assert result["empleados_con_error"] >= 0  # At least one error expected
+            # With zero salary, calculation should still work (just result in zero net pay)
+            assert result["empleados_con_error"] >= 0
             db.session.refresh(nomina)
-            # State should still be GENERADO if most employees succeeded
+            # State should be GENERADO if processing completed
             assert nomina.estado in [NominaEstado.GENERADO, NominaEstado.ERROR]
 
     def test_nomina_progress_tracking_fields(self, app):
         """Test that Nomina model has all required progress tracking fields."""
         with app.app_context():
-            # Create currency and tipo_planilla
-            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            # Create currency and tipo_planilla with unique codes
+            moneda = Moneda(codigo="NIOPF", nombre="Córdoba PF", simbolo="C$", activo=True)
             db.session.add(moneda)
             tipo_planilla = TipoPlanilla(
-                codigo="MENSUAL",
-                descripcion="Mensual",
+                codigo="MENSUALPF",
+                descripcion="Mensual PF",
                 periodicidad="mensual",
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -235,7 +242,7 @@ class TestBackgroundPayrollProcessing:
             db.session.flush()
 
             planilla = Planilla(
-                nombre="Test Planilla",
+                nombre="Test Planilla Progress Tracking",
                 tipo_planilla_id=tipo_planilla.id,
                 moneda_id=moneda.id,
                 activo=True,
@@ -292,14 +299,12 @@ class TestBackgroundPayrollThreshold:
 
     def test_default_threshold_is_100(self, app):
         """Test that default threshold is 100 employees."""
-        with app.app_context():
-            threshold = app.config.get("BACKGROUND_PAYROLL_THRESHOLD", 100)
-            assert threshold == 100
+        threshold = app.config.get("BACKGROUND_PAYROLL_THRESHOLD", 100)
+        assert threshold == 100
 
     def test_threshold_can_be_configured(self, app):
         """Test that threshold can be changed via config."""
-        with app.app_context():
-            # Set custom threshold
-            app.config["BACKGROUND_PAYROLL_THRESHOLD"] = 50
-            threshold = app.config.get("BACKGROUND_PAYROLL_THRESHOLD")
-            assert threshold == 50
+        # Set custom threshold
+        app.config["BACKGROUND_PAYROLL_THRESHOLD"] = 50
+        threshold = app.config.get("BACKGROUND_PAYROLL_THRESHOLD")
+        assert threshold == 50

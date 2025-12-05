@@ -54,9 +54,9 @@ class TestPlanillaAccountingFields:
             db.session.add(tipo)
             db.session.commit()
 
-            # Create planilla with accounting fields
+            # Create planilla with accounting fields (unique name)
             planilla = Planilla(
-                nombre="Test Planilla",
+                nombre="Test Planilla Accounting Fields",
                 descripcion="Planilla de prueba",
                 tipo_planilla_id=tipo.id,
                 moneda_id=moneda.id,

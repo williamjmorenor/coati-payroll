@@ -317,11 +317,12 @@ class NominaEngine:
         # Process employer benefits (don't affect employee pay)
         self._procesar_prestaciones(emp_calculo)
 
-        # Create NominaEmpleado record
-        nomina_empleado = self._crear_nomina_empleado(emp_calculo)
-
-        # Update accumulated annual values
-        self._actualizar_acumulados(emp_calculo, nomina_empleado)
+        # Create NominaEmpleado record and update accumulados only if nomina exists
+        # (When processing in background, nomina records are created externally)
+        if self.nomina:
+            nomina_empleado = self._crear_nomina_empleado(emp_calculo)
+            # Update accumulated annual values
+            self._actualizar_acumulados(emp_calculo, nomina_empleado)
 
         return emp_calculo
 

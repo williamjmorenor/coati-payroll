@@ -28,6 +28,8 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
+from sqlalchemy.orm import joinedload
+
 from coati_payroll.log import log
 from coati_payroll.model import (
     db,
@@ -284,7 +286,13 @@ def process_large_payroll(
                 "error": "Nomina not found",
             }
             
-        planilla = db.session.get(Planilla, planilla_id)
+        # Load planilla with eager loading of tipo_planilla and moneda
+        planilla = db.session.execute(
+            db.select(Planilla)
+            .options(joinedload(Planilla.tipo_planilla), joinedload(Planilla.moneda))
+            .filter_by(id=planilla_id)
+        ).scalar_one_or_none()
+        
         if not planilla:
             log.error(f"Planilla {planilla_id} not found")
             nomina.estado = NominaEstado.ERROR
@@ -353,7 +361,7 @@ def process_large_payroll(
                 emp_calculo = engine._procesar_empleado(empleado)
                 
                 # Save employee calculation to existing nomina
-                nomina_empleado = NominaModelEmpleado(
+                nomina_empleado = NominaEmpleadoModel(
                     nomina_id=nomina_id,
                     empleado_id=empleado.id,
                     salario_bruto=emp_calculo.salario_bruto,
@@ -362,8 +370,8 @@ def process_large_payroll(
                     salario_neto=emp_calculo.salario_neto,
                     moneda_origen_id=emp_calculo.moneda_origen_id,
                     tipo_cambio_aplicado=emp_calculo.tipo_cambio,
-                    cargo_snapshot=empleado.puesto,
-                    area_snapshot=empleado.departamento,
+                    cargo_snapshot=empleado.cargo,
+                    area_snapshot=empleado.area,
                     centro_costos_snapshot=empleado.centro_costos,
                     sueldo_base_historico=emp_calculo.salario_base,
                 )
@@ -372,7 +380,7 @@ def process_large_payroll(
                 
                 # Save details
                 for percepcion in emp_calculo.percepciones:
-                    detalle = NominaModelDetalle(
+                    detalle = NominaDetalleModel(
                         nomina_empleado_id=nomina_empleado.id,
                         tipo="ingreso",
                         codigo=percepcion.codigo,
@@ -384,7 +392,7 @@ def process_large_payroll(
                     db.session.add(detalle)
                 
                 for deduccion in emp_calculo.deducciones:
-                    detalle = NominaModelDetalle(
+                    detalle = NominaDetalleModel(
                         nomina_empleado_id=nomina_empleado.id,
                         tipo="deduccion",
                         codigo=deduccion.codigo,
@@ -396,7 +404,7 @@ def process_large_payroll(
                     db.session.add(detalle)
                 
                 for prestacion in emp_calculo.prestaciones:
-                    detalle = NominaModelDetalle(
+                    detalle = NominaDetalleModel(
                         nomina_empleado_id=nomina_empleado.id,
                         tipo="prestacion",
                         codigo=prestacion.codigo,
