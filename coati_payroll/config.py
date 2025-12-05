@@ -241,4 +241,21 @@ if DATABASE_URL_BASE := CONFIGURACION.get("SQLALCHEMY_DATABASE_URI"):
         CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL_CORREGIDA
 
 # < --------------------------------------------------------------------------------------------- >
+# Queue configuration for background job processing
+# The system will automatically select between Dramatiq (Redis) and Huey (filesystem)
+# based on REDIS_URL availability
+CONFIGURACION["QUEUE_ENABLED"] = environ.get("QUEUE_ENABLED", "1") in ["1", "true", "True", "yes"]
+CONFIGURACION["QUEUE_STORAGE_PATH"] = environ.get("COATI_QUEUE_PATH")  # For Huey filesystem
+
+# Background payroll processing configuration
+# Threshold for automatic background processing (number of employees)
+# Payrolls with more employees than this threshold will be processed in background
+# Default: 100 employees. Can be adjusted based on system performance:
+# - For systems with complex formulas or slow performance: lower to 50 or 25
+# - For high-performance systems: increase to 200 or 500
+CONFIGURACION["BACKGROUND_PAYROLL_THRESHOLD"] = int(
+    environ.get("BACKGROUND_PAYROLL_THRESHOLD", "100")
+)
+
+# < --------------------------------------------------------------------------------------------- >
 configuration = CONFIGURACION

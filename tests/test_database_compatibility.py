@@ -49,14 +49,19 @@ class TestDatabaseCompatibility:
     def test_ulid_primary_keys(self, app):
         """Test ULID-based String(26) primary keys work across databases."""
         with app.app_context():
-            # Create a currency with ULID ID
-            moneda = Moneda(
-                codigo="USD",
-                nombre="US Dollar",
-                simbolo="$",
-            )
-            db.session.add(moneda)
-            db.session.commit()
+            # Use or create a currency with ULID ID
+            moneda = db.session.execute(
+                db.select(Moneda).filter_by(codigo="USD")
+            ).scalar_one_or_none()
+            
+            if moneda is None:
+                moneda = Moneda(
+                    codigo="USD",
+                    nombre="US Dollar",
+                    simbolo="$",
+                )
+                db.session.add(moneda)
+                db.session.commit()
 
             # Verify ID is 26 characters
             assert len(moneda.id) == 26
@@ -72,10 +77,15 @@ class TestDatabaseCompatibility:
     def test_numeric_decimal_columns(self, app):
         """Test Numeric/Decimal columns work consistently across databases."""
         with app.app_context():
-            # Create currency
-            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
-            db.session.add(moneda)
-            db.session.commit()
+            # Use or create currency
+            moneda = db.session.execute(
+                db.select(Moneda).filter_by(codigo="NIO")
+            ).scalar_one_or_none()
+            
+            if moneda is None:
+                moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$")
+                db.session.add(moneda)
+                db.session.commit()
 
             # Create employee with decimal salary
             empleado = Empleado(
@@ -177,10 +187,15 @@ class TestDatabaseCompatibility:
     def test_date_and_datetime_columns(self, app):
         """Test Date and DateTime columns work across databases."""
         with app.app_context():
-            # Create currency
-            moneda = Moneda(codigo="CAD", nombre="Canadian Dollar", simbolo="C$")
-            db.session.add(moneda)
-            db.session.commit()
+            # Use or create currency
+            moneda = db.session.execute(
+                db.select(Moneda).filter_by(codigo="CAD")
+            ).scalar_one_or_none()
+            
+            if moneda is None:
+                moneda = Moneda(codigo="CAD", nombre="Canadian Dollar", simbolo="C$")
+                db.session.add(moneda)
+                db.session.commit()
 
             # Create employee with dates
             fecha_alta = date(2025, 1, 15)

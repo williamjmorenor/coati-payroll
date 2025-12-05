@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-04 02:50+0000\n"
+"POT-Creation-Date: 2025-12-04 15:27+0000\n"
 "PO-Revision-Date: 2025-12-04 02:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -712,7 +712,7 @@ msgstr "Salario Bruto"
 #: coati_payroll/forms.py:473 coati_payroll/forms.py:598
 #: coati_payroll/forms.py:876
 msgid "Salario Gravable"
-msgstr "Salario Gravable"
+msgstr "Adelanto de salario"
 
 #: coati_payroll/forms.py:474 coati_payroll/forms.py:599
 msgid "Salario Neto"
@@ -1561,6 +1561,420 @@ msgstr "Sitio Web"
 msgid "Representante Legal"
 msgstr "Representante Legal"
 
+#: coati_payroll/initial_data.py:42
+msgid "US Dollar"
+msgstr "Dólar estadounidense"
+
+#: coati_payroll/initial_data.py:43
+msgid "Canadian Dollar"
+msgstr "Dólar canadiense"
+
+#: coati_payroll/initial_data.py:44
+msgid "Mexican Peso"
+msgstr "Peso mexicano"
+
+#: coati_payroll/initial_data.py:47
+msgid "Belize Dollar"
+msgstr "Dólar beliceño"
+
+#: coati_payroll/initial_data.py:48
+msgid "Costa Rican Colón"
+msgstr "Colón costarricense"
+
+#: coati_payroll/initial_data.py:49
+msgid "Guatemalan Quetzal"
+msgstr "Quetzal guatemalteco"
+
+#: coati_payroll/initial_data.py:50
+msgid "Honduran Lempira"
+msgstr "Lempira hondureño"
+
+#: coati_payroll/initial_data.py:51
+msgid "Nicaraguan Córdoba"
+msgstr "Córdoba nicaragüense"
+
+#: coati_payroll/initial_data.py:52
+msgid "Panamanian Balboa"
+msgstr "Balboa panameño"
+
+#: coati_payroll/initial_data.py:53
+msgid "Salvadoran Colón"
+msgstr "Colón salvadoreño"
+
+#: coati_payroll/initial_data.py:56
+msgid "Argentine Peso"
+msgstr "Peso argentino"
+
+#: coati_payroll/initial_data.py:57
+msgid "Bolivian Boliviano"
+msgstr "Boliviano"
+
+#: coati_payroll/initial_data.py:58
+msgid "Brazilian Real"
+msgstr "Real brasileño"
+
+#: coati_payroll/initial_data.py:59
+msgid "Chilean Peso"
+msgstr "Peso chileno"
+
+#: coati_payroll/initial_data.py:60
+msgid "Colombian Peso"
+msgstr "Peso colombiano"
+
+#: coati_payroll/initial_data.py:61
+msgid "Guyanese Dollar"
+msgstr "Dólar guyanés"
+
+#: coati_payroll/initial_data.py:62
+msgid "Peruvian Sol"
+msgstr "Sol peruano"
+
+#: coati_payroll/initial_data.py:63
+msgid "Paraguayan Guaraní"
+msgstr "Guaraní paraguayo"
+
+#: coati_payroll/initial_data.py:64
+msgid "Surinamese Dollar"
+msgstr "Dólar surinamés"
+
+#: coati_payroll/initial_data.py:65
+msgid "Uruguayan Peso"
+msgstr "Peso uruguayo"
+
+#: coati_payroll/initial_data.py:66
+msgid "Venezuelan Bolívar"
+msgstr "Bolívar venezolano"
+
+#: coati_payroll/initial_data.py:69
+msgid "Netherlands Antillean Guilder"
+msgstr "Florín antillano neerlandés"
+
+#: coati_payroll/initial_data.py:70
+msgid "Aruban Florin"
+msgstr "Florín arubeño"
+
+#: coati_payroll/initial_data.py:71
+msgid "Barbadian Dollar"
+msgstr "Dólar barbadense"
+
+#: coati_payroll/initial_data.py:72
+msgid "Bahamian Dollar"
+msgstr "Dólar bahameño"
+
+#: coati_payroll/initial_data.py:73
+msgid "Cuban Peso"
+msgstr "Peso cubano"
+
+#: coati_payroll/initial_data.py:74
+msgid "Dominican Peso"
+msgstr "Peso dominicano"
+
+#: coati_payroll/initial_data.py:75
+msgid "Haitian Gourde"
+msgstr "Gourde haitiano"
+
+#: coati_payroll/initial_data.py:76
+msgid "Jamaican Dollar"
+msgstr "Dólar jamaiquino"
+
+#: coati_payroll/initial_data.py:77
+msgid "Trinidad and Tobago Dollar"
+msgstr "Dólar de Trinidad y Tobago"
+
+#: coati_payroll/initial_data.py:78
+msgid "East Caribbean Dollar"
+msgstr "Dólar del Caribe Oriental"
+
+#: coati_payroll/initial_data.py:88
+msgid "Overtime"
+msgstr "Horas extras"
+
+#: coati_payroll/initial_data.py:89
+msgid "Additional hours worked beyond regular schedule"
+msgstr "Horas adicionales trabajadas fuera del horario regular"
+
+#: coati_payroll/initial_data.py:93
+msgid "Commissions"
+msgstr "Comisiones"
+
+#: coati_payroll/initial_data.py:94
+msgid "Sales commissions and performance-based income"
+msgstr "Comisiones de ventas e ingresos por desempeño"
+
+#: coati_payroll/initial_data.py:98
+msgid "Bonuses"
+msgstr "Bonos"
+
+#: coati_payroll/initial_data.py:99
+msgid "Performance or achievement bonuses"
+msgstr "Bonos por desempeño o logros"
+
+#: coati_payroll/initial_data.py:103
+msgid "Goal Incentives"
+msgstr "Incentivos por metas"
+
+#: coati_payroll/initial_data.py:104
+msgid "Incentives for meeting specific targets or goals"
+msgstr "Incentivos por cumplimiento de metas u objetivos específicos"
+
+#: coati_payroll/initial_data.py:108
+msgid "Reported Tips"
+msgstr "Propinas reportadas"
+
+#: coati_payroll/initial_data.py:109
+msgid "Tips and gratuities reported by employee"
+msgstr "Propinas y gratificaciones reportadas por el empleado"
+
+#: coati_payroll/initial_data.py:113
+msgid "Transportation Allowance"
+msgstr "Asignación de transporte"
+
+#: coati_payroll/initial_data.py:114
+msgid "Fixed transportation allowance"
+msgstr "Asignación fija de transporte"
+
+#: coati_payroll/initial_data.py:118
+msgid "Food Allowance"
+msgstr "Asignación de alimentación"
+
+#: coati_payroll/initial_data.py:119
+msgid "Fixed food or meal allowance"
+msgstr "Asignación fija de alimentación"
+
+#: coati_payroll/initial_data.py:123
+msgid "Housing Allowance"
+msgstr "Asignación de vivienda"
+
+#: coati_payroll/initial_data.py:124
+msgid "Fixed housing or rent allowance"
+msgstr "Asignación fija de vivienda o alquiler"
+
+#: coati_payroll/initial_data.py:128
+msgid "Seniority Bonus"
+msgstr "Antigüedad"
+
+#: coati_payroll/initial_data.py:129
+msgid "Additional payment based on years of service"
+msgstr "Pago adicional basado en años de servicio"
+
+#: coati_payroll/initial_data.py:133
+msgid "Paid Vacation"
+msgstr "Vacaciones pagadas"
+
+#: coati_payroll/initial_data.py:134
+msgid "Payment for vacation time taken"
+msgstr "Pago por tiempo de vacaciones tomado"
+
+#: coati_payroll/initial_data.py:138
+msgid "Holiday Work"
+msgstr "Feriados trabajados"
+
+#: coati_payroll/initial_data.py:139
+msgid "Additional payment for working on holidays"
+msgstr "Pago adicional por trabajar en días feriados"
+
+#: coati_payroll/initial_data.py:143
+msgid "Paid Leave"
+msgstr "Permisos remunerados"
+
+#: coati_payroll/initial_data.py:144
+msgid "Payment for authorized paid leave"
+msgstr "Pago por permisos autorizados remunerados"
+
+#: coati_payroll/initial_data.py:148
+msgid "Paid License"
+msgstr "Licencias remuneradas"
+
+#: coati_payroll/initial_data.py:149
+msgid "Payment for extended paid license periods"
+msgstr "Pago por períodos de licencia remunerada extendidos"
+
+#: coati_payroll/initial_data.py:153
+msgid "Retroactive Payments"
+msgstr "Pagos retroactivos"
+
+#: coati_payroll/initial_data.py:154
+msgid "Back payments for salary adjustments"
+msgstr "Pagos atrasados por ajustes salariales"
+
+#: coati_payroll/initial_data.py:158
+msgid "13th Month Salary"
+msgstr "Aguinaldo"
+
+#: coati_payroll/initial_data.py:159
+msgid "Annual bonus (13th month salary)"
+msgstr "Bono anual (decimotercer mes)"
+
+#: coati_payroll/initial_data.py:163
+msgid "Gratuities"
+msgstr "Gratificaciones"
+
+#: coati_payroll/initial_data.py:164
+msgid "Discretionary bonuses or gratuities"
+msgstr "Bonos o gratificaciones discrecionales"
+
+#: coati_payroll/initial_data.py:168
+msgid "Severance Pay"
+msgstr "Indemnización salarial"
+
+#: coati_payroll/initial_data.py:169
+msgid "Severance or termination compensation"
+msgstr "Indemnización o compensación por terminación"
+
+#: coati_payroll/initial_data.py:180
+msgid "Salary Advance"
+msgstr "Adelanto de salario"
+
+#: coati_payroll/initial_data.py:181
+msgid ""
+"Deduction for salary advance repayment (automatic from Loans/Advances "
+"module)"
+msgstr ""
+
+#: coati_payroll/initial_data.py:185
+msgid "Voluntary Retirement Plan"
+msgstr "Plan de retiro voluntario"
+
+#: coati_payroll/initial_data.py:186
+msgid "Voluntary retirement savings contribution"
+msgstr "Contribución voluntaria para ahorro de retiro"
+
+#: coati_payroll/initial_data.py:190
+msgid "Memberships/Subscriptions"
+msgstr "Membresías o suscripciones"
+
+#: coati_payroll/initial_data.py:191
+msgid "Deduction for memberships or subscription services"
+msgstr "Deducción por membresías o servicios de suscripción"
+
+#: coati_payroll/initial_data.py:195
+msgid "Cafeteria"
+msgstr "Comedor"
+
+#: coati_payroll/initial_data.py:196
+msgid "Company cafeteria charges"
+msgstr "Cargos por comedor de la empresa"
+
+#: coati_payroll/initial_data.py:200
+msgid "Internal Loans"
+msgstr "Préstamos internos"
+
+#: coati_payroll/initial_data.py:201
+msgid "Internal loan repayment installments"
+msgstr "Cuotas de pago de préstamos internos"
+
+#: coati_payroll/initial_data.py:205
+msgid "Credit Union Loans"
+msgstr "Créditos de cooperativa"
+
+#: coati_payroll/initial_data.py:206
+msgid "Credit union or cooperative loan payments"
+msgstr "Pagos de préstamos de cooperativa o crédito"
+
+#: coati_payroll/initial_data.py:210
+msgid "Loan Interest"
+msgstr "Intereses de préstamos"
+
+#: coati_payroll/initial_data.py:211
+msgid "Interest charges on loans"
+msgstr "Cargos por intereses de préstamos"
+
+#: coati_payroll/initial_data.py:215
+msgid "Alimony"
+msgstr "Pensión alimenticia"
+
+#: coati_payroll/initial_data.py:216
+msgid "Court-ordered alimony or child support payments"
+msgstr "Pensión alimenticia o manutención ordenada por tribunal"
+
+#: coati_payroll/initial_data.py:220
+msgid "Court Garnishments"
+msgstr "Embargos judiciales"
+
+#: coati_payroll/initial_data.py:221
+msgid "Court-ordered wage garnishments"
+msgstr "Embargos salariales ordenados por tribunal"
+
+#: coati_payroll/initial_data.py:225
+msgid "Unpaid Absences"
+msgstr "Descuentos por ausencias no remuneradas"
+
+#: coati_payroll/initial_data.py:226
+msgid "Deductions for unpaid absences"
+msgstr "Descuentos por ausencias sin goce de salario"
+
+#: coati_payroll/initial_data.py:230
+msgid "Tardiness"
+msgstr "Descuentos por tardanzas"
+
+#: coati_payroll/initial_data.py:231
+msgid "Deductions for late arrivals"
+msgstr "Descuentos por llegadas tardías"
+
+#: coati_payroll/initial_data.py:235
+msgid "Non-compliance Penalties"
+msgstr "Penalizaciones por incumplimientos"
+
+#: coati_payroll/initial_data.py:236
+msgid "Penalties for policy or contract violations"
+msgstr "Penalizaciones por violaciones de políticas o contratos"
+
+#: coati_payroll/initial_data.py:240
+msgid "Losses or Damages"
+msgstr "Descuentos por pérdidas o daños"
+
+#: coati_payroll/initial_data.py:241
+msgid "Deductions for lost or damaged property"
+msgstr "Descuentos por propiedad perdida o dañada"
+
+#: coati_payroll/initial_data.py:245
+msgid "Uniform Penalties"
+msgstr "Penalización por uniformes no devueltos"
+
+#: coati_payroll/initial_data.py:246
+msgid "Penalties for unreturned uniforms or equipment"
+msgstr "Penalizaciones por uniformes o equipos no devueltos"
+
+#: coati_payroll/initial_data.py:250
+msgid "Store/Canteen Purchases"
+msgstr "Consumos en tienda/cantina de la empresa"
+
+#: coati_payroll/initial_data.py:251
+msgid "Purchases at company store or canteen"
+msgstr "Compras en tienda o cantina de la empresa"
+
+#: coati_payroll/initial_data.py:255
+msgid "Voluntary Donations"
+msgstr "Donaciones voluntarias"
+
+#: coati_payroll/initial_data.py:256
+msgid "Voluntary charitable donations"
+msgstr "Donaciones caritativas voluntarias"
+
+#: coati_payroll/initial_data.py:260
+msgid "Association Contributions"
+msgstr "Aportaciones voluntarias a asociaciones"
+
+#: coati_payroll/initial_data.py:261
+msgid "Voluntary contributions to associations"
+msgstr "Aportaciones voluntarias a asociaciones"
+
+#: coati_payroll/initial_data.py:265
+msgid "Union Dues"
+msgstr "Cuota sindical voluntaria"
+
+#: coati_payroll/initial_data.py:266
+msgid "Voluntary union membership dues"
+msgstr "Cuota sindical voluntaria"
+
+#: coati_payroll/initial_data.py:270
+msgid "Overpayment Correction"
+msgstr "Corrección de pagos en exceso"
+
+#: coati_payroll/initial_data.py:271
+msgid "Correction for previous overpayments"
+msgstr "Corrección por pagos en exceso anteriores"
+
 #: coati_payroll/templates/base.html:7
 msgid "Coaty - Sistema de Planillas"
 msgstr "Coaty - Sistema de Planillas"
@@ -1604,7 +2018,7 @@ msgstr "Préstamos"
 #: coati_payroll/templates/modules/employee/index.html:9
 #: coati_payroll/templates/modules/planilla/config.html:83
 #: coati_payroll/templates/modules/planilla/config_empleados.html:8
-#: coati_payroll/templates/modules/planilla/form.html:189
+#: coati_payroll/templates/modules/planilla/form.html:156
 #: coati_payroll/templates/modules/planilla/index.html:33
 msgid "Empleados"
 msgstr "Empleados"
@@ -1657,7 +2071,7 @@ msgstr "Tipos de Cambio"
 #: coati_payroll/templates/base.html:168
 #: coati_payroll/templates/modules/planilla/config.html:102
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:8
-#: coati_payroll/templates/modules/planilla/form.html:193
+#: coati_payroll/templates/modules/planilla/form.html:160
 #: coati_payroll/templates/modules/planilla/index.html:34
 #: coati_payroll/vistas/payroll_concepts.py:62
 msgid "Percepciones"
@@ -1666,7 +2080,7 @@ msgstr "Percepciones"
 #: coati_payroll/templates/base.html:173
 #: coati_payroll/templates/modules/planilla/config.html:121
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:8
-#: coati_payroll/templates/modules/planilla/form.html:197
+#: coati_payroll/templates/modules/planilla/form.html:164
 #: coati_payroll/templates/modules/planilla/index.html:35
 #: coati_payroll/vistas/payroll_concepts.py:73
 msgid "Deducciones"
@@ -1675,7 +2089,7 @@ msgstr "Deducciones"
 #: coati_payroll/templates/base.html:178
 #: coati_payroll/templates/modules/planilla/config.html:140
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:8
-#: coati_payroll/templates/modules/planilla/form.html:201
+#: coati_payroll/templates/modules/planilla/form.html:168
 #: coati_payroll/templates/modules/planilla/index.html:36
 #: coati_payroll/vistas/payroll_concepts.py:84
 msgid "Prestaciones"
@@ -1689,7 +2103,7 @@ msgid "Reglas de Cálculo"
 msgstr "Reglas de Cálculo"
 
 #: coati_payroll/templates/base.html:188
-#: coati_payroll/templates/modules/employee/form.html:191
+#: coati_payroll/templates/modules/employee/form.html:188
 msgid "Campos Personalizados"
 msgstr "Campos Personalizados"
 
@@ -1835,10 +2249,10 @@ msgstr "Volver"
 #: coati_payroll/templates/modules/configuracion/index.html:53
 #: coati_payroll/templates/modules/currency/form.html:41
 #: coati_payroll/templates/modules/custom_field/form.html:56
-#: coati_payroll/templates/modules/employee/form.html:248
+#: coati_payroll/templates/modules/employee/form.html:245
 #: coati_payroll/templates/modules/empresa/form.html:68
 #: coati_payroll/templates/modules/exchange_rate/form.html:41
-#: coati_payroll/templates/modules/planilla/form.html:171
+#: coati_payroll/templates/modules/planilla/form.html:138
 #: coati_payroll/templates/modules/planilla/index.html:118
 #: coati_payroll/templates/modules/planilla/novedades/form.html:109
 #: coati_payroll/templates/modules/prestamo/approve.html:134
@@ -2366,29 +2780,29 @@ msgstr "Información Personal"
 msgid "Información Laboral"
 msgstr "Información Laboral"
 
-#: coati_payroll/templates/modules/employee/form.html:122
+#: coati_payroll/templates/modules/employee/form.html:119
 msgid "Información de Contacto"
 msgstr "Información de Contacto"
 
-#: coati_payroll/templates/modules/employee/form.html:140
+#: coati_payroll/templates/modules/employee/form.html:137
 msgid "Información Bancaria"
 msgstr "Información Bancaria"
 
-#: coati_payroll/templates/modules/employee/form.html:153
+#: coati_payroll/templates/modules/employee/form.html:150
 msgid "Datos Iniciales de Implementación"
 msgstr "Datos Iniciales de Implementación"
 
-#: coati_payroll/templates/modules/employee/form.html:155
+#: coati_payroll/templates/modules/employee/form.html:152
 msgid ""
 "Estos campos almacenan saldos acumulados cuando el sistema se implementa "
 "a mitad de un período fiscal."
 msgstr ""
 
-#: coati_payroll/templates/modules/employee/form.html:175
+#: coati_payroll/templates/modules/employee/form.html:172
 msgid "Últimos tres salarios mensuales antes de la implementación:"
 msgstr "Últimos tres salarios mensuales antes de la implementación:"
 
-#: coati_payroll/templates/modules/employee/form.html:193
+#: coati_payroll/templates/modules/employee/form.html:190
 msgid ""
 "Estos campos son personalizados y pueden ser configurados desde el menú "
 "de Configuración."
@@ -2765,23 +3179,19 @@ msgstr "Ver Configuración"
 msgid "Configuración General"
 msgstr "Configuración General"
 
-#: coati_payroll/templates/modules/planilla/form.html:123
+#: coati_payroll/templates/modules/planilla/form.html:110
 msgid "Deducciones Automáticas"
 msgstr "Deducciones Automáticas"
 
 #: coati_payroll/templates/modules/planilla/form.html:151
-msgid "Cuentas Contables del Salario Base"
-msgstr "Cuentas Contables del Salario Base"
-
-#: coati_payroll/templates/modules/planilla/form.html:184
 msgid "Componentes Asignados"
 msgstr "Componentes Asignados"
 
-#: coati_payroll/templates/modules/planilla/form.html:205
+#: coati_payroll/templates/modules/planilla/form.html:172
 msgid "Reglas"
 msgstr "Reglas"
 
-#: coati_payroll/templates/modules/planilla/form.html:211
+#: coati_payroll/templates/modules/planilla/form.html:178
 msgid "Gestionar Componentes"
 msgstr "Gestionar Componentes"
 
@@ -3966,4 +4376,7 @@ msgstr "Contraseña actualizada exitosamente."
 #: coati_payroll/vistas/user.py:174
 msgid "Perfil actualizado exitosamente."
 msgstr "Perfil actualizado exitosamente."
+
+#~ msgid "Cuentas Contables del Salario Base"
+#~ msgstr "Cuentas Contables del Salario Base"
 

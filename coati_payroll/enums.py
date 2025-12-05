@@ -59,9 +59,11 @@ class NominaEstado(StrEnum):
     StrEnum ensures type safety when checking or setting nomina status.
     """
 
+    CALCULANDO = "calculando"  # Calculating in background
     GENERADO = "generado"  # Generated but not approved
     APROBADO = "aprobado"  # Approved and ready to apply
     APLICADO = "aplicado"  # Applied/executed
+    ERROR = "error"  # Error during calculation
 
 
 class AdelantoEstado(StrEnum):

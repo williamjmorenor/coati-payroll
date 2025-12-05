@@ -652,8 +652,11 @@ def remove_regla(planilla_id: str, association_id: str):
 def ejecutar_nomina(planilla_id: str):
     """Execute a payroll run for a planilla."""
     from datetime import date
+    from flask import current_app
     from coati_payroll.nomina_engine import NominaEngine
     from coati_payroll.model import Nomina
+    from coati_payroll.enums import NominaEstado
+    from coati_payroll.queue import get_queue_driver
 
     planilla = db.get_or_404(Planilla, planilla_id)
 
@@ -681,36 +684,112 @@ def ejecutar_nomina(planilla_id: str):
                 url_for("planilla.ejecutar_nomina", planilla_id=planilla_id)
             )
 
-        # Execute the payroll
-        engine = NominaEngine(
-            planilla=planilla,
-            periodo_inicio=periodo_inicio,
-            periodo_fin=periodo_fin,
-            fecha_calculo=fecha_calculo,
-            usuario=current_user.usuario,
+        # Count active employees
+        num_empleados = sum(
+            1
+            for pe in planilla.planilla_empleados
+            if pe.activo and pe.empleado.activo
         )
 
-        nomina = engine.ejecutar()
+        # Get configurable threshold for background processing
+        # Default is 100, but can be adjusted via BACKGROUND_PAYROLL_THRESHOLD env var
+        # - Lower (25-50) for systems with complex formulas or slow performance
+        # - Higher (200-500) for high-performance systems with simple formulas
+        threshold = current_app.config.get("BACKGROUND_PAYROLL_THRESHOLD", 100)
 
-        if engine.errors:
-            for error in engine.errors:
-                flash(error, "error")
+        # Determine if we should process in background
+        # For large payrolls (>threshold employees), use background processing
+        if num_empleados > threshold:
+            # Create nomina record with "calculando" status
+            nomina = Nomina(
+                planilla_id=planilla_id,
+                periodo_inicio=periodo_inicio,
+                periodo_fin=periodo_fin,
+                generado_por=current_user.usuario,
+                estado=NominaEstado.CALCULANDO,
+                total_bruto=0,
+                total_deducciones=0,
+                total_neto=0,
+                total_empleados=num_empleados,
+                empleados_procesados=0,
+                empleados_con_error=0,
+                procesamiento_en_background=True,
+            )
+            db.session.add(nomina)
+            db.session.commit()
 
-        if engine.warnings:
-            for warning in engine.warnings:
-                flash(warning, "warning")
-
-        if nomina:
-            flash(_("Nómina generada exitosamente."), "success")
-            return redirect(
-                url_for(
-                    "planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina.id
+            # Enqueue background task
+            try:
+                queue = get_queue_driver()
+                queue.enqueue(
+                    "process_large_payroll",
+                    nomina_id=nomina.id,
+                    planilla_id=planilla_id,
+                    periodo_inicio=periodo_inicio.isoformat(),
+                    periodo_fin=periodo_fin.isoformat(),
+                    fecha_calculo=fecha_calculo.isoformat(),
+                    usuario=current_user.usuario,
                 )
-            )
+                flash(
+                    _(
+                        "La nómina está siendo calculada en segundo plano. "
+                        "Se procesarán %(num)d empleados. "
+                        "Por favor, revise el progreso en unos momentos.",
+                        num=num_empleados,
+                    ),
+                    "info",
+                )
+                return redirect(
+                    url_for(
+                        "planilla.ver_nomina",
+                        planilla_id=planilla_id,
+                        nomina_id=nomina.id,
+                    )
+                )
+            except Exception as e:
+                # If background processing fails, mark nomina as error
+                nomina.estado = NominaEstado.ERROR
+                nomina.errores_calculo = {"background_task_initialization_error": str(e)}
+                db.session.commit()
+                flash(
+                    _("Error al iniciar el procesamiento en segundo plano: %(error)s", error=str(e)),
+                    "error",
+                )
+                return redirect(
+                    url_for("planilla.ejecutar_nomina", planilla_id=planilla_id)
+                )
         else:
-            return redirect(
-                url_for("planilla.ejecutar_nomina", planilla_id=planilla_id)
+            # For smaller payrolls, process synchronously as before
+            # Execute the payroll
+            engine = NominaEngine(
+                planilla=planilla,
+                periodo_inicio=periodo_inicio,
+                periodo_fin=periodo_fin,
+                fecha_calculo=fecha_calculo,
+                usuario=current_user.usuario,
             )
+
+            nomina = engine.ejecutar()
+
+            if engine.errors:
+                for error in engine.errors:
+                    flash(error, "error")
+
+            if engine.warnings:
+                for warning in engine.warnings:
+                    flash(warning, "warning")
+
+            if nomina:
+                flash(_("Nómina generada exitosamente."), "success")
+                return redirect(
+                    url_for(
+                        "planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina.id
+                    )
+                )
+            else:
+                return redirect(
+                    url_for("planilla.ejecutar_nomina", planilla_id=planilla_id)
+                )
 
     # GET - show execution form
     # Get last nomina for default dates
@@ -849,6 +928,39 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
         percepciones=percepciones,
         deducciones=deducciones,
         prestaciones=prestaciones,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/progreso")
+@login_required
+def progreso_nomina(planilla_id: str, nomina_id: str):
+    """API endpoint to check calculation progress of a nomina."""
+    from flask import jsonify
+    from coati_payroll.model import Nomina
+
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        return jsonify({"error": "Nomina does not belong to this planilla"}), 404
+
+    return jsonify(
+        {
+            "estado": nomina.estado,
+            "total_empleados": nomina.total_empleados or 0,
+            "empleados_procesados": nomina.empleados_procesados or 0,
+            "empleados_con_error": nomina.empleados_con_error or 0,
+            "progreso_porcentaje": (
+                int(
+                    (nomina.empleados_procesados / nomina.total_empleados) * 100
+                )
+                if nomina.total_empleados and nomina.total_empleados > 0
+                else 0
+            ),
+            "errores_calculo": nomina.errores_calculo or {},
+            "procesamiento_en_background": nomina.procesamiento_en_background,
+            "empleado_actual": nomina.empleado_actual or "",
+            "log_procesamiento": nomina.log_procesamiento or [],
+        }
     )
 
 

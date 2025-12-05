@@ -845,7 +845,7 @@ class Nomina(database.Model, BaseTabla):
     generado_por = database.Column(database.String(150), nullable=True)
     estado = database.Column(
         database.String(30), nullable=False, default="generado"
-    )  # generado, aprobado, aplicado
+    )  # calculando, generado, aprobado, aplicado, error
 
     total_bruto = database.Column(
         database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
@@ -856,6 +856,21 @@ class Nomina(database.Model, BaseTabla):
     total_neto = database.Column(
         database.Numeric(14, 2), nullable=True, default=Decimal("0.00")
     )
+    
+    # Progress tracking for background processing
+    total_empleados = database.Column(database.Integer, nullable=True, default=0)
+    empleados_procesados = database.Column(database.Integer, nullable=True, default=0)
+    empleados_con_error = database.Column(database.Integer, nullable=True, default=0)
+    errores_calculo = database.Column(
+        MutableDict.as_mutable(JSON), nullable=True, default=dict
+    )
+    procesamiento_en_background = database.Column(
+        database.Boolean, nullable=False, default=False
+    )
+    log_procesamiento = database.Column(
+        JSON, nullable=True
+    )  # Stores list of log entries as JSON
+    empleado_actual = database.Column(database.String(255), nullable=True)
 
     planilla = database.relationship("Planilla", back_populates="nominas")
     nomina_empleados = database.relationship(
@@ -1484,6 +1499,16 @@ class AcumuladoAnual(database.Model, BaseTabla):
     # Last processed period
     ultimo_periodo_procesado = database.Column(database.Date, nullable=True)
 
+    # Monthly accumulated salary (for biweekly/weekly payrolls)
+    # This tracks the accumulated salary in the current calendar month
+    # Essential for calculations that require month-to-date totals
+    salario_acumulado_mes = database.Column(
+        database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )
+    mes_actual = database.Column(
+        database.Integer, nullable=True
+    )  # Current month (1-12) for tracking monthly resets
+
     # Additional accumulated data (JSON for flexibility)
     # Can store: inss_acumulado, otras_deducciones_acumuladas, percepciones_acumuladas, etc.
     datos_adicionales = database.Column(
@@ -1492,6 +1517,16 @@ class AcumuladoAnual(database.Model, BaseTabla):
 
     empleado = database.relationship("Empleado", backref="acumulados_anuales")
     tipo_planilla = database.relationship("TipoPlanilla", back_populates="acumulados")
+
+    def reset_mes_acumulado_if_needed(self, periodo_fin: date) -> None:
+        """Reset monthly accumulated salary if entering a new month.
+        
+        Args:
+            periodo_fin: End date of the current payroll period
+        """
+        if self.mes_actual != periodo_fin.month:
+            self.salario_acumulado_mes = Decimal("0.00")
+            self.mes_actual = periodo_fin.month
 
 
 # Global configuration settings

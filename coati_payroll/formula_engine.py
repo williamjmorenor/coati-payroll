@@ -1065,6 +1065,11 @@ AVAILABLE_DATA_SOURCES = {
                 "label": "Total Neto Acumulado",
                 "description": "Total neto pagado en el período fiscal",
             },
+            "salario_acumulado_mes": {
+                "type": "decimal",
+                "label": "Salario Acumulado del Mes",
+                "description": "Total de salario bruto acumulado en el mes calendario actual. Para planillas quincenales o semanales, esto suma todos los pagos del mes en curso.",
+            },
         },
     },
     "prestamos_adelantos": {

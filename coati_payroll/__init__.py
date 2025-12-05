@@ -269,3 +269,11 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
             initialize_language_from_env()
         except Exception as exc:
             log.trace(f"Could not initialize language from environment: {exc}")
+        
+        # Load initial data (currencies, income concepts, deduction concepts)
+        # Strings are translated automatically based on the configured language
+        try:
+            from coati_payroll.initial_data import load_initial_data
+            load_initial_data()
+        except Exception as exc:
+            log.trace(f"Could not load initial data: {exc}")

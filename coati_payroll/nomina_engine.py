@@ -333,7 +333,7 @@ class NominaEngine:
         multiplying by the number of days in the current payroll period.
 
         Formula:
-        - Daily salary = Monthly salary / dias_base (typically 30)
+        - Daily salary = Monthly salary / 30 (always use 30-day month)
         - Period salary = Daily salary × actual days in period
 
         Args:
@@ -349,16 +349,18 @@ class NominaEngine:
         if not self.periodo_fin or not self.periodo_inicio:
             return salario_mensual
 
-        # Get the base days for calculating daily salary (usually 30 for monthly)
-        dias_base = Decimal(str(self.planilla.tipo_planilla.dias or 30))
-
         # Calculate actual days in this pay period
         dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
 
-        # If the period days equals the base days, return the full salary
-        # to avoid rounding issues (e.g., for monthly payrolls)
-        if dias_periodo == int(dias_base):
+        # For monthly payrolls (30 days), return full salary to avoid rounding
+        # Check the periodicidad to determine if this is a monthly payroll
+        periodicidad = self.planilla.tipo_planilla.periodicidad.lower()
+        if periodicidad == "mensual" and dias_periodo == 30:
             return salario_mensual
+
+        # Always use 30 days as the base for salary proration
+        # This ensures consistent daily rates regardless of payroll type
+        dias_base = Decimal("30")
 
         # Calculate daily salary
         salario_diario = (salario_mensual / dias_base).quantize(
@@ -507,6 +509,7 @@ class NominaEngine:
             "salario_acumulado": Decimal("0.00"),
             "impuesto_acumulado": Decimal("0.00"),
             "ir_retenido_acumulado": Decimal("0.00"),
+            "salario_acumulado_mes": Decimal("0.00"),  # Monthly accumulated salary
         }
 
         # Add employee implementation initial values
@@ -533,6 +536,9 @@ class NominaEngine:
             )
             variables["ir_retenido_acumulado"] += Decimal(
                 str(acumulado.impuesto_retenido_acumulado or 0)
+            )
+            variables["salario_acumulado_mes"] = Decimal(
+                str(acumulado.salario_acumulado_mes or 0)
             )
 
         return variables
@@ -942,8 +948,8 @@ class NominaEngine:
                     base = emp_calculo.salario_mensual
 
                 # Calculate hourly rate
-                # Default: 30 days/month, 8 hours/day (HORAS_TRABAJO_DIA constant)
-                dias_base = Decimal(str(self.planilla.tipo_planilla.dias or 30))
+                # Always use 30 days/month, 8 hours/day (HORAS_TRABAJO_DIA constant)
+                dias_base = Decimal("30")
                 tasa_hora = (base / dias_base / HORAS_TRABAJO_DIA).quantize(
                     Decimal("0.01"), rounding=ROUND_HALF_UP
                 )
@@ -977,8 +983,8 @@ class NominaEngine:
                     # salario_mensual is the full monthly salary before period proration
                     base = emp_calculo.salario_mensual
 
-                # Calculate daily rate
-                dias_base = Decimal(str(self.planilla.tipo_planilla.dias or 30))
+                # Calculate daily rate - always use 30-day month
+                dias_base = Decimal("30")
                 tasa_dia = (base / dias_base).quantize(
                     Decimal("0.01"), rounding=ROUND_HALF_UP
                 )
@@ -1136,11 +1142,17 @@ class NominaEngine:
                 deducciones_antes_impuesto_acumulado=Decimal("0.00"),
                 impuesto_retenido_acumulado=Decimal("0.00"),
                 periodos_procesados=0,
+                salario_acumulado_mes=Decimal("0.00"),
+                mes_actual=self.periodo_fin.month,
             )
             db.session.add(acumulado)
 
+        # Reset monthly accumulation if entering a new month
+        acumulado.reset_mes_acumulado_if_needed(self.periodo_fin)
+
         # Update accumulated values
         acumulado.salario_bruto_acumulado += emp_calculo.salario_bruto
+        acumulado.salario_acumulado_mes += emp_calculo.salario_bruto
         acumulado.periodos_procesados += 1
         acumulado.ultimo_periodo_procesado = self.periodo_fin
 
