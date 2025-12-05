@@ -1271,7 +1271,7 @@ AVAILABLE_DATA_SOURCES = {
                 "type": "decimal",
                 "label": "Aguinaldo/Gratificación Anual",
                 "description": "Pago extra en época específica del año",
-                "codigo_concepto": "AGUINALDO",
+                "codigo_concepto": "THIRTEENTH_SALARY",
                 "tipo_valor": "monto",
                 "gravable": True,
             },
@@ -1604,7 +1604,7 @@ NOVELTY_CODES = {
         "gravable": True,
         "descripcion": "Pago por días festivos trabajados",
     },
-    "AGUINALDO": {
+    "THIRTEENTH_SALARY": {
         "tipo": "percepcion",
         "gravable": True,
         "descripcion": "Aguinaldo o gratificación anual",

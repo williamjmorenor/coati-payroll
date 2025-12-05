@@ -75,3 +75,129 @@ class TestProtegerPasswd:
         assert isinstance(result, bytes)
         # Verify the hash is correct
         assert ph.verify(result.decode("utf-8"), password.encode())
+
+
+class TestValidarAcceso:
+    """Tests for access validation function."""
+
+    def test_validar_acceso_valid_credentials(self, app):
+        """Test validar_acceso with valid credentials."""
+        from coati_payroll.auth import validar_acceso, proteger_passwd
+        from coati_payroll.model import Usuario, db
+
+        with app.app_context():
+            # Create a test user
+            user = Usuario()
+            user.usuario = "testuser_auth"
+            user.acceso = proteger_passwd("testpass")
+            user.nombre = "Test"
+            user.apellido = "User"
+            user.tipo = "user"
+            user.activo = True
+            db.session.add(user)
+            db.session.commit()
+
+            # Test valid credentials
+            result = validar_acceso("testuser_auth", "testpass")
+            assert result is True
+
+    def test_validar_acceso_invalid_password(self, app):
+        """Test validar_acceso with invalid password."""
+        from coati_payroll.auth import validar_acceso, proteger_passwd
+        from coati_payroll.model import Usuario, db
+
+        with app.app_context():
+            # Create a test user
+            user = Usuario()
+            user.usuario = "testuser_auth2"
+            user.acceso = proteger_passwd("testpass")
+            user.nombre = "Test"
+            user.apellido = "User"
+            user.tipo = "user"
+            user.activo = True
+            db.session.add(user)
+            db.session.commit()
+
+            # Test invalid password
+            result = validar_acceso("testuser_auth2", "wrongpass")
+            assert result is False
+
+    def test_validar_acceso_nonexistent_user(self, app):
+        """Test validar_acceso with non-existent user."""
+        from coati_payroll.auth import validar_acceso
+
+        with app.app_context():
+            # Test non-existent user
+            result = validar_acceso("nonexistent_user", "anypass")
+            assert result is False
+
+    def test_validar_acceso_by_email(self, app):
+        """Test validar_acceso with email instead of username."""
+        from coati_payroll.auth import validar_acceso, proteger_passwd
+        from coati_payroll.model import Usuario, db
+
+        with app.app_context():
+            # Create a test user with email
+            user = Usuario()
+            user.usuario = "testuser_auth3"
+            user.correo_electronico = "test@example.com"
+            user.acceso = proteger_passwd("testpass")
+            user.nombre = "Test"
+            user.apellido = "User"
+            user.tipo = "user"
+            user.activo = True
+            db.session.add(user)
+            db.session.commit()
+
+            # Test with email
+            result = validar_acceso("test@example.com", "testpass")
+            assert result is True
+
+
+class TestAuthRoutes:
+    """Tests for authentication routes."""
+
+    def test_login_page_get(self, client):
+        """Test GET request to login page."""
+        response = client.get("/auth/login")
+        assert response.status_code == 200
+        assert b"login" in response.data.lower() or b"email" in response.data.lower()
+
+    def test_login_post_valid(self, app, client):
+        """Test POST to login with valid credentials."""
+        from coati_payroll.auth import proteger_passwd
+        from coati_payroll.model import Usuario, db
+
+        with app.app_context():
+            # Create a test user
+            user = Usuario()
+            user.usuario = "testuser_login"
+            user.acceso = proteger_passwd("testpass")
+            user.nombre = "Test"
+            user.apellido = "User"
+            user.tipo = "user"
+            user.activo = True
+            db.session.add(user)
+            db.session.commit()
+
+        # Try to login
+        response = client.post(
+            "/auth/login",
+            data={"email": "testuser_login", "password": "testpass"},
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+
+    def test_login_post_invalid(self, client):
+        """Test POST to login with invalid credentials."""
+        response = client.post(
+            "/auth/login",
+            data={"email": "nonexistent", "password": "wrongpass"},
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+
+    def test_logout_redirects(self, authenticated_client):
+        """Test logout redirects to login."""
+        response = authenticated_client.get("/auth/logout", follow_redirects=True)
+        assert response.status_code == 200

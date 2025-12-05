@@ -96,6 +96,44 @@ class TestInitialDataConstants:
         assert "BRL" in codes  # Brazil
         assert "ARS" in codes  # Argentina
         assert "NIO" in codes  # Nicaragua
+        
+    def test_income_concepts_use_english_codes(self):
+        """Test that income concept codes are in English, not Spanish."""
+        codes = [c["codigo"] for c in INCOME_CONCEPTS]
+        # Verify the codes mentioned in the issue are now in English
+        assert "GOAL_INCENTIVES" in codes
+        assert "SEVERANCE_PAY" in codes
+        assert "PAID_LICENSE" in codes
+        assert "RETROACTIVE_PAYMENTS" in codes
+        assert "PAID_LEAVE" in codes
+        assert "REPORTED_TIPS" in codes
+        assert "PAID_VACATION" in codes
+        # Verify old Spanish codes are NOT present
+        assert "INCENTIVOS_METAS" not in codes
+        assert "INDEMNIZACION_SALARIAL" not in codes
+        assert "LICENCIAS_REMUNERADAS" not in codes
+        assert "PAGOS_RETROACTIVOS" not in codes
+        assert "PERMISOS_REMUNERADOS" not in codes
+        assert "PROPINAS" not in codes
+        assert "VACACIONES_PAGADAS" not in codes
+        
+    def test_deduction_concepts_use_english_codes(self):
+        """Test that deduction concept codes are in English, not Spanish."""
+        codes = [c["codigo"] for c in DEDUCTION_CONCEPTS]
+        # Verify all codes are in English
+        assert "SALARY_ADVANCE" in codes
+        assert "VOLUNTARY_RETIREMENT" in codes
+        assert "CAFETERIA" in codes
+        assert "INTERNAL_LOANS" in codes
+        assert "ALIMONY" in codes
+        assert "UNION_DUES" in codes
+        # Verify old Spanish codes are NOT present
+        assert "ADELANTO_SALARIO" not in codes
+        assert "PLAN_RETIRO_VOLUNTARIO" not in codes
+        assert "COMEDOR" not in codes
+        assert "PRESTAMOS_INTERNOS" not in codes
+        assert "PENSION_ALIMENTICIA" not in codes
+        assert "CUOTA_SINDICAL" not in codes
 
 
 class TestLoadCurrencies:
@@ -166,10 +204,10 @@ class TestLoadIncomeConcepts:
             
             # Check a specific concept
             overtime = db.session.execute(
-                db.select(Percepcion).filter_by(codigo="HORAS_EXTRAS")
+                db.select(Percepcion).filter_by(codigo="OVERTIME")
             ).scalar_one_or_none()
             assert overtime is not None
-            assert overtime.codigo == "HORAS_EXTRAS"
+            assert overtime.codigo == "OVERTIME"
             assert overtime.activo is True
             
     def test_load_income_concepts_no_duplicates(self, app):
@@ -219,10 +257,10 @@ class TestLoadDeductionConcepts:
             
             # Check a specific concept
             advance = db.session.execute(
-                db.select(Deduccion).filter_by(codigo="ADELANTO_SALARIO")
+                db.select(Deduccion).filter_by(codigo="SALARY_ADVANCE")
             ).scalar_one_or_none()
             assert advance is not None
-            assert advance.codigo == "ADELANTO_SALARIO"
+            assert advance.codigo == "SALARY_ADVANCE"
             assert advance.activo is True
             
     def test_load_deduction_concepts_no_duplicates(self, app):

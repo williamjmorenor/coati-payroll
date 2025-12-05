@@ -201,6 +201,44 @@ El sistema genera reportes visuales. Para exportación, consulte las funcionalid
 
 ---
 
+## Características Avanzadas
+
+### ¿Qué son los campos personalizados?
+
+Los campos personalizados permiten extender la información de empleados con datos adicionales específicos de su organización, como tipo de sangre, contactos de emergencia, o cualquier información que necesite registrar.
+
+Para más información, consulte la [Guía de Campos Personalizados](../guia/campos-personalizados.md).
+
+### ¿Qué son las reglas de cálculo?
+
+Las reglas de cálculo son esquemas configurables para cálculos complejos como impuestos progresivos o seguridad social con topes. Permiten definir tablas de tramos y fórmulas estructuradas sin necesidad de programar.
+
+Para más información, consulte la [Guía de Reglas de Cálculo](../guia/reglas-calculo.md).
+
+### ¿Qué es el procesamiento en segundo plano?
+
+Para nóminas grandes (más de 100 empleados por defecto), el sistema automáticamente procesa la nómina en segundo plano usando un sistema de colas. Esto evita que la interfaz se congele y proporciona feedback en tiempo real del progreso.
+
+El umbral se puede ajustar con la variable de entorno `BACKGROUND_PAYROLL_THRESHOLD`.
+
+Para más información, consulte la documentación del [Sistema de Colas](../queue_system.md) y [Procesamiento en Segundo Plano](../background-payroll-processing.md).
+
+### ¿Cómo sé si mi nómina se está procesando en segundo plano?
+
+Verá un mensaje que indica "La nómina está siendo calculada en segundo plano" y una barra de progreso mostrando cuántos empleados se han procesado del total. La página se actualiza automáticamente para mostrar el progreso.
+
+### ¿Qué pasa si el procesamiento en segundo plano falla?
+
+Si algunos empleados fallan al procesarse:
+- El sistema continúa con los demás empleados
+- Se registran los errores específicos por empleado
+- Puede revisar los errores en el detalle de la nómina
+- Los empleados exitosos mantienen sus cálculos
+
+Si todo falla, puede intentar ejecutar la nómina nuevamente.
+
+---
+
 ## Solución de Problemas
 
 ### Error: "La planilla no tiene empleados asignados"

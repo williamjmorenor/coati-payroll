@@ -21,7 +21,13 @@ El monto sobre el cual se aplica un porcentaje para calcular una percepción, de
 ### Base Gravable
 Monto sobre el cual se calculan los impuestos. Se obtiene restando las deducciones "antes de impuesto" del salario bruto.
 
+### Background Processing (Procesamiento en Segundo Plano)
+Sistema que ejecuta tareas de larga duración (como calcular nóminas grandes) en segundo plano sin bloquear la interfaz de usuario. Proporciona feedback en tiempo real del progreso.
+
 ## C
+
+### Campo Personalizado
+Campo adicional definido por el usuario para almacenar información específica de empleados que no está incluida en los campos estándar. Ejemplos: tipo de sangre, contacto de emergencia, talla de uniforme.
 
 ### Centro de Costos
 Unidad organizacional o proyecto al que se imputan los gastos de nómina. Permite segmentar el costo de personal por departamento o proyecto.
@@ -33,6 +39,9 @@ Monto fijo que se descuenta periódicamente de un préstamo o adelanto hasta sal
 
 ### Deducción
 Concepto que se resta del salario bruto del empleado. Ejemplos: INSS laboral, IR, cuota sindical, préstamos.
+
+### Dramatiq
+Sistema de colas de tareas distribuido que usa Redis como backend. Utilizado para procesamiento en segundo plano en entornos de producción.
 
 ### Deducción Antes de Impuesto
 Deducción que se aplica antes de calcular el impuesto sobre la renta, reduciendo así la base gravable. Ejemplo: INSS laboral.
@@ -67,6 +76,11 @@ Fecha en que el empleado dejó de trabajar en la empresa.
 
 ### Gravable
 Que está sujeto al pago de impuestos. Una percepción gravable aumenta la base sobre la cual se calcula el IR.
+
+## H
+
+### Huey
+Sistema de colas de tareas ligero que usa filesystem como backend. Utilizado como fallback automático cuando Redis no está disponible, ideal para desarrollo y entornos pequeños.
 
 ## I
 
@@ -132,8 +146,8 @@ Número que determina el orden en que se aplican las deducciones. Menor número 
 ### Recurrente
 Que se aplica automáticamente en cada período de nómina sin necesidad de configuración adicional.
 
-### ReglaCalculo
-Esquema JSON que define lógica de cálculo compleja, como tablas de impuestos progresivos.
+### Regla de Cálculo (ReglaCalculo)
+Esquema JSON configurable que define lógica de cálculo compleja, como tablas de impuestos progresivos o seguridad social con topes. Permite definir cálculos por tramos sin necesidad de programar.
 
 ## S
 

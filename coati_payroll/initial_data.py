@@ -84,87 +84,87 @@ CURRENCIES = [
 # All names and descriptions are marked for translation
 INCOME_CONCEPTS = [
     {
-        "codigo": "HORAS_EXTRAS",
+        "codigo": "OVERTIME",
         "nombre": _("Overtime"),
         "descripcion": _("Additional hours worked beyond regular schedule")
     },
     {
-        "codigo": "COMISIONES",
+        "codigo": "COMMISSIONS",
         "nombre": _("Commissions"),
         "descripcion": _("Sales commissions and performance-based income")
     },
     {
-        "codigo": "BONOS",
+        "codigo": "BONUSES",
         "nombre": _("Bonuses"),
         "descripcion": _("Performance or achievement bonuses")
     },
     {
-        "codigo": "INCENTIVOS_METAS",
+        "codigo": "GOAL_INCENTIVES",
         "nombre": _("Goal Incentives"),
         "descripcion": _("Incentives for meeting specific targets or goals")
     },
     {
-        "codigo": "PROPINAS",
+        "codigo": "REPORTED_TIPS",
         "nombre": _("Reported Tips"),
         "descripcion": _("Tips and gratuities reported by employee")
     },
     {
-        "codigo": "ASIG_TRANSPORTE",
+        "codigo": "TRANSPORT_ALLOWANCE",
         "nombre": _("Transportation Allowance"),
         "descripcion": _("Fixed transportation allowance")
     },
     {
-        "codigo": "ASIG_ALIMENTACION",
+        "codigo": "FOOD_ALLOWANCE",
         "nombre": _("Food Allowance"),
         "descripcion": _("Fixed food or meal allowance")
     },
     {
-        "codigo": "ASIG_VIVIENDA",
+        "codigo": "HOUSING_ALLOWANCE",
         "nombre": _("Housing Allowance"),
         "descripcion": _("Fixed housing or rent allowance")
     },
     {
-        "codigo": "ANTIGUEDAD",
+        "codigo": "SENIORITY_BONUS",
         "nombre": _("Seniority Bonus"),
         "descripcion": _("Additional payment based on years of service")
     },
     {
-        "codigo": "VACACIONES_PAGADAS",
+        "codigo": "PAID_VACATION",
         "nombre": _("Paid Vacation"),
         "descripcion": _("Payment for vacation time taken")
     },
     {
-        "codigo": "FERIADOS_TRABAJADOS",
+        "codigo": "HOLIDAY_WORK",
         "nombre": _("Holiday Work"),
         "descripcion": _("Additional payment for working on holidays")
     },
     {
-        "codigo": "PERMISOS_REMUNERADOS",
+        "codigo": "PAID_LEAVE",
         "nombre": _("Paid Leave"),
         "descripcion": _("Payment for authorized paid leave")
     },
     {
-        "codigo": "LICENCIAS_REMUNERADAS",
+        "codigo": "PAID_LICENSE",
         "nombre": _("Paid License"),
         "descripcion": _("Payment for extended paid license periods")
     },
     {
-        "codigo": "PAGOS_RETROACTIVOS",
+        "codigo": "RETROACTIVE_PAYMENTS",
         "nombre": _("Retroactive Payments"),
         "descripcion": _("Back payments for salary adjustments")
     },
     {
-        "codigo": "AGUINALDO",
+        "codigo": "THIRTEENTH_SALARY",
         "nombre": _("13th Month Salary"),
         "descripcion": _("Annual bonus (13th month salary)")
     },
     {
-        "codigo": "GRATIFICACIONES",
+        "codigo": "GRATUITIES",
         "nombre": _("Gratuities"),
         "descripcion": _("Discretionary bonuses or gratuities")
     },
     {
-        "codigo": "INDEMNIZACION_SALARIAL",
+        "codigo": "SEVERANCE_PAY",
         "nombre": _("Severance Pay"),
         "descripcion": _("Severance or termination compensation")
     },
@@ -176,97 +176,97 @@ INCOME_CONCEPTS = [
 # All names and descriptions are marked for translation
 DEDUCTION_CONCEPTS = [
     {
-        "codigo": "ADELANTO_SALARIO",
+        "codigo": "SALARY_ADVANCE",
         "nombre": _("Salary Advance"),
         "descripcion": _("Deduction for salary advance repayment (automatic from Loans/Advances module)")
     },
     {
-        "codigo": "PLAN_RETIRO_VOLUNTARIO",
+        "codigo": "VOLUNTARY_RETIREMENT",
         "nombre": _("Voluntary Retirement Plan"),
         "descripcion": _("Voluntary retirement savings contribution")
     },
     {
-        "codigo": "MEMBRESIAS_SUSCRIPCIONES",
+        "codigo": "MEMBERSHIPS_SUBSCRIPTIONS",
         "nombre": _("Memberships/Subscriptions"),
         "descripcion": _("Deduction for memberships or subscription services")
     },
     {
-        "codigo": "COMEDOR",
+        "codigo": "CAFETERIA",
         "nombre": _("Cafeteria"),
         "descripcion": _("Company cafeteria charges")
     },
     {
-        "codigo": "PRESTAMOS_INTERNOS",
+        "codigo": "INTERNAL_LOANS",
         "nombre": _("Internal Loans"),
         "descripcion": _("Internal loan repayment installments")
     },
     {
-        "codigo": "CREDITOS_COOPERATIVA",
+        "codigo": "CREDIT_UNION_LOANS",
         "nombre": _("Credit Union Loans"),
         "descripcion": _("Credit union or cooperative loan payments")
     },
     {
-        "codigo": "INTERESES_PRESTAMOS",
+        "codigo": "LOAN_INTEREST",
         "nombre": _("Loan Interest"),
         "descripcion": _("Interest charges on loans")
     },
     {
-        "codigo": "PENSION_ALIMENTICIA",
+        "codigo": "ALIMONY",
         "nombre": _("Alimony"),
         "descripcion": _("Court-ordered alimony or child support payments")
     },
     {
-        "codigo": "EMBARGOS_JUDICIALES",
+        "codigo": "COURT_GARNISHMENTS",
         "nombre": _("Court Garnishments"),
         "descripcion": _("Court-ordered wage garnishments")
     },
     {
-        "codigo": "DESC_AUSENCIAS",
+        "codigo": "UNPAID_ABSENCES",
         "nombre": _("Unpaid Absences"),
         "descripcion": _("Deductions for unpaid absences")
     },
     {
-        "codigo": "DESC_TARDANZAS",
+        "codigo": "TARDINESS",
         "nombre": _("Tardiness"),
         "descripcion": _("Deductions for late arrivals")
     },
     {
-        "codigo": "PENALIZACIONES_INCUMPLIMIENTO",
+        "codigo": "NONCOMPLIANCE_PENALTIES",
         "nombre": _("Non-compliance Penalties"),
         "descripcion": _("Penalties for policy or contract violations")
     },
     {
-        "codigo": "DESC_PERDIDAS_DANOS",
+        "codigo": "LOSSES_DAMAGES",
         "nombre": _("Losses or Damages"),
         "descripcion": _("Deductions for lost or damaged property")
     },
     {
-        "codigo": "PENALIZACION_UNIFORMES",
+        "codigo": "UNIFORM_PENALTIES",
         "nombre": _("Uniform Penalties"),
         "descripcion": _("Penalties for unreturned uniforms or equipment")
     },
     {
-        "codigo": "CONSUMOS_TIENDA_CANTINA",
+        "codigo": "STORE_CANTEEN_PURCHASES",
         "nombre": _("Store/Canteen Purchases"),
         "descripcion": _("Purchases at company store or canteen")
     },
     {
-        "codigo": "DONACIONES_VOLUNTARIAS",
+        "codigo": "VOLUNTARY_DONATIONS",
         "nombre": _("Voluntary Donations"),
         "descripcion": _("Voluntary charitable donations")
     },
     {
-        "codigo": "APORTACIONES_ASOCIACIONES",
+        "codigo": "ASSOCIATION_CONTRIBUTIONS",
         "nombre": _("Association Contributions"),
         "descripcion": _("Voluntary contributions to associations")
     },
     {
-        "codigo": "CUOTA_SINDICAL",
+        "codigo": "UNION_DUES",
         "nombre": _("Union Dues"),
         "descripcion": _("Voluntary union membership dues")
     },
     {
-        "codigo": "CORRECCION_PAGOS_EXCESO",
+        "codigo": "OVERPAYMENT_CORRECTION",
         "nombre": _("Overpayment Correction"),
         "descripcion": _("Correction for previous overpayments")
     },

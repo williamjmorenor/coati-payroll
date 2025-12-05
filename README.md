@@ -13,12 +13,15 @@ Coati Payroll es una aplicación web diseñada para facilitar la gestión comple
 
 - **Multi-empresa**: Gestione nóminas para múltiples empresas o entidades desde un solo sistema
 - **Gestión de Empleados**: Registro completo de información personal, laboral y salarial
+- **Campos Personalizados**: Extienda la información de empleados con campos personalizados
 - **Percepciones Configurables**: Bonos, comisiones, horas extras y otros ingresos
 - **Deducciones con Prioridad**: INSS, IR, préstamos y otras deducciones en orden configurable
 - **Prestaciones Patronales**: INSS patronal, INATEC, vacaciones, aguinaldo, indemnización
+- **Reglas de Cálculo**: Motor de reglas con esquemas configurables para cálculos complejos (IR, INSS, etc.)
 - **Préstamos y Adelantos**: Control de préstamos con deducción automática de cuotas
 - **Multi-moneda**: Soporte para múltiples monedas con tipos de cambio
 - **Motor de Cálculo**: Procesamiento automático de nóminas con fórmulas configurables
+- **Procesamiento en Segundo Plano**: Sistema de colas para nóminas grandes con Dramatiq/Huey
 
 ## 🚀 Instalación Rápida
 
@@ -85,8 +88,9 @@ mkdocs build
 ### Contenido de la Documentación
 
 - **Guía de Instalación**: Requisitos, instalación y configuración inicial
-- **Guía de Uso**: Usuarios, monedas, empleados, conceptos de nómina
+- **Guía de Uso**: Usuarios, empresas, monedas, empleados, campos personalizados, conceptos de nómina, reglas de cálculo
 - **Tutorial Completo**: Paso a paso para configurar y ejecutar una nómina
+- **Características Avanzadas**: Sistema de colas, procesamiento en segundo plano, compatibilidad de bases de datos
 - **Referencia**: Glosario y preguntas frecuentes
 
 ## 🏗️ Arquitectura
@@ -100,6 +104,7 @@ coati/
 │   ├── nomina_engine.py   # Motor de cálculo de nómina
 │   ├── formula_engine.py  # Motor de fórmulas
 │   ├── forms.py           # Formularios WTForms
+│   ├── queue/             # Sistema de colas (Dramatiq/Huey)
 │   ├── vistas/            # Vistas/Controladores (Blueprints)
 │   ├── templates/         # Plantillas HTML (Jinja2)
 │   └── static/            # Archivos estáticos
@@ -121,6 +126,10 @@ coati/
 | `ADMIN_PASSWORD` | Contraseña del administrador | `coati-admin` |
 | `PORT` | Puerto de la aplicación | `5000` |
 | `SESSION_REDIS_URL` | URL de Redis para sesiones | Ninguno (usa SQLAlchemy) |
+| `REDIS_URL` | URL de Redis para sistema de colas | Ninguno (usa Huey) |
+| `QUEUE_ENABLED` | Habilitar sistema de colas | `1` |
+| `COATI_QUEUE_PATH` | Ruta para almacenamiento de Huey | Auto-detectada |
+| `BACKGROUND_PAYROLL_THRESHOLD` | Umbral de empleados para procesamiento en segundo plano | `100` |
 
 ### Base de Datos
 
@@ -130,6 +139,18 @@ El sistema soporta:
 - **MySQL/MariaDB**: Alternativa para producción
 
 El sistema está diseñado para ser **agnóstico al motor de base de datos**. Para más detalles sobre compatibilidad y configuración, consulte la [Guía de Compatibilidad de Base de Datos](docs/database-compatibility.md).
+
+### Sistema de Colas
+
+Para operaciones de larga duración, el sistema incluye un **sistema de colas de procesos en segundo plano**:
+
+- **Dramatiq + Redis**: Para entornos de producción con alta escala
+- **Huey + Filesystem**: Para desarrollo o como fallback automático
+- **Selección automática**: El sistema elige el mejor backend disponible
+- **Procesamiento paralelo**: Nóminas grandes se procesan automáticamente en segundo plano
+- **Feedback en tiempo real**: Seguimiento del progreso de las tareas
+
+Para más información, consulte la [Documentación del Sistema de Colas](docs/queue_system.md) y [Procesamiento de Nómina en Segundo Plano](docs/background-payroll-processing.md).
 
 ## 📊 Flujo de Trabajo
 
@@ -186,10 +207,13 @@ pip install -r development.txt
 Los principales modelos son:
 
 - `Usuario`: Usuarios del sistema
+- `Empresa`: Empresas o entidades que contratan empleados
 - `Empleado`: Registro maestro de empleados
+- `CampoPersonalizado`: Campos personalizados para empleados
 - `Percepcion`: Conceptos de ingreso
 - `Deduccion`: Conceptos de descuento
 - `Prestacion`: Aportes patronales
+- `ReglaCalculo`: Reglas de cálculo con esquemas configurables
 - `Planilla`: Configuración de nómina
 - `Nomina`: Ejecución de nómina
 - `Adelanto`: Préstamos y adelantos

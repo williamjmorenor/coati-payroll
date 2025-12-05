@@ -86,14 +86,21 @@ nav:
     - Gestión de Empresas: guia/empresas.md
     - Monedas y Tipos de Cambio: guia/monedas.md
     - Gestión de Empleados: guia/empleados.md
+    - Campos Personalizados: guia/campos-personalizados.md
     - Percepciones (Ingresos): guia/percepciones.md
     - Deducciones: guia/deducciones.md
     - Prestaciones (Aportes Patronales): guia/prestaciones.md
+    - Reglas de Cálculo: guia/reglas-calculo.md
     - Préstamos y Adelantos: guia/prestamos.md
     - Configuración de Planillas: guia/planillas.md
     - Ejecución de Nómina: guia/nomina.md
   - Tutorial Completo:
     - Paso a Paso - Nómina Completa: tutorial/nomina-completa.md
+  - Características Avanzadas:
+    - Sistema de Colas: queue_system.md
+    - Procesamiento en Segundo Plano: background-payroll-processing.md
+    - Compatibilidad de Base de Datos: database-compatibility.md
+    - Implementación Agnóstica: database-agnostic-implementation.md
   - Referencia:
     - Glosario: referencia/glosario.md
     - Preguntas Frecuentes: referencia/faq.md

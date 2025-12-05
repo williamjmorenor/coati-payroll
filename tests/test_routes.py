@@ -119,6 +119,30 @@ class TestRouteRendering:
                     f"expected 200. Response data: {response.data[:500]}"
                 )
 
+    def test_pagination_with_page_parameter(self, app, authenticated_client):
+        """Test that pagination works correctly with page query parameter.
+
+        This specifically tests the fix for TypeError when page parameter
+        conflicts with request.args in the render_pagination macro.
+        """
+        with app.app_context():
+            # Routes that support pagination
+            paginated_routes = [
+                ("/currency/?page=2", "currency.index"),
+                ("/exchange_rate/?page=2", "exchange_rate.index"),
+                ("/employee/?page=2", "employee.index"),
+                ("/custom_field/?page=2", "custom_field.index"),
+                ("/calculation-rule/?page=2", "calculation_rule.index"),
+            ]
+
+            for url, endpoint in paginated_routes:
+                response = authenticated_client.get(url)
+                # Should return 200 OK, not 500 (TypeError)
+                assert response.status_code == 200, (
+                    f"Route {endpoint} ({url}) returned {response.status_code}, "
+                    f"expected 200. Response data: {response.data[:500]}"
+                )
+
     def test_authenticated_new_form_routes_render(self, app, authenticated_client):
         """Test that 'new' form routes render correctly for authenticated users.
 

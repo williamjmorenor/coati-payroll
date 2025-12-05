@@ -8,9 +8,12 @@ Coati Payroll es una aplicación web diseñada para facilitar la gestión comple
 
 - **Multi-empresa**: Gestione nóminas para múltiples empresas o entidades desde una sola instalación.
 - **Gestión de Empleados**: Registro y administración completa de la información del personal.
+- **Campos Personalizados**: Extienda la información de empleados con campos personalizados definidos por el usuario.
 - **Configuración de Conceptos de Nómina**: Percepciones (ingresos), deducciones y prestaciones patronales.
+- **Reglas de Cálculo**: Motor de reglas con esquemas configurables para cálculos complejos como impuestos y seguridad social.
 - **Planillas Flexibles**: Configuración de diferentes tipos de planilla (mensual, quincenal, semanal).
 - **Cálculo Automático**: Motor de cálculo que procesa automáticamente salarios, deducciones e impuestos.
+- **Procesamiento en Segundo Plano**: Sistema de colas para nóminas grandes con feedback en tiempo real.
 - **Préstamos y Adelantos**: Control de préstamos a empleados con deducción automática de cuotas.
 - **Multi-moneda**: Soporte para múltiples monedas con tipos de cambio configurables.
 
@@ -109,6 +112,41 @@ graph LR
     C --> D[Revisar y Aprobar]
     D --> E[Aplicar/Pagar]
 ```
+
+## Características Avanzadas
+
+### Sistema de Colas
+
+Para nóminas grandes (más de 100 empleados por defecto), el sistema utiliza procesamiento en segundo plano:
+
+- **Procesamiento paralelo**: Los empleados se procesan de forma concurrente
+- **Feedback en tiempo real**: Progreso visible durante el cálculo
+- **Doble backend**: Dramatiq+Redis (producción) o Huey+Filesystem (desarrollo)
+- **Selección automática**: El sistema elige el mejor backend disponible
+
+[:octicons-arrow-right-24: Más sobre el Sistema de Colas](queue_system.md)
+
+### Campos Personalizados
+
+Extienda la información de empleados con campos adicionales:
+
+- Información médica (tipo de sangre, alergias)
+- Contactos de emergencia
+- Información bancaria adicional
+- Cualquier dato específico de su organización
+
+[:octicons-arrow-right-24: Guía de Campos Personalizados](guia/campos-personalizados.md)
+
+### Reglas de Cálculo
+
+Configure cálculos complejos usando esquemas estructurados:
+
+- Impuestos progresivos (IR)
+- Seguridad social con topes (INSS)
+- Bonos escalonados
+- Cualquier cálculo basado en tramos o tablas
+
+[:octicons-arrow-right-24: Guía de Reglas de Cálculo](guia/reglas-calculo.md)
 
 ## Licencia
 
