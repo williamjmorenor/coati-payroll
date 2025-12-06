@@ -872,3 +872,160 @@ a:hover{ color: var(--coati-primary-hover); }
 .mb-4 {
   margin-bottom: 16px !important;
 }
+
+/* =====================================================
+   DASHBOARD STYLES
+   ===================================================== */
+
+/* Dashboard Cards */
+.dashboard-card {
+  transition: all var(--transition);
+  height: 100%;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.dashboard-card .card-body {
+  padding: 20px;
+}
+
+.dashboard-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.dashboard-card-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.dashboard-card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0;
+  line-height: 1;
+}
+
+.dashboard-card-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 0;
+  margin-top: 2px;
+}
+
+/* Background colors for icons */
+.bg-primary-light {
+  background-color: rgba(160,82,45,0.12);
+  color: var(--coati-primary);
+}
+
+.bg-success-light {
+  background-color: rgba(46,125,50,0.12);
+  color: #2E7D32;
+}
+
+.bg-warning-light {
+  background-color: rgba(237,108,2,0.12);
+  color: #ED6C02;
+}
+
+.bg-info-light {
+  background-color: rgba(2,136,209,0.12);
+  color: #0288D1;
+}
+
+.bg-danger-light {
+  background-color: rgba(211,47,47,0.12);
+  color: #D32F2F;
+}
+
+.bg-secondary-light {
+  background-color: rgba(102,102,102,0.12);
+  color: var(--text-secondary);
+}
+
+/* Quick Action Cards */
+.quick-action-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: var(--bg-white);
+  border: 1px solid var(--coati-border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: all var(--transition);
+  height: 100%;
+}
+
+.quick-action-card:hover {
+  border-color: var(--coati-primary);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+
+.quick-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.quick-action-content h6 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.quick-action-content p {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+/* Dashboard responsive */
+@media (max-width: 575.98px) {
+  .dashboard-card-value {
+    font-size: 1.5rem;
+  }
+  
+  .dashboard-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+  
+  .quick-action-card {
+    padding: 12px;
+  }
+  
+  .quick-action-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+}
+
+/* =====================================================
+   END DASHBOARD STYLES
+   ===================================================== */

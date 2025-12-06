@@ -1676,7 +1676,7 @@ def exportar_prestaciones_excel(planilla_id: str, nomina_id: str):
         prestaciones_dict = {d.codigo: float(d.monto) for d in detalles}
 
         # Fill prestacion amounts
-        for col_idx, (codigo, _) in enumerate(prestaciones_list, start=4):
+        for col_idx, (codigo, _nombre) in enumerate(prestaciones_list, start=4):
             cell = ws.cell(row=row, column=col_idx, value=prestaciones_dict.get(codigo, 0.0))
             cell.border = border
 

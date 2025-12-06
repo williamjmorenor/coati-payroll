@@ -24,10 +24,12 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 from flask import Blueprint, render_template
 from flask_login import login_required
+from sqlalchemy import func
 
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
+from coati_payroll.model import db, Empleado, Empresa, Planilla, Nomina, Usuario
 
 app = Blueprint("app", __name__)
 
@@ -35,4 +37,20 @@ app = Blueprint("app", __name__)
 @app.route("/")
 @login_required
 def index():
-    return render_template("index.html")
+    # Get statistics for dashboard
+    total_empleados = db.session.query(func.count(Empleado.id)).filter(Empleado.activo == True).scalar() or 0
+    total_empresas = db.session.query(func.count(Empresa.id)).filter(Empresa.activo == True).scalar() or 0
+    total_planillas = db.session.query(func.count(Planilla.id)).filter(Planilla.activo == True).scalar() or 0
+    total_nominas = db.session.query(func.count(Nomina.id)).scalar() or 0
+
+    # Get recent payrolls (last 5)
+    recent_nominas = db.session.query(Nomina).order_by(Nomina.fecha_generacion.desc()).limit(5).all()
+
+    return render_template(
+        "index.html",
+        total_empleados=total_empleados,
+        total_empresas=total_empresas,
+        total_planillas=total_planillas,
+        total_nominas=total_nominas,
+        recent_nominas=recent_nominas,
+    )
