@@ -101,6 +101,7 @@ class Usuario(database.Model, BaseTabla, UserMixin):
     correo_electronico = database.Column(database.String(150))
     tipo = database.Column(database.String(20))
     activo = database.Column(database.Boolean(), default=True)
+    ultimo_acceso = database.Column(database.DateTime, nullable=True)
 
 
 # Gestión de empresas/entidades

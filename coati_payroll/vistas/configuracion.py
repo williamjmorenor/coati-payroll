@@ -29,6 +29,7 @@ from flask_login import login_required
 # Local modules
 # <-------------------------------------------------------------------------> #
 from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.locale_config import (
     SUPPORTED_LANGUAGES,
     get_language_from_db,
@@ -39,7 +40,7 @@ configuracion_bp = Blueprint("configuracion", __name__, url_prefix="/configuraci
 
 
 @configuracion_bp.route("/")
-@login_required
+@require_write_access()
 def index():
     """Display global configuration page."""
     current_language = get_language_from_db()
@@ -56,7 +57,7 @@ def index():
 
 
 @configuracion_bp.route("/idioma", methods=["POST"])
-@login_required
+@require_write_access()
 def cambiar_idioma():
     """Change the application language."""
     new_language = request.form.get("idioma", "").strip()

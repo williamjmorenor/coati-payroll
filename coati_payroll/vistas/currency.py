@@ -20,6 +20,7 @@ from flask_login import current_user, login_required
 
 from coati_payroll.forms import CurrencyForm
 from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.model import Moneda, db
 from coati_payroll.vistas.constants import PER_PAGE
 
@@ -27,7 +28,7 @@ currency_bp = Blueprint("currency", __name__, url_prefix="/currency")
 
 
 @currency_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all currencies with pagination."""
     page = request.args.get("page", 1, type=int)
@@ -45,7 +46,7 @@ def index():
 
 
 @currency_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def new():
     """Create a new currency."""
     form = CurrencyForm()
@@ -67,7 +68,7 @@ def new():
 
 
 @currency_bp.route("/edit/<string:id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def edit(id: str):
     """Edit an existing currency."""
     currency = db.session.get(Moneda, id)
@@ -97,7 +98,7 @@ def edit(id: str):
 
 
 @currency_bp.route("/delete/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def delete(id: str):
     """Delete a currency."""
     currency = db.session.get(Moneda, id)

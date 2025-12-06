@@ -19,18 +19,20 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from coati_payroll.auth import proteger_passwd, validar_acceso
+from coati_payroll.enums import TipoUsuario
 from coati_payroll.forms import UserForm, ProfileForm
 from coati_payroll.i18n import _
 from coati_payroll.model import Usuario, db
+from coati_payroll.rbac import require_role
 from coati_payroll.vistas.constants import PER_PAGE
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
 
 
 @user_bp.route("/")
-@login_required
+@require_role(TipoUsuario.ADMIN)
 def index():
-    """List all users with pagination."""
+    """List all users with pagination. Only administrators can manage users."""
     page = request.args.get("page", 1, type=int)
     pagination = db.paginate(
         db.select(Usuario).order_by(Usuario.usuario),
@@ -42,9 +44,9 @@ def index():
 
 
 @user_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_role(TipoUsuario.ADMIN)
 def new():
-    """Create a new user."""
+    """Create a new user. Only administrators can create users."""
     form = UserForm()
 
     if form.validate_on_submit():
@@ -72,9 +74,9 @@ def new():
 
 
 @user_bp.route("/edit/<string:id>", methods=["GET", "POST"])
-@login_required
+@require_role(TipoUsuario.ADMIN)
 def edit(id: str):
-    """Edit an existing user."""
+    """Edit an existing user. Only administrators can edit users."""
     user = db.session.get(Usuario, id)
     if not user:
         flash(_("Usuario no encontrado."), "error")
@@ -103,9 +105,9 @@ def edit(id: str):
 
 
 @user_bp.route("/delete/<string:id>", methods=["POST"])
-@login_required
+@require_role(TipoUsuario.ADMIN)
 def delete(id: str):
-    """Delete a user."""
+    """Delete a user. Only administrators can delete users."""
     user = db.session.get(Usuario, id)
     if not user:
         flash(_("Usuario no encontrado."), "error")

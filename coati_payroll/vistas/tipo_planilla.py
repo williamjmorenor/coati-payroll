@@ -20,6 +20,7 @@ from flask_login import current_user, login_required
 
 from coati_payroll.forms import TipoPlanillaForm
 from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.model import TipoPlanilla, db
 from coati_payroll.vistas.constants import PER_PAGE
 
@@ -27,7 +28,7 @@ tipo_planilla_bp = Blueprint("tipo_planilla", __name__, url_prefix="/tipo-planil
 
 
 @tipo_planilla_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all payroll types with pagination."""
     page = request.args.get("page", 1, type=int)
@@ -45,7 +46,7 @@ def index():
 
 
 @tipo_planilla_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def new():
     """Create a new payroll type."""
     form = TipoPlanillaForm()
@@ -76,7 +77,7 @@ def new():
 
 
 @tipo_planilla_bp.route("/edit/<string:id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def edit(id: str):
     """Edit an existing payroll type."""
     tipo_planilla = db.session.get(TipoPlanilla, id)
@@ -111,7 +112,7 @@ def edit(id: str):
 
 
 @tipo_planilla_bp.route("/delete/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def delete(id: str):
     """Delete a payroll type."""
     tipo_planilla = db.session.get(TipoPlanilla, id)

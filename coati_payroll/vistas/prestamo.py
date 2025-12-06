@@ -56,12 +56,13 @@ from coati_payroll.forms import (
 )
 from coati_payroll.i18n import _
 from coati_payroll.enums import AdelantoEstado, AdelantoTipo
+from coati_payroll.rbac import require_read_access, require_write_access
 
 prestamo_bp = Blueprint("prestamo", __name__, url_prefix="/prestamo")
 
 
 @prestamo_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all loans and advances with filtering options."""
     # Get filter parameters
@@ -104,7 +105,7 @@ def index():
 
 
 @prestamo_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def new():
     """Create a new loan or salary advance."""
     form = PrestamoForm()
@@ -167,7 +168,7 @@ def new():
 
 
 @prestamo_bp.route("/<prestamo_id>")
-@login_required
+@require_read_access()
 def detail(prestamo_id):
     """View loan details including payment schedule."""
     prestamo = db.session.get(Adelanto, prestamo_id)
@@ -196,7 +197,7 @@ def detail(prestamo_id):
 
 
 @prestamo_bp.route("/<prestamo_id>/edit", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def edit(prestamo_id):
     """Edit a loan (only allowed in draft or pending state)."""
     prestamo = db.session.get(Adelanto, prestamo_id)
@@ -261,7 +262,7 @@ def edit(prestamo_id):
 
 
 @prestamo_bp.route("/<prestamo_id>/submit", methods=["POST"])
-@login_required
+@require_write_access()
 def submit(prestamo_id):
     """Submit a loan for approval (change from draft to pending)."""
     prestamo = db.session.get(Adelanto, prestamo_id)
@@ -282,7 +283,7 @@ def submit(prestamo_id):
 
 
 @prestamo_bp.route("/<prestamo_id>/approve", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def approve(prestamo_id):
     """Approve a loan and set it as active."""
     prestamo = db.session.get(Adelanto, prestamo_id)
@@ -344,7 +345,7 @@ def approve(prestamo_id):
 
 
 @prestamo_bp.route("/<prestamo_id>/cancel", methods=["POST"])
-@login_required
+@require_write_access()
 def cancel(prestamo_id):
     """Cancel a loan."""
     prestamo = db.session.get(Adelanto, prestamo_id)
@@ -365,7 +366,7 @@ def cancel(prestamo_id):
 
 
 @prestamo_bp.route("/<prestamo_id>/pago-extraordinario", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def pago_extraordinario(prestamo_id):
     """Register an extraordinary/manual payment on a loan."""
     prestamo = db.session.get(Adelanto, prestamo_id)
@@ -493,7 +494,7 @@ def pago_extraordinario(prestamo_id):
 
 
 @prestamo_bp.route("/<prestamo_id>/condonacion", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def condonacion(prestamo_id):
     """Record a loan forgiveness/write-off (condonación de deuda)."""
     prestamo = db.session.get(Adelanto, prestamo_id)
@@ -593,7 +594,7 @@ def condonacion(prestamo_id):
 
 
 @prestamo_bp.route("/<prestamo_id>/tabla-pago/excel")
-@login_required
+@require_read_access()
 def export_excel(prestamo_id):
     """Export payment schedule to Excel."""
     prestamo = db.session.get(Adelanto, prestamo_id)
@@ -674,7 +675,7 @@ def export_excel(prestamo_id):
 
 
 @prestamo_bp.route("/<prestamo_id>/tabla-pago/pdf")
-@login_required
+@require_read_access()
 def export_pdf(prestamo_id):
     """Export payment schedule to PDF."""
     prestamo = db.session.get(Adelanto, prestamo_id)

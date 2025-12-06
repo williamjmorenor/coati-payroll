@@ -20,6 +20,7 @@ from flask_login import current_user, login_required
 
 from coati_payroll.forms import CustomFieldForm
 from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.model import CampoPersonalizado, db
 from coati_payroll.vistas.constants import PER_PAGE
 
@@ -27,7 +28,7 @@ custom_field_bp = Blueprint("custom_field", __name__, url_prefix="/custom_field"
 
 
 @custom_field_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all custom fields with pagination."""
     page = request.args.get("page", 1, type=int)
@@ -45,7 +46,7 @@ def index():
 
 
 @custom_field_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def new():
     """Create a new custom field."""
     form = CustomFieldForm()
@@ -73,7 +74,7 @@ def new():
 
 
 @custom_field_bp.route("/edit/<string:id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def edit(id: str):
     """Edit an existing custom field."""
     custom_field = db.session.get(CampoPersonalizado, id)
@@ -105,7 +106,7 @@ def edit(id: str):
 
 
 @custom_field_bp.route("/delete/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def delete(id: str):
     """Delete a custom field."""
     custom_field = db.session.get(CampoPersonalizado, id)

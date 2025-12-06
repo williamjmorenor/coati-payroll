@@ -31,6 +31,7 @@ from coati_payroll.forms import (
 )
 from coati_payroll.i18n import _
 from coati_payroll.model import Deduccion, Percepcion, Prestacion, db
+from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.vistas.constants import PER_PAGE
 
 # Create blueprints for each concept type
@@ -274,30 +275,30 @@ def populate_concept_from_form(concept, form):
 
 
 @percepcion_bp.route("/")
-@login_required
+@require_read_access()
 def percepcion_index():
     """List all perceptions."""
     return list_concepts("percepcion")
 
 
 @percepcion_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def percepcion_new():
-    """Create a new perception."""
+    """Create a new perception. Admin and HR can create perceptions."""
     return create_concept("percepcion")
 
 
 @percepcion_bp.route("/edit/<string:concept_id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def percepcion_edit(concept_id: str):
-    """Edit an existing perception."""
+    """Edit an existing perception. Admin and HR can edit perceptions."""
     return edit_concept("percepcion", concept_id)
 
 
 @percepcion_bp.route("/delete/<string:concept_id>", methods=["POST"])
-@login_required
+@require_write_access()
 def percepcion_delete(concept_id: str):
-    """Delete a perception."""
+    """Delete a perception. Admin and HR can delete perceptions."""
     return delete_concept("percepcion", concept_id)
 
 
@@ -307,30 +308,30 @@ def percepcion_delete(concept_id: str):
 
 
 @deduccion_bp.route("/")
-@login_required
+@require_read_access()
 def deduccion_index():
     """List all deductions."""
     return list_concepts("deduccion")
 
 
 @deduccion_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def deduccion_new():
-    """Create a new deduction."""
+    """Create a new deduction. Admin and HR can create deductions."""
     return create_concept("deduccion")
 
 
 @deduccion_bp.route("/edit/<string:concept_id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def deduccion_edit(concept_id: str):
-    """Edit an existing deduction."""
+    """Edit an existing deduction. Admin and HR can edit deductions."""
     return edit_concept("deduccion", concept_id)
 
 
 @deduccion_bp.route("/delete/<string:concept_id>", methods=["POST"])
-@login_required
+@require_write_access()
 def deduccion_delete(concept_id: str):
-    """Delete a deduction."""
+    """Delete a deduction. Admin and HR can delete deductions."""
     return delete_concept("deduccion", concept_id)
 
 
@@ -340,28 +341,28 @@ def deduccion_delete(concept_id: str):
 
 
 @prestacion_bp.route("/")
-@login_required
+@require_read_access()
 def prestacion_index():
     """List all benefits."""
     return list_concepts("prestacion")
 
 
 @prestacion_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def prestacion_new():
-    """Create a new benefit."""
+    """Create a new benefit. Admin and HR can create benefits."""
     return create_concept("prestacion")
 
 
 @prestacion_bp.route("/edit/<string:concept_id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def prestacion_edit(concept_id: str):
-    """Edit an existing benefit."""
+    """Edit an existing benefit. Admin and HR can edit benefits."""
     return edit_concept("prestacion", concept_id)
 
 
 @prestacion_bp.route("/delete/<string:concept_id>", methods=["POST"])
-@login_required
+@require_write_access()
 def prestacion_delete(concept_id: str):
-    """Delete a benefit."""
+    """Delete a benefit. Admin and HR can delete benefits."""
     return delete_concept("prestacion", concept_id)

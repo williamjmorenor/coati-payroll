@@ -22,6 +22,7 @@ from flask_login import current_user, login_required
 
 from coati_payroll.forms import ReglaCalculoForm
 from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.model import ReglaCalculo, db
 from coati_payroll.vistas.constants import PER_PAGE
 from coati_payroll.formula_engine import (
@@ -35,7 +36,7 @@ calculation_rule_bp = Blueprint("calculation_rule", __name__, url_prefix="/calcu
 
 
 @calculation_rule_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all calculation rules with pagination."""
     page = request.args.get("page", 1, type=int)
@@ -67,7 +68,7 @@ DEFAULT_SCHEMA = {
 
 
 @calculation_rule_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def new():
     """Create a new calculation rule."""
     form = ReglaCalculoForm()
@@ -110,7 +111,7 @@ def new():
 
 
 @calculation_rule_bp.route("/edit/<string:id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def edit(id: str):
     """Edit an existing calculation rule metadata."""
     rule = db.session.get(ReglaCalculo, id)
@@ -146,7 +147,7 @@ def edit(id: str):
 
 
 @calculation_rule_bp.route("/edit-schema/<string:id>", methods=["GET"])
-@login_required
+@require_write_access()
 def edit_schema(id: str):
     """Edit the JSON schema of a calculation rule."""
     rule = db.session.get(ReglaCalculo, id)
@@ -167,7 +168,7 @@ def edit_schema(id: str):
 
 
 @calculation_rule_bp.route("/api/save-schema/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def save_schema(id: str):
     """API endpoint to save the JSON schema."""
     rule = db.session.get(ReglaCalculo, id)
@@ -196,7 +197,7 @@ def save_schema(id: str):
 
 
 @calculation_rule_bp.route("/api/test-schema/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def test_schema(id: str):
     """API endpoint to test the calculation schema with sample data."""
     rule = db.session.get(ReglaCalculo, id)
@@ -219,7 +220,7 @@ def test_schema(id: str):
 
 
 @calculation_rule_bp.route("/delete/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def delete(id: str):
     """Delete a calculation rule."""
     rule = db.session.get(ReglaCalculo, id)
@@ -234,7 +235,7 @@ def delete(id: str):
 
 
 @calculation_rule_bp.route("/duplicate/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def duplicate(id: str):
     """Duplicate a calculation rule with a new version."""
     rule = db.session.get(ReglaCalculo, id)

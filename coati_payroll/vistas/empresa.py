@@ -18,14 +18,16 @@ from __future__ import annotations
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
 from coati_payroll.model import Empresa, db
+from coati_payroll.rbac import require_role, require_read_access
 
 empresa_bp = Blueprint("empresa", __name__, url_prefix="/empresa")
 
 
 @empresa_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all companies."""
     page = request.args.get("page", 1, type=int)
@@ -43,9 +45,9 @@ def index():
 
 
 @empresa_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_role(TipoUsuario.ADMIN)
 def new():
-    """Create a new company."""
+    """Create a new company. Only administrators can create companies."""
     from coati_payroll.forms import EmpresaForm
 
     form = EmpresaForm()
@@ -68,9 +70,9 @@ def new():
 
 
 @empresa_bp.route("/<string:empresa_id>/edit", methods=["GET", "POST"])
-@login_required
+@require_role(TipoUsuario.ADMIN)
 def edit(empresa_id):
-    """Edit an existing company."""
+    """Edit an existing company. Only administrators can edit companies."""
     from coati_payroll.forms import EmpresaForm
 
     empresa = db.session.get(Empresa, empresa_id)
@@ -101,9 +103,9 @@ def edit(empresa_id):
 
 
 @empresa_bp.route("/<string:empresa_id>/delete", methods=["POST"])
-@login_required
+@require_role(TipoUsuario.ADMIN)
 def delete(empresa_id):
-    """Delete a company."""
+    """Delete a company. Only administrators can delete companies."""
     empresa = db.session.get(Empresa, empresa_id)
     if not empresa:
         flash(_("Empresa no encontrada."), "warning")
@@ -129,9 +131,9 @@ def delete(empresa_id):
 
 
 @empresa_bp.route("/<string:empresa_id>/toggle", methods=["POST"])
-@login_required
+@require_role(TipoUsuario.ADMIN)
 def toggle_active(empresa_id):
-    """Toggle company active status."""
+    """Toggle company active status. Only administrators can toggle status."""
     empresa = db.session.get(Empresa, empresa_id)
     if not empresa:
         flash(_("Empresa no encontrada."), "warning")

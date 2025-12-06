@@ -46,12 +46,13 @@ from coati_payroll.model import (
 )
 from coati_payroll.forms import PlanillaForm
 from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
 
 planilla_bp = Blueprint("planilla", __name__, url_prefix="/planilla")
 
 
 @planilla_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all planillas."""
     planillas = db.session.execute(db.select(Planilla).order_by(Planilla.nombre)).scalars().all()
@@ -59,9 +60,9 @@ def index():
 
 
 @planilla_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def new():
-    """Create a new planilla."""
+    """Create a new planilla. Admin and HR can create planillas."""
     form = PlanillaForm()
     _populate_form_choices(form)
 
@@ -92,7 +93,7 @@ def new():
 
 
 @planilla_bp.route("/<planilla_id>/edit", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def edit(planilla_id: str):
     """Edit basic planilla configuration."""
     planilla = db.get_or_404(Planilla, planilla_id)
@@ -132,7 +133,7 @@ def edit(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/config")
-@login_required
+@require_read_access()
 def config(planilla_id: str):
     """Configuration overview page for a planilla."""
     planilla = db.get_or_404(Planilla, planilla_id)
@@ -153,9 +154,9 @@ def config(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/config/empleados")
-@login_required
+@require_read_access()
 def config_empleados(planilla_id: str):
-    """Manage employees associated with a planilla."""
+    """View employees associated with a planilla."""
     planilla = db.get_or_404(Planilla, planilla_id)
 
     empleados_asignados = (
@@ -178,9 +179,9 @@ def config_empleados(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/config/percepciones")
-@login_required
+@require_read_access()
 def config_percepciones(planilla_id: str):
-    """Manage perceptions associated with a planilla."""
+    """View perceptions associated with a planilla."""
     planilla = db.get_or_404(Planilla, planilla_id)
 
     percepciones_asignadas = (
@@ -200,9 +201,9 @@ def config_percepciones(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/config/deducciones")
-@login_required
+@require_read_access()
 def config_deducciones(planilla_id: str):
-    """Manage deductions associated with a planilla."""
+    """View deductions associated with a planilla."""
     planilla = db.get_or_404(Planilla, planilla_id)
 
     deducciones_asignadas = (
@@ -226,7 +227,7 @@ def config_deducciones(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/config/prestaciones")
-@login_required
+@require_write_access()
 def config_prestaciones(planilla_id: str):
     """Manage benefits associated with a planilla."""
     planilla = db.get_or_404(Planilla, planilla_id)
@@ -248,9 +249,9 @@ def config_prestaciones(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/config/reglas")
-@login_required
+@require_read_access()
 def config_reglas(planilla_id: str):
-    """Manage calculation rules associated with a planilla."""
+    """View calculation rules associated with a planilla."""
     planilla = db.get_or_404(Planilla, planilla_id)
 
     reglas_asignadas = (
@@ -274,7 +275,7 @@ def config_reglas(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/delete", methods=["POST"])
-@login_required
+@require_write_access()
 def delete(planilla_id: str):
     """Delete a planilla."""
     planilla = db.get_or_404(Planilla, planilla_id)
@@ -296,7 +297,7 @@ def delete(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/empleado/add", methods=["POST"])
-@login_required
+@require_write_access()
 def add_empleado(planilla_id: str):
     """Add an employee to the planilla."""
     # Verify planilla exists (raises 404 if not found)
@@ -336,7 +337,7 @@ def add_empleado(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/empleado/<association_id>/remove", methods=["POST"])
-@login_required
+@require_write_access()
 def remove_empleado(planilla_id: str, association_id: str):
     """Remove an employee from the planilla."""
     association = db.get_or_404(PlanillaEmpleado, association_id)
@@ -352,7 +353,7 @@ def remove_empleado(planilla_id: str, association_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/percepcion/add", methods=["POST"])
-@login_required
+@require_write_access()
 def add_percepcion(planilla_id: str):
     """Add a perception to the planilla."""
     # Verify planilla exists (raises 404 if not found)
@@ -388,7 +389,7 @@ def add_percepcion(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/percepcion/<association_id>/remove", methods=["POST"])
-@login_required
+@require_write_access()
 def remove_percepcion(planilla_id: str, association_id: str):
     """Remove a perception from the planilla."""
     association = db.get_or_404(PlanillaIngreso, association_id)
@@ -404,7 +405,7 @@ def remove_percepcion(planilla_id: str, association_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/deduccion/add", methods=["POST"])
-@login_required
+@require_write_access()
 def add_deduccion(planilla_id: str):
     """Add a deduction to the planilla with priority."""
     # Verify planilla exists (raises 404 if not found)
@@ -442,7 +443,7 @@ def add_deduccion(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/deduccion/<association_id>/remove", methods=["POST"])
-@login_required
+@require_write_access()
 def remove_deduccion(planilla_id: str, association_id: str):
     """Remove a deduction from the planilla."""
     association = db.get_or_404(PlanillaDeduccion, association_id)
@@ -453,7 +454,7 @@ def remove_deduccion(planilla_id: str, association_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/deduccion/<association_id>/update-priority", methods=["POST"])
-@login_required
+@require_write_access()
 def update_deduccion_priority(planilla_id: str, association_id: str):
     """Update the priority of a deduction."""
     association = db.get_or_404(PlanillaDeduccion, association_id)
@@ -474,7 +475,7 @@ def update_deduccion_priority(planilla_id: str, association_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/prestacion/add", methods=["POST"])
-@login_required
+@require_write_access()
 def add_prestacion(planilla_id: str):
     """Add a benefit (prestacion) to the planilla."""
     # Verify planilla exists (raises 404 if not found)
@@ -510,7 +511,7 @@ def add_prestacion(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/prestacion/<association_id>/remove", methods=["POST"])
-@login_required
+@require_write_access()
 def remove_prestacion(planilla_id: str, association_id: str):
     """Remove a benefit from the planilla."""
     association = db.get_or_404(PlanillaPrestacion, association_id)
@@ -526,7 +527,7 @@ def remove_prestacion(planilla_id: str, association_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/regla/add", methods=["POST"])
-@login_required
+@require_write_access()
 def add_regla(planilla_id: str):
     """Add a calculation rule to the planilla."""
     # Verify planilla exists (raises 404 if not found)
@@ -561,7 +562,7 @@ def add_regla(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/regla/<association_id>/remove", methods=["POST"])
-@login_required
+@require_write_access()
 def remove_regla(planilla_id: str, association_id: str):
     """Remove a calculation rule from the planilla."""
     association = db.get_or_404(PlanillaReglaCalculo, association_id)
@@ -577,7 +578,7 @@ def remove_regla(planilla_id: str, association_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/ejecutar", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def ejecutar_nomina(planilla_id: str):
     """Execute a payroll run for a planilla."""
     from datetime import date
@@ -757,7 +758,7 @@ def ejecutar_nomina(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/nominas")
-@login_required
+@require_read_access()
 def listar_nominas(planilla_id: str):
     """List all nominas for a planilla."""
     from coati_payroll.model import Nomina
@@ -777,7 +778,7 @@ def listar_nominas(planilla_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>")
-@login_required
+@require_read_access()
 def ver_nomina(planilla_id: str, nomina_id: str):
     """View details of a specific nomina."""
     from coati_payroll.model import Nomina, NominaEmpleado
@@ -800,7 +801,7 @@ def ver_nomina(planilla_id: str, nomina_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/empleado/<nomina_empleado_id>")
-@login_required
+@require_read_access()
 def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: str):
     """View details of an employee's payroll."""
     from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle
@@ -838,7 +839,7 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/progreso")
-@login_required
+@require_read_access()
 def progreso_nomina(planilla_id: str, nomina_id: str):
     """API endpoint to check calculation progress of a nomina."""
     from flask import jsonify
@@ -869,7 +870,7 @@ def progreso_nomina(planilla_id: str, nomina_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aprobar", methods=["POST"])
-@login_required
+@require_write_access()
 def aprobar_nomina(planilla_id: str, nomina_id: str):
     """Approve a nomina for payment."""
     from coati_payroll.model import Nomina
@@ -893,7 +894,7 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aplicar", methods=["POST"])
-@login_required
+@require_write_access()
 def aplicar_nomina(planilla_id: str, nomina_id: str):
     """Mark a nomina as applied (paid)."""
     from coati_payroll.model import Nomina
@@ -947,7 +948,7 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/recalcular", methods=["POST"])
-@login_required
+@require_write_access()
 def recalcular_nomina(planilla_id: str, nomina_id: str):
     """Recalculate an existing nomina.
 
@@ -1097,7 +1098,7 @@ def _populate_form_choices(form: PlanillaForm):
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/novedades")
-@login_required
+@require_read_access()
 def listar_novedades(planilla_id: str, nomina_id: str):
     """List all novedades (novelties) for a specific nomina.
 
@@ -1141,7 +1142,7 @@ def listar_novedades(planilla_id: str, nomina_id: str):
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/novedades/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def nueva_novedad(planilla_id: str, nomina_id: str):
     """Add a new novedad to a nomina."""
     from decimal import Decimal
@@ -1224,7 +1225,7 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
     "/<planilla_id>/nomina/<nomina_id>/novedades/<novedad_id>/edit",
     methods=["GET", "POST"],
 )
-@login_required
+@require_write_access()
 def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     """Edit an existing novedad."""
     from decimal import Decimal
@@ -1326,7 +1327,7 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     "/<planilla_id>/nomina/<nomina_id>/novedades/<novedad_id>/delete",
     methods=["POST"],
 )
-@login_required
+@require_write_access()
 def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     """Delete a novedad from a nomina."""
     from coati_payroll.model import Nomina, NominaNovedad

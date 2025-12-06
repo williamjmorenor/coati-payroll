@@ -24,6 +24,7 @@ from flask_login import current_user, login_required
 from coati_payroll.forms import EmployeeForm
 from coati_payroll.i18n import _
 from coati_payroll.model import CampoPersonalizado, Empleado, Moneda, db
+from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.vistas.constants import PER_PAGE
 
 employee_bp = Blueprint("employee", __name__, url_prefix="/employee")
@@ -113,7 +114,7 @@ def process_last_three_salaries(form):
 
 
 @employee_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all employees with pagination."""
     page = request.args.get("page", 1, type=int)
@@ -127,9 +128,9 @@ def index():
 
 
 @employee_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def new():
-    """Create a new employee."""
+    """Create a new employee. Admin and HR can create employees."""
     form = EmployeeForm()
     form.moneda_id.choices = get_currency_choices()
     form.empresa_id.choices = get_empresa_choices()
@@ -203,9 +204,9 @@ def new():
 
 
 @employee_bp.route("/edit/<string:id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def edit(id: str):
-    """Edit an existing employee."""
+    """Edit an existing employee. Admin and HR can edit employees."""
     employee = db.session.get(Empleado, id)
     if not employee:
         flash(_("Empleado no encontrado."), "error")
@@ -290,9 +291,9 @@ def edit(id: str):
 
 
 @employee_bp.route("/delete/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def delete(id: str):
-    """Delete an employee."""
+    """Delete an employee. Admin and HR can delete employees."""
     employee = db.session.get(Empleado, id)
     if not employee:
         flash(_("Empleado no encontrado."), "error")

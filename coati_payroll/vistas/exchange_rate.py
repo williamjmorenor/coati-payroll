@@ -22,6 +22,7 @@ from flask_login import current_user, login_required
 
 from coati_payroll.forms import ExchangeRateForm
 from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.model import Moneda, TipoCambio, db
 from coati_payroll.vistas.constants import PER_PAGE
 
@@ -35,7 +36,7 @@ def get_currency_choices():
 
 
 @exchange_rate_bp.route("/")
-@login_required
+@require_read_access()
 def index():
     """List all exchange rates with pagination and filters."""
     page = request.args.get("page", 1, type=int)
@@ -85,7 +86,7 @@ def index():
 
 
 @exchange_rate_bp.route("/new", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def new():
     """Create a new exchange rate."""
     form = ExchangeRateForm()
@@ -113,7 +114,7 @@ def new():
 
 
 @exchange_rate_bp.route("/edit/<string:id>", methods=["GET", "POST"])
-@login_required
+@require_write_access()
 def edit(id: str):
     """Edit an existing exchange rate."""
     exchange_rate = db.session.get(TipoCambio, id)
@@ -145,7 +146,7 @@ def edit(id: str):
 
 
 @exchange_rate_bp.route("/delete/<string:id>", methods=["POST"])
-@login_required
+@require_write_access()
 def delete(id: str):
     """Delete an exchange rate."""
     exchange_rate = db.session.get(TipoCambio, id)
