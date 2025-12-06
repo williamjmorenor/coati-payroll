@@ -17,8 +17,7 @@ Esta guía le ayudará a familiarizarse con Coati Payroll y preparar el sistema 
 Después de iniciar sesión, verá el panel principal con acceso a todos los módulos del sistema:
 
 - **Personal**: Gestión de empleados
-- **Catálogos**: Monedas y tipos de cambio
-- **Conceptos**: Percepciones, deducciones y prestaciones
+- **Configuración**: Empresas, monedas, tipos de cambio, percepciones, deducciones y prestaciones
 - **Planillas**: Configuración y ejecución de nóminas
 
 ## Estructura del Sistema

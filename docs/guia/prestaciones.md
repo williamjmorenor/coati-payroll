@@ -21,7 +21,7 @@ Las prestaciones permiten:
 
 ## Acceder al Módulo
 
-1. Navegue a **Conceptos > Prestaciones**
+1. Navegue a **Configuración > Prestaciones**
 
 ## Crear Nueva Prestación
 

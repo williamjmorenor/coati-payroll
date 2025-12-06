@@ -36,8 +36,8 @@ No necesariamente. Coati Payroll puede instalarse en un servidor local sin conex
 
 ### ¿Cómo configuro el sistema para múltiples monedas?
 
-1. Cree las monedas necesarias en **Catálogos > Monedas**
-2. Configure los tipos de cambio en **Catálogos > Tipos de Cambio**
+1. Cree las monedas necesarias en **Configuración > Monedas**
+2. Configure los tipos de cambio en **Configuración > Tipos de Cambio**
 3. Al crear empleados, asigne la moneda de su salario
 4. Al crear planillas, seleccione la moneda de pago
 
@@ -249,7 +249,7 @@ Si todo falla, puede intentar ejecutar la nómina nuevamente.
 
 ### Error: "No se encontró tipo de cambio"
 
-1. Navegue a **Catálogos > Tipos de Cambio**
+1. Navegue a **Configuración > Tipos de Cambio**
 2. Cree un tipo de cambio para las monedas involucradas
 3. Asegúrese de que la fecha sea anterior o igual a la fecha de cálculo
 

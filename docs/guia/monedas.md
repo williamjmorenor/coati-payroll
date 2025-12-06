@@ -6,7 +6,7 @@ El sistema soporta múltiples monedas, permitiendo pagar salarios en diferentes 
 
 ### Acceder al Módulo
 
-1. Navegue a **Catálogos > Monedas**
+1. Navegue a **Configuración > Monedas**
 
 ### Crear Nueva Moneda
 
@@ -42,7 +42,7 @@ Los tipos de cambio permiten convertir valores entre monedas cuando el empleado 
 
 ### Acceder al Módulo
 
-1. Navegue a **Catálogos > Tipos de Cambio**
+1. Navegue a **Configuración > Tipos de Cambio**
 
 ### Crear Tipo de Cambio
 

@@ -20,7 +20,7 @@ Las deducciones incluyen:
 
 ## Acceder al Módulo
 
-1. Navegue a **Conceptos > Deducciones**
+1. Navegue a **Configuración > Deducciones**
 
 ## Crear Nueva Deducción
 

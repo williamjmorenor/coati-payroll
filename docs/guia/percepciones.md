@@ -18,7 +18,7 @@ Las percepciones incluyen:
 
 ## Acceder al Módulo
 
-1. Navegue a **Conceptos > Percepciones**
+1. Navegue a **Configuración > Percepciones**
 
 ## Crear Nueva Percepción
 

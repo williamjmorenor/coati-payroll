@@ -31,7 +31,7 @@ Configuraremos una empresa ficticia con:
 
 ### 1.2 Crear la Moneda
 
-1. Navegue a **Catálogos > Monedas**
+1. Navegue a **Configuración > Monedas**
 2. Haga clic en **Nueva Moneda**
 3. Complete:
 
@@ -52,7 +52,7 @@ Las percepciones son los ingresos del empleado.
 
 ### 2.1 Percepción: Horas Extras
 
-1. Navegue a **Conceptos > Percepciones**
+1. Navegue a **Configuración > Percepciones**
 2. Haga clic en **Nueva Percepción**
 3. Complete:
 
@@ -94,7 +94,7 @@ Las deducciones son los descuentos del salario.
 
 ### 3.1 Deducción: INSS Laboral
 
-1. Navegue a **Conceptos > Deducciones**
+1. Navegue a **Configuración > Deducciones**
 2. Haga clic en **Nueva Deducción**
 3. Complete:
 
@@ -163,7 +163,7 @@ Las prestaciones son aportes patronales (la empresa paga, no el empleado).
 
 ### 4.1 Prestación: INSS Patronal
 
-1. Navegue a **Conceptos > Prestaciones**
+1. Navegue a **Configuración > Prestaciones**
 2. Haga clic en **Nueva Prestación**
 3. Complete:
 

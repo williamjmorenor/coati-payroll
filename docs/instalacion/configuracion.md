@@ -31,7 +31,7 @@ graph LR
 
 Las monedas son necesarias para definir los salarios de los empleados y las planillas.
 
-1. Navegue a **Catálogos > Monedas**
+1. Navegue a **Configuración > Monedas**
 2. Haga clic en **Nueva Moneda**
 3. Complete los campos:
    - **Código**: Código ISO de la moneda (ej: `NIO`, `USD`)
@@ -48,7 +48,7 @@ Las monedas son necesarias para definir los salarios de los empleados y las plan
 
 Si su empresa opera con múltiples monedas, configure los tipos de cambio:
 
-1. Navegue a **Catálogos > Tipos de Cambio**
+1. Navegue a **Configuración > Tipos de Cambio**
 2. Haga clic en **Nuevo Tipo de Cambio**
 3. Configure:
    - **Fecha**: Fecha de vigencia del tipo de cambio
@@ -60,7 +60,7 @@ Si su empresa opera con múltiples monedas, configure los tipos de cambio:
 
 Las percepciones son los ingresos adicionales al salario base.
 
-1. Navegue a **Conceptos > Percepciones**
+1. Navegue a **Configuración > Percepciones**
 2. Haga clic en **Nueva Percepción**
 3. Configure según el tipo de ingreso
 
@@ -77,7 +77,7 @@ Las percepciones son los ingresos adicionales al salario base.
 
 Las deducciones son los descuentos del salario del empleado.
 
-1. Navegue a **Conceptos > Deducciones**
+1. Navegue a **Configuración > Deducciones**
 2. Haga clic en **Nueva Deducción**
 3. Configure según el tipo de descuento
 
@@ -98,7 +98,7 @@ Las deducciones son los descuentos del salario del empleado.
 
 Las prestaciones son aportes patronales que NO afectan el salario del empleado.
 
-1. Navegue a **Conceptos > Prestaciones**
+1. Navegue a **Configuración > Prestaciones**
 2. Haga clic en **Nueva Prestación**
 3. Configure según el aporte patronal
 
