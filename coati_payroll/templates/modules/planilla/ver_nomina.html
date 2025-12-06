@@ -163,6 +163,33 @@
                 <a href="{{ url_for('planilla.listar_novedades', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-info">
                     <i class="bi bi-list-check"></i> Novedades
                 </a>
+                <a href="{{ url_for('planilla.ver_log_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-list-alt"></i> Log de Ejecución
+                </a>
+                {% if nomina.estado in ['generado', 'aprobado', 'aplicado'] %}
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-file-excel"></i> Exportar
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('planilla.exportar_nomina_excel', planilla_id=planilla.id, nomina_id=nomina.id) }}">
+                                <i class="fas fa-file-excel"></i> Nómina (Excel)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('planilla.exportar_prestaciones_excel', planilla_id=planilla.id, nomina_id=nomina.id) }}">
+                                <i class="fas fa-file-excel"></i> Prestaciones (Excel)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('planilla.exportar_comprobante_excel', planilla_id=planilla.id, nomina_id=nomina.id) }}">
+                                <i class="fas fa-file-invoice"></i> Comprobante Contable (Excel)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

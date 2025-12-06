@@ -235,8 +235,14 @@ def populate_concept_from_form(concept, form):
     if hasattr(form, "codigo_cuenta_debe") and form.codigo_cuenta_debe.data:
         concept.codigo_cuenta_debe = form.codigo_cuenta_debe.data
 
+    if hasattr(form, "descripcion_cuenta_debe") and form.descripcion_cuenta_debe.data:
+        concept.descripcion_cuenta_debe = form.descripcion_cuenta_debe.data
+
     if hasattr(form, "codigo_cuenta_haber") and form.codigo_cuenta_haber.data:
         concept.codigo_cuenta_haber = form.codigo_cuenta_haber.data
+
+    if hasattr(form, "descripcion_cuenta_haber") and form.descripcion_cuenta_haber.data:
+        concept.descripcion_cuenta_haber = form.descripcion_cuenta_haber.data
 
     if hasattr(form, "editable_en_nomina"):
         concept.editable_en_nomina = form.editable_en_nomina.data

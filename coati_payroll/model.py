@@ -390,7 +390,9 @@ class Planilla(database.Model, BaseTabla):
     # Base salary is the foundation of payroll calculation and needs its own
     # accounting accounts to generate proper accounting vouchers
     codigo_cuenta_debe_salario = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_debe_salario = database.Column(database.String(255), nullable=True)
     codigo_cuenta_haber_salario = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_haber_salario = database.Column(database.String(255), nullable=True)
 
     # relaciones con componentes configurados
     planilla_percepciones = database.relationship(
@@ -468,7 +470,9 @@ class Percepcion(database.Model, BaseTabla):
     # Control contable
     contabilizable = database.Column(database.Boolean(), default=True, nullable=False)
     codigo_cuenta_debe = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_debe = database.Column(database.String(255), nullable=True)
     codigo_cuenta_haber = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
 
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
@@ -510,7 +514,9 @@ class Deduccion(database.Model, BaseTabla):
     # Control contable
     contabilizable = database.Column(database.Boolean(), default=True, nullable=False)
     codigo_cuenta_debe = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_debe = database.Column(database.String(255), nullable=True)
     codigo_cuenta_haber = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
 
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
@@ -567,7 +573,9 @@ class Prestacion(database.Model, BaseTabla):
 
     contabilizable = database.Column(database.Boolean(), default=True, nullable=False)
     codigo_cuenta_debe = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_debe = database.Column(database.String(255), nullable=True)
     codigo_cuenta_haber = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
 
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
@@ -733,6 +741,11 @@ class Nomina(database.Model, BaseTabla):
         "NominaNovedad",
         back_populates="nomina",
     )
+    comprobante_contable = database.relationship(
+        "ComprobanteContable",
+        back_populates="nomina",
+        uselist=False,
+    )
 
 
 class NominaEmpleado(database.Model, BaseTabla):
@@ -815,6 +828,33 @@ class NominaNovedad(database.Model, BaseTabla):
 
     nomina = database.relationship("Nomina", back_populates="novedades")
     empleado = database.relationship("Empleado", back_populates="novedades_registradas")
+
+
+# Comprobante Contable (Accounting Voucher)
+class ComprobanteContable(database.Model, BaseTabla):
+    """Stores the accounting voucher for audit purposes.
+
+    This model preserves the accounting entries generated at the time of payroll
+    calculation, preventing configuration changes from affecting historical records.
+    """
+
+    __tablename__ = "comprobante_contable"
+
+    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False, unique=True)
+
+    # Store the complete voucher as JSON for historical preservation
+    # Structure: [{"codigo_cuenta": "...", "descripcion": "...", "debito": 0.0, "credito": 0.0}, ...]
+    asientos_contables = database.Column(JSON, nullable=False)
+
+    # Summary totals
+    total_debitos = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    total_creditos = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    balance = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+
+    # Warnings about incomplete configurations
+    advertencias = database.Column(JSON, nullable=True, default=list)
+
+    nomina = database.relationship("Nomina", back_populates="comprobante_contable")
 
 
 # Historial de cambios de salario
@@ -978,7 +1018,9 @@ class Adelanto(database.Model, BaseTabla):
 
     # Accounting fields for initial disbursement
     cuenta_debe = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_debe = database.Column(database.String(255), nullable=True)
     cuenta_haber = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
 
     # Estado: borrador, pendiente, aprobado, aplicado (pagado), rechazado, cancelado
     estado = database.Column(database.String(30), nullable=False, default="borrador")
@@ -1029,7 +1071,9 @@ class AdelantoAbono(database.Model, BaseTabla):
     # Accounting entries for manual payments/deductions
     # Optional for payments/forgiveness, but useful for financial reconciliation
     cuenta_debe = database.Column(database.String(64), nullable=True)  # Debit account for payment/deduction
+    descripcion_cuenta_debe = database.Column(database.String(255), nullable=True)
     cuenta_haber = database.Column(database.String(64), nullable=True)  # Credit account for payment/deduction
+    descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
 
     # Loan forgiveness/write-off fields (condonación)
     # Used when company decides not to collect part or all of the loan

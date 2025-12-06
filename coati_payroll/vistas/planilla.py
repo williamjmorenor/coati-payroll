@@ -23,7 +23,7 @@ A Planilla is the central hub that connects:
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required, current_user
@@ -80,7 +80,9 @@ def new():
             aplicar_prestamos_automatico=form.aplicar_prestamos_automatico.data,
             aplicar_adelantos_automatico=form.aplicar_adelantos_automatico.data,
             codigo_cuenta_debe_salario=form.codigo_cuenta_debe_salario.data,
+            descripcion_cuenta_debe_salario=form.descripcion_cuenta_debe_salario.data,
             codigo_cuenta_haber_salario=form.codigo_cuenta_haber_salario.data,
+            descripcion_cuenta_haber_salario=form.descripcion_cuenta_haber_salario.data,
             activo=form.activo.data,
             creado_por=current_user.usuario,
         )
@@ -113,7 +115,9 @@ def edit(planilla_id: str):
         planilla.aplicar_prestamos_automatico = form.aplicar_prestamos_automatico.data
         planilla.aplicar_adelantos_automatico = form.aplicar_adelantos_automatico.data
         planilla.codigo_cuenta_debe_salario = form.codigo_cuenta_debe_salario.data
+        planilla.descripcion_cuenta_debe_salario = form.descripcion_cuenta_debe_salario.data
         planilla.codigo_cuenta_haber_salario = form.codigo_cuenta_haber_salario.data
+        planilla.descripcion_cuenta_haber_salario = form.descripcion_cuenta_haber_salario.data
         planilla.activo = form.activo.data
         planilla.modificado_por = current_user.usuario
         db.session.commit()
@@ -1414,3 +1418,624 @@ def _get_concepto_ids_from_form(form) -> tuple[str | None, str | None]:
         deduccion_id = form.deduccion_id.data if form.deduccion_id.data else None
 
     return percepcion_id, deduccion_id
+
+
+def _check_openpyxl_available():
+    """Check if openpyxl is available and return necessary classes.
+    
+    Returns:
+        tuple: (Workbook, Font, Alignment, PatternFill, Border, Side) or None if not available
+    """
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+        return Workbook, Font, Alignment, PatternFill, Border, Side
+    except ImportError:
+        return None
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/exportar-excel")
+@login_required
+def exportar_nomina_excel(planilla_id: str, nomina_id: str):
+    """Export nomina to Excel with employee details and calculations."""
+    from io import BytesIO
+    from flask import send_file
+    from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle
+    from decimal import Decimal
+
+    openpyxl_classes = _check_openpyxl_available()
+    if not openpyxl_classes:
+        flash(_("Excel export no disponible. Instale openpyxl."), "warning")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+    
+    Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
+
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    # Get all nomina employees
+    nomina_empleados = (
+        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
+    )
+
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Nómina"
+
+    # Define styles
+    header_font = Font(bold=True, size=14, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    subheader_font = Font(bold=True, size=11)
+    subheader_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
+    border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+
+    # Title
+    ws.merge_cells("A1:P1")
+    title_cell = ws["A1"]
+    title_cell.value = f"NÓMINA - {planilla.nombre}"
+    title_cell.font = header_font
+    title_cell.fill = header_fill
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Nomina info
+    row = 3
+    # Company information if linked
+    if planilla.empresa_id and planilla.empresa:
+        ws[f"A{row}"] = "Empresa:"
+        ws[f"B{row}"] = planilla.empresa.razon_social
+        row += 1
+        if planilla.empresa.ruc:
+            ws[f"A{row}"] = "RUC:"
+            ws[f"B{row}"] = planilla.empresa.ruc
+            row += 1
+    ws[f"A{row}"] = "Período:"
+    ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+    row += 1
+    ws[f"A{row}"] = "Estado:"
+    ws[f"B{row}"] = nomina.estado
+    row += 1
+    ws[f"A{row}"] = "Generado por:"
+    ws[f"B{row}"] = nomina.generado_por or ""
+    row += 2
+
+    # Table headers
+    headers = [
+        "Cód. Empleado",
+        "Identificación",
+        "No. Seg. Social",
+        "ID Fiscal",
+        "Nombres",
+        "Apellidos",
+        "Cargo",
+        "Salario Base",
+        "Total Percepciones",
+        "Total Deducciones",
+        "Salario Neto",
+    ]
+
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=row, column=col, value=header)
+        cell.font = subheader_font
+        cell.fill = subheader_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = border
+
+    # Data rows
+    for ne in nomina_empleados:
+        row += 1
+        emp = ne.empleado
+
+        ws.cell(row=row, column=1, value=emp.codigo_empleado).border = border
+        ws.cell(row=row, column=2, value=emp.identificacion_personal).border = border
+        ws.cell(row=row, column=3, value=emp.id_seguridad_social or "").border = border
+        ws.cell(row=row, column=4, value=emp.id_fiscal or "").border = border
+        ws.cell(row=row, column=5, value=f"{emp.primer_nombre} {emp.segundo_nombre or ''}".strip()).border = border
+        ws.cell(row=row, column=6, value=f"{emp.primer_apellido} {emp.segundo_apellido or ''}".strip()).border = (
+            border
+        )
+        ws.cell(row=row, column=7, value=ne.cargo_snapshot or emp.cargo or "").border = border
+        ws.cell(row=row, column=8, value=float(ne.sueldo_base_historico)).border = border
+        ws.cell(row=row, column=9, value=float(ne.total_ingresos)).border = border
+        ws.cell(row=row, column=10, value=float(ne.total_deducciones)).border = border
+        ws.cell(row=row, column=11, value=float(ne.salario_neto)).border = border
+
+    # Auto-adjust column widths
+    for col in range(1, 12):
+        ws.column_dimensions[chr(64 + col)].width = 15
+
+    # Save to BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"nomina_{planilla.nombre}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
+
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/exportar-prestaciones-excel")
+@login_required
+def exportar_prestaciones_excel(planilla_id: str, nomina_id: str):
+    """Export benefits (prestaciones) to Excel separately."""
+    from io import BytesIO
+    from flask import send_file
+    from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle
+
+    openpyxl_classes = _check_openpyxl_available()
+    if not openpyxl_classes:
+        flash(_("Excel export no disponible. Instale openpyxl."), "warning")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+    
+    Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
+
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    # Get all nomina employees
+    nomina_empleados = (
+        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
+    )
+
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Prestaciones"
+
+    # Define styles
+    header_font = Font(bold=True, size=14, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    subheader_font = Font(bold=True, size=11)
+    subheader_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
+    border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+
+    # Title
+    ws.merge_cells("A1:F1")
+    title_cell = ws["A1"]
+    title_cell.value = f"PRESTACIONES LABORALES - {planilla.nombre}"
+    title_cell.font = header_font
+    title_cell.fill = header_fill
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Nomina info
+    row = 3
+    # Company information if linked
+    if planilla.empresa_id and planilla.empresa:
+        ws[f"A{row}"] = "Empresa:"
+        ws[f"B{row}"] = planilla.empresa.razon_social
+        row += 1
+        if planilla.empresa.ruc:
+            ws[f"A{row}"] = "RUC:"
+            ws[f"B{row}"] = planilla.empresa.ruc
+            row += 1
+    ws[f"A{row}"] = "Período:"
+    ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+    row += 2
+
+    # Table headers
+    headers = ["Cód. Empleado", "Nombres", "Apellidos"]
+
+    # Get all unique prestaciones
+    prestaciones_set = set()
+    for ne in nomina_empleados:
+        detalles = (
+            db.session.execute(
+                db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id, tipo="prestacion")
+            )
+            .scalars()
+            .all()
+        )
+        for d in detalles:
+            prestaciones_set.add((d.codigo, d.descripcion))
+
+    prestaciones_list = sorted(prestaciones_set, key=lambda x: x[0])
+    headers.extend([p[1] or p[0] for p in prestaciones_list])
+
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=row, column=col, value=header)
+        cell.font = subheader_font
+        cell.fill = subheader_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = border
+
+    # Data rows
+    for ne in nomina_empleados:
+        row += 1
+        emp = ne.empleado
+
+        ws.cell(row=row, column=1, value=emp.codigo_empleado).border = border
+        ws.cell(row=row, column=2, value=f"{emp.primer_nombre} {emp.segundo_nombre or ''}".strip()).border = border
+        ws.cell(row=row, column=3, value=f"{emp.primer_apellido} {emp.segundo_apellido or ''}".strip()).border = (
+            border
+        )
+
+        # Get prestaciones for this employee
+        detalles = (
+            db.session.execute(
+                db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id, tipo="prestacion").order_by(
+                    NominaDetalle.orden
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        prestaciones_dict = {d.codigo: float(d.monto) for d in detalles}
+
+        # Fill prestacion amounts
+        for col_idx, (codigo, _) in enumerate(prestaciones_list, start=4):
+            cell = ws.cell(row=row, column=col_idx, value=prestaciones_dict.get(codigo, 0.0))
+            cell.border = border
+
+    # Auto-adjust column widths (limit to 26 columns for simplicity)
+    for col in range(1, min(len(headers) + 1, 27)):
+        ws.column_dimensions[chr(64 + col)].width = 15
+
+    # Save to BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"prestaciones_{planilla.nombre}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
+
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/exportar-comprobante-excel")
+@login_required
+def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
+    """Export accounting voucher (comprobante contable) to Excel."""
+    from io import BytesIO
+    from flask import send_file
+    from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle, ComprobanteContable
+    from decimal import Decimal
+
+    openpyxl_classes = _check_openpyxl_available()
+    if not openpyxl_classes:
+        flash(_("Excel export no disponible. Instale openpyxl."), "warning")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+    
+    Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
+
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    # Get all nomina employees
+    nomina_empleados = (
+        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
+    )
+
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Comprobante Contable"
+
+    # Define styles
+    header_font = Font(bold=True, size=14, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    subheader_font = Font(bold=True, size=11)
+    subheader_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
+    total_font = Font(bold=True, size=11)
+    total_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+    border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+
+    # Title
+    ws.merge_cells("A1:D1")
+    title_cell = ws["A1"]
+    title_cell.value = "COMPROBANTE CONTABLE - NÓMINA"
+    title_cell.font = header_font
+    title_cell.fill = header_fill
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Header info
+    row = 3
+    # Company information if linked
+    if planilla.empresa_id and planilla.empresa:
+        ws[f"A{row}"] = "Empresa:"
+        ws[f"B{row}"] = planilla.empresa.razon_social
+        row += 1
+        if planilla.empresa.ruc:
+            ws[f"A{row}"] = "RUC:"
+            ws[f"B{row}"] = planilla.empresa.ruc
+            row += 1
+    ws[f"A{row}"] = "Planilla:"
+    ws[f"B{row}"] = planilla.nombre
+    row += 1
+    ws[f"A{row}"] = "Período:"
+    ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+    row += 1
+    ws[f"A{row}"] = "Estado:"
+    ws[f"B{row}"] = nomina.estado
+    row += 1
+    ws[f"A{row}"] = "Generado por:"
+    ws[f"B{row}"] = nomina.generado_por or ""
+    row += 2
+
+    # Table headers
+    headers = ["Código Cuenta", "Descripción", "Débitos", "Créditos"]
+
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=row, column=col, value=header)
+        cell.font = subheader_font
+        cell.fill = subheader_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = border
+
+    # Collect accounting entries - summarized by account code (not by description)
+    # Key is codigo_cuenta only, value includes first description found
+    accounting_entries = {}  # {codigo_cuenta: {"descripcion": str, "debito": amount, "credito": amount}}
+    advertencias = []  # List of configuration warnings
+
+    # 1. Salario Base (from planilla configuration)
+    total_salario_base = sum(ne.sueldo_base_historico for ne in nomina_empleados)
+    
+    if total_salario_base > 0:
+        if planilla.codigo_cuenta_debe_salario:
+            if planilla.codigo_cuenta_debe_salario not in accounting_entries:
+                accounting_entries[planilla.codigo_cuenta_debe_salario] = {
+                    "descripcion": planilla.descripcion_cuenta_debe_salario or "Salario Base",
+                    "debito": Decimal("0"),
+                    "credito": Decimal("0"),
+                }
+            accounting_entries[planilla.codigo_cuenta_debe_salario]["debito"] += total_salario_base
+        else:
+            advertencias.append("Planilla: Falta configurar cuenta débito para salario base")
+
+        if planilla.codigo_cuenta_haber_salario:
+            if planilla.codigo_cuenta_haber_salario not in accounting_entries:
+                accounting_entries[planilla.codigo_cuenta_haber_salario] = {
+                    "descripcion": planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
+                    "debito": Decimal("0"),
+                    "credito": Decimal("0"),
+                }
+            accounting_entries[planilla.codigo_cuenta_haber_salario]["credito"] += total_salario_base
+        else:
+            advertencias.append("Planilla: Falta configurar cuenta crédito para salario base")
+
+    # 2. Process all detalles (percepciones, deducciones, prestaciones)
+    for ne in nomina_empleados:
+        detalles = (
+            db.session.execute(
+                db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id).order_by(NominaDetalle.orden)
+            )
+            .scalars()
+            .all()
+        )
+
+        for detalle in detalles:
+            # Get the corresponding concept to get account codes
+            concepto = None
+            concepto_tipo = ""
+            if detalle.tipo == "ingreso" and detalle.percepcion_id:
+                concepto = db.session.get(Percepcion, detalle.percepcion_id)
+                concepto_tipo = "Percepción"
+            elif detalle.tipo == "deduccion" and detalle.deduccion_id:
+                concepto = db.session.get(Deduccion, detalle.deduccion_id)
+                concepto_tipo = "Deducción"
+            elif detalle.tipo == "prestacion" and detalle.prestacion_id:
+                concepto = db.session.get(Prestacion, detalle.prestacion_id)
+                concepto_tipo = "Prestación"
+            else:
+                continue
+
+            if not concepto or not concepto.contabilizable:
+                continue
+
+            # Add debit entry
+            if concepto.codigo_cuenta_debe:
+                if concepto.codigo_cuenta_debe not in accounting_entries:
+                    accounting_entries[concepto.codigo_cuenta_debe] = {
+                        "descripcion": concepto.descripcion_cuenta_debe or detalle.descripcion or concepto.nombre,
+                        "debito": Decimal("0"),
+                        "credito": Decimal("0"),
+                    }
+                accounting_entries[concepto.codigo_cuenta_debe]["debito"] += detalle.monto
+            else:
+                advertencias.append(
+                    f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta débito"
+                )
+
+            # Add credit entry
+            if concepto.codigo_cuenta_haber:
+                if concepto.codigo_cuenta_haber not in accounting_entries:
+                    accounting_entries[concepto.codigo_cuenta_haber] = {
+                        "descripcion": concepto.descripcion_cuenta_haber or detalle.descripcion or concepto.nombre,
+                        "debito": Decimal("0"),
+                        "credito": Decimal("0"),
+                    }
+                accounting_entries[concepto.codigo_cuenta_haber]["credito"] += detalle.monto
+            else:
+                advertencias.append(
+                    f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta crédito"
+                )
+
+    # Remove duplicate warnings
+    advertencias = list(set(advertencias))
+
+    # Write accounting entries (summarized by account code)
+    total_debitos = Decimal("0")
+    total_creditos = Decimal("0")
+    asientos_json = []  # For database storage
+
+    for codigo in sorted(accounting_entries.keys()):
+        entry = accounting_entries[codigo]
+        row += 1
+        ws.cell(row=row, column=1, value=codigo).border = border
+        ws.cell(row=row, column=2, value=entry["descripcion"]).border = border
+        ws.cell(row=row, column=3, value=float(entry["debito"]) if entry["debito"] else "").border = border
+        ws.cell(row=row, column=4, value=float(entry["credito"]) if entry["credito"] else "").border = border
+
+        total_debitos += entry["debito"]
+        total_creditos += entry["credito"]
+
+        # Store for database
+        asientos_json.append({
+            "codigo_cuenta": codigo,
+            "descripcion": entry["descripcion"],
+            "debito": float(entry["debito"]),
+            "credito": float(entry["credito"]),
+        })
+
+    # Totals row
+    row += 1
+    ws.cell(row=row, column=1, value="").border = border
+    total_cell = ws.cell(row=row, column=2, value="TOTALES")
+    total_cell.font = total_font
+    total_cell.fill = total_fill
+    total_cell.border = border
+    debito_total = ws.cell(row=row, column=3, value=float(total_debitos))
+    debito_total.font = total_font
+    debito_total.fill = total_fill
+    debito_total.border = border
+    credito_total = ws.cell(row=row, column=4, value=float(total_creditos))
+    credito_total.font = total_font
+    credito_total.fill = total_fill
+    credito_total.border = border
+
+    # Balance check
+    row += 2
+    ws[f"A{row}"] = "Balance:"
+    balance = total_debitos - total_creditos
+    balance_cell = ws[f"B{row}"]
+    balance_cell.value = float(balance)
+    if abs(balance) < 0.01:  # Close to zero
+        balance_cell.font = Font(bold=True, color="008000")  # Green
+        ws[f"C{row}"] = "✓ Balanceado"
+    else:
+        balance_cell.font = Font(bold=True, color="FF0000")  # Red
+        ws[f"C{row}"] = "⚠ Desbalanceado"
+
+    # Save comprobante to database for audit trail
+    comprobante = db.session.execute(
+        db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)
+    ).scalar_one_or_none()
+
+    if comprobante:
+        # Update existing
+        comprobante.asientos_contables = asientos_json
+        comprobante.total_debitos = total_debitos
+        comprobante.total_creditos = total_creditos
+        comprobante.balance = balance
+        comprobante.advertencias = advertencias
+        comprobante.modificado_por = current_user.usuario
+    else:
+        # Create new
+        comprobante = ComprobanteContable(
+            nomina_id=nomina_id,
+            asientos_contables=asientos_json,
+            total_debitos=total_debitos,
+            total_creditos=total_creditos,
+            balance=balance,
+            advertencias=advertencias,
+            creado_por=current_user.usuario,
+        )
+        db.session.add(comprobante)
+
+    db.session.commit()
+
+    # Auto-adjust column widths
+    ws.column_dimensions["A"].width = 18
+    ws.column_dimensions["B"].width = 40
+    ws.column_dimensions["C"].width = 15
+    ws.column_dimensions["D"].width = 15
+
+    # Save to BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"comprobante_{planilla.nombre}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
+
+    # Save warnings to nomina log
+    if advertencias:
+        # Initialize log if needed
+        if not nomina.log_procesamiento:
+            nomina.log_procesamiento = []
+        
+        # Add warnings to log
+        for adv in advertencias:
+            log_entry = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "tipo": "advertencia_contabilidad",
+                "mensaje": adv,
+            }
+            nomina.log_procesamiento.append(log_entry)
+        
+        db.session.commit()
+
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/log")
+@login_required
+def ver_log_nomina(planilla_id: str, nomina_id: str):
+    """View execution log for a nomina including warnings and errors."""
+    from coati_payroll.model import Nomina
+
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    # Get log entries
+    log_entries = nomina.log_procesamiento or []
+    
+    # Get comprobante warnings if exists
+    from coati_payroll.model import ComprobanteContable
+    comprobante = db.session.execute(
+        db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)
+    ).scalar_one_or_none()
+    
+    comprobante_warnings = comprobante.advertencias if comprobante else []
+
+    return render_template(
+        "modules/planilla/log_nomina.html",
+        planilla=planilla,
+        nomina=nomina,
+        log_entries=log_entries,
+        comprobante_warnings=comprobante_warnings,
+    )

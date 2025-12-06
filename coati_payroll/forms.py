@@ -473,9 +473,17 @@ class PercepcionForm(FlaskForm):
         _("Cuenta Contable (Debe)"),
         validators=[Optional(), Length(max=64)],
     )
+    descripcion_cuenta_debe = StringField(
+        _("Descripción Cuenta (Debe)"),
+        validators=[Optional(), Length(max=255)],
+    )
     codigo_cuenta_haber = StringField(
         _("Cuenta Contable (Haber)"),
         validators=[Optional(), Length(max=64)],
+    )
+    descripcion_cuenta_haber = StringField(
+        _("Descripción Cuenta (Haber)"),
+        validators=[Optional(), Length(max=255)],
     )
     editable_en_nomina = BooleanField(
         _("Editable en Nómina"),
@@ -596,9 +604,17 @@ class DeduccionForm(FlaskForm):
         _("Cuenta Contable (Debe)"),
         validators=[Optional(), Length(max=64)],
     )
+    descripcion_cuenta_debe = StringField(
+        _("Descripción Cuenta (Debe)"),
+        validators=[Optional(), Length(max=255)],
+    )
     codigo_cuenta_haber = StringField(
         _("Cuenta Contable (Haber)"),
         validators=[Optional(), Length(max=64)],
+    )
+    descripcion_cuenta_haber = StringField(
+        _("Descripción Cuenta (Haber)"),
+        validators=[Optional(), Length(max=255)],
     )
     editable_en_nomina = BooleanField(
         _("Editable en Nómina"),
@@ -682,10 +698,18 @@ class PlanillaForm(FlaskForm):
         validators=[Optional(), Length(max=64)],
         description=_("Cuenta de débito para contabilizar el salario base (gasto)"),
     )
+    descripcion_cuenta_debe_salario = StringField(
+        _("Descripción Cuenta Débito (Salario)"),
+        validators=[Optional(), Length(max=255)],
+    )
     codigo_cuenta_haber_salario = StringField(
         _("Cuenta Crédito (Salario Base)"),
         validators=[Optional(), Length(max=64)],
         description=_("Cuenta de crédito para contabilizar el salario base (pasivo)"),
+    )
+    descripcion_cuenta_haber_salario = StringField(
+        _("Descripción Cuenta Crédito (Salario)"),
+        validators=[Optional(), Length(max=255)],
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
@@ -871,9 +895,17 @@ class PrestacionForm(FlaskForm):
         _("Cuenta Contable (Debe)"),
         validators=[Optional(), Length(max=64)],
     )
+    descripcion_cuenta_debe = StringField(
+        _("Descripción Cuenta (Debe)"),
+        validators=[Optional(), Length(max=255)],
+    )
     codigo_cuenta_haber = StringField(
         _("Cuenta Contable (Haber)"),
         validators=[Optional(), Length(max=64)],
+    )
+    descripcion_cuenta_haber = StringField(
+        _("Descripción Cuenta (Haber)"),
+        validators=[Optional(), Length(max=255)],
     )
     editable_en_nomina = BooleanField(
         _("Editable en Nómina"),
