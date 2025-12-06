@@ -388,3 +388,291 @@ class TestOperators:
         assert "<=" in COMPARISON_OPERATORS
         assert "==" in COMPARISON_OPERATORS
         assert "!=" in COMPARISON_OPERATORS
+
+
+class TestASTExpressionEvaluation:
+    """Tests for AST-based expression evaluation with correct operator precedence."""
+
+    def test_operator_precedence_multiplication_before_addition(self):
+        """Test that multiplication is evaluated before addition."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "2 + 3 * 4"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        # Should be 2 + (3 * 4) = 2 + 12 = 14, not (2 + 3) * 4 = 20
+        assert result["output"] == 14.0
+
+    def test_operator_precedence_division_before_subtraction(self):
+        """Test that division is evaluated before subtraction."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "10 - 8 / 2"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        # Should be 10 - (8 / 2) = 10 - 4 = 6, not (10 - 8) / 2 = 1
+        assert result["output"] == 6.0
+
+    def test_operator_precedence_complex_expression(self):
+        """Test complex expression with multiple operators."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "2 + 3 * 4 - 5 / 2"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        # Should be 2 + (3 * 4) - (5 / 2) = 2 + 12 - 2.5 = 11.5
+        assert result["output"] == 11.5
+
+    def test_parentheses_override_precedence(self):
+        """Test that parentheses can override normal precedence."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "(2 + 3) * 4"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 20.0
+
+    def test_nested_parentheses(self):
+        """Test nested parentheses."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "((2 + 3) * 4) - 5"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 15.0
+
+    def test_power_operator_precedence(self):
+        """Test that exponentiation has highest precedence."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "2 + 3 ** 2"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        # Should be 2 + (3 ** 2) = 2 + 9 = 11
+        assert result["output"] == 11.0
+
+    def test_unary_minus(self):
+        """Test unary minus operator."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "-5 + 3"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == -2.0
+
+    def test_unary_plus(self):
+        """Test unary plus operator."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "+5 + 3"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 8.0
+
+    def test_floor_division(self):
+        """Test floor division operator."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "17 // 5"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 3.0
+
+    def test_modulo_operator(self):
+        """Test modulo operator."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "17 % 5"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 2.0
+
+    def test_safe_function_min(self):
+        """Test min function."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "min(10, 20, 5)"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 5.0
+
+    def test_safe_function_max(self):
+        """Test max function."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "max(10, 20, 5)"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 20.0
+
+    def test_safe_function_abs(self):
+        """Test abs function."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "abs(-15)"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 15.0
+
+    def test_safe_function_round(self):
+        """Test round function."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "round(15.6789, 2)"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        assert result["output"] == 15.68
+
+    def test_function_in_expression(self):
+        """Test function call within larger expression."""
+        schema = {
+            "inputs": [{"name": "salary", "default": 50000}],
+            "steps": [{"name": "result", "type": "calculation", "formula": "min(salary * 0.15, 10000) + 1000"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        # min(50000 * 0.15, 10000) = min(7500, 10000) = 7500, then 7500 + 1000 = 8500
+        assert result["output"] == 8500.0
+
+    def test_real_world_tax_calculation(self):
+        """Test real-world tax calculation with correct precedence."""
+        schema = {
+            "inputs": [
+                {"name": "salario", "default": 50000},
+                {"name": "deducciones", "default": 5000},
+                {"name": "tasa", "default": 0.15},
+            ],
+            "steps": [
+                {
+                    "name": "result",
+                    "type": "calculation",
+                    "formula": "salario * tasa - deducciones / 12",
+                }
+            ],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        result = engine.execute({})
+        # Should be (50000 * 0.15) - (5000 / 12) = 7500 - 416.666... ≈ 7083.33
+        assert abs(result["output"] - 7083.33) < 0.01
+
+
+class TestASTSecurityValidation:
+    """Tests for AST security validation to prevent code injection."""
+
+    def test_reject_import_statement(self):
+        """Test that import statements are rejected."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "__import__('os')"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="not allowed"):
+            engine.execute({})
+
+    def test_reject_eval_function(self):
+        """Test that eval is rejected."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "eval('1+1')"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="not allowed"):
+            engine.execute({})
+
+    def test_reject_exec_function(self):
+        """Test that exec is rejected."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "exec('x=1')"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="not allowed"):
+            engine.execute({})
+
+    def test_reject_attribute_access(self):
+        """Test that attribute access is rejected."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "().__class__"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="Unsafe operation"):
+            engine.execute({})
+
+    def test_reject_list_comprehension(self):
+        """Test that list comprehensions are rejected."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "[x for x in range(10)]"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="Unsafe operation"):
+            engine.execute({})
+
+    def test_reject_lambda(self):
+        """Test that lambda functions are rejected."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "lambda x: x + 1"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="Unsafe operation"):
+            engine.execute({})
+
+    def test_undefined_variable_error(self):
+        """Test that undefined variables raise an error."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "undefined_var * 2"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="Undefined variable"):
+            engine.execute({})
+
+    def test_syntax_error_handling(self):
+        """Test that syntax errors are caught and reported."""
+        schema = {
+            "inputs": [],
+            "steps": [{"name": "result", "type": "calculation", "formula": "2 +/ 3"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="Invalid expression syntax|Error evaluating"):
+            engine.execute({})

@@ -209,7 +209,7 @@
                                     </td>
                                     <td>{{ nomina.fecha_generacion.strftime('%d/%m/%Y %H:%M') if nomina.fecha_generacion else '-' }}</td>
                                     <td>
-                                        <a href="{{ url_for('planilla.view_nomina', nomina_id=nomina.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ url_for('planilla.ver_nomina', planilla_id=nomina.planilla_id, nomina_id=nomina.id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </td>

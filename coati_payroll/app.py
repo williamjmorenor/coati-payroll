@@ -29,7 +29,7 @@ from sqlalchemy import func
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
-from coati_payroll.model import db, Empleado, Empresa, Planilla, Nomina, Usuario
+from coati_payroll.model import db, Empleado, Empresa, Planilla, Nomina
 
 app = Blueprint("app", __name__)
 
@@ -38,9 +38,9 @@ app = Blueprint("app", __name__)
 @login_required
 def index():
     # Get statistics for dashboard
-    total_empleados = db.session.query(func.count(Empleado.id)).filter(Empleado.activo == True).scalar() or 0
-    total_empresas = db.session.query(func.count(Empresa.id)).filter(Empresa.activo == True).scalar() or 0
-    total_planillas = db.session.query(func.count(Planilla.id)).filter(Planilla.activo == True).scalar() or 0
+    total_empleados = db.session.query(func.count(Empleado.id)).filter(Empleado.activo.is_(True)).scalar() or 0
+    total_empresas = db.session.query(func.count(Empresa.id)).filter(Empresa.activo.is_(True)).scalar() or 0
+    total_planillas = db.session.query(func.count(Planilla.id)).filter(Planilla.activo.is_(True)).scalar() or 0
     total_nominas = db.session.query(func.count(Nomina.id)).scalar() or 0
 
     # Get recent payrolls (last 5)

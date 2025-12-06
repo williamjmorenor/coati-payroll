@@ -23,7 +23,7 @@ Prestaciones are employer costs that do NOT affect employee pay.
 
 The engine supports:
 - Variable definitions (inputs from database, static parameters)
-- Mathematical calculations with safe expression evaluation
+- Mathematical calculations with safe expression evaluation using AST
 - Conditional logic (if/else)
 - Tax/rate table lookups with progressive rates
 - Accumulated annual calculations
@@ -31,6 +31,7 @@ The engine supports:
 
 from __future__ import annotations
 
+import ast
 import operator
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
@@ -220,10 +221,11 @@ class FormulaEngine:
                 raise ValidationError(f"Step {i} must have a 'type' field")
 
     def _evaluate_expression(self, expression: str) -> Decimal:
-        """Safely evaluate a mathematical expression.
+        """Safely evaluate a mathematical expression using AST.
 
-        This method parses and evaluates simple arithmetic expressions
-        using only the defined safe operators and variables.
+        This method parses and evaluates arithmetic expressions using Python's
+        Abstract Syntax Tree (AST) to ensure correct operator precedence and
+        security.
 
         Args:
             expression: Mathematical expression string
@@ -237,129 +239,177 @@ class FormulaEngine:
         if not expression or not isinstance(expression, str):
             return Decimal("0")
 
-        # Replace variable names with their values
-        tokens = self._tokenize_expression(expression)
-        result = self._evaluate_tokens(tokens)
-        return to_decimal(result)
-
-    def _tokenize_expression(self, expression: str) -> list[str]:
-        """Tokenize a mathematical expression.
-
-        Args:
-            expression: Expression string to tokenize
-
-        Returns:
-            List of tokens (numbers, operators, variable names)
-        """
-        tokens = []
-        current_token = ""
-        operators = set("+-*/%()") | {"**", "//"}
-
-        i = 0
-        while i < len(expression):
-            char = expression[i]
-
-            # Check for two-character operators
-            if i + 1 < len(expression) and expression[i : i + 2] in {"**", "//"}:
-                if current_token:
-                    tokens.append(current_token)
-                    current_token = ""
-                tokens.append(expression[i : i + 2])
-                i += 2
-                continue
-
-            if char in " \t\n":
-                if current_token:
-                    tokens.append(current_token)
-                    current_token = ""
-            elif char in operators:
-                if current_token:
-                    tokens.append(current_token)
-                    current_token = ""
-                tokens.append(char)
-            else:
-                current_token += char
-            i += 1
-
-        if current_token:
-            tokens.append(current_token)
-
-        return tokens
-
-    def _evaluate_tokens(self, tokens: list[str]) -> Decimal:
-        """Evaluate a list of tokens.
-
-        This is a simple expression evaluator that handles basic
-        arithmetic with operator precedence.
-
-        Args:
-            tokens: List of expression tokens
-
-        Returns:
-            Result of the expression
-        """
-        if not tokens:
+        expression = expression.strip()
+        if not expression:
             return Decimal("0")
 
-        # Convert variable names to values and numbers to Decimal
-        values = []
-        ops = []
-
-        i = 0
-        while i < len(tokens):
-            token = tokens[i]
-
-            if token == "(":
-                # Find matching closing parenthesis
-                depth = 1
-                j = i + 1
-                while j < len(tokens) and depth > 0:
-                    if tokens[j] == "(":
-                        depth += 1
-                    elif tokens[j] == ")":
-                        depth -= 1
-                    j += 1
-                # Recursively evaluate the sub-expression
-                sub_result = self._evaluate_tokens(tokens[i + 1 : j - 1])
-                values.append(sub_result)
-                i = j
-                continue
-
-            if token == ")":
-                i += 1
-                continue
-
-            if token in SAFE_OPERATORS:
-                ops.append(token)
-            elif token in self.variables:
-                values.append(to_decimal(self.variables[token]))
-            elif token in SAFE_FUNCTIONS:
-                # Handle function calls - simplified for now
-                values.append(Decimal("0"))
-            else:
-                # Try to parse as number
-                try:
-                    values.append(to_decimal(token))
-                except ValidationError as exc:
-                    raise CalculationError(f"Unknown variable or invalid number: {token}") from exc
-
-            i += 1
-
-        # Simple left-to-right evaluation (no precedence for simplicity)
-        # For production use, implement proper precedence
-        if not values:
+        try:
+            # Parse the expression into an AST
+            tree = ast.parse(expression, mode='eval')
+            # Validate that the AST only contains safe operations
+            self._validate_ast_security(tree.body)
+            # Evaluate the AST
+            result = self._eval_ast_node(tree.body)
+            return to_decimal(result)
+        except SyntaxError as e:
+            raise CalculationError(f"Invalid expression syntax: {e}") from e
+        except ZeroDivisionError:
             return Decimal("0")
+        except Exception as e:
+            raise CalculationError(f"Error evaluating expression '{expression}': {e}") from e
 
-        result = values[0]
-        for j, op in enumerate(ops):
-            if j + 1 < len(values):
-                if op in SAFE_OPERATORS:
-                    if op == "/" and values[j + 1] == 0:
-                        result = Decimal("0")
-                    else:
-                        result = to_decimal(SAFE_OPERATORS[op](float(result), float(values[j + 1])))
+    def _validate_ast_security(self, node: ast.AST) -> None:
+        """Validate that an AST node only contains safe operations.
 
-        return result
+        This prevents code injection by ensuring only mathematical operations
+        and safe function calls are present.
+
+        Args:
+            node: AST node to validate
+
+        Raises:
+            CalculationError: If unsafe operations are detected
+        """
+        # Define allowed node types
+        allowed_types = (
+            ast.Expression, ast.Constant, ast.Name, ast.Load,
+            ast.BinOp, ast.UnaryOp, ast.Call,
+            ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow,
+            ast.UAdd, ast.USub,
+        )
+
+        # Validate all nodes in the tree in a single pass
+        for child in ast.walk(node):
+            if not isinstance(child, allowed_types):
+                raise CalculationError(
+                    f"Unsafe operation detected: {child.__class__.__name__}. "
+                    "Only basic arithmetic and safe functions are allowed."
+                )
+            # Validate function calls
+            if isinstance(child, ast.Call):
+                if not isinstance(child.func, ast.Name):
+                    raise CalculationError("Only named functions are allowed")
+                if child.func.id not in SAFE_FUNCTIONS:
+                    raise CalculationError(
+                        f"Function '{child.func.id}' is not allowed. "
+                        f"Allowed functions: {', '.join(SAFE_FUNCTIONS.keys())}"
+                    )
+
+    def _eval_ast_node(self, node: ast.AST) -> Decimal:
+        """Evaluate an AST node recursively.
+
+        Args:
+            node: AST node to evaluate
+
+        Returns:
+            Decimal result of the evaluation
+
+        Raises:
+            CalculationError: If evaluation fails
+        """
+        if isinstance(node, ast.Constant):
+            # Python 3.8+ uses ast.Constant for literals
+            return to_decimal(node.value)
+
+        if isinstance(node, ast.Name):
+            # Variable reference
+            var_name = node.id
+            if var_name not in self.variables:
+                raise CalculationError(f"Undefined variable: {var_name}")
+            return self.variables[var_name]
+
+        if isinstance(node, ast.BinOp):
+            return self._eval_binary_op(node)
+
+        if isinstance(node, ast.UnaryOp):
+            return self._eval_unary_op(node)
+
+        if isinstance(node, ast.Call):
+            return self._eval_function_call(node)
+
+        raise CalculationError(f"Unsupported AST node type: {type(node).__name__}")
+
+    def _eval_binary_op(self, node: ast.BinOp) -> Decimal:
+        """Evaluate a binary operation node.
+
+        Args:
+            node: Binary operation AST node
+
+        Returns:
+            Result as Decimal
+        """
+        left = self._eval_ast_node(node.left)
+        right = self._eval_ast_node(node.right)
+
+        op_type = type(node.op)
+        if op_type == ast.Add:
+            return to_decimal(left + right)
+        if op_type == ast.Sub:
+            return to_decimal(left - right)
+        if op_type == ast.Mult:
+            return to_decimal(left * right)
+        if op_type == ast.Div:
+            if right == 0:
+                return Decimal("0")  # Safe division by zero handling
+            return to_decimal(left / right)
+        if op_type == ast.FloorDiv:
+            if right == 0:
+                return Decimal("0")
+            return to_decimal(left // right)
+        if op_type == ast.Mod:
+            if right == 0:
+                return Decimal("0")
+            return to_decimal(left % right)
+        if op_type == ast.Pow:
+            return to_decimal(left ** right)
+
+        raise CalculationError(f"Unsupported binary operator: {op_type.__name__}")
+
+    def _eval_unary_op(self, node: ast.UnaryOp) -> Decimal:
+        """Evaluate a unary operation node.
+
+        Args:
+            node: Unary operation AST node
+
+        Returns:
+            Result as Decimal
+        """
+        operand = self._eval_ast_node(node.operand)
+
+        op_type = type(node.op)
+        if op_type == ast.UAdd:
+            return to_decimal(+operand)
+        if op_type == ast.USub:
+            return to_decimal(-operand)
+
+        raise CalculationError(f"Unsupported unary operator: {op_type.__name__}")
+
+    def _eval_function_call(self, node: ast.Call) -> Decimal:
+        """Evaluate a function call node.
+
+        Args:
+            node: Function call AST node
+
+        Returns:
+            Result as Decimal
+        """
+        func_name = node.func.id
+        if func_name not in SAFE_FUNCTIONS:
+            raise CalculationError(f"Function '{func_name}' is not allowed")
+
+        # Evaluate arguments
+        args = [self._eval_ast_node(arg) for arg in node.args]
+
+        # Call the safe function and maintain Decimal precision
+        try:
+            # Special handling for round() which needs an integer as second argument
+            if func_name == 'round' and len(args) > 1:
+                result = SAFE_FUNCTIONS[func_name](args[0], int(args[1]))
+            else:
+                result = SAFE_FUNCTIONS[func_name](*args)
+            return to_decimal(result)
+        except Exception as e:
+            raise CalculationError(f"Error calling {func_name}: {e}") from e
 
     def _evaluate_condition(self, condition: dict[str, Any]) -> bool:
         """Evaluate a conditional expression.
