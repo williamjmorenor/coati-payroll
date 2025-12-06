@@ -38,7 +38,7 @@ from flask import (
     send_file,
     Response,
 )
-from flask_login import login_required, current_user
+from flask_login import current_user
 
 from coati_payroll.model import (
     db,

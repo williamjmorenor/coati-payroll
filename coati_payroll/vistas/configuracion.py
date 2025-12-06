@@ -23,13 +23,12 @@ from __future__ import annotations
 # Third party libraries
 # <-------------------------------------------------------------------------> #
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_required
 
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
 from coati_payroll.i18n import _
-from coati_payroll.rbac import require_read_access, require_write_access
+from coati_payroll.rbac import require_write_access
 from coati_payroll.locale_config import (
     SUPPORTED_LANGUAGES,
     get_language_from_db,

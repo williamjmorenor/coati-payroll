@@ -18,7 +18,7 @@ from __future__ import annotations
 from datetime import date
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import current_user, login_required
+from flask_login import current_user
 
 from coati_payroll.forms import ExchangeRateForm
 from coati_payroll.i18n import _

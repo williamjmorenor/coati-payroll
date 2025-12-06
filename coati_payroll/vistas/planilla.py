@@ -1422,13 +1422,14 @@ def _get_concepto_ids_from_form(form) -> tuple[str | None, str | None]:
 
 def _check_openpyxl_available():
     """Check if openpyxl is available and return necessary classes.
-    
+
     Returns:
         tuple: (Workbook, Font, Alignment, PatternFill, Border, Side) or None if not available
     """
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
         return Workbook, Font, Alignment, PatternFill, Border, Side
     except ImportError:
         return None
@@ -1440,14 +1441,13 @@ def exportar_nomina_excel(planilla_id: str, nomina_id: str):
     """Export nomina to Excel with employee details and calculations."""
     from io import BytesIO
     from flask import send_file
-    from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle
-    from decimal import Decimal
+    from coati_payroll.model import Nomina, NominaEmpleado
 
     openpyxl_classes = _check_openpyxl_available()
     if not openpyxl_classes:
         flash(_("Excel export no disponible. Instale openpyxl."), "warning")
         return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
-    
+
     Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
 
     planilla = db.get_or_404(Planilla, planilla_id)
@@ -1458,9 +1458,7 @@ def exportar_nomina_excel(planilla_id: str, nomina_id: str):
         return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
 
     # Get all nomina employees
-    nomina_empleados = (
-        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
-    )
+    nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
 
     # Create workbook
     wb = Workbook()
@@ -1540,9 +1538,7 @@ def exportar_nomina_excel(planilla_id: str, nomina_id: str):
         ws.cell(row=row, column=3, value=emp.id_seguridad_social or "").border = border
         ws.cell(row=row, column=4, value=emp.id_fiscal or "").border = border
         ws.cell(row=row, column=5, value=f"{emp.primer_nombre} {emp.segundo_nombre or ''}".strip()).border = border
-        ws.cell(row=row, column=6, value=f"{emp.primer_apellido} {emp.segundo_apellido or ''}".strip()).border = (
-            border
-        )
+        ws.cell(row=row, column=6, value=f"{emp.primer_apellido} {emp.segundo_apellido or ''}".strip()).border = border
         ws.cell(row=row, column=7, value=ne.cargo_snapshot or emp.cargo or "").border = border
         ws.cell(row=row, column=8, value=float(ne.sueldo_base_historico)).border = border
         ws.cell(row=row, column=9, value=float(ne.total_ingresos)).border = border
@@ -1580,7 +1576,7 @@ def exportar_prestaciones_excel(planilla_id: str, nomina_id: str):
     if not openpyxl_classes:
         flash(_("Excel export no disponible. Instale openpyxl."), "warning")
         return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
-    
+
     Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
 
     planilla = db.get_or_404(Planilla, planilla_id)
@@ -1591,9 +1587,7 @@ def exportar_prestaciones_excel(planilla_id: str, nomina_id: str):
         return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
 
     # Get all nomina employees
-    nomina_empleados = (
-        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
-    )
+    nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
 
     # Create workbook
     wb = Workbook()
@@ -1642,9 +1636,7 @@ def exportar_prestaciones_excel(planilla_id: str, nomina_id: str):
     prestaciones_set = set()
     for ne in nomina_empleados:
         detalles = (
-            db.session.execute(
-                db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id, tipo="prestacion")
-            )
+            db.session.execute(db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id, tipo="prestacion"))
             .scalars()
             .all()
         )
@@ -1668,16 +1660,14 @@ def exportar_prestaciones_excel(planilla_id: str, nomina_id: str):
 
         ws.cell(row=row, column=1, value=emp.codigo_empleado).border = border
         ws.cell(row=row, column=2, value=f"{emp.primer_nombre} {emp.segundo_nombre or ''}".strip()).border = border
-        ws.cell(row=row, column=3, value=f"{emp.primer_apellido} {emp.segundo_apellido or ''}".strip()).border = (
-            border
-        )
+        ws.cell(row=row, column=3, value=f"{emp.primer_apellido} {emp.segundo_apellido or ''}".strip()).border = border
 
         # Get prestaciones for this employee
         detalles = (
             db.session.execute(
-                db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id, tipo="prestacion").order_by(
-                    NominaDetalle.orden
-                )
+                db.select(NominaDetalle)
+                .filter_by(nomina_empleado_id=ne.id, tipo="prestacion")
+                .order_by(NominaDetalle.orden)
             )
             .scalars()
             .all()
@@ -1722,7 +1712,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
     if not openpyxl_classes:
         flash(_("Excel export no disponible. Instale openpyxl."), "warning")
         return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
-    
+
     Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
 
     planilla = db.get_or_404(Planilla, planilla_id)
@@ -1733,9 +1723,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
         return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
 
     # Get all nomina employees
-    nomina_empleados = (
-        db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
-    )
+    nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
 
     # Create workbook
     wb = Workbook()
@@ -1805,7 +1793,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
 
     # 1. Salario Base (from planilla configuration)
     total_salario_base = sum(ne.sueldo_base_historico for ne in nomina_empleados)
-    
+
     if total_salario_base > 0:
         if planilla.codigo_cuenta_debe_salario:
             if planilla.codigo_cuenta_debe_salario not in accounting_entries:
@@ -1868,9 +1856,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
                     }
                 accounting_entries[concepto.codigo_cuenta_debe]["debito"] += detalle.monto
             else:
-                advertencias.append(
-                    f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta débito"
-                )
+                advertencias.append(f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta débito")
 
             # Add credit entry
             if concepto.codigo_cuenta_haber:
@@ -1882,9 +1868,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
                     }
                 accounting_entries[concepto.codigo_cuenta_haber]["credito"] += detalle.monto
             else:
-                advertencias.append(
-                    f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta crédito"
-                )
+                advertencias.append(f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta crédito")
 
     # Remove duplicate warnings
     advertencias = list(set(advertencias))
@@ -1906,12 +1890,14 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
         total_creditos += entry["credito"]
 
         # Store for database
-        asientos_json.append({
-            "codigo_cuenta": codigo,
-            "descripcion": entry["descripcion"],
-            "debito": float(entry["debito"]),
-            "credito": float(entry["credito"]),
-        })
+        asientos_json.append(
+            {
+                "codigo_cuenta": codigo,
+                "descripcion": entry["descripcion"],
+                "debito": float(entry["debito"]),
+                "credito": float(entry["credito"]),
+            }
+        )
 
     # Totals row
     row += 1
@@ -1943,9 +1929,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
         ws[f"C{row}"] = "⚠ Desbalanceado"
 
     # Save comprobante to database for audit trail
-    comprobante = db.session.execute(
-        db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)
-    ).scalar_one_or_none()
+    comprobante = db.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)).scalar_one_or_none()
 
     if comprobante:
         # Update existing
@@ -1988,7 +1972,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
         # Initialize log if needed
         if not nomina.log_procesamiento:
             nomina.log_procesamiento = []
-        
+
         # Add warnings to log
         for adv in advertencias:
             log_entry = {
@@ -1997,7 +1981,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
                 "mensaje": adv,
             }
             nomina.log_procesamiento.append(log_entry)
-        
+
         db.session.commit()
 
     return send_file(
@@ -2023,13 +2007,12 @@ def ver_log_nomina(planilla_id: str, nomina_id: str):
 
     # Get log entries
     log_entries = nomina.log_procesamiento or []
-    
+
     # Get comprobante warnings if exists
     from coati_payroll.model import ComprobanteContable
-    comprobante = db.session.execute(
-        db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)
-    ).scalar_one_or_none()
-    
+
+    comprobante = db.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)).scalar_one_or_none()
+
     comprobante_warnings = comprobante.advertencias if comprobante else []
 
     return render_template(

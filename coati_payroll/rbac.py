@@ -34,109 +34,112 @@ from coati_payroll.i18n import _
 
 def require_role(*allowed_roles: str):
     """Decorator to restrict access to specific user roles.
-    
+
     Args:
         *allowed_roles: Variable number of allowed role strings (admin, hhrr, audit)
-    
+
     Returns:
         Decorated function that checks user role before execution
-        
+
     Example:
         @require_role(TipoUsuario.ADMIN)
         def admin_only_view():
             pass
-            
+
         @require_role(TipoUsuario.ADMIN, TipoUsuario.HHRR)
         def admin_or_hr_view():
             pass
     """
+
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
                 flash(_("Favor iniciar sesión para acceder al sistema."), "warning")
                 return redirect(url_for("auth.login"))
-            
+
             # Check if user has required role
             if current_user.tipo not in allowed_roles:
-                flash(
-                    _("No tiene permisos para acceder a esta funcionalidad."),
-                    "danger"
-                )
+                flash(_("No tiene permisos para acceder a esta funcionalidad."), "danger")
                 abort(403)
-            
+
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 
 def require_read_access():
     """Decorator to allow read access to admin, hhrr, and audit users.
-    
+
     This is used for listing and viewing data where all user types should
     have access but audit users are read-only.
-    
+
     Returns:
         Decorated function that allows read access to all authenticated users
-        
+
     Example:
         @require_read_access()
         def list_employees():
             pass
     """
+
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
                 flash(_("Favor iniciar sesión para acceder al sistema."), "warning")
                 return redirect(url_for("auth.login"))
-            
+
             # All authenticated users can read
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 
 def require_write_access():
     """Decorator to restrict write operations to admin and hhrr users only.
-    
+
     Audit users are denied access to create, update, or delete operations.
-    
+
     Returns:
         Decorated function that checks write permissions
-        
+
     Example:
         @require_write_access()
         def create_employee():
             pass
-            
+
         @require_write_access()
         def update_employee():
             pass
     """
+
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
                 flash(_("Favor iniciar sesión para acceder al sistema."), "warning")
                 return redirect(url_for("auth.login"))
-            
+
             # Only admin and hhrr can write
             if current_user.tipo not in [TipoUsuario.ADMIN, TipoUsuario.HHRR]:
-                flash(
-                    _("No tiene permisos para modificar datos. Su rol es de solo lectura."),
-                    "danger"
-                )
+                flash(_("No tiene permisos para modificar datos. Su rol es de solo lectura."), "danger")
                 abort(403)
-            
+
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 
 def is_admin() -> bool:
     """Check if current user is an administrator.
-    
+
     Returns:
         True if current user has admin role, False otherwise
     """
@@ -145,7 +148,7 @@ def is_admin() -> bool:
 
 def is_hhrr() -> bool:
     """Check if current user is HR personnel.
-    
+
     Returns:
         True if current user has hhrr role, False otherwise
     """
@@ -154,7 +157,7 @@ def is_hhrr() -> bool:
 
 def is_audit() -> bool:
     """Check if current user is an auditor.
-    
+
     Returns:
         True if current user has audit role, False otherwise
     """
@@ -163,11 +166,8 @@ def is_audit() -> bool:
 
 def can_write() -> bool:
     """Check if current user has write permissions.
-    
+
     Returns:
         True if current user is admin or hhrr, False otherwise
     """
-    return current_user.is_authenticated and current_user.tipo in [
-        TipoUsuario.ADMIN,
-        TipoUsuario.HHRR
-    ]
+    return current_user.is_authenticated and current_user.tipo in [TipoUsuario.ADMIN, TipoUsuario.HHRR]
