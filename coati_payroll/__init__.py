@@ -149,6 +149,30 @@ def create_app(config) -> Flask:
     session_manager.init_app(app)
     login_manager.init_app(app)
 
+    # Load initial data and demo data after Babel is initialized
+    # This allows translations to work properly
+    # Skip loading in test environments to keep test databases clean
+    if not app.config.get("TESTING"):
+        with app.app_context():
+            # Load initial data (currencies, income concepts, deduction concepts)
+            # Strings are translated automatically based on the configured language
+            try:
+                from coati_payroll.initial_data import load_initial_data
+
+                load_initial_data()
+            except Exception as exc:
+                log.trace(f"Could not load initial data: {exc}")
+
+            # Load demo data if COATI_LOAD_DEMO_DATA environment variable is set
+            # This provides comprehensive sample data for manual testing
+            if environ.get("COATI_LOAD_DEMO_DATA"):
+                try:
+                    from coati_payroll.demo_data import load_demo_data
+
+                    load_demo_data()
+                except Exception as exc:
+                    log.trace(f"Could not load demo data: {exc}")
+
     app.register_blueprint(auth, url_prefix="/auth")
     app.register_blueprint(app_blueprint, url_prefix="/")
 
@@ -265,12 +289,3 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
             initialize_language_from_env()
         except Exception as exc:
             log.trace(f"Could not initialize language from environment: {exc}")
-
-        # Load initial data (currencies, income concepts, deduction concepts)
-        # Strings are translated automatically based on the configured language
-        try:
-            from coati_payroll.initial_data import load_initial_data
-
-            load_initial_data()
-        except Exception as exc:
-            log.trace(f"Could not load initial data: {exc}")
