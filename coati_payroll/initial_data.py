@@ -277,10 +277,7 @@ BENEFIT_CONCEPTS = [
     {
         "codigo": "PAID_VACATION_PROVISION",
         "nombre": _("Paid Vacation Provision"),
-        "descripcion": _(
-            "Employer provision for paid vacation days "
-            "(universal labor right in the Americas)"
-        ),
+        "descripcion": _("Employer provision for paid vacation days " "(universal labor right in the Americas)"),
     },
     {
         "codigo": "THIRTEENTH_SALARY_PROVISION",
@@ -486,6 +483,8 @@ def load_benefit_concepts() -> None:
         log.info(f"Loaded {concepts_loaded} benefit concepts")
     else:
         log.trace("No new benefit concepts to load")
+
+
 def load_payroll_types() -> None:
     """Load common payroll types into the database.
 

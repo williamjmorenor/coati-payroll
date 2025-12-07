@@ -245,7 +245,7 @@ class FormulaEngine:
 
         try:
             # Parse the expression into an AST
-            tree = ast.parse(expression, mode='eval')
+            tree = ast.parse(expression, mode="eval")
             # Validate that the AST only contains safe operations
             self._validate_ast_security(tree.body)
             # Evaluate the AST
@@ -272,10 +272,22 @@ class FormulaEngine:
         """
         # Define allowed node types
         allowed_types = (
-            ast.Expression, ast.Constant, ast.Name, ast.Load,
-            ast.BinOp, ast.UnaryOp, ast.Call,
-            ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow,
-            ast.UAdd, ast.USub,
+            ast.Expression,
+            ast.Constant,
+            ast.Name,
+            ast.Load,
+            ast.BinOp,
+            ast.UnaryOp,
+            ast.Call,
+            ast.Add,
+            ast.Sub,
+            ast.Mult,
+            ast.Div,
+            ast.FloorDiv,
+            ast.Mod,
+            ast.Pow,
+            ast.UAdd,
+            ast.USub,
         )
 
         # Validate all nodes in the tree in a single pass
@@ -361,7 +373,7 @@ class FormulaEngine:
                 return Decimal("0")
             return to_decimal(left % right)
         if op_type == ast.Pow:
-            return to_decimal(left ** right)
+            return to_decimal(left**right)
 
         raise CalculationError(f"Unsupported binary operator: {op_type.__name__}")
 
@@ -403,7 +415,7 @@ class FormulaEngine:
         # Call the safe function and maintain Decimal precision
         try:
             # Special handling for round() which needs an integer as second argument
-            if func_name == 'round' and len(args) > 1:
+            if func_name == "round" and len(args) > 1:
                 result = SAFE_FUNCTIONS[func_name](args[0], int(args[1]))
             else:
                 result = SAFE_FUNCTIONS[func_name](*args)
