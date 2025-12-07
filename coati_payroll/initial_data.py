@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Initial data for currencies, income concepts, and deduction concepts.
+"""Initial data for currencies, income concepts, deduction concepts, and payroll types.
 
 This module provides default data to be loaded during system initialization.
 All data is jurisdiction-agnostic and uses Flask-Babel for translation support.
@@ -270,6 +270,72 @@ DEDUCTION_CONCEPTS = [
 ]
 
 
+# Employer benefit concepts (Prestaciones / Aportes Patronales)
+# These are employer costs and provisions that do NOT affect employee's net pay
+# All names and descriptions are marked for translation
+BENEFIT_CONCEPTS = [
+    {
+        "codigo": "PAID_VACATION_PROVISION",
+        "nombre": _("Paid Vacation Provision"),
+        "descripcion": _(
+            "Employer provision for paid vacation days "
+            "(universal labor right in the Americas)"
+        ),
+    },
+    {
+        "codigo": "THIRTEENTH_SALARY_PROVISION",
+        "nombre": _("13th Month Salary Provision"),
+        "descripcion": _(
+            "Employer provision for 13th month salary/Christmas bonus "
+            "(aguinaldo - widespread right in Latin America)"
+        ),
+    },
+    {
+        "codigo": "SEVERANCE_PROVISION",
+        "nombre": _("Severance Pay Provision"),
+        "descripcion": _(
+            "Employer provision for severance pay in case of unjust dismissal "
+            "(common legal principle in the Americas)"
+        ),
+    },
+]
+
+
+# Payroll Types (Tipos de Planilla)
+# Common payroll types with different periodicities
+# All names and descriptions are marked for translation
+PAYROLL_TYPES = [
+    {
+        "codigo": "MONTHLY",
+        "descripcion": _("Monthly Payroll - 30 days"),
+        "dias": 30,
+        "periodicidad": "mensual",
+        "periodos_por_anio": 12,
+    },
+    {
+        "codigo": "BIWEEKLY",
+        "descripcion": _("Biweekly Payroll - 15 days"),
+        "dias": 15,
+        "periodicidad": "quincenal",
+        "periodos_por_anio": 24,
+    },
+    {
+        "codigo": "FORTNIGHTLY",
+        "descripcion": _("Fortnightly Payroll - 14 days"),
+        "dias": 14,
+        "periodicidad": "catorcenal",
+        "periodos_por_anio": 26,
+    },
+    {
+        "codigo": "WEEKLY",
+        "descripcion": _("Weekly Payroll - 7 days"),
+        "dias": 7,
+        "periodicidad": "semanal",
+        "periodos_por_anio": 52,
+    },
+]
+
+
 def load_currencies() -> None:
     """Load American currencies into the database.
 
@@ -383,11 +449,89 @@ def load_deduction_concepts() -> None:
         log.trace("No new deduction concepts to load")
 
 
+def load_benefit_concepts() -> None:
+    """Load employer benefit concepts (prestaciones) into the database.
+
+    Concept names and descriptions are translated based on the configured
+    language in the database. This function is idempotent.
+    """
+    from coati_payroll.model import Prestacion, db
+    from coati_payroll.log import log
+
+    concepts_loaded = 0
+    for concept_data in BENEFIT_CONCEPTS:
+        # Check if concept already exists
+        existing = db.session.execute(
+            db.select(Prestacion).filter_by(codigo=concept_data["codigo"])
+        ).scalar_one_or_none()
+
+        if existing is None:
+            # Create new benefit concept - strings will be translated by _()
+            # Convert lazy strings to regular strings for database storage
+            concept = Prestacion()
+            concept.codigo = concept_data["codigo"]
+            concept.nombre = str(concept_data["nombre"])
+            concept.descripcion = str(concept_data["descripcion"])
+            concept.tipo = "patronal"
+            concept.formula_tipo = "fijo"
+            concept.recurrente = False
+            concept.activo = True
+            concept.editable_en_nomina = True
+
+            db.session.add(concept)
+            concepts_loaded += 1
+
+    if concepts_loaded > 0:
+        db.session.commit()
+        log.info(f"Loaded {concepts_loaded} benefit concepts")
+    else:
+        log.trace("No new benefit concepts to load")
+def load_payroll_types() -> None:
+    """Load common payroll types into the database.
+
+    Payroll type descriptions are translated based on the configured
+    language in the database. This function is idempotent.
+    """
+    from coati_payroll.model import TipoPlanilla, db
+    from coati_payroll.log import log
+
+    types_loaded = 0
+    for type_data in PAYROLL_TYPES:
+        # Check if payroll type already exists
+        existing = db.session.execute(
+            db.select(TipoPlanilla).filter_by(codigo=type_data["codigo"])
+        ).scalar_one_or_none()
+
+        if existing is None:
+            # Create new payroll type - strings will be translated by _()
+            # Convert lazy strings to regular strings for database storage
+            payroll_type = TipoPlanilla()
+            payroll_type.codigo = type_data["codigo"]
+            payroll_type.descripcion = str(type_data["descripcion"])
+            payroll_type.dias = type_data["dias"]
+            payroll_type.periodicidad = type_data["periodicidad"]
+            payroll_type.periodos_por_anio = type_data["periodos_por_anio"]
+            payroll_type.mes_inicio_fiscal = 1  # January
+            payroll_type.dia_inicio_fiscal = 1  # 1st day
+            payroll_type.acumula_anual = True
+            payroll_type.activo = True
+
+            db.session.add(payroll_type)
+            types_loaded += 1
+
+    if types_loaded > 0:
+        db.session.commit()
+        log.info(f"Loaded {types_loaded} payroll types")
+    else:
+        log.trace("No new payroll types to load")
+
+
 def load_initial_data() -> None:
     """Load all initial data into the database.
 
-    This function loads currencies, income concepts, and deduction concepts.
-    All strings are translated based on the configured language in the database.
+    This function loads currencies, income concepts, deduction concepts,
+    employer benefit concepts, and payroll types. All strings are translated
+    based on the configured language in the database.
     This function is idempotent - safe to call multiple times.
     """
     from coati_payroll.log import log
@@ -397,5 +541,7 @@ def load_initial_data() -> None:
     load_currencies()
     load_income_concepts()
     load_deduction_concepts()
+    load_benefit_concepts()
+    load_payroll_types()
 
     log.info("Initial data loading completed")

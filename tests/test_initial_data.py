@@ -15,18 +15,20 @@
 
 from __future__ import annotations
 
-import pytest
-
 from coati_payroll.initial_data import (
     CURRENCIES,
     INCOME_CONCEPTS,
     DEDUCTION_CONCEPTS,
+    BENEFIT_CONCEPTS,
+    PAYROLL_TYPES,
     load_currencies,
     load_income_concepts,
     load_deduction_concepts,
+    load_benefit_concepts,
+    load_payroll_types,
     load_initial_data,
 )
-from coati_payroll.model import Moneda, Percepcion, Deduccion, db
+from coati_payroll.model import Moneda, Percepcion, Deduccion, Prestacion, TipoPlanilla, db
 
 
 class TestInitialDataConstants:
@@ -134,6 +136,80 @@ class TestInitialDataConstants:
         assert "PRESTAMOS_INTERNOS" not in codes
         assert "PENSION_ALIMENTICIA" not in codes
         assert "CUOTA_SINDICAL" not in codes
+
+    def test_benefit_concepts_not_empty(self):
+        """Test that benefit concepts list is not empty."""
+        assert len(BENEFIT_CONCEPTS) > 0
+
+    def test_benefit_concepts_have_required_fields(self):
+        """Test that all benefit concepts have required fields."""
+        for concept in BENEFIT_CONCEPTS:
+            assert "codigo" in concept
+            assert "nombre" in concept
+            assert "descripcion" in concept
+
+    def test_benefit_concepts_are_unique(self):
+        """Test that all benefit concept codes are unique."""
+        codes = [c["codigo"] for c in BENEFIT_CONCEPTS]
+        assert len(codes) == len(set(codes))
+
+    def test_benefit_concepts_include_three_main_concepts(self):
+        """Test that the three main labor concepts in the Americas are included."""
+        codes = [c["codigo"] for c in BENEFIT_CONCEPTS]
+        # Paid Vacation - Universal right
+        assert "PAID_VACATION_PROVISION" in codes
+        # 13th Month Salary/Aguinaldo - Very widespread right
+        assert "THIRTEENTH_SALARY_PROVISION" in codes
+        # Severance Pay - Common legal principle
+        assert "SEVERANCE_PROVISION" in codes
+    def test_payroll_types_not_empty(self):
+        """Test that payroll types list is not empty."""
+        assert len(PAYROLL_TYPES) > 0
+
+    def test_payroll_types_have_required_fields(self):
+        """Test that all payroll types have required fields."""
+        for payroll_type in PAYROLL_TYPES:
+            assert "codigo" in payroll_type
+            assert "descripcion" in payroll_type
+            assert "dias" in payroll_type
+            assert "periodicidad" in payroll_type
+            assert "periodos_por_anio" in payroll_type
+
+    def test_payroll_types_are_unique(self):
+        """Test that all payroll type codes are unique."""
+        codes = [pt["codigo"] for pt in PAYROLL_TYPES]
+        assert len(codes) == len(set(codes))
+
+    def test_payroll_types_use_english_codes(self):
+        """Test that payroll type codes are in English."""
+        codes = [pt["codigo"] for pt in PAYROLL_TYPES]
+        # Verify all codes are in English
+        assert "MONTHLY" in codes
+        assert "BIWEEKLY" in codes
+        assert "FORTNIGHTLY" in codes
+        assert "WEEKLY" in codes
+
+    def test_payroll_types_have_correct_values(self):
+        """Test that payroll types have the correct values."""
+        monthly = next((pt for pt in PAYROLL_TYPES if pt["codigo"] == "MONTHLY"), None)
+        assert monthly is not None
+        assert monthly["dias"] == 30
+        assert monthly["periodos_por_anio"] == 12
+
+        biweekly = next((pt for pt in PAYROLL_TYPES if pt["codigo"] == "BIWEEKLY"), None)
+        assert biweekly is not None
+        assert biweekly["dias"] == 15
+        assert biweekly["periodos_por_anio"] == 24
+
+        fortnightly = next((pt for pt in PAYROLL_TYPES if pt["codigo"] == "FORTNIGHTLY"), None)
+        assert fortnightly is not None
+        assert fortnightly["dias"] == 14
+        assert fortnightly["periodos_por_anio"] == 26
+
+        weekly = next((pt for pt in PAYROLL_TYPES if pt["codigo"] == "WEEKLY"), None)
+        assert weekly is not None
+        assert weekly["dias"] == 7
+        assert weekly["periodos_por_anio"] == 52
 
 
 class TestLoadCurrencies:
@@ -286,6 +362,173 @@ class TestLoadDeductionConcepts:
                 assert concept.es_impuesto is False
 
 
+class TestLoadBenefitConcepts:
+    """Test employer benefit concept loading functionality."""
+
+    def test_load_benefit_concepts(self, app):
+        """Test loading benefit concepts."""
+        with app.app_context():
+            # Clear existing concepts first
+            db.session.execute(db.delete(Prestacion))
+            db.session.commit()
+
+            load_benefit_concepts()
+
+            # Check that concepts were loaded
+            concepts = db.session.execute(db.select(Prestacion)).scalars().all()
+            assert len(concepts) >= len(BENEFIT_CONCEPTS)
+
+            # Check a specific concept - Paid Vacation
+            vacation = db.session.execute(
+                db.select(Prestacion).filter_by(codigo="PAID_VACATION_PROVISION")
+            ).scalar_one_or_none()
+            assert vacation is not None
+            assert vacation.codigo == "PAID_VACATION_PROVISION"
+            assert vacation.activo is True
+            assert vacation.tipo == "patronal"
+
+    def test_load_benefit_concepts_no_duplicates(self, app):
+        """Test that loading benefit concepts twice doesn't create duplicates."""
+        with app.app_context():
+            # Load concepts twice
+            load_benefit_concepts()
+            count_first = db.session.execute(db.select(Prestacion)).scalars().all()
+
+            load_benefit_concepts()
+            count_second = db.session.execute(db.select(Prestacion)).scalars().all()
+class TestLoadPayrollTypes:
+    """Test payroll types loading functionality."""
+
+    def test_load_payroll_types(self, app):
+        """Test loading payroll types."""
+        with app.app_context():
+            # Clear existing types first
+            db.session.execute(db.delete(TipoPlanilla))
+            db.session.commit()
+
+            load_payroll_types()
+
+            # Check that payroll types were loaded
+            types = db.session.execute(db.select(TipoPlanilla)).scalars().all()
+            assert len(types) >= len(PAYROLL_TYPES)
+
+            # Check a specific payroll type
+            monthly = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="MONTHLY")
+            ).scalar_one_or_none()
+            assert monthly is not None
+            assert monthly.codigo == "MONTHLY"
+            assert monthly.dias == 30
+            assert monthly.periodos_por_anio == 12
+            assert monthly.activo is True
+
+    def test_load_payroll_types_no_duplicates(self, app):
+        """Test that loading payroll types twice doesn't create duplicates."""
+        with app.app_context():
+            # Load types twice
+            load_payroll_types()
+            count_first = db.session.execute(db.select(TipoPlanilla)).scalars().all()
+
+            load_payroll_types()
+            count_second = db.session.execute(db.select(TipoPlanilla)).scalars().all()
+
+            # Should have same count
+            assert len(count_first) == len(count_second)
+
+    def test_benefit_concepts_have_correct_properties(self, app):
+        """Test that loaded benefit concepts have correct properties."""
+        with app.app_context():
+            load_benefit_concepts()
+
+            # Get all loaded concepts
+            concepts = db.session.execute(db.select(Prestacion)).scalars().all()
+
+            for concept in concepts:
+                # Check that they are active and editable
+                assert concept.activo is True
+                assert concept.editable_en_nomina is True
+                # Check formula type is set
+                assert concept.formula_tipo is not None
+                # Check they are marked as employer contributions
+                assert concept.tipo == "patronal"
+
+    def test_three_main_benefit_concepts_loaded(self, app):
+        """Test that the three main labor concepts are properly loaded."""
+        with app.app_context():
+            # Clear existing concepts first
+            db.session.execute(db.delete(Prestacion))
+            db.session.commit()
+
+            load_benefit_concepts()
+
+            # Check for Paid Vacation provision
+            vacation = db.session.execute(
+                db.select(Prestacion).filter_by(codigo="PAID_VACATION_PROVISION")
+            ).scalar_one_or_none()
+            assert vacation is not None
+
+            # Check for 13th Month Salary provision
+            thirteenth = db.session.execute(
+                db.select(Prestacion).filter_by(codigo="THIRTEENTH_SALARY_PROVISION")
+            ).scalar_one_or_none()
+            assert thirteenth is not None
+
+            # Check for Severance Pay provision
+            severance = db.session.execute(
+                db.select(Prestacion).filter_by(codigo="SEVERANCE_PROVISION")
+            ).scalar_one_or_none()
+            assert severance is not None
+    def test_load_payroll_types_have_correct_properties(self, app):
+        """Test that loaded payroll types have correct properties."""
+        with app.app_context():
+            load_payroll_types()
+
+            # Get all loaded types
+            types = db.session.execute(db.select(TipoPlanilla)).scalars().all()
+
+            for payroll_type in types:
+                # Check that they are active
+                assert payroll_type.activo is True
+                # Check required fields are set
+                assert payroll_type.codigo is not None
+                assert payroll_type.dias > 0
+                assert payroll_type.periodos_por_anio > 0
+                # Check fiscal period defaults
+                assert payroll_type.mes_inicio_fiscal == 1
+                assert payroll_type.dia_inicio_fiscal == 1
+                assert payroll_type.acumula_anual is True
+
+    def test_payroll_types_all_four_loaded(self, app):
+        """Test that all four common payroll types are loaded."""
+        with app.app_context():
+            # Clear existing types first
+            db.session.execute(db.delete(TipoPlanilla))
+            db.session.commit()
+
+            load_payroll_types()
+
+            # Check specific types
+            monthly = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="MONTHLY")
+            ).scalar_one_or_none()
+            assert monthly is not None
+
+            biweekly = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="BIWEEKLY")
+            ).scalar_one_or_none()
+            assert biweekly is not None
+
+            fortnightly = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="FORTNIGHTLY")
+            ).scalar_one_or_none()
+            assert fortnightly is not None
+
+            weekly = db.session.execute(
+                db.select(TipoPlanilla).filter_by(codigo="WEEKLY")
+            ).scalar_one_or_none()
+            assert weekly is not None
+
+
 class TestLoadInitialData:
     """Test the main load_initial_data function."""
 
@@ -295,7 +538,9 @@ class TestLoadInitialData:
             # Clear existing data
             db.session.execute(db.delete(Percepcion))
             db.session.execute(db.delete(Deduccion))
+            db.session.execute(db.delete(Prestacion))
             db.session.execute(db.delete(Moneda))
+            db.session.execute(db.delete(TipoPlanilla))
             db.session.commit()
 
             load_initial_data()
@@ -312,6 +557,13 @@ class TestLoadInitialData:
             deductions = db.session.execute(db.select(Deduccion)).scalars().all()
             assert len(deductions) >= len(DEDUCTION_CONCEPTS)
 
+            # Check benefit concepts
+            benefits = db.session.execute(db.select(Prestacion)).scalars().all()
+            assert len(benefits) >= len(BENEFIT_CONCEPTS)
+            # Check payroll types
+            payroll_types = db.session.execute(db.select(TipoPlanilla)).scalars().all()
+            assert len(payroll_types) >= len(PAYROLL_TYPES)
+
     def test_load_initial_data_idempotent(self, app):
         """Test that loading initial data multiple times is idempotent."""
         with app.app_context():
@@ -320,13 +572,19 @@ class TestLoadInitialData:
             currencies_1 = len(db.session.execute(db.select(Moneda)).scalars().all())
             income_1 = len(db.session.execute(db.select(Percepcion)).scalars().all())
             deductions_1 = len(db.session.execute(db.select(Deduccion)).scalars().all())
+            benefits_1 = len(db.session.execute(db.select(Prestacion)).scalars().all())
+            payroll_types_1 = len(db.session.execute(db.select(TipoPlanilla)).scalars().all())
 
             load_initial_data()
             currencies_2 = len(db.session.execute(db.select(Moneda)).scalars().all())
             income_2 = len(db.session.execute(db.select(Percepcion)).scalars().all())
             deductions_2 = len(db.session.execute(db.select(Deduccion)).scalars().all())
+            benefits_2 = len(db.session.execute(db.select(Prestacion)).scalars().all())
+            payroll_types_2 = len(db.session.execute(db.select(TipoPlanilla)).scalars().all())
 
             # Counts should be the same
             assert currencies_1 == currencies_2
             assert income_1 == income_2
             assert deductions_1 == deductions_2
+            assert benefits_1 == benefits_2
+            assert payroll_types_1 == payroll_types_2
