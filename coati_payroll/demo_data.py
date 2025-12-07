@@ -60,7 +60,7 @@ def load_demo_companies() -> tuple[Empresa, Empresa]:
     Returns:
         tuple: Two Empresa objects (company1, company2)
     """
-    log.info("Loading demo companies...")
+    log.trace("Loading demo companies...")
 
     # Check if demo companies already exist
     empresa1 = db.session.execute(
@@ -80,7 +80,7 @@ def load_demo_companies() -> tuple[Empresa, Empresa]:
         empresa1.representante_legal = "María Elena Gutiérrez"
         empresa1.activo = True
         db.session.add(empresa1)
-        log.info("Created demo company: Tecnología y Soluciones S.A.")
+        log.trace("Created demo company: Tecnología y Soluciones S.A.")
 
     empresa2 = db.session.execute(
         db.select(Empresa).filter_by(codigo="DEMO002")
@@ -99,7 +99,7 @@ def load_demo_companies() -> tuple[Empresa, Empresa]:
         empresa2.representante_legal = "Carlos Antonio Ramírez"
         empresa2.activo = True
         db.session.add(empresa2)
-        log.info("Created demo company: Servicios Profesionales BMO Ltda.")
+        log.trace("Created demo company: Servicios Profesionales BMO Ltda.")
 
     db.session.commit()
     return empresa1, empresa2
@@ -121,7 +121,7 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
     Returns:
         list: List of created Empleado objects
     """
-    log.info("Loading demo employees...")
+    log.trace("Loading demo employees...")
 
     # Get currency (use NIO if available, otherwise first available)
     moneda = db.session.execute(
@@ -132,7 +132,7 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         moneda = db.session.execute(db.select(Moneda)).scalars().first()
 
     if moneda is None:
-        log.warning("No currency available for demo employees")
+        log.trace("No currency available for demo employees")
         return []
 
     empleados_data = [
@@ -398,7 +398,7 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
 
             db.session.add(empleado)
             empleados.append(empleado)
-            log.info(f"Created demo employee: {empleado.primer_nombre} {empleado.primer_apellido}")
+            log.trace(f"Created demo employee: {empleado.primer_nombre} {empleado.primer_apellido}")
         else:
             empleados.append(existing)
 
@@ -421,7 +421,7 @@ def load_demo_payrolls(
     Returns:
         tuple: Two Planilla objects (planilla1, planilla2)
     """
-    log.info("Loading demo payrolls...")
+    log.trace("Loading demo payrolls...")
 
     # Get or create required data
     moneda = db.session.execute(
@@ -439,7 +439,7 @@ def load_demo_payrolls(
         tipo_planilla = db.session.execute(db.select(TipoPlanilla)).scalars().first()
 
     if moneda is None or tipo_planilla is None:
-        log.warning("Required data (currency or payroll type) not available")
+        log.trace("Required data (currency or payroll type) not available")
         return None, None
 
     # Create Planilla 1 for Company 1
@@ -456,7 +456,7 @@ def load_demo_payrolls(
         planilla1.empresa_id = empresa1.id
         planilla1.activo = True
         db.session.add(planilla1)
-        log.info("Created demo payroll: Planilla Demo - TechSol")
+        log.trace("Created demo payroll: Planilla Demo - TechSol")
 
     # Create Planilla 2 for Company 2
     planilla2 = db.session.execute(
@@ -472,7 +472,7 @@ def load_demo_payrolls(
         planilla2.empresa_id = empresa2.id
         planilla2.activo = True
         db.session.add(planilla2)
-        log.info("Created demo payroll: Planilla Demo - BMO Services")
+        log.trace("Created demo payroll: Planilla Demo - BMO Services")
 
     db.session.commit()
 
@@ -500,7 +500,7 @@ def load_demo_payrolls(
             asignacion.activo = True
             asignacion.fecha_inicio = empleado.fecha_alta
             db.session.add(asignacion)
-            log.info(f"Assigned employee {empleado.codigo_empleado} to payroll {planilla.nombre}")
+            log.trace(f"Assigned employee {empleado.codigo_empleado} to payroll {planilla.nombre}")
 
     db.session.commit()
 
@@ -602,7 +602,7 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
     Returns:
         Nomina object or None if creation failed
     """
-    log.info(f"Creating demo nomina for payroll: {planilla.nombre}")
+    log.trace(f"Creating demo nomina for payroll: {planilla.nombre}")
 
     # Calculate dates for next month
     today = date.today()
@@ -619,7 +619,7 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
     ).scalar_one_or_none()
 
     if existing is not None:
-        log.info(f"Demo nomina already exists for period {next_month_start} to {next_month_end}")
+        log.trace(f"Demo nomina already exists for period {next_month_start} to {next_month_end}")
         return existing
 
     # Create nomina
@@ -634,7 +634,7 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
     db.session.add(nomina)
     db.session.commit()
 
-    log.info(f"Created demo nomina for period {next_month_start} to {next_month_end}")
+    log.trace(f"Created demo nomina for period {next_month_start} to {next_month_end}")
     return nomina
 
 
@@ -647,10 +647,10 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
     Args:
         empleados: List of employees to create novelties for
     """
-    log.info("Creating demo novelties...")
+    log.trace("Creating demo novelties...")
 
     if len(empleados) < 5:
-        log.warning("Not enough employees to create demo novelties")
+        log.trace("Not enough employees to create demo novelties")
         return
 
     # Get perceptions for overtime
@@ -668,7 +668,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
     nomina = db.session.execute(db.select(Nomina)).scalars().first()
 
     if nomina is None:
-        log.warning("No nomina available to associate novelties")
+        log.trace("No nomina available to associate novelties")
         # Novelties can still be created without a nomina (as pending)
 
     # Create overtime for some employees
@@ -698,7 +698,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                         novedad.percepcion_id = overtime.id
                         novedad.estado = "pendiente"
                         db.session.add(novedad)
-                        log.info(f"Created overtime novedad for {empleado.codigo_empleado}")
+                        log.trace(f"Created overtime novedad for {empleado.codigo_empleado}")
 
     # Create absences for some employees
     if absence:
@@ -727,7 +727,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                         novedad.deduccion_id = absence.id
                         novedad.estado = "pendiente"
                         db.session.add(novedad)
-                        log.info(f"Created absence novedad for {empleado.codigo_empleado}")
+                        log.trace(f"Created absence novedad for {empleado.codigo_empleado}")
 
     db.session.commit()
 
@@ -746,9 +746,9 @@ def load_demo_data() -> None:
     This function is idempotent - safe to call multiple times.
     """
     try:
-        log.info("=" * 60)
-        log.info("Loading demo data for manual testing...")
-        log.info("=" * 60)
+        log.trace("=" * 60)
+        log.trace("Loading demo data for manual testing...")
+        log.trace("=" * 60)
 
         # 1. Create demo companies
         empresa1, empresa2 = load_demo_companies()
@@ -757,7 +757,7 @@ def load_demo_data() -> None:
         empleados = load_demo_employees(empresa1, empresa2)
 
         if not empleados:
-            log.warning("No employees created, skipping payroll and nomina creation")
+            log.trace("No employees created, skipping payroll and nomina creation")
             return
 
         # 3. Create demo payrolls with employees and concepts
@@ -770,14 +770,14 @@ def load_demo_data() -> None:
         # 5. Create demo novelties
         create_demo_novelties(empleados)
 
-        log.info("=" * 60)
-        log.info("Demo data loading completed successfully!")
-        log.info("=" * 60)
-        log.info(f"Created {len(empleados)} demo employees")
-        log.info("Created 2 demo companies")
-        log.info("Created 2 demo payrolls with assigned concepts")
-        log.info("Created demo novelties (overtime, absences)")
-        log.info("=" * 60)
+        log.trace("=" * 60)
+        log.trace("Demo data loading completed successfully!")
+        log.trace("=" * 60)
+        log.trace(f"Created {len(empleados)} demo employees")
+        log.trace("Created 2 demo companies")
+        log.trace("Created 2 demo payrolls with assigned concepts")
+        log.trace("Created demo novelties (overtime, absences)")
+        log.trace("=" * 60)
 
     except Exception as exc:
         log.error(f"Error loading demo data: {exc}")
