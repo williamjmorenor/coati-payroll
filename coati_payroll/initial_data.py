@@ -361,7 +361,7 @@ def load_currencies() -> None:
 
     if currencies_loaded > 0:
         db.session.commit()
-        log.info(f"Loaded {currencies_loaded} currencies")
+        log.trace(f"Loaded {currencies_loaded} currencies")
     else:
         log.trace("No new currencies to load")
 
@@ -400,7 +400,7 @@ def load_income_concepts() -> None:
 
     if concepts_loaded > 0:
         db.session.commit()
-        log.info(f"Loaded {concepts_loaded} income concepts")
+        log.trace(f"Loaded {concepts_loaded} income concepts")
     else:
         log.trace("No new income concepts to load")
 
@@ -441,7 +441,7 @@ def load_deduction_concepts() -> None:
 
     if concepts_loaded > 0:
         db.session.commit()
-        log.info(f"Loaded {concepts_loaded} deduction concepts")
+        log.trace(f"Loaded {concepts_loaded} deduction concepts")
     else:
         log.trace("No new deduction concepts to load")
 
@@ -480,7 +480,7 @@ def load_benefit_concepts() -> None:
 
     if concepts_loaded > 0:
         db.session.commit()
-        log.info(f"Loaded {concepts_loaded} benefit concepts")
+        log.trace(f"Loaded {concepts_loaded} benefit concepts")
     else:
         log.trace("No new benefit concepts to load")
 
@@ -520,7 +520,7 @@ def load_payroll_types() -> None:
 
     if types_loaded > 0:
         db.session.commit()
-        log.info(f"Loaded {types_loaded} payroll types")
+        log.trace(f"Loaded {types_loaded} payroll types")
     else:
         log.trace("No new payroll types to load")
 
@@ -535,7 +535,7 @@ def load_initial_data() -> None:
     """
     from coati_payroll.log import log
 
-    log.info("Loading initial data")
+    log.trace("Loading initial data")
 
     load_currencies()
     load_income_concepts()
@@ -543,4 +543,4 @@ def load_initial_data() -> None:
     load_benefit_concepts()
     load_payroll_types()
 
-    log.info("Initial data loading completed")
+    log.trace("Initial data loading completed")
