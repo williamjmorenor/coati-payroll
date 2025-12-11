@@ -63,9 +63,7 @@ def load_demo_companies() -> tuple[Empresa, Empresa]:
     log.trace("Loading demo companies...")
 
     # Check if demo companies already exist
-    empresa1 = db.session.execute(
-        db.select(Empresa).filter_by(codigo="DEMO001")
-    ).scalar_one_or_none()
+    empresa1 = db.session.execute(db.select(Empresa).filter_by(codigo="DEMO001")).scalar_one_or_none()
 
     if empresa1 is None:
         empresa1 = Empresa()
@@ -82,9 +80,7 @@ def load_demo_companies() -> tuple[Empresa, Empresa]:
         db.session.add(empresa1)
         log.trace("Created demo company: Tecnología y Soluciones S.A.")
 
-    empresa2 = db.session.execute(
-        db.select(Empresa).filter_by(codigo="DEMO002")
-    ).scalar_one_or_none()
+    empresa2 = db.session.execute(db.select(Empresa).filter_by(codigo="DEMO002")).scalar_one_or_none()
 
     if empresa2 is None:
         empresa2 = Empresa()
@@ -124,9 +120,7 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
     log.trace("Loading demo employees...")
 
     # Get currency (use NIO if available, otherwise first available)
-    moneda = db.session.execute(
-        db.select(Moneda).filter_by(codigo="NIO")
-    ).scalar_one_or_none()
+    moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
 
     if moneda is None:
         moneda = db.session.execute(db.select(Moneda)).scalars().first()
@@ -139,12 +133,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         # Company 1 - Tecnología y Soluciones
         {
             "codigo": "DEMO-EMP001",
-            "primer_nombre": "Juan", "segundo_nombre": "Carlos",
-            "primer_apellido": "Pérez", "segundo_apellido": "González",
+            "primer_nombre": "Juan",
+            "segundo_nombre": "Carlos",
+            "primer_apellido": "Pérez",
+            "segundo_apellido": "González",
             "identificacion_personal": "001-150890-0001K",
-            "genero": "Masculino", "nacionalidad": "Nicaragüense",
+            "genero": "Masculino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1990, 8, 15),
-            "cargo": "Gerente de Tecnología", "area": "Tecnología",
+            "cargo": "Gerente de Tecnología",
+            "area": "Tecnología",
             "salario_base": Decimal("35000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=730),  # 2 years ago
@@ -154,12 +152,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP002",
-            "primer_nombre": "María", "segundo_nombre": "Elena",
-            "primer_apellido": "Rodríguez", "segundo_apellido": "Morales",
+            "primer_nombre": "María",
+            "segundo_nombre": "Elena",
+            "primer_apellido": "Rodríguez",
+            "segundo_apellido": "Morales",
             "identificacion_personal": "001-220685-0002M",
-            "genero": "Femenino", "nacionalidad": "Nicaragüense",
+            "genero": "Femenino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1985, 6, 22),
-            "cargo": "Desarrolladora Senior", "area": "Tecnología",
+            "cargo": "Desarrolladora Senior",
+            "area": "Tecnología",
             "salario_base": Decimal("28000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=1095),  # 3 years ago
@@ -169,12 +171,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP003",
-            "primer_nombre": "Carlos", "segundo_nombre": "Alberto",
-            "primer_apellido": "Martínez", "segundo_apellido": "López",
+            "primer_nombre": "Carlos",
+            "segundo_nombre": "Alberto",
+            "primer_apellido": "Martínez",
+            "segundo_apellido": "López",
             "identificacion_personal": "001-100992-0003N",
-            "genero": "Masculino", "nacionalidad": "Nicaragüense",
+            "genero": "Masculino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1992, 9, 10),
-            "cargo": "Desarrollador Junior", "area": "Tecnología",
+            "cargo": "Desarrollador Junior",
+            "area": "Tecnología",
             "salario_base": Decimal("15000.00"),
             "tipo_contrato": "Temporal",
             "fecha_alta": date.today() - timedelta(days=180),  # 6 months ago
@@ -184,12 +190,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP004",
-            "primer_nombre": "Ana", "segundo_nombre": "Patricia",
-            "primer_apellido": "García", "segundo_apellido": "Hernández",
+            "primer_nombre": "Ana",
+            "segundo_nombre": "Patricia",
+            "primer_apellido": "García",
+            "segundo_apellido": "Hernández",
             "identificacion_personal": "001-050888-0004L",
-            "genero": "Femenino", "nacionalidad": "Nicaragüense",
+            "genero": "Femenino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1988, 8, 5),
-            "cargo": "Contador", "area": "Finanzas",
+            "cargo": "Contador",
+            "area": "Finanzas",
             "salario_base": Decimal("22000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=1460),  # 4 years ago
@@ -199,12 +209,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP005",
-            "primer_nombre": "Roberto", "segundo_nombre": "José",
-            "primer_apellido": "Flores", "segundo_apellido": "Gutiérrez",
+            "primer_nombre": "Roberto",
+            "segundo_nombre": "José",
+            "primer_apellido": "Flores",
+            "segundo_apellido": "Gutiérrez",
             "identificacion_personal": "001-181195-0005P",
-            "genero": "Masculino", "nacionalidad": "Nicaragüense",
+            "genero": "Masculino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1995, 11, 18),
-            "cargo": "Asistente Administrativo", "area": "Administración",
+            "cargo": "Asistente Administrativo",
+            "area": "Administración",
             "salario_base": Decimal("12000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=365),  # 1 year ago
@@ -214,12 +228,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP006",
-            "primer_nombre": "Laura", "segundo_nombre": "Isabel",
-            "primer_apellido": "Ramírez", "segundo_apellido": "Castro",
+            "primer_nombre": "Laura",
+            "segundo_nombre": "Isabel",
+            "primer_apellido": "Ramírez",
+            "segundo_apellido": "Castro",
             "identificacion_personal": "001-250687-0006R",
-            "genero": "Femenino", "nacionalidad": "Nicaragüense",
+            "genero": "Femenino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1987, 6, 25),
-            "cargo": "Jefa de Recursos Humanos", "area": "Recursos Humanos",
+            "cargo": "Jefa de Recursos Humanos",
+            "area": "Recursos Humanos",
             "salario_base": Decimal("26000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=900),  # ~2.5 years ago
@@ -229,12 +247,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP007",
-            "primer_nombre": "Diego", "segundo_nombre": "Andrés",
-            "primer_apellido": "Sánchez", "segundo_apellido": "Vargas",
+            "primer_nombre": "Diego",
+            "segundo_nombre": "Andrés",
+            "primer_apellido": "Sánchez",
+            "segundo_apellido": "Vargas",
             "identificacion_personal": "001-120993-0007T",
-            "genero": "Masculino", "nacionalidad": "Nicaragüense",
+            "genero": "Masculino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1993, 9, 12),
-            "cargo": "Analista de Soporte", "area": "Tecnología",
+            "cargo": "Analista de Soporte",
+            "area": "Tecnología",
             "salario_base": Decimal("18000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=545),  # ~1.5 years ago
@@ -244,12 +266,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP008",
-            "primer_nombre": "Gabriela", "segundo_nombre": "Sofía",
-            "primer_apellido": "Mendoza", "segundo_apellido": "Ortiz",
+            "primer_nombre": "Gabriela",
+            "segundo_nombre": "Sofía",
+            "primer_apellido": "Mendoza",
+            "segundo_apellido": "Ortiz",
             "identificacion_personal": "001-080391-0008U",
-            "genero": "Femenino", "nacionalidad": "Nicaragüense",
+            "genero": "Femenino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1991, 3, 8),
-            "cargo": "Diseñadora UX/UI", "area": "Tecnología",
+            "cargo": "Diseñadora UX/UI",
+            "area": "Tecnología",
             "salario_base": Decimal("20000.00"),
             "tipo_contrato": "Temporal",
             "fecha_alta": date.today() - timedelta(days=270),  # 9 months ago
@@ -260,12 +286,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         # Company 2 - Servicios Profesionales BMO
         {
             "codigo": "DEMO-EMP009",
-            "primer_nombre": "Fernando", "segundo_nombre": "Luis",
-            "primer_apellido": "Torres", "segundo_apellido": "Ruiz",
+            "primer_nombre": "Fernando",
+            "segundo_nombre": "Luis",
+            "primer_apellido": "Torres",
+            "segundo_apellido": "Ruiz",
             "identificacion_personal": "001-301284-0009V",
-            "genero": "Masculino", "nacionalidad": "Nicaragüense",
+            "genero": "Masculino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1984, 12, 30),
-            "cargo": "Director General", "area": "Dirección",
+            "cargo": "Director General",
+            "area": "Dirección",
             "salario_base": Decimal("50000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=1825),  # 5 years ago
@@ -275,12 +305,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP010",
-            "primer_nombre": "Patricia", "segundo_nombre": "Mercedes",
-            "primer_apellido": "Jiménez", "segundo_apellido": "Silva",
+            "primer_nombre": "Patricia",
+            "segundo_nombre": "Mercedes",
+            "primer_apellido": "Jiménez",
+            "segundo_apellido": "Silva",
             "identificacion_personal": "001-140689-0010W",
-            "genero": "Femenino", "nacionalidad": "Nicaragüense",
+            "genero": "Femenino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1989, 6, 14),
-            "cargo": "Consultora Senior", "area": "Consultoría",
+            "cargo": "Consultora Senior",
+            "area": "Consultoría",
             "salario_base": Decimal("32000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=1095),  # 3 years ago
@@ -290,12 +324,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP011",
-            "primer_nombre": "Miguel", "segundo_nombre": "Ángel",
-            "primer_apellido": "Herrera", "segundo_apellido": "Díaz",
+            "primer_nombre": "Miguel",
+            "segundo_nombre": "Ángel",
+            "primer_apellido": "Herrera",
+            "segundo_apellido": "Díaz",
             "identificacion_personal": "001-221090-0011X",
-            "genero": "Masculino", "nacionalidad": "Nicaragüense",
+            "genero": "Masculino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1990, 10, 22),
-            "cargo": "Consultor", "area": "Consultoría",
+            "cargo": "Consultor",
+            "area": "Consultoría",
             "salario_base": Decimal("24000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=730),  # 2 years ago
@@ -305,12 +343,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP012",
-            "primer_nombre": "Claudia", "segundo_nombre": "Beatriz",
-            "primer_apellido": "Moreno", "segundo_apellido": "Rivas",
+            "primer_nombre": "Claudia",
+            "segundo_nombre": "Beatriz",
+            "primer_apellido": "Moreno",
+            "segundo_apellido": "Rivas",
             "identificacion_personal": "001-190992-0012Y",
-            "genero": "Femenino", "nacionalidad": "Nicaragüense",
+            "genero": "Femenino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1992, 9, 19),
-            "cargo": "Asistente de Consultoría", "area": "Consultoría",
+            "cargo": "Asistente de Consultoría",
+            "area": "Consultoría",
             "salario_base": Decimal("16000.00"),
             "tipo_contrato": "Temporal",
             "fecha_alta": date.today() - timedelta(days=365),  # 1 year ago
@@ -320,12 +362,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP013",
-            "primer_nombre": "Sergio", "segundo_nombre": "Rafael",
-            "primer_apellido": "Vega", "segundo_apellido": "Campos",
+            "primer_nombre": "Sergio",
+            "segundo_nombre": "Rafael",
+            "primer_apellido": "Vega",
+            "segundo_apellido": "Campos",
             "identificacion_personal": "001-051286-0013Z",
-            "genero": "Masculino", "nacionalidad": "Nicaragüense",
+            "genero": "Masculino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1986, 12, 5),
-            "cargo": "Contador General", "area": "Finanzas",
+            "cargo": "Contador General",
+            "area": "Finanzas",
             "salario_base": Decimal("28000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=1460),  # 4 years ago
@@ -335,12 +381,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP014",
-            "primer_nombre": "Lucía", "segundo_nombre": "Fernanda",
-            "primer_apellido": "Navarro", "segundo_apellido": "Pérez",
+            "primer_nombre": "Lucía",
+            "segundo_nombre": "Fernanda",
+            "primer_apellido": "Navarro",
+            "segundo_apellido": "Pérez",
             "identificacion_personal": "001-280894-0014A",
-            "genero": "Femenino", "nacionalidad": "Nicaragüense",
+            "genero": "Femenino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1994, 8, 28),
-            "cargo": "Recepcionista", "area": "Administración",
+            "cargo": "Recepcionista",
+            "area": "Administración",
             "salario_base": Decimal("11000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=545),  # ~1.5 years ago
@@ -350,12 +400,16 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
         },
         {
             "codigo": "DEMO-EMP015",
-            "primer_nombre": "Andrés", "segundo_nombre": "Mauricio",
-            "primer_apellido": "Cruz", "segundo_apellido": "Aguilar",
+            "primer_nombre": "Andrés",
+            "segundo_nombre": "Mauricio",
+            "primer_apellido": "Cruz",
+            "segundo_apellido": "Aguilar",
             "identificacion_personal": "001-170791-0015B",
-            "genero": "Masculino", "nacionalidad": "Nicaragüense",
+            "genero": "Masculino",
+            "nacionalidad": "Nicaragüense",
             "fecha_nacimiento": date(1991, 7, 17),
-            "cargo": "Analista Financiero", "area": "Finanzas",
+            "cargo": "Analista Financiero",
+            "area": "Finanzas",
             "salario_base": Decimal("19000.00"),
             "tipo_contrato": "Indefinido",
             "fecha_alta": date.today() - timedelta(days=630),  # ~1.7 years ago
@@ -406,11 +460,7 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
     return empleados
 
 
-def load_demo_payrolls(
-    empresa1: Empresa,
-    empresa2: Empresa,
-    empleados: list[Empleado]
-) -> tuple[Planilla, Planilla]:
+def load_demo_payrolls(empresa1: Empresa, empresa2: Empresa, empleados: list[Empleado]) -> tuple[Planilla, Planilla]:
     """Create demo payrolls with assigned employees and concepts.
 
     Args:
@@ -424,16 +474,12 @@ def load_demo_payrolls(
     log.trace("Loading demo payrolls...")
 
     # Get or create required data
-    moneda = db.session.execute(
-        db.select(Moneda).filter_by(codigo="NIO")
-    ).scalar_one_or_none()
+    moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
 
     if moneda is None:
         moneda = db.session.execute(db.select(Moneda)).scalars().first()
 
-    tipo_planilla = db.session.execute(
-        db.select(TipoPlanilla).filter_by(codigo="MONTHLY")
-    ).scalar_one_or_none()
+    tipo_planilla = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MONTHLY")).scalar_one_or_none()
 
     if tipo_planilla is None:
         tipo_planilla = db.session.execute(db.select(TipoPlanilla)).scalars().first()
@@ -443,9 +489,7 @@ def load_demo_payrolls(
         return None, None
 
     # Create Planilla 1 for Company 1
-    planilla1 = db.session.execute(
-        db.select(Planilla).filter_by(nombre="Planilla Demo - TechSol")
-    ).scalar_one_or_none()
+    planilla1 = db.session.execute(db.select(Planilla).filter_by(nombre="Planilla Demo - TechSol")).scalar_one_or_none()
 
     if planilla1 is None:
         planilla1 = Planilla()
@@ -487,10 +531,7 @@ def load_demo_payrolls(
 
         # Check if already assigned
         existing = db.session.execute(
-            db.select(PlanillaEmpleado).filter_by(
-                planilla_id=planilla.id,
-                empleado_id=empleado.id
-            )
+            db.select(PlanillaEmpleado).filter_by(planilla_id=planilla.id, empleado_id=empleado.id)
         ).scalar_one_or_none()
 
         if existing is None:
@@ -518,18 +559,17 @@ def _assign_concepts_to_payroll(planilla: Planilla) -> None:
         planilla: Planilla to assign concepts to
     """
     # Get some common concepts
-    percepciones = db.session.execute(
-        db.select(Percepcion).filter(
-            Percepcion.codigo.in_(["OVERTIME", "BONUSES", "TRANSPORT_ALLOWANCE"])
+    percepciones = (
+        db.session.execute(
+            db.select(Percepcion).filter(Percepcion.codigo.in_(["OVERTIME", "BONUSES", "TRANSPORT_ALLOWANCE"]))
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     for percepcion in percepciones:
         existing = db.session.execute(
-            db.select(PlanillaIngreso).filter_by(
-                planilla_id=planilla.id,
-                percepcion_id=percepcion.id
-            )
+            db.select(PlanillaIngreso).filter_by(planilla_id=planilla.id, percepcion_id=percepcion.id)
         ).scalar_one_or_none()
 
         if existing is None:
@@ -541,18 +581,17 @@ def _assign_concepts_to_payroll(planilla: Planilla) -> None:
             db.session.add(asignacion)
 
     # Assign deductions
-    deducciones = db.session.execute(
-        db.select(Deduccion).filter(
-            Deduccion.codigo.in_(["UNPAID_ABSENCES", "TARDINESS", "INTERNAL_LOANS"])
+    deducciones = (
+        db.session.execute(
+            db.select(Deduccion).filter(Deduccion.codigo.in_(["UNPAID_ABSENCES", "TARDINESS", "INTERNAL_LOANS"]))
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     for idx, deduccion in enumerate(deducciones):
         existing = db.session.execute(
-            db.select(PlanillaDeduccion).filter_by(
-                planilla_id=planilla.id,
-                deduccion_id=deduccion.id
-            )
+            db.select(PlanillaDeduccion).filter_by(planilla_id=planilla.id, deduccion_id=deduccion.id)
         ).scalar_one_or_none()
 
         if existing is None:
@@ -565,18 +604,19 @@ def _assign_concepts_to_payroll(planilla: Planilla) -> None:
             db.session.add(asignacion)
 
     # Assign benefits
-    prestaciones = db.session.execute(
-        db.select(Prestacion).filter(
-            Prestacion.codigo.in_(["PAID_VACATION_PROVISION", "THIRTEENTH_SALARY_PROVISION"])
+    prestaciones = (
+        db.session.execute(
+            db.select(Prestacion).filter(
+                Prestacion.codigo.in_(["PAID_VACATION_PROVISION", "THIRTEENTH_SALARY_PROVISION"])
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     for prestacion in prestaciones:
         existing = db.session.execute(
-            db.select(PlanillaPrestacion).filter_by(
-                planilla_id=planilla.id,
-                prestacion_id=prestacion.id
-            )
+            db.select(PlanillaPrestacion).filter_by(planilla_id=planilla.id, prestacion_id=prestacion.id)
         ).scalar_one_or_none()
 
         if existing is None:
@@ -606,15 +646,13 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
 
     # Calculate dates for next month
     today = date.today()
-    next_month_start = (today.replace(day=1) + relativedelta(months=1))
+    next_month_start = today.replace(day=1) + relativedelta(months=1)
     next_month_end = (next_month_start + relativedelta(months=1)) - timedelta(days=1)
 
     # Check if demo nomina already exists for this period
     existing = db.session.execute(
         db.select(Nomina).filter_by(
-            planilla_id=planilla.id,
-            periodo_inicio=next_month_start,
-            periodo_fin=next_month_end
+            planilla_id=planilla.id, periodo_inicio=next_month_start, periodo_fin=next_month_end
         )
     ).scalar_one_or_none()
 
@@ -654,14 +692,10 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
         return
 
     # Get perceptions for overtime
-    overtime = db.session.execute(
-        db.select(Percepcion).filter_by(codigo="OVERTIME")
-    ).scalar_one_or_none()
+    overtime = db.session.execute(db.select(Percepcion).filter_by(codigo="OVERTIME")).scalar_one_or_none()
 
     # Get deduction for absences
-    absence = db.session.execute(
-        db.select(Deduccion).filter_by(codigo="UNPAID_ABSENCES")
-    ).scalar_one_or_none()
+    absence = db.session.execute(db.select(Deduccion).filter_by(codigo="UNPAID_ABSENCES")).scalar_one_or_none()
 
     # Get a demo nomina to associate novelties with
     # (We'll use the first available nomina or None)
@@ -681,9 +715,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                 if nomina:
                     existing = db.session.execute(
                         db.select(NominaNovedad).filter_by(
-                            nomina_id=nomina.id,
-                            empleado_id=empleado.id,
-                            codigo_concepto=overtime.codigo
+                            nomina_id=nomina.id, empleado_id=empleado.id, codigo_concepto=overtime.codigo
                         )
                     ).scalar_one_or_none()
 
@@ -710,9 +742,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                 if nomina:
                     existing = db.session.execute(
                         db.select(NominaNovedad).filter_by(
-                            nomina_id=nomina.id,
-                            empleado_id=empleado.id,
-                            codigo_concepto=absence.codigo
+                            nomina_id=nomina.id, empleado_id=empleado.id, codigo_concepto=absence.codigo
                         )
                     ).scalar_one_or_none()
 

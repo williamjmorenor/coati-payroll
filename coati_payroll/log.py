@@ -83,3 +83,56 @@ LOG_LEVEL = root_logger.getEffectiveLevel()
 
 log = root_logger
 logger = root_logger
+
+
+# Cached helper to avoid repeated debug/level checks on every trace call
+_TRACE_ACTIVE: bool | None = None
+
+
+def _compute_trace_active(debug_flag: bool | None = None) -> bool:
+    """Compute whether TRACE logging should be emitted.
+
+    Prefers an explicit debug_flag, then Flask's current_app.debug (if available),
+    then FLASK_DEBUG/FLASK_ENV environment hints. Also verifies the logger is
+    actually enabled for TRACE level.
+    """
+
+    # Determine debug flag
+    if debug_flag is None:
+        try:
+            from flask import current_app
+
+            debug_flag = bool(getattr(current_app, "debug", False))
+        except Exception:
+            debug_flag = False
+
+    if not debug_flag:
+        debug_env = environ.get("FLASK_DEBUG") or environ.get("FLASK_ENV")
+        if debug_env:
+            debug_flag = str(debug_env).lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+                "development",
+                "dev",
+                "debug",
+            }
+
+    try:
+        return bool(debug_flag) and log.isEnabledFor(TRACE_LEVEL_NUM)
+    except Exception:
+        return False
+
+
+def is_trace_enabled(*, force_refresh: bool = False, debug_flag: bool | None = None) -> bool:
+    """Return cached TRACE-enabled flag, computing once unless refreshed.
+
+    This keeps per-log-call overhead minimal while allowing an explicit refresh
+    if runtime configuration changes.
+    """
+
+    global _TRACE_ACTIVE
+    if force_refresh or _TRACE_ACTIVE is None:
+        _TRACE_ACTIVE = _compute_trace_active(debug_flag)
+    return _TRACE_ACTIVE

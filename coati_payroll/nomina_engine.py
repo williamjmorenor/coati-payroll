@@ -33,6 +33,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
 
 from coati_payroll.enums import AdelantoEstado, FormulaType, NominaEstado
+from coati_payroll.i18n import _
 from coati_payroll.model import (
     db,
     Planilla,
@@ -48,6 +49,7 @@ from coati_payroll.model import (
     TipoCambio,
 )
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
+from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
 
 
 # Constants for payroll calculations
@@ -167,6 +169,14 @@ class NominaEngine:
         self.errors: list[str] = []
         self.warnings: list[str] = []
 
+    # ------------------------------------------------------------------
+    # Trace helper uses cached check from log.is_trace_enabled() to avoid
+    # recomputing debug/level state on every call.
+    # ------------------------------------------------------------------
+    def _trace(self, message: str) -> None:
+        if is_trace_enabled():
+            log.log(TRACE_LEVEL_NUM, message)
+
     def validar_planilla(self) -> bool:
         """Validate that the planilla is ready for execution.
 
@@ -257,8 +267,19 @@ class NominaEngine:
         """
         emp_calculo = EmpleadoCalculo(empleado, self.planilla)
 
+        self._trace(
+            _("Calculando nómina del empleado %(id)s (%(nombre)s %(apellido)s)")
+            % {
+                "id": empleado.id,
+                "nombre": empleado.primer_nombre,
+                "apellido": empleado.primer_apellido,
+            }
+        )
+        self._trace(_("Obteniendo salario base %(salario)s") % {"salario": emp_calculo.salario_base})
+
         # Get exchange rate if currencies differ
         emp_calculo.tipo_cambio = self._obtener_tipo_cambio(empleado)
+        self._trace(_("Aplicando tipo de cambio %(tasa)s") % {"tasa": emp_calculo.tipo_cambio})
 
         # Apply exchange rate to convert employee salary to planilla currency
         # Only convert when employee currency differs from planilla currency
@@ -267,11 +288,20 @@ class NominaEngine:
             salario_mensual = (salario_mensual * emp_calculo.tipo_cambio).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
             )
+        self._trace(_("Salario mensual convertido: %(salario)s") % {"salario": salario_mensual})
 
         # Calculate salary for the pay period based on actual days worked
         # The employee's salario_base is always the monthly salary
         # We need to convert it to the actual period salary based on days
         emp_calculo.salario_base = self._calcular_salario_periodo(salario_mensual)
+        self._trace(
+            _("Salario base del período (%(inicio)s a %(fin)s): %(salario)s")
+            % {
+                "inicio": self.periodo_inicio,
+                "fin": self.periodo_fin,
+                "salario": emp_calculo.salario_base,
+            }
+        )
 
         # Store the monthly salary for use in calculations (e.g., hourly rate)
         emp_calculo.salario_mensual = salario_mensual
@@ -285,8 +315,14 @@ class NominaEngine:
         # Process perceptions (add to gross salary)
         self._procesar_percepciones(emp_calculo)
 
+        self._trace(_("Total percepciones después de cálculo: %(total)s") % {"total": emp_calculo.total_percepciones})
+
         # Calculate gross salary
         emp_calculo.salario_bruto = emp_calculo.salario_base + emp_calculo.total_percepciones
+        self._trace(
+            _("Salario bruto = base (%(base)s) + percepciones (%(percepciones)s)")
+            % {"base": emp_calculo.salario_base, "percepciones": emp_calculo.total_percepciones}
+        )
 
         # Process deductions (subtract from net salary)
         self._procesar_deducciones(emp_calculo)
@@ -296,6 +332,14 @@ class NominaEngine:
 
         # Calculate net salary
         emp_calculo.salario_neto = emp_calculo.salario_bruto - emp_calculo.total_deducciones
+        self._trace(
+            _("Salario neto = bruto (%(bruto)s) - deducciones (%(deducciones)s) = %(neto)s")
+            % {
+                "bruto": emp_calculo.salario_bruto,
+                "deducciones": emp_calculo.total_deducciones,
+                "neto": emp_calculo.salario_neto,
+            }
+        )
 
         # Ensure net salary is not negative
         if emp_calculo.salario_neto < 0:
@@ -563,6 +607,13 @@ class NominaEngine:
         Args:
             emp_calculo: Employee calculation container
         """
+        self._trace(
+            _("Procesando percepciones para %(nombre)s %(apellido)s")
+            % {
+                "nombre": emp_calculo.empleado.primer_nombre,
+                "apellido": emp_calculo.empleado.primer_apellido,
+            }
+        )
         for planilla_percepcion in self.planilla.planilla_percepciones:
             if not planilla_percepcion.activo:
                 continue
@@ -602,6 +653,17 @@ class NominaEngine:
                 )
                 emp_calculo.percepciones.append(item)
                 emp_calculo.total_percepciones += monto
+                self._trace(
+                    _(
+                        "Calculando percepción %(codigo)s (%(nombre)s) monto=%(monto)s nuevo total percepciones=%(total)s"
+                    )
+                    % {
+                        "codigo": item.codigo,
+                        "nombre": item.nombre,
+                        "monto": monto,
+                        "total": emp_calculo.total_percepciones,
+                    }
+                )
 
     def _procesar_deducciones(self, emp_calculo: EmpleadoCalculo) -> None:
         """Process deductions for an employee.
@@ -609,6 +671,13 @@ class NominaEngine:
         Args:
             emp_calculo: Employee calculation container
         """
+        self._trace(
+            _("Procesando deducciones para %(nombre)s %(apellido)s")
+            % {
+                "nombre": emp_calculo.empleado.primer_nombre,
+                "apellido": emp_calculo.empleado.primer_apellido,
+            }
+        )
         deducciones_pendientes: list[DeduccionItem] = []
 
         for planilla_deduccion in self.planilla.planilla_deducciones:
@@ -679,6 +748,18 @@ class NominaEngine:
             emp_calculo.deducciones.append(item)
             emp_calculo.total_deducciones += monto_aplicar
             saldo_disponible -= monto_aplicar
+            self._trace(
+                _(
+                    "Calculando deducción %(codigo)s (%(nombre)s) monto=%(monto)s nuevo total deducciones=%(total)s saldo disponible=%(saldo)s"
+                )
+                % {
+                    "codigo": item.codigo,
+                    "nombre": item.nombre,
+                    "monto": monto_aplicar,
+                    "total": emp_calculo.total_deducciones,
+                    "saldo": saldo_disponible,
+                }
+            )
 
     def _aplicar_deducciones_automaticas(self, emp_calculo: EmpleadoCalculo) -> None:
         """Apply automatic loan and advance deductions.

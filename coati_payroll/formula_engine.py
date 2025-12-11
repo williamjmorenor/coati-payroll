@@ -37,6 +37,8 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
 from coati_payroll.enums import StepType
+from coati_payroll.i18n import _
+from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
 
 
 # Safe operators for expression evaluation
@@ -198,6 +200,17 @@ class FormulaEngine:
         self.results: dict[str, Any] = {}
         self._validate_schema()
 
+    # ------------------------------------------------------------------
+    # Trace helper uses cached check from log.is_trace_enabled() to avoid
+    # recomputing debug/level state on every call.
+    # ------------------------------------------------------------------
+    def _trace(self, message: str) -> None:
+        if is_trace_enabled():
+            try:
+                log.log(TRACE_LEVEL_NUM, message)
+            except Exception:
+                pass
+
     def _validate_schema(self) -> None:
         """Validate the calculation schema structure.
 
@@ -243,6 +256,8 @@ class FormulaEngine:
         if not expression:
             return Decimal("0")
 
+        self._trace(_("Evaluando expresión: '%(expr)s'") % {"expr": expression})
+
         try:
             # Parse the expression into an AST
             tree = ast.parse(expression, mode="eval")
@@ -250,7 +265,9 @@ class FormulaEngine:
             self._validate_ast_security(tree.body)
             # Evaluate the AST
             result = self._eval_ast_node(tree.body)
-            return to_decimal(result)
+            final_result = to_decimal(result)
+            self._trace(_("Resultado expresión '%(expr)s' => %(res)s") % {"expr": expression, "res": final_result})
+            return final_result
         except SyntaxError as e:
             raise CalculationError(f"Invalid expression syntax: {e}") from e
         except ZeroDivisionError:
@@ -448,8 +465,12 @@ class FormulaEngine:
         # Resolve variable references
         left_val = self._resolve_value(left)
         right_val = self._resolve_value(right)
-
-        return COMPARISON_OPERATORS[op](left_val, right_val)
+        result = COMPARISON_OPERATORS[op](left_val, right_val)
+        self._trace(
+            _("Condición evaluada: %(left)s %(op)s %(right)s -> %(res)s")
+            % {"left": left_val, "op": op, "right": right_val, "res": result}
+        )
+        return result
 
     def _resolve_value(self, value: Any) -> Decimal:
         """Resolve a value that might be a variable reference.
@@ -461,8 +482,13 @@ class FormulaEngine:
             Decimal value
         """
         if isinstance(value, str) and value in self.variables:
-            return self.variables[value]
-        return to_decimal(value)
+            resolved = self.variables[value]
+            self._trace(_("Resolviendo variable '%(name)s' => %(value)s") % {"name": value, "value": resolved})
+            return resolved
+
+        resolved_literal = to_decimal(value)
+        self._trace(_("Resolviendo valor literal '%(raw)s' => %(value)s") % {"raw": value, "value": resolved_literal})
+        return resolved_literal
 
     def _lookup_tax_table(
         self,
@@ -489,6 +515,11 @@ class FormulaEngine:
         if not isinstance(table, list):
             raise CalculationError(f"Tax table '{table_name}' must be a list")
 
+        self._trace(
+            _("Buscando tabla de impuestos '%(table)s' con valor %(value)s; brackets=%(count)s")
+            % {"table": table_name, "value": input_value, "count": len(table)}
+        )
+
         # Find the applicable bracket
         for bracket in table:
             min_val = to_decimal(bracket.get("min", 0))
@@ -497,13 +528,27 @@ class FormulaEngine:
             if max_val is None:
                 # Open-ended bracket (highest tier)
                 if input_value >= min_val:
-                    return self._calculate_bracket_tax(bracket, input_value)
+                    result = self._calculate_bracket_tax(bracket, input_value)
+                    self._trace(
+                        _("Aplicando tramo abierto desde %(min)s para valor %(value)s -> %(result)s")
+                        % {"min": min_val, "value": input_value, "result": result}
+                    )
+                    return result
             else:
                 max_val = to_decimal(max_val)
                 if min_val <= input_value <= max_val:
-                    return self._calculate_bracket_tax(bracket, input_value)
+                    result = self._calculate_bracket_tax(bracket, input_value)
+                    self._trace(
+                        _("Aplicando tramo %(min)s - %(max)s para valor %(value)s -> %(result)s")
+                        % {"min": min_val, "max": max_val, "value": input_value, "result": result}
+                    )
+                    return result
 
         # If no bracket found, return zeros
+        self._trace(
+            _("No se encontró tramo para valor %(value)s en tabla '%(table)s', devolviendo ceros")
+            % {"value": input_value, "table": table_name}
+        )
         return {
             "tax": Decimal("0"),
             "rate": Decimal("0"),
@@ -533,12 +578,18 @@ class FormulaEngine:
         excess = max(input_value - over, Decimal("0"))
         tax = fixed + (excess * rate)
 
-        return {
+        result = {
             "tax": tax.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
             "rate": rate,
             "fixed": fixed,
             "over": over,
         }
+
+        self._trace(
+            _("Cálculo de tramo: rate=%(rate)s fixed=%(fixed)s over=%(over)s valor=%(value)s -> %(result)s")
+            % {"rate": rate, "fixed": fixed, "over": over, "value": input_value, "result": result}
+        )
+        return result
 
     def _execute_step(self, step: dict[str, Any]) -> Any:
         """Execute a single calculation step.
@@ -555,12 +606,25 @@ class FormulaEngine:
         step_type = step.get("type")
         step_name = step.get("name")
 
+        self._trace(
+            _("Ejecutando paso '%(name)s' tipo=%(type)s variables_disponibles=%(vars)s")
+            % {
+                "name": step_name,
+                "type": step_type,
+                "vars": list(self.variables.keys()),
+            }
+        )
+
         match step_type:
             case StepType.CALCULATION:
                 formula = step.get("formula", "")
+                self._trace(
+                    _("Paso cálculo '%(name)s': formula='%(formula)s'") % {"name": step_name, "formula": formula}
+                )
                 result = self._evaluate_expression(formula)
                 self.variables[step_name] = result
                 self.results[step_name] = result
+                self._trace(_("Resultado paso '%(name)s' => %(result)s") % {"name": step_name, "result": result})
                 return result
 
             case StepType.CONDITIONAL:
@@ -568,13 +632,21 @@ class FormulaEngine:
                 if_true = step.get("if_true", "0")
                 if_false = step.get("if_false", "0")
 
-                if self._evaluate_condition(condition):
-                    result = self._evaluate_expression(str(if_true))
-                else:
-                    result = self._evaluate_expression(str(if_false))
+                condition_result = self._evaluate_condition(condition)
+                selected_value = if_true if condition_result else if_false
+                result = self._evaluate_expression(str(selected_value))
 
                 self.variables[step_name] = result
                 self.results[step_name] = result
+                self._trace(
+                    _("Paso condicional '%(name)s': condición=%(cond)s -> %(cond_res)s; valor=%(value)s")
+                    % {
+                        "name": step_name,
+                        "cond": condition,
+                        "cond_res": condition_result,
+                        "value": result,
+                    }
+                )
                 return result
 
             case StepType.TAX_LOOKUP:
@@ -582,9 +654,21 @@ class FormulaEngine:
                 input_var = step.get("input", "")
                 input_value = self.variables.get(input_var, Decimal("0"))
 
+                self._trace(
+                    _("Paso tax_lookup '%(name)s': tabla=%(table)s input_var=%(input)s valor=%(value)s")
+                    % {
+                        "name": step_name,
+                        "table": table_name,
+                        "input": input_var,
+                        "value": input_value,
+                    }
+                )
                 tax_result = self._lookup_tax_table(table_name, input_value)
                 self.variables[step_name] = tax_result["tax"]
                 self.results[step_name] = tax_result
+                self._trace(
+                    _("Resultado tax_lookup '%(name)s' => %(result)s") % {"name": step_name, "result": tax_result}
+                )
                 return tax_result
 
             case StepType.ASSIGNMENT:
@@ -592,6 +676,10 @@ class FormulaEngine:
                 result = self._resolve_value(value)
                 self.variables[step_name] = result
                 self.results[step_name] = result
+                self._trace(
+                    _("Paso asignación '%(name)s': valor=%(value)s resuelto=%(result)s")
+                    % {"name": step_name, "value": value, "result": result}
+                )
                 return result
 
             case _:
@@ -613,6 +701,12 @@ class FormulaEngine:
         self.variables = {}
         self.results = {}
 
+        meta = self.schema.get("meta", {})
+        self._trace(
+            _("Iniciando ejecución de esquema '%(name)s' pasos=%(count)s")
+            % {"name": meta.get("name", "sin nombre"), "count": len(self.schema.get("steps", []))}
+        )
+
         # Load input definitions and set values
         for input_def in self.schema.get("inputs", []):
             name = input_def.get("name")
@@ -623,6 +717,12 @@ class FormulaEngine:
                 self.variables[name] = to_decimal(inputs[name])
             else:
                 self.variables[name] = to_decimal(default)
+
+            source = "input" if name in inputs else "default"
+            self._trace(
+                _("Input '%(name)s' cargado desde %(source)s => %(value)s")
+                % {"name": name, "source": source, "value": self.variables[name]}
+            )
 
         # Execute each step in order
         for step in self.schema.get("steps", []):
@@ -640,6 +740,8 @@ class FormulaEngine:
         # Get the final output
         output_name = self.schema.get("output", "")
         final_result = self.variables.get(output_name, Decimal("0"))
+
+        self._trace(_("Resultado final '%(name)s' => %(value)s") % {"name": output_name, "value": final_result})
 
         return {
             "variables": {k: float(v) for k, v in self.variables.items()},
