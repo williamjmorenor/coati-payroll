@@ -1831,7 +1831,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
                     planilla.codigo_cuenta_debe_salario,
                     centro_costos,
                     planilla.descripcion_cuenta_debe_salario or "Salario Base",
-                    debito=total_salario
+                    debito=total_salario,
                 )
             else:
                 add_unique_warning(advertencias, "Planilla: Falta configurar cuenta débito para salario base")
@@ -1842,7 +1842,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
                     planilla.codigo_cuenta_haber_salario,
                     centro_costos,
                     planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
-                    credito=total_salario
+                    credito=total_salario,
                 )
             else:
                 add_unique_warning(advertencias, "Planilla: Falta configurar cuenta crédito para salario base")
@@ -1885,7 +1885,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
                     concepto.codigo_cuenta_debe,
                     centro_costos,
                     concepto.descripcion_cuenta_debe or detalle.descripcion or concepto.nombre,
-                    debito=detalle.monto
+                    debito=detalle.monto,
                 )
             else:
                 warning = f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta débito"
@@ -1898,7 +1898,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
                     concepto.codigo_cuenta_haber,
                     centro_costos,
                     concepto.descripcion_cuenta_haber or detalle.descripcion or concepto.nombre,
-                    credito=detalle.monto
+                    credito=detalle.monto,
                 )
             else:
                 warning = f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta crédito"
@@ -2006,7 +2006,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
     output.seek(0)
 
     # Sanitize planilla name for filename
-    safe_planilla_name = re.sub(r'[^\w\s-]', '', planilla.nombre).strip().replace(' ', '_')
+    safe_planilla_name = re.sub(r"[^\w\s-]", "", planilla.nombre).strip().replace(" ", "_")
     filename = f"comprobante_{safe_planilla_name}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
 
     # Save warnings to nomina log
@@ -2058,12 +2058,13 @@ def exportar_comprobante_detallado_excel(planilla_id: str, nomina_id: str):
         return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
 
     # Get all nomina employees
-    nomina_empleados = db.session.execute(
-        db.select(NominaEmpleado)
-        .filter_by(nomina_id=nomina_id)
-        .join(Empleado)
-        .order_by(Empleado.codigo_empleado)
-    ).scalars().all()
+    nomina_empleados = (
+        db.session.execute(
+            db.select(NominaEmpleado).filter_by(nomina_id=nomina_id).join(Empleado).order_by(Empleado.codigo_empleado)
+        )
+        .scalars()
+        .all()
+    )
 
     # Create workbook
     wb = Workbook()
@@ -2250,8 +2251,8 @@ def exportar_comprobante_detallado_excel(planilla_id: str, nomina_id: str):
     output.seek(0)
 
     # Sanitize planilla name for filename
-    safe_planilla_name = re.sub(r'[^\w\s-]', '', planilla.nombre).strip().replace(' ', '_')
-    date_str = nomina.periodo_inicio.strftime('%Y%m%d')
+    safe_planilla_name = re.sub(r"[^\w\s-]", "", planilla.nombre).strip().replace(" ", "_")
+    date_str = nomina.periodo_inicio.strftime("%Y%m%d")
     filename = f"comprobante_detallado_{safe_planilla_name}_{date_str}_{nomina.id[:8]}.xlsx"
 
     return send_file(
