@@ -195,3 +195,191 @@ class TestPlanillaAccountingFields:
             # Verify accounting fields are still available through the planilla
             assert nomina.planilla.codigo_cuenta_debe_salario == "610-100"
             assert nomina.planilla.codigo_cuenta_haber_salario == "210-100"
+
+    def test_employee_has_cost_center_field(self, app):
+        """Test that Employee model has the cost center field."""
+        with app.app_context():
+            # Create currency
+            moneda = Moneda(
+                codigo="GTQ1",
+                nombre="Quetzal Guatemalteco",
+                simbolo="Q",
+                activo=True,
+            )
+            db.session.add(moneda)
+            db.session.commit()
+
+            # Create employee with cost center
+            empleado = Empleado(
+                codigo_empleado="EMP-CC-001",
+                primer_nombre="Juan",
+                primer_apellido="Pérez",
+                identificacion_personal="001-CC-0001P",
+                fecha_alta=date.today(),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                centro_costos="CC-001",
+                activo=True,
+            )
+            db.session.add(empleado)
+            db.session.commit()
+
+            # Verify cost center was saved
+            empleado_loaded = db.session.get(Empleado, empleado.id)
+            assert empleado_loaded.centro_costos == "CC-001"
+
+    def test_nomina_empleado_has_cost_center_snapshot_field(self, app):
+        """Test that NominaEmpleado model has the cost center snapshot field."""
+        from coati_payroll.model import NominaEmpleado, Nomina
+
+        with app.app_context():
+            # Create currency
+            moneda = Moneda(
+                codigo="HNL1",
+                nombre="Lempira Hondureño",
+                simbolo="L",
+                activo=True,
+            )
+            db.session.add(moneda)
+
+            # Create tipo planilla
+            tipo = TipoPlanilla(
+                codigo="MENSUAL_SNAP1",
+                descripcion="Planilla Mensual Snapshot",
+                dias=30,
+                periodicidad="mensual",
+                activo=True,
+            )
+            db.session.add(tipo)
+            db.session.commit()
+
+            # Create planilla
+            planilla = Planilla(
+                nombre="Test Planilla Snapshot",
+                descripcion="Planilla para test de snapshot",
+                tipo_planilla_id=tipo.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db.session.add(planilla)
+
+            # Create employee
+            empleado = Empleado(
+                codigo_empleado="EMP-SNAP-001",
+                primer_nombre="Ana",
+                primer_apellido="López",
+                identificacion_personal="001-SNAP-0001P",
+                fecha_alta=date.today(),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                centro_costos="CC-TEST",
+                activo=True,
+            )
+            db.session.add(empleado)
+            db.session.commit()
+
+            # Create nomina manually
+            nomina = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2025, 1, 1),
+                periodo_fin=date(2025, 1, 31),
+                estado="borrador",
+            )
+            db.session.add(nomina)
+            db.session.commit()
+
+            # Create nomina_empleado with snapshot
+            nomina_empleado = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("10000.00"),
+                salario_neto=Decimal("10000.00"),
+                sueldo_base_historico=Decimal("10000.00"),
+                centro_costos_snapshot="CC-TEST",
+            )
+            db.session.add(nomina_empleado)
+            db.session.commit()
+
+            # Verify snapshot was saved
+            ne_loaded = db.session.get(NominaEmpleado, nomina_empleado.id)
+            assert ne_loaded.centro_costos_snapshot == "CC-TEST"
+
+    def test_comprobante_stores_cost_center_in_json(self, app):
+        """Test that ComprobanteContable can store cost center in asientos JSON."""
+        from coati_payroll.model import ComprobanteContable, Nomina
+
+        with app.app_context():
+            # Create currency
+            moneda = Moneda(
+                codigo="PAB1",
+                nombre="Balboa Panameño",
+                simbolo="B/.",
+                activo=True,
+            )
+            db.session.add(moneda)
+
+            # Create tipo planilla
+            tipo = TipoPlanilla(
+                codigo="MENSUAL_JSON1",
+                descripcion="Planilla Mensual JSON",
+                dias=30,
+                periodicidad="mensual",
+                activo=True,
+            )
+            db.session.add(tipo)
+            db.session.commit()
+
+            # Create planilla
+            planilla = Planilla(
+                nombre="Test Planilla JSON",
+                descripcion="Planilla para test de JSON",
+                tipo_planilla_id=tipo.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db.session.add(planilla)
+            db.session.commit()
+
+            # Create nomina
+            nomina = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2025, 1, 1),
+                periodo_fin=date(2025, 1, 31),
+                estado="borrador",
+            )
+            db.session.add(nomina)
+            db.session.commit()
+
+            # Create comprobante with cost center in JSON
+            asientos = [
+                {
+                    "codigo_cuenta": "610-001",
+                    "descripcion": "Gastos de Salarios",
+                    "centro_costos": "CC-001",
+                    "debito": 10000.00,
+                    "credito": 0.0,
+                },
+                {
+                    "codigo_cuenta": "210-001",
+                    "descripcion": "Salarios por Pagar",
+                    "centro_costos": "CC-001",
+                    "debito": 0.0,
+                    "credito": 10000.00,
+                },
+            ]
+
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                asientos_contables=asientos,
+                total_debitos=Decimal("10000.00"),
+                total_creditos=Decimal("10000.00"),
+                balance=Decimal("0.00"),
+            )
+            db.session.add(comprobante)
+            db.session.commit()
+
+            # Verify JSON was saved with cost center
+            comp_loaded = db.session.get(ComprobanteContable, comprobante.id)
+            assert len(comp_loaded.asientos_contables) == 2
+            assert comp_loaded.asientos_contables[0]["centro_costos"] == "CC-001"
+            assert comp_loaded.asientos_contables[1]["centro_costos"] == "CC-001"

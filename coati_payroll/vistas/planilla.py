@@ -23,6 +23,7 @@ A Planilla is the central hub that connects:
 
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timezone
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
@@ -1745,7 +1746,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
     )
 
     # Title
-    ws.merge_cells("A1:D1")
+    ws.merge_cells("A1:E1")
     title_cell = ws["A1"]
     title_cell.value = "COMPROBANTE CONTABLE - NÓMINA"
     title_cell.font = header_font
@@ -1777,7 +1778,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
     row += 2
 
     # Table headers
-    headers = ["Código Cuenta", "Descripción", "Débitos", "Créditos"]
+    headers = ["Código Cuenta", "Descripción", "Centro de Costos", "Débitos", "Créditos"]
 
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=row, column=col, value=header)
@@ -1786,39 +1787,70 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
         cell.alignment = Alignment(horizontal="center", vertical="center")
         cell.border = border
 
-    # Collect accounting entries - summarized by account code (not by description)
-    # Key is codigo_cuenta only, value includes first description found
-    accounting_entries = {}  # {codigo_cuenta: {"descripcion": str, "debito": amount, "credito": amount}}
+    # Helper function to add or update accounting entry
+    def add_accounting_entry(entries_dict, codigo_cuenta, centro_costos, descripcion, debito=None, credito=None):
+        """Add or update an accounting entry in the entries dictionary."""
+        key = (codigo_cuenta, centro_costos)
+        if key not in entries_dict:
+            entries_dict[key] = {
+                "descripcion": descripcion,
+                "debito": Decimal("0"),
+                "credito": Decimal("0"),
+            }
+        if debito is not None:
+            entries_dict[key]["debito"] += debito
+        if credito is not None:
+            entries_dict[key]["credito"] += credito
+
+    # Helper function to add unique warnings
+    def add_unique_warning(warnings_list, warning_message):
+        """Add a warning message to the list if it's not already present."""
+        if warning_message not in warnings_list:
+            warnings_list.append(warning_message)
+
+    # Collect accounting entries - summarized by (account code, cost center) combination
+    # Key is (codigo_cuenta, centro_costos), value includes description and amounts
+    # Structure: {(codigo_cuenta, centro_costos): {"descripcion": str, "debito": amount, "credito": amount}}
+    accounting_entries = {}
     advertencias = []  # List of configuration warnings
 
     # 1. Salario Base (from planilla configuration)
-    total_salario_base = sum(ne.sueldo_base_historico for ne in nomina_empleados)
+    # Group by cost center
+    salario_por_centro_costos = {}  # {centro_costos: amount}
+    for ne in nomina_empleados:
+        centro = ne.centro_costos_snapshot or ""
+        if centro not in salario_por_centro_costos:
+            salario_por_centro_costos[centro] = Decimal("0")
+        salario_por_centro_costos[centro] += ne.sueldo_base_historico
 
-    if total_salario_base > 0:
-        if planilla.codigo_cuenta_debe_salario:
-            if planilla.codigo_cuenta_debe_salario not in accounting_entries:
-                accounting_entries[planilla.codigo_cuenta_debe_salario] = {
-                    "descripcion": planilla.descripcion_cuenta_debe_salario or "Salario Base",
-                    "debito": Decimal("0"),
-                    "credito": Decimal("0"),
-                }
-            accounting_entries[planilla.codigo_cuenta_debe_salario]["debito"] += total_salario_base
-        else:
-            advertencias.append("Planilla: Falta configurar cuenta débito para salario base")
+    for centro_costos, total_salario in salario_por_centro_costos.items():
+        if total_salario > 0:
+            if planilla.codigo_cuenta_debe_salario:
+                add_accounting_entry(
+                    accounting_entries,
+                    planilla.codigo_cuenta_debe_salario,
+                    centro_costos,
+                    planilla.descripcion_cuenta_debe_salario or "Salario Base",
+                    debito=total_salario
+                )
+            else:
+                add_unique_warning(advertencias, "Planilla: Falta configurar cuenta débito para salario base")
 
-        if planilla.codigo_cuenta_haber_salario:
-            if planilla.codigo_cuenta_haber_salario not in accounting_entries:
-                accounting_entries[planilla.codigo_cuenta_haber_salario] = {
-                    "descripcion": planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
-                    "debito": Decimal("0"),
-                    "credito": Decimal("0"),
-                }
-            accounting_entries[planilla.codigo_cuenta_haber_salario]["credito"] += total_salario_base
-        else:
-            advertencias.append("Planilla: Falta configurar cuenta crédito para salario base")
+            if planilla.codigo_cuenta_haber_salario:
+                add_accounting_entry(
+                    accounting_entries,
+                    planilla.codigo_cuenta_haber_salario,
+                    centro_costos,
+                    planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
+                    credito=total_salario
+                )
+            else:
+                add_unique_warning(advertencias, "Planilla: Falta configurar cuenta crédito para salario base")
 
     # 2. Process all detalles (percepciones, deducciones, prestaciones)
     for ne in nomina_empleados:
+        centro_costos = ne.centro_costos_snapshot or ""
+
         detalles = (
             db.session.execute(
                 db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id).order_by(NominaDetalle.orden)
@@ -1846,45 +1878,50 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
             if not concepto or not concepto.contabilizable:
                 continue
 
-            # Add debit entry
+            # Add debit entry with cost center
             if concepto.codigo_cuenta_debe:
-                if concepto.codigo_cuenta_debe not in accounting_entries:
-                    accounting_entries[concepto.codigo_cuenta_debe] = {
-                        "descripcion": concepto.descripcion_cuenta_debe or detalle.descripcion or concepto.nombre,
-                        "debito": Decimal("0"),
-                        "credito": Decimal("0"),
-                    }
-                accounting_entries[concepto.codigo_cuenta_debe]["debito"] += detalle.monto
+                add_accounting_entry(
+                    accounting_entries,
+                    concepto.codigo_cuenta_debe,
+                    centro_costos,
+                    concepto.descripcion_cuenta_debe or detalle.descripcion or concepto.nombre,
+                    debito=detalle.monto
+                )
             else:
-                advertencias.append(f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta débito")
+                warning = f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta débito"
+                add_unique_warning(advertencias, warning)
 
-            # Add credit entry
+            # Add credit entry with cost center
             if concepto.codigo_cuenta_haber:
-                if concepto.codigo_cuenta_haber not in accounting_entries:
-                    accounting_entries[concepto.codigo_cuenta_haber] = {
-                        "descripcion": concepto.descripcion_cuenta_haber or detalle.descripcion or concepto.nombre,
-                        "debito": Decimal("0"),
-                        "credito": Decimal("0"),
-                    }
-                accounting_entries[concepto.codigo_cuenta_haber]["credito"] += detalle.monto
+                add_accounting_entry(
+                    accounting_entries,
+                    concepto.codigo_cuenta_haber,
+                    centro_costos,
+                    concepto.descripcion_cuenta_haber or detalle.descripcion or concepto.nombre,
+                    credito=detalle.monto
+                )
             else:
-                advertencias.append(f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta crédito")
+                warning = f"{concepto_tipo} '{concepto.codigo}': Falta configurar cuenta crédito"
+                add_unique_warning(advertencias, warning)
 
-    # Remove duplicate warnings
+    # Remove duplicate warnings (already done inline, but keep for safety)
     advertencias = list(set(advertencias))
 
-    # Write accounting entries (summarized by account code)
+    # Write accounting entries (summarized by account code + cost center)
     total_debitos = Decimal("0")
     total_creditos = Decimal("0")
     asientos_json = []  # For database storage
 
-    for codigo in sorted(accounting_entries.keys()):
-        entry = accounting_entries[codigo]
+    # Sort entries by account code, then by cost center
+    for key in sorted(accounting_entries.keys(), key=lambda x: (x[0], x[1])):
+        codigo_cuenta, centro_costos = key
+        entry = accounting_entries[key]
         row += 1
-        ws.cell(row=row, column=1, value=codigo).border = border
+        ws.cell(row=row, column=1, value=codigo_cuenta).border = border
         ws.cell(row=row, column=2, value=entry["descripcion"]).border = border
-        ws.cell(row=row, column=3, value=float(entry["debito"]) if entry["debito"] else "").border = border
-        ws.cell(row=row, column=4, value=float(entry["credito"]) if entry["credito"] else "").border = border
+        ws.cell(row=row, column=3, value=centro_costos).border = border
+        ws.cell(row=row, column=4, value=float(entry["debito"]) if entry["debito"] else "").border = border
+        ws.cell(row=row, column=5, value=float(entry["credito"]) if entry["credito"] else "").border = border
 
         total_debitos += entry["debito"]
         total_creditos += entry["credito"]
@@ -1892,8 +1929,9 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
         # Store for database
         asientos_json.append(
             {
-                "codigo_cuenta": codigo,
+                "codigo_cuenta": codigo_cuenta,
                 "descripcion": entry["descripcion"],
+                "centro_costos": centro_costos,
                 "debito": float(entry["debito"]),
                 "credito": float(entry["credito"]),
             }
@@ -1902,15 +1940,16 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
     # Totals row
     row += 1
     ws.cell(row=row, column=1, value="").border = border
-    total_cell = ws.cell(row=row, column=2, value="TOTALES")
+    ws.cell(row=row, column=2, value="").border = border
+    total_cell = ws.cell(row=row, column=3, value="TOTALES")
     total_cell.font = total_font
     total_cell.fill = total_fill
     total_cell.border = border
-    debito_total = ws.cell(row=row, column=3, value=float(total_debitos))
+    debito_total = ws.cell(row=row, column=4, value=float(total_debitos))
     debito_total.font = total_font
     debito_total.fill = total_fill
     debito_total.border = border
-    credito_total = ws.cell(row=row, column=4, value=float(total_creditos))
+    credito_total = ws.cell(row=row, column=5, value=float(total_creditos))
     credito_total.font = total_font
     credito_total.fill = total_fill
     credito_total.border = border
@@ -1957,15 +1996,18 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
     # Auto-adjust column widths
     ws.column_dimensions["A"].width = 18
     ws.column_dimensions["B"].width = 40
-    ws.column_dimensions["C"].width = 15
+    ws.column_dimensions["C"].width = 20
     ws.column_dimensions["D"].width = 15
+    ws.column_dimensions["E"].width = 15
 
     # Save to BytesIO
     output = BytesIO()
     wb.save(output)
     output.seek(0)
 
-    filename = f"comprobante_{planilla.nombre}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
+    # Sanitize planilla name for filename
+    safe_planilla_name = re.sub(r'[^\w\s-]', '', planilla.nombre).strip().replace(' ', '_')
+    filename = f"comprobante_{safe_planilla_name}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
 
     # Save warnings to nomina log
     if advertencias:
@@ -1983,6 +2025,234 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
             nomina.log_procesamiento.append(log_entry)
 
         db.session.commit()
+
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/exportar-comprobante-detallado-excel")
+@login_required
+def exportar_comprobante_detallado_excel(planilla_id: str, nomina_id: str):
+    """Export detailed accounting voucher per employee to Excel."""
+    from io import BytesIO
+    from flask import send_file
+    from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle
+    from decimal import Decimal
+
+    openpyxl_classes = _check_openpyxl_available()
+    if not openpyxl_classes:
+        flash(_("Excel export no disponible. Instale openpyxl."), "warning")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
+
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    # Get all nomina employees
+    nomina_empleados = db.session.execute(
+        db.select(NominaEmpleado)
+        .filter_by(nomina_id=nomina_id)
+        .join(Empleado)
+        .order_by(Empleado.codigo_empleado)
+    ).scalars().all()
+
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Detalle por Empleado"
+
+    # Define styles
+    header_font = Font(bold=True, size=14, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    subheader_font = Font(bold=True, size=11)
+    subheader_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
+    total_font = Font(bold=True, size=11)
+    total_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+    border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+
+    # Title
+    ws.merge_cells("A1:F1")
+    title_cell = ws["A1"]
+    title_cell.value = "COMPROBANTE CONTABLE DETALLADO - POR EMPLEADO"
+    title_cell.font = header_font
+    title_cell.fill = header_fill
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Header info
+    row = 3
+    # Company information if linked
+    if planilla.empresa_id and planilla.empresa:
+        ws[f"A{row}"] = "Empresa:"
+        ws[f"B{row}"] = planilla.empresa.razon_social
+        row += 1
+        if planilla.empresa.ruc:
+            ws[f"A{row}"] = "RUC:"
+            ws[f"B{row}"] = planilla.empresa.ruc
+            row += 1
+    ws[f"A{row}"] = "Planilla:"
+    ws[f"B{row}"] = planilla.nombre
+    row += 1
+    ws[f"A{row}"] = "Período:"
+    ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+    row += 1
+    ws[f"A{row}"] = "Estado:"
+    ws[f"B{row}"] = nomina.estado
+    row += 2
+
+    # Table headers
+    headers = ["Código Empleado", "Código Cuenta", "Descripción", "Centro de Costos", "Débitos", "Créditos"]
+
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=row, column=col, value=header)
+        cell.font = subheader_font
+        cell.fill = subheader_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = border
+
+    # Collect detailed entries per employee
+    total_debitos = Decimal("0")
+    total_creditos = Decimal("0")
+
+    for ne in nomina_empleados:
+        empleado = ne.empleado
+        centro_costos = ne.centro_costos_snapshot or ""
+
+        # 1. Salario Base
+        if ne.sueldo_base_historico > 0:
+            # Debit entry
+            if planilla.codigo_cuenta_debe_salario:
+                row += 1
+                ws.cell(row=row, column=1, value=empleado.codigo_empleado).border = border
+                ws.cell(row=row, column=2, value=planilla.codigo_cuenta_debe_salario).border = border
+                desc_debe = planilla.descripcion_cuenta_debe_salario or "Salario Base"
+                ws.cell(row=row, column=3, value=desc_debe).border = border
+                ws.cell(row=row, column=4, value=centro_costos).border = border
+                ws.cell(row=row, column=5, value=float(ne.sueldo_base_historico)).border = border
+                ws.cell(row=row, column=6, value="").border = border
+                total_debitos += ne.sueldo_base_historico
+
+            # Credit entry
+            if planilla.codigo_cuenta_haber_salario:
+                row += 1
+                ws.cell(row=row, column=1, value=empleado.codigo_empleado).border = border
+                ws.cell(row=row, column=2, value=planilla.codigo_cuenta_haber_salario).border = border
+                desc_haber = planilla.descripcion_cuenta_haber_salario or "Salario por Pagar"
+                ws.cell(row=row, column=3, value=desc_haber).border = border
+                ws.cell(row=row, column=4, value=centro_costos).border = border
+                ws.cell(row=row, column=5, value="").border = border
+                ws.cell(row=row, column=6, value=float(ne.sueldo_base_historico)).border = border
+                total_creditos += ne.sueldo_base_historico
+
+        # 2. Process all detalles
+        detalles = (
+            db.session.execute(
+                db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id).order_by(NominaDetalle.orden)
+            )
+            .scalars()
+            .all()
+        )
+
+        for detalle in detalles:
+            # Get the corresponding concept to get account codes
+            concepto = None
+            if detalle.tipo == "ingreso" and detalle.percepcion_id:
+                concepto = db.session.get(Percepcion, detalle.percepcion_id)
+            elif detalle.tipo == "deduccion" and detalle.deduccion_id:
+                concepto = db.session.get(Deduccion, detalle.deduccion_id)
+            elif detalle.tipo == "prestacion" and detalle.prestacion_id:
+                concepto = db.session.get(Prestacion, detalle.prestacion_id)
+            else:
+                continue
+
+            if not concepto or not concepto.contabilizable:
+                continue
+
+            # Add debit entry
+            if concepto.codigo_cuenta_debe:
+                row += 1
+                ws.cell(row=row, column=1, value=empleado.codigo_empleado).border = border
+                ws.cell(row=row, column=2, value=concepto.codigo_cuenta_debe).border = border
+                desc_debe_det = concepto.descripcion_cuenta_debe or detalle.descripcion or concepto.nombre
+                ws.cell(row=row, column=3, value=desc_debe_det).border = border
+                ws.cell(row=row, column=4, value=centro_costos).border = border
+                ws.cell(row=row, column=5, value=float(detalle.monto)).border = border
+                ws.cell(row=row, column=6, value="").border = border
+                total_debitos += detalle.monto
+
+            # Add credit entry
+            if concepto.codigo_cuenta_haber:
+                row += 1
+                ws.cell(row=row, column=1, value=empleado.codigo_empleado).border = border
+                ws.cell(row=row, column=2, value=concepto.codigo_cuenta_haber).border = border
+                desc_haber_det = concepto.descripcion_cuenta_haber or detalle.descripcion or concepto.nombre
+                ws.cell(row=row, column=3, value=desc_haber_det).border = border
+                ws.cell(row=row, column=4, value=centro_costos).border = border
+                ws.cell(row=row, column=5, value="").border = border
+                ws.cell(row=row, column=6, value=float(detalle.monto)).border = border
+                total_creditos += detalle.monto
+
+    # Totals row
+    row += 1
+    ws.cell(row=row, column=1, value="").border = border
+    ws.cell(row=row, column=2, value="").border = border
+    ws.cell(row=row, column=3, value="").border = border
+    total_cell = ws.cell(row=row, column=4, value="TOTALES")
+    total_cell.font = total_font
+    total_cell.fill = total_fill
+    total_cell.border = border
+    debito_total = ws.cell(row=row, column=5, value=float(total_debitos))
+    debito_total.font = total_font
+    debito_total.fill = total_fill
+    debito_total.border = border
+    credito_total = ws.cell(row=row, column=6, value=float(total_creditos))
+    credito_total.font = total_font
+    credito_total.fill = total_fill
+    credito_total.border = border
+
+    # Balance check
+    row += 2
+    ws[f"A{row}"] = "Balance:"
+    balance = total_debitos - total_creditos
+    balance_cell = ws[f"B{row}"]
+    balance_cell.value = float(balance)
+    if abs(balance) < 0.01:  # Close to zero
+        balance_cell.font = Font(bold=True, color="008000")  # Green
+        ws[f"C{row}"] = "✓ Balanceado"
+    else:
+        balance_cell.font = Font(bold=True, color="FF0000")  # Red
+        ws[f"C{row}"] = "⚠ Desbalanceado"
+
+    # Auto-adjust column widths
+    ws.column_dimensions["A"].width = 18
+    ws.column_dimensions["B"].width = 18
+    ws.column_dimensions["C"].width = 40
+    ws.column_dimensions["D"].width = 20
+    ws.column_dimensions["E"].width = 15
+    ws.column_dimensions["F"].width = 15
+
+    # Save to BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    # Sanitize planilla name for filename
+    safe_planilla_name = re.sub(r'[^\w\s-]', '', planilla.nombre).strip().replace(' ', '_')
+    date_str = nomina.periodo_inicio.strftime('%Y%m%d')
+    filename = f"comprobante_detallado_{safe_planilla_name}_{date_str}_{nomina.id[:8]}.xlsx"
 
     return send_file(
         output,
