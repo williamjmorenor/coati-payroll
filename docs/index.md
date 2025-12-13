@@ -48,7 +48,18 @@ La prioridad de estas deducciones es configurable por planilla.
 
 ## Comenzando
 
+!!! tip "¿Primera vez aquí?"
+    Si es nuevo en Coati Payroll, comience con la **[Guía de Inicio Rápido](guia/inicio-rapido.md)** para evaluar el sistema en 15-20 minutos. Esta guía le llevará desde la instalación hasta calcular su primera nómina con un ejemplo práctico.
+
 <div class="grid cards" markdown>
+
+-   :material-flash:{ .lg .middle } __Guía de Inicio Rápido__
+
+    ---
+
+    Instale el sistema y calcule su primera nómina en 15-20 minutos. Ideal para evaluar si Coati se ajusta a sus necesidades.
+
+    [:octicons-arrow-right-24: Inicio Rápido](guia/inicio-rapido.md)
 
 -   :material-download:{ .lg .middle } __Instalación__
 
@@ -62,7 +73,7 @@ La prioridad de estas deducciones es configurable por planilla.
 
     ---
 
-    Configura tu primera planilla y ejecuta tu primera nómina.
+    Entiende los conceptos fundamentales y la estructura del sistema.
 
     [:octicons-arrow-right-24: Primeros Pasos](guia/primeros-pasos.md)
 
@@ -70,7 +81,7 @@ La prioridad de estas deducciones es configurable por planilla.
 
     ---
 
-    Sigue el tutorial paso a paso para configurar una nómina completa.
+    Sigue el tutorial paso a paso para configurar una nómina completa con todos los componentes.
 
     [:octicons-arrow-right-24: Tutorial](tutorial/nomina-completa.md)
 

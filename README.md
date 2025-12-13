@@ -87,9 +87,10 @@ mkdocs build
 
 ### Contenido de la Documentación
 
+- **[Guía de Inicio Rápido](docs/guia/inicio-rapido.md)**: 15 minutos desde instalación hasta su primera nómina - ideal para evaluar el sistema
 - **Guía de Instalación**: Requisitos, instalación y configuración inicial
 - **Guía de Uso**: Usuarios, empresas, monedas, empleados, campos personalizados, conceptos de nómina, reglas de cálculo
-- **Tutorial Completo**: Paso a paso para configurar y ejecutar una nómina
+- **Tutorial Completo**: Paso a paso para configurar y ejecutar una nómina con todos los componentes
 - **Características Avanzadas**: Sistema de colas, procesamiento en segundo plano, compatibilidad de bases de datos
 - **Referencia**: Glosario y preguntas frecuentes
 
