@@ -519,7 +519,7 @@ def database_migrate(ctx):
     try:
         # Try to use flask-migrate
         try:
-            from flask_migrate import Migrate, init, migrate
+            from flask_migrate import Migrate, init, migrate  # noqa: F401
 
             click.echo("Generating database migration...")
             # This would need proper setup
@@ -541,7 +541,7 @@ def database_upgrade(ctx):
     """Apply database migrations."""
     try:
         try:
-            from flask_migrate import upgrade
+            from flask_migrate import upgrade  # noqa: F401
 
             click.echo("Applying database migrations...")
             output_result(ctx, "Migration support requires flask-migrate setup")

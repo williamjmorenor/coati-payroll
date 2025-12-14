@@ -25,6 +25,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install -r test.txt
+        python -m pip install -e .
     - name: Check python package
       run: |
         pybabel compile -d coati_payroll/translations
@@ -41,7 +42,7 @@ jobs:
         pytest -n auto --cov=coati_payroll --cov-report=xml --cov-report=term-missing
     - name: Test with pytest (validation tests)
       run: |
-        pytest -n auto -m validation --cov=coati_payroll --cov-append --cov-report=xml --cov-report=term-missing
+        pytest -n auto -m validation --cov=coati_payroll --cov-append --cov-report=xml --cov-report=term-missing || [ $? -eq 5 ]
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
       with:

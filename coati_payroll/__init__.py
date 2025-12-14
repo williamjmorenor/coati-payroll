@@ -128,18 +128,22 @@ def create_app(config) -> Flask:
         # No interrumpir el arranque si la inicialización automática falla.
         pass
 
-    if session_redis_url := environ.get("SESSION_REDIS_URL", None):
-        from redis import Redis
+    # Configure session storage
+    # In testing mode, respect the SESSION_TYPE from config (e.g., filesystem)
+    # to avoid conflicts with parallel test execution
+    if not app.config.get("SESSION_TYPE"):
+        if session_redis_url := environ.get("SESSION_REDIS_URL", None):
+            from redis import Redis
 
-        app.config["SESSION_TYPE"] = "redis"
-        app.config["SESSION_REDIS"] = Redis.from_url(session_redis_url)
+            app.config["SESSION_TYPE"] = "redis"
+            app.config["SESSION_REDIS"] = Redis.from_url(session_redis_url)
 
-    else:
-        app.config["SESSION_TYPE"] = "sqlalchemy"
-        app.config["SESSION_SQLALCHEMY"] = db
-        app.config["SESSION_SQLALCHEMY_TABLE"] = "sessions"
-        app.config["SESSION_PERMANENT"] = False
-        app.config["SESSION_USE_SIGNER"] = True
+        else:
+            app.config["SESSION_TYPE"] = "sqlalchemy"
+            app.config["SESSION_SQLALCHEMY"] = db
+            app.config["SESSION_SQLALCHEMY_TABLE"] = "sessions"
+            app.config["SESSION_PERMANENT"] = False
+            app.config["SESSION_USE_SIGNER"] = True
 
     # Configure Flask-Babel
     app.config["BABEL_DEFAULT_LOCALE"] = "en"
