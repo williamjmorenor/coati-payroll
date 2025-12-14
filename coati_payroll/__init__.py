@@ -26,12 +26,19 @@ from __future__ import annotations
 from os import environ
 
 # <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
+from datetime import datetime
+
+# <-------------------------------------------------------------------------> #
 # Third party libraries
 # <-------------------------------------------------------------------------> #
 from flask import Flask, flash, redirect, url_for
 from flask_babel import Babel
 from flask_login import LoginManager
 from flask_session import Session
+import flask_session.sqlalchemy.sqlalchemy as fs_sqlalchemy
+from sqlalchemy import Column, DateTime, Integer, LargeBinary, Sequence, String
 
 # <-------------------------------------------------------------------------> #
 # Local modules
@@ -42,6 +49,44 @@ from coati_payroll.config import DIRECTORIO_ARCHIVOS_BASE, DIRECTORIO_PLANTILLAS
 from coati_payroll.i18n import _
 from coati_payroll.model import Usuario, db
 from coati_payroll.log import log
+
+
+# Patch Flask-Session to use extend_existing=True for the sessions table
+# This prevents the "Table 'sessions' is already defined" error when the app
+# is initialized multiple times (e.g., by the CLI).
+#
+# NOTE: This monkey-patch is necessary because Flask-Session v0.8.0 does not
+# provide a configuration option to set extend_existing=True on the sessions
+# table. Without this, the CLI fails when it initializes the app multiple times.
+# This is a minimal, surgical fix that only modifies the table_args to add
+# extend_existing=True. If Flask-Session adds native support for this in a
+# future version, this patch can be removed.
+def _patched_create_session_model(db, table_name, schema=None, bind_key=None, sequence=None):
+    """Patched version of Flask-Session's create_session_model that includes extend_existing=True."""
+
+    class Session(db.Model):
+        __tablename__ = table_name
+        # Include extend_existing=True to allow table redefinition
+        __table_args__ = {"schema": schema, "extend_existing": True} if schema else {"extend_existing": True}
+        __bind_key__ = bind_key
+
+        id = Column(Integer, Sequence(sequence), primary_key=True) if sequence else Column(Integer, primary_key=True)
+        session_id = Column(String(255), unique=True)
+        data = Column(LargeBinary)
+        expiry = Column(DateTime)
+
+        def __init__(self, session_id: str, data, expiry: datetime):
+            self.session_id = session_id
+            self.data = data
+            self.expiry = expiry
+
+        def __repr__(self):
+            return f"<Session data {self.data}>"
+
+    return Session
+
+
+fs_sqlalchemy.create_session_model = _patched_create_session_model
 
 # Third party libraries
 session_manager = Session()
@@ -103,6 +148,12 @@ def create_app(config) -> Flask:
         from coati_payroll.config import configuration
 
         app.config.from_object(configuration)
+
+    # Warn if using default SECRET_KEY in production
+    from coati_payroll.config import DESARROLLO
+
+    if not DESARROLLO and app.config.get("SECRET_KEY") == "dev":
+        log.warning("Using default SECRET_KEY in production! This can cause issues.")
 
     log.trace("create_app: initializing app")
     db.init_app(app)
@@ -215,6 +266,7 @@ def create_app(config) -> Flask:
 
     # Register CLI commands
     from coati_payroll.cli import register_cli_commands
+
     register_cli_commands(app)
 
     return app
