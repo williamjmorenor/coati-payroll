@@ -13,6 +13,7 @@
 # limitations under the License.
 """Unit tests for configuration module."""
 
+from os import environ
 from pathlib import Path
 
 
@@ -64,8 +65,9 @@ class TestConfiguration:
         from coati_payroll.config import CONFIGURACION
 
         db_uri = CONFIGURACION.get("SQLALCHEMY_DATABASE_URI", "")
-        # Should be sqlite in test environment
-        assert "sqlite" in db_uri
+        if not environ.get("DATABASE_URL"):
+            # Should be sqlite in test environment
+            assert "sqlite" in db_uri
 
 
 class TestLoadConfigFromFile:

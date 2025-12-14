@@ -51,9 +51,9 @@ from coati_payroll.model import (
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
 
-
 # Constants for payroll calculations
-HORAS_TRABAJO_DIA = Decimal("8.00")  # Standard 8-hour workday for hourly rate calculations
+HORAS_TRABAJO_DIA = Decimal(
+    "8.00")  # Standard 8-hour workday for hourly rate calculations
 
 
 class NominaEngineError(Exception):
@@ -192,7 +192,8 @@ class NominaEngine:
             return False
 
         if not self.planilla.tipo_planilla:
-            self.errors.append("La planilla no tiene un tipo de planilla configurado.")
+            self.errors.append(
+                "La planilla no tiene un tipo de planilla configurado.")
             return False
 
         if not self.planilla.moneda:
@@ -233,8 +234,8 @@ class NominaEngine:
             empleado = planilla_empleado.empleado
             if not empleado.activo:
                 self.warnings.append(
-                    f"Empleado {empleado.primer_nombre} {empleado.primer_apellido} " f"no está activo y será omitido."
-                )
+                    f"Empleado {empleado.primer_nombre} {empleado.primer_apellido} "
+                    f"no está activo y será omitido.")
                 continue
 
             try:
@@ -242,8 +243,8 @@ class NominaEngine:
                 self.empleados_calculo.append(emp_calculo)
             except (NominaEngineError, FormulaEngineError) as e:
                 self.errors.append(
-                    f"Error procesando empleado {empleado.primer_nombre} " f"{empleado.primer_apellido}: {str(e)}"
-                )
+                    f"Error procesando empleado {empleado.primer_nombre} "
+                    f"{empleado.primer_apellido}: {str(e)}")
 
         # Calculate totals
         self._calcular_totales()
@@ -268,40 +269,45 @@ class NominaEngine:
         emp_calculo = EmpleadoCalculo(empleado, self.planilla)
 
         self._trace(
-            _("Calculando nómina del empleado %(id)s (%(nombre)s %(apellido)s)")
-            % {
-                "id": empleado.id,
-                "nombre": empleado.primer_nombre,
-                "apellido": empleado.primer_apellido,
-            }
-        )
-        self._trace(_("Obteniendo salario base %(salario)s") % {"salario": emp_calculo.salario_base})
+            _("Calculando nómina del empleado %(id)s (%(nombre)s %(apellido)s)"
+              ) % {
+                  "id": empleado.id,
+                  "nombre": empleado.primer_nombre,
+                  "apellido": empleado.primer_apellido,
+              })
+        self._trace(
+            _("Obteniendo salario base %(salario)s") %
+            {"salario": emp_calculo.salario_base})
 
         # Get exchange rate if currencies differ
         emp_calculo.tipo_cambio = self._obtener_tipo_cambio(empleado)
-        self._trace(_("Aplicando tipo de cambio %(tasa)s") % {"tasa": emp_calculo.tipo_cambio})
+        self._trace(
+            _("Aplicando tipo de cambio %(tasa)s") %
+            {"tasa": emp_calculo.tipo_cambio})
 
         # Apply exchange rate to convert employee salary to planilla currency
         # Only convert when employee currency differs from planilla currency
         salario_mensual = emp_calculo.salario_base
         if emp_calculo.tipo_cambio != Decimal("1.00"):
-            salario_mensual = (salario_mensual * emp_calculo.tipo_cambio).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
-        self._trace(_("Salario mensual convertido: %(salario)s") % {"salario": salario_mensual})
+            salario_mensual = (salario_mensual *
+                               emp_calculo.tipo_cambio).quantize(
+                                   Decimal("0.01"), rounding=ROUND_HALF_UP)
+        self._trace(
+            _("Salario mensual convertido: %(salario)s") %
+            {"salario": salario_mensual})
 
         # Calculate salary for the pay period based on actual days worked
         # The employee's salario_base is always the monthly salary
         # We need to convert it to the actual period salary based on days
-        emp_calculo.salario_base = self._calcular_salario_periodo(salario_mensual)
+        emp_calculo.salario_base = self._calcular_salario_periodo(
+            salario_mensual)
         self._trace(
-            _("Salario base del período (%(inicio)s a %(fin)s): %(salario)s")
-            % {
+            _("Salario base del período (%(inicio)s a %(fin)s): %(salario)s") %
+            {
                 "inicio": self.periodo_inicio,
                 "fin": self.periodo_fin,
                 "salario": emp_calculo.salario_base,
-            }
-        )
+            })
 
         # Store the monthly salary for use in calculations (e.g., hourly rate)
         emp_calculo.salario_mensual = salario_mensual
@@ -315,14 +321,18 @@ class NominaEngine:
         # Process perceptions (add to gross salary)
         self._procesar_percepciones(emp_calculo)
 
-        self._trace(_("Total percepciones después de cálculo: %(total)s") % {"total": emp_calculo.total_percepciones})
+        self._trace(
+            _("Total percepciones después de cálculo: %(total)s") %
+            {"total": emp_calculo.total_percepciones})
 
         # Calculate gross salary
         emp_calculo.salario_bruto = emp_calculo.salario_base + emp_calculo.total_percepciones
         self._trace(
-            _("Salario bruto = base (%(base)s) + percepciones (%(percepciones)s)")
-            % {"base": emp_calculo.salario_base, "percepciones": emp_calculo.total_percepciones}
-        )
+            _("Salario bruto = base (%(base)s) + percepciones (%(percepciones)s)"
+              ) % {
+                  "base": emp_calculo.salario_base,
+                  "percepciones": emp_calculo.total_percepciones
+              })
 
         # Process deductions (subtract from net salary)
         self._procesar_deducciones(emp_calculo)
@@ -333,21 +343,19 @@ class NominaEngine:
         # Calculate net salary
         emp_calculo.salario_neto = emp_calculo.salario_bruto - emp_calculo.total_deducciones
         self._trace(
-            _("Salario neto = bruto (%(bruto)s) - deducciones (%(deducciones)s) = %(neto)s")
-            % {
-                "bruto": emp_calculo.salario_bruto,
-                "deducciones": emp_calculo.total_deducciones,
-                "neto": emp_calculo.salario_neto,
-            }
-        )
+            _("Salario neto = bruto (%(bruto)s) - deducciones (%(deducciones)s) = %(neto)s"
+              ) % {
+                  "bruto": emp_calculo.salario_bruto,
+                  "deducciones": emp_calculo.total_deducciones,
+                  "neto": emp_calculo.salario_neto,
+              })
 
         # Ensure net salary is not negative
         if emp_calculo.salario_neto < 0:
             self.warnings.append(
                 f"Empleado {empleado.primer_nombre} {empleado.primer_apellido}: "
                 f"Salario neto negativo ({emp_calculo.salario_neto}). "
-                f"Ajustando a 0.00"
-            )
+                f"Ajustando a 0.00")
             emp_calculo.salario_neto = Decimal("0.00")
 
         # Process employer benefits (don't affect employee pay)
@@ -400,12 +408,13 @@ class NominaEngine:
         dias_base = Decimal("30")
 
         # Calculate daily salary
-        salario_diario = (salario_mensual / dias_base).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        salario_diario = (salario_mensual / dias_base).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         # Calculate period salary
-        salario_periodo = (salario_diario * Decimal(str(dias_periodo))).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        salario_periodo = (salario_diario *
+                           Decimal(str(dias_periodo))).quantize(
+                               Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         return salario_periodo
 
@@ -426,14 +435,11 @@ class NominaEngine:
 
         # Look up exchange rate
         tipo_cambio = db.session.execute(
-            db.select(TipoCambio)
-            .filter(
+            db.select(TipoCambio).filter(
                 TipoCambio.moneda_origen_id == empleado.moneda_id,
                 TipoCambio.moneda_destino_id == self.planilla.moneda_id,
                 TipoCambio.fecha <= self.fecha_calculo,
-            )
-            .order_by(TipoCambio.fecha.desc())
-        ).scalar()
+            ).order_by(TipoCambio.fecha.desc())).scalar()
 
         if tipo_cambio:
             return Decimal(str(tipo_cambio.tasa))
@@ -471,17 +477,12 @@ class NominaEngine:
 
         # Query novelties for this employee within the payroll period dates
         # We filter by fecha_novedad to ensure the novedad falls within the period
-        nomina_novedades = (
-            db.session.execute(
-                db.select(NominaNovedad).filter(
-                    NominaNovedad.empleado_id == empleado.id,
-                    NominaNovedad.fecha_novedad >= self.periodo_inicio,
-                    NominaNovedad.fecha_novedad <= self.periodo_fin,
-                )
-            )
-            .scalars()
-            .all()
-        )
+        nomina_novedades = (db.session.execute(
+            db.select(NominaNovedad).filter(
+                NominaNovedad.empleado_id == empleado.id,
+                NominaNovedad.fecha_novedad >= self.periodo_inicio,
+                NominaNovedad.fecha_novedad <= self.periodo_fin,
+            )).scalars().all())
 
         for novedad in nomina_novedades:
             codigo = novedad.codigo_concepto
@@ -490,7 +491,8 @@ class NominaEngine:
 
         return novedades
 
-    def _construir_variables(self, emp_calculo: EmpleadoCalculo) -> dict[str, Any]:
+    def _construir_variables(self,
+                             emp_calculo: EmpleadoCalculo) -> dict[str, Any]:
         """Build the calculation variables for an employee.
 
         Args:
@@ -522,35 +524,56 @@ class NominaEngine:
         # Build variables dictionary
         variables = {
             # Employee base data
-            "salario_base": emp_calculo.salario_base,
-            "salario_mensual": emp_calculo.salario_mensual,
-            "tipo_cambio": emp_calculo.tipo_cambio,
+            "salario_base":
+            emp_calculo.salario_base,
+            "salario_mensual":
+            emp_calculo.salario_mensual,
+            "tipo_cambio":
+            emp_calculo.tipo_cambio,
             # Period data
-            "fecha_calculo": self.fecha_calculo,
-            "periodo_inicio": self.periodo_inicio,
-            "periodo_fin": self.periodo_fin,
-            "dias_periodo": Decimal(str(dias_periodo)),
+            "fecha_calculo":
+            self.fecha_calculo,
+            "periodo_inicio":
+            self.periodo_inicio,
+            "periodo_fin":
+            self.periodo_fin,
+            "dias_periodo":
+            Decimal(str(dias_periodo)),
             # Seniority
-            "fecha_alta": fecha_alta,
-            "antiguedad_dias": Decimal(str(antiguedad_dias)),
-            "antiguedad_meses": Decimal(str(antiguedad_meses)),
-            "antiguedad_anios": Decimal(str(antiguedad_anios)),
+            "fecha_alta":
+            fecha_alta,
+            "antiguedad_dias":
+            Decimal(str(antiguedad_dias)),
+            "antiguedad_meses":
+            Decimal(str(antiguedad_meses)),
+            "antiguedad_anios":
+            Decimal(str(antiguedad_anios)),
             # Fiscal calculations
-            "meses_restantes": Decimal(str(meses_restantes)),
-            "periodos_por_anio": Decimal(str(tipo_planilla.periodos_por_anio if tipo_planilla else 12)),
+            "meses_restantes":
+            Decimal(str(meses_restantes)),
+            "periodos_por_anio":
+            Decimal(
+                str(tipo_planilla.periodos_por_anio if tipo_planilla else 12)),
             # Accumulated values (will be populated from AcumuladoAnual)
-            "salario_acumulado": Decimal("0.00"),
-            "impuesto_acumulado": Decimal("0.00"),
-            "ir_retenido_acumulado": Decimal("0.00"),
-            "salario_acumulado_mes": Decimal("0.00"),  # Monthly accumulated salary
+            "salario_acumulado":
+            Decimal("0.00"),
+            "impuesto_acumulado":
+            Decimal("0.00"),
+            "ir_retenido_acumulado":
+            Decimal("0.00"),
+            "salario_acumulado_mes":
+            Decimal("0.00"),  # Monthly accumulated salary
         }
 
         # Add employee implementation initial values
         if empleado.salario_acumulado:
-            variables["salario_acumulado"] = Decimal(str(empleado.salario_acumulado))
+            variables["salario_acumulado"] = Decimal(
+                str(empleado.salario_acumulado))
         if empleado.impuesto_acumulado:
-            variables["impuesto_acumulado"] = Decimal(str(empleado.impuesto_acumulado))
-            variables["ir_retenido_acumulado"] = Decimal(str(empleado.impuesto_acumulado))
+            variables["impuesto_acumulado"] = Decimal(
+                str(empleado.impuesto_acumulado))
+            variables["ir_retenido_acumulado"] = Decimal(
+                str(empleado.impuesto_acumulado))
 
         # Add novelties
         for codigo, valor in emp_calculo.novedades.items():
@@ -559,14 +582,19 @@ class NominaEngine:
         # Load accumulated annual values
         acumulado = self._obtener_acumulado_anual(empleado)
         if acumulado:
-            variables["salario_acumulado"] += Decimal(str(acumulado.salario_bruto_acumulado or 0))
-            variables["impuesto_acumulado"] += Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
-            variables["ir_retenido_acumulado"] += Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
-            variables["salario_acumulado_mes"] = Decimal(str(acumulado.salario_acumulado_mes or 0))
+            variables["salario_acumulado"] += Decimal(
+                str(acumulado.salario_bruto_acumulado or 0))
+            variables["impuesto_acumulado"] += Decimal(
+                str(acumulado.impuesto_retenido_acumulado or 0))
+            variables["ir_retenido_acumulado"] += Decimal(
+                str(acumulado.impuesto_retenido_acumulado or 0))
+            variables["salario_acumulado_mes"] = Decimal(
+                str(acumulado.salario_acumulado_mes or 0))
 
         return variables
 
-    def _obtener_acumulado_anual(self, empleado: Empleado) -> AcumuladoAnual | None:
+    def _obtener_acumulado_anual(self,
+                                 empleado: Empleado) -> AcumuladoAnual | None:
         """Get or create accumulated annual values for employee.
 
         Args:
@@ -596,8 +624,7 @@ class NominaEngine:
                 AcumuladoAnual.empleado_id == empleado.id,
                 AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
                 AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
-            )
-        ).scalar()
+            )).scalar()
 
         return acumulado
 
@@ -608,12 +635,10 @@ class NominaEngine:
             emp_calculo: Employee calculation container
         """
         self._trace(
-            _("Procesando percepciones para %(nombre)s %(apellido)s")
-            % {
+            _("Procesando percepciones para %(nombre)s %(apellido)s") % {
                 "nombre": emp_calculo.empleado.primer_nombre,
                 "apellido": emp_calculo.empleado.primer_apellido,
-            }
-        )
+            })
         for planilla_percepcion in self.planilla.planilla_percepciones:
             if not planilla_percepcion.activo:
                 continue
@@ -654,16 +679,13 @@ class NominaEngine:
                 emp_calculo.percepciones.append(item)
                 emp_calculo.total_percepciones += monto
                 self._trace(
-                    _(
-                        "Calculando percepción %(codigo)s (%(nombre)s) monto=%(monto)s nuevo total percepciones=%(total)s"
-                    )
-                    % {
-                        "codigo": item.codigo,
-                        "nombre": item.nombre,
-                        "monto": monto,
-                        "total": emp_calculo.total_percepciones,
-                    }
-                )
+                    _("Calculando percepción %(codigo)s (%(nombre)s) monto=%(monto)s nuevo total percepciones=%(total)s"
+                      ) % {
+                          "codigo": item.codigo,
+                          "nombre": item.nombre,
+                          "monto": monto,
+                          "total": emp_calculo.total_percepciones,
+                      })
 
     def _procesar_deducciones(self, emp_calculo: EmpleadoCalculo) -> None:
         """Process deductions for an employee.
@@ -672,12 +694,10 @@ class NominaEngine:
             emp_calculo: Employee calculation container
         """
         self._trace(
-            _("Procesando deducciones para %(nombre)s %(apellido)s")
-            % {
+            _("Procesando deducciones para %(nombre)s %(apellido)s") % {
                 "nombre": emp_calculo.empleado.primer_nombre,
                 "apellido": emp_calculo.empleado.primer_apellido,
-            }
-        )
+            })
         deducciones_pendientes: list[DeduccionItem] = []
 
         for planilla_deduccion in self.planilla.planilla_deducciones:
@@ -749,19 +769,17 @@ class NominaEngine:
             emp_calculo.total_deducciones += monto_aplicar
             saldo_disponible -= monto_aplicar
             self._trace(
-                _(
-                    "Calculando deducción %(codigo)s (%(nombre)s) monto=%(monto)s nuevo total deducciones=%(total)s saldo disponible=%(saldo)s"
-                )
-                % {
-                    "codigo": item.codigo,
-                    "nombre": item.nombre,
-                    "monto": monto_aplicar,
-                    "total": emp_calculo.total_deducciones,
-                    "saldo": saldo_disponible,
-                }
-            )
+                _("Calculando deducción %(codigo)s (%(nombre)s) monto=%(monto)s total deducciones=%(total)s saldo =%(saldo)s"
+                  ) % {
+                      "codigo": item.codigo,
+                      "nombre": item.nombre,
+                      "monto": monto_aplicar,
+                      "total": emp_calculo.total_deducciones,
+                      "saldo": saldo_disponible,
+                  })
 
-    def _aplicar_deducciones_automaticas(self, emp_calculo: EmpleadoCalculo) -> None:
+    def _aplicar_deducciones_automaticas(self,
+                                         emp_calculo: EmpleadoCalculo) -> None:
         """Apply automatic loan and advance deductions.
 
         Args:
@@ -771,17 +789,12 @@ class NominaEngine:
         saldo_disponible = emp_calculo.salario_bruto - emp_calculo.total_deducciones
 
         # Get active loans/advances
-        adelantos = (
-            db.session.execute(
-                db.select(Adelanto).filter(
-                    Adelanto.empleado_id == empleado.id,
-                    Adelanto.estado == AdelantoEstado.APROBADO,
-                    Adelanto.saldo_pendiente > 0,
-                )
-            )
-            .scalars()
-            .all()
-        )
+        adelantos = (db.session.execute(
+            db.select(Adelanto).filter(
+                Adelanto.empleado_id == empleado.id,
+                Adelanto.estado == AdelantoEstado.APROBADO,
+                Adelanto.saldo_pendiente > 0,
+            )).scalars().all())
 
         # Separate loans and advances
         prestamos = [a for a in adelantos if a.deduccion_id]
@@ -820,7 +833,8 @@ class NominaEngine:
                 if saldo_disponible <= 0:
                     break
 
-                monto_cuota = Decimal(str(adelanto.monto_por_cuota or adelanto.saldo_pendiente))
+                monto_cuota = Decimal(
+                    str(adelanto.monto_por_cuota or adelanto.saldo_pendiente))
                 monto_aplicar = min(monto_cuota, saldo_disponible)
 
                 item = DeduccionItem(
@@ -838,7 +852,8 @@ class NominaEngine:
                 # Record the payment
                 self._registrar_abono_adelanto(adelanto, monto_aplicar)
 
-    def _registrar_abono_adelanto(self, adelanto: Adelanto, monto: Decimal) -> None:
+    def _registrar_abono_adelanto(self, adelanto: Adelanto,
+                                  monto: Decimal) -> None:
         """Record a payment towards a loan/advance.
 
         Args:
@@ -902,7 +917,8 @@ class NominaEngine:
             )
 
             # Apply ceiling if defined
-            if prestacion.tope_aplicacion and monto > Decimal(str(prestacion.tope_aplicacion)):
+            if prestacion.tope_aplicacion and monto > Decimal(
+                    str(prestacion.tope_aplicacion)):
                 monto = Decimal(str(prestacion.tope_aplicacion))
 
             if monto > 0:
@@ -951,9 +967,10 @@ class NominaEngine:
             return Decimal(str(monto_override))
 
         if porcentaje_override:
-            return (emp_calculo.salario_base * Decimal(str(porcentaje_override)) / Decimal("100")).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
+            return (emp_calculo.salario_base *
+                    Decimal(str(porcentaje_override)) /
+                    Decimal("100")).quantize(Decimal("0.01"),
+                                             rounding=ROUND_HALF_UP)
 
         match formula_tipo:
             case FormulaType.FIJO:
@@ -961,16 +978,18 @@ class NominaEngine:
 
             case FormulaType.PORCENTAJE_SALARIO | FormulaType.PORCENTAJE:
                 if porcentaje:
-                    return (emp_calculo.salario_base * Decimal(str(porcentaje)) / Decimal("100")).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
+                    return (emp_calculo.salario_base *
+                            Decimal(str(porcentaje)) /
+                            Decimal("100")).quantize(Decimal("0.01"),
+                                                     rounding=ROUND_HALF_UP)
                 return Decimal("0.00")
 
             case FormulaType.PORCENTAJE_BRUTO:
                 if porcentaje:
-                    return (emp_calculo.salario_bruto * Decimal(str(porcentaje)) / Decimal("100")).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
+                    return (emp_calculo.salario_bruto *
+                            Decimal(str(porcentaje)) /
+                            Decimal("100")).quantize(Decimal("0.01"),
+                                                     rounding=ROUND_HALF_UP)
                 return Decimal("0.00")
 
             case FormulaType.HORAS:
@@ -994,16 +1013,18 @@ class NominaEngine:
                 # Calculate hourly rate
                 # Always use 30 days/month, 8 hours/day (HORAS_TRABAJO_DIA constant)
                 dias_base = Decimal("30")
-                tasa_hora = (base / dias_base / HORAS_TRABAJO_DIA).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                tasa_hora = (base / dias_base / HORAS_TRABAJO_DIA).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP)
 
                 # Apply percentage (e.g., 100% for normal overtime, 200% for special)
                 if porcentaje:
-                    tasa_hora = (tasa_hora * Decimal(str(porcentaje)) / Decimal("100")).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
+                    tasa_hora = (tasa_hora * Decimal(str(porcentaje)) /
+                                 Decimal("100")).quantize(
+                                     Decimal("0.01"), rounding=ROUND_HALF_UP)
 
                 # Calculate total for hours
-                return (tasa_hora * horas).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                return (tasa_hora * horas).quantize(Decimal("0.01"),
+                                                    rounding=ROUND_HALF_UP)
 
             case FormulaType.DIAS:
                 # Calculate based on days from novedades
@@ -1025,16 +1046,18 @@ class NominaEngine:
 
                 # Calculate daily rate - always use 30-day month
                 dias_base = Decimal("30")
-                tasa_dia = (base / dias_base).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                tasa_dia = (base / dias_base).quantize(Decimal("0.01"),
+                                                       rounding=ROUND_HALF_UP)
 
                 # Apply percentage
                 if porcentaje:
-                    tasa_dia = (tasa_dia * Decimal(str(porcentaje)) / Decimal("100")).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
+                    tasa_dia = (tasa_dia * Decimal(str(porcentaje)) /
+                                Decimal("100")).quantize(
+                                    Decimal("0.01"), rounding=ROUND_HALF_UP)
 
                 # Calculate total for days
-                return (tasa_dia * dias).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                return (tasa_dia * dias).quantize(Decimal("0.01"),
+                                                  rounding=ROUND_HALF_UP)
 
             case FormulaType.FORMULA:
                 if formula and isinstance(formula, dict):
@@ -1042,11 +1065,13 @@ class NominaEngine:
                         # Merge variables with formula inputs
                         inputs = {**emp_calculo.variables_calculo}
                         inputs["salario_bruto"] = emp_calculo.salario_bruto
-                        inputs["total_percepciones"] = emp_calculo.total_percepciones
+                        inputs[
+                            "total_percepciones"] = emp_calculo.total_percepciones
 
                         engine = FormulaEngine(formula)
                         result = engine.execute(inputs)
-                        return Decimal(str(result.get("output", 0))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                        return Decimal(str(result.get("output", 0))).quantize(
+                            Decimal("0.01"), rounding=ROUND_HALF_UP)
                     except FormulaEngineError as e:
                         self.warnings.append(f"Error en fórmula: {str(e)}")
                         return Decimal("0.00")
@@ -1055,7 +1080,8 @@ class NominaEngine:
             case _:
                 return Decimal(str(monto_default or 0))
 
-    def _crear_nomina_empleado(self, emp_calculo: EmpleadoCalculo) -> NominaEmpleado:
+    def _crear_nomina_empleado(self,
+                               emp_calculo: EmpleadoCalculo) -> NominaEmpleado:
         """Create the NominaEmpleado record with all details.
 
         Args:
@@ -1162,8 +1188,7 @@ class NominaEngine:
                 AcumuladoAnual.empleado_id == empleado.id,
                 AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
                 AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
-            )
-        ).scalar()
+            )).scalar()
 
         if not acumulado:
             acumulado = AcumuladoAnual(
@@ -1200,7 +1225,9 @@ class NominaEngine:
         # Sum up before-tax deductions and taxes
         for deduccion in emp_calculo.deducciones:
             # Check if this is a tax deduction
-            deduccion_obj = db.session.get(Deduccion, deduccion.deduccion_id) if deduccion.deduccion_id else None
+            deduccion_obj = db.session.get(
+                Deduccion,
+                deduccion.deduccion_id) if deduccion.deduccion_id else None
             if deduccion_obj:
                 if deduccion_obj.es_impuesto:
                     acumulado.impuesto_retenido_acumulado += deduccion.monto
