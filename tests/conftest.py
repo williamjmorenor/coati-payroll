@@ -157,3 +157,40 @@ def authenticated_client(app, client):
         follow_redirects=True,
     )
     return client
+
+
+@pytest.fixture(scope="function")
+def clean_database(app):
+    """Clean the database before each test that uses this fixture.
+
+    This fixture ensures a clean slate for validation tests that need
+    to create specific data without conflicts from other tests.
+    """
+    with app.app_context():
+        from coati_payroll.model import db
+
+        # Get all table names
+        tables = db.metadata.sorted_tables
+
+        # Disable foreign key constraints temporarily (SQLite specific)
+        db.session.execute(db.text("PRAGMA foreign_keys=OFF"))
+
+        # Delete data from all tables in reverse order (respecting dependencies)
+        for table in reversed(tables):
+            db.session.execute(table.delete())
+
+        db.session.commit()
+
+        # Re-enable foreign key constraints
+        db.session.execute(db.text("PRAGMA foreign_keys=ON"))
+        db.session.commit()
+
+        yield
+
+        # Clean up after the test as well
+        db.session.execute(db.text("PRAGMA foreign_keys=OFF"))
+        for table in reversed(tables):
+            db.session.execute(table.delete())
+        db.session.commit()
+        db.session.execute(db.text("PRAGMA foreign_keys=ON"))
+        db.session.commit()

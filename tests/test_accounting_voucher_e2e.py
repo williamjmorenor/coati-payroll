@@ -275,13 +275,11 @@ class TestAccountingVoucherE2E:
             nomina_empleado = nomina.nomina_empleados[0]
 
             # Validate cost center snapshot
-            assert nomina_empleado.centro_costos_snapshot == "CC-VENTAS", \
-                "Cost center must be captured in snapshot"
+            assert nomina_empleado.centro_costos_snapshot == "CC-VENTAS", "Cost center must be captured in snapshot"
 
             # Validate base salary is stored (engine may apply adjustments)
             actual_base = nomina_empleado.sueldo_base_historico
-            assert actual_base > Decimal("0"), \
-                "Base salary must be stored and positive"
+            assert actual_base > Decimal("0"), "Base salary must be stored and positive"
 
             # Get all nomina details for validation
             detalles = nomina_empleado.nomina_detalles
@@ -294,20 +292,23 @@ class TestAccountingVoucherE2E:
 
             # Validate that INSS is calculated correctly (6.25% of gross)
             expected_inss = actual_bruto * Decimal("0.0625")
-            assert abs(actual_inss - expected_inss) < Decimal("0.01"), \
-                f"INSS must be 6.25% of gross: expected {expected_inss}, got {actual_inss}"
+            assert abs(actual_inss - expected_inss) < Decimal(
+                "0.01"
+            ), f"INSS must be 6.25% of gross: expected {expected_inss}, got {actual_inss}"
 
             # Validate that net = gross - deductions
             expected_neto = actual_bruto - actual_inss
-            assert abs(actual_neto - expected_neto) < Decimal("0.01"), \
-                f"Net salary must equal gross - deductions: expected {expected_neto}, got {actual_neto}"
+            assert abs(actual_neto - expected_neto) < Decimal(
+                "0.01"
+            ), f"Net salary must equal gross - deductions: expected {expected_neto}, got {actual_neto}"
 
             # Validate that prestacion is calculated correctly (19% of gross)
             prestacion_detail = next((d for d in detalles if d.codigo == "INSS-PATRONAL-E2E"), None)
             if prestacion_detail:
                 expected_prestacion = actual_bruto * Decimal("0.19")
-                assert abs(prestacion_detail.monto - expected_prestacion) < Decimal("0.01"), \
-                    f"Prestacion must be 19% of gross: expected {expected_prestacion}, got {prestacion_detail.monto}"
+                assert abs(prestacion_detail.monto - expected_prestacion) < Decimal(
+                    "0.01"
+                ), f"Prestacion must be 19% of gross: expected {expected_prestacion}, got {prestacion_detail.monto}"
 
             assert len(detalles) >= 3, "Must have at least 3 details: base salary, bonus, INSS, prestacion"
 
@@ -330,14 +331,14 @@ class TestAccountingVoucherE2E:
                 planilla.codigo_cuenta_debe_salario,
                 nomina_empleado.centro_costos_snapshot,
                 planilla.descripcion_cuenta_debe_salario,
-                debito=nomina_empleado.sueldo_base_historico
+                debito=nomina_empleado.sueldo_base_historico,
             )
             add_accounting_entry(
                 accounting_entries,
                 planilla.codigo_cuenta_haber_salario,
                 nomina_empleado.centro_costos_snapshot,
                 planilla.descripcion_cuenta_haber_salario,
-                credito=nomina_empleado.sueldo_base_historico
+                credito=nomina_empleado.sueldo_base_historico,
             )
 
             # Process all detalles
@@ -359,7 +360,7 @@ class TestAccountingVoucherE2E:
                         concepto.codigo_cuenta_debe,
                         nomina_empleado.centro_costos_snapshot,
                         concepto.descripcion_cuenta_debe or detalle.descripcion,
-                        debito=detalle.monto
+                        debito=detalle.monto,
                     )
 
                 if concepto.codigo_cuenta_haber:
@@ -368,7 +369,7 @@ class TestAccountingVoucherE2E:
                         concepto.codigo_cuenta_haber,
                         nomina_empleado.centro_costos_snapshot,
                         concepto.descripcion_cuenta_haber or detalle.descripcion,
-                        credito=detalle.monto
+                        credito=detalle.monto,
                     )
 
             # Calculate totals
@@ -377,8 +378,9 @@ class TestAccountingVoucherE2E:
             balance = total_debitos - total_creditos
 
             # CRITICAL VALIDATION: Debits and credits must be balanced
-            assert abs(balance) < Decimal("0.01"), \
-                f"Accounting voucher must be balanced! Debits: {total_debitos}, Credits: {total_creditos}, Balance: {balance}"
+            assert abs(balance) < Decimal(
+                "0.01"
+            ), f"Accounting voucher must be balanced! Debits: {total_debitos}, Credits: {total_creditos}, Balance: {balance}"
 
             # VALIDATION 6: Store comprobante in database
             # Store amounts as strings to maintain precision
@@ -418,8 +420,9 @@ class TestAccountingVoucherE2E:
             # Validate all entries have cost center
             for asiento in saved_comprobante.asientos_contables:
                 assert "centro_costos" in asiento, "All entries must have cost center field"
-                assert asiento["centro_costos"] == "CC-VENTAS", \
-                    f"Cost center must be CC-VENTAS, got {asiento.get('centro_costos')}"
+                assert (
+                    asiento["centro_costos"] == "CC-VENTAS"
+                ), f"Cost center must be CC-VENTAS, got {asiento.get('centro_costos')}"
 
     @pytest.mark.validation
     def test_accounting_voucher_with_multiple_employees_different_cost_centers(self, app, authenticated_client):
@@ -505,19 +508,20 @@ class TestAccountingVoucherE2E:
                     planilla.codigo_cuenta_debe_salario,
                     ne.centro_costos_snapshot,
                     "Salary Expense",
-                    debito=ne.sueldo_base_historico
+                    debito=ne.sueldo_base_historico,
                 )
                 add_accounting_entry(
                     accounting_entries,
                     planilla.codigo_cuenta_haber_salario,
                     ne.centro_costos_snapshot,
                     "Salary Payable",
-                    credito=ne.sueldo_base_historico
+                    credito=ne.sueldo_base_historico,
                 )
 
             # Validate we have 4 entries (2 cost centers × 2 accounts)
-            assert len(accounting_entries) == 4, \
-                f"Should have 4 entries (2 cost centers × 2 accounts), got {len(accounting_entries)}"
+            assert (
+                len(accounting_entries) == 4
+            ), f"Should have 4 entries (2 cost centers × 2 accounts), got {len(accounting_entries)}"
 
             # Validate specific entries exist
             assert ("6101-001", "CC-VENTAS") in accounting_entries
@@ -532,23 +536,24 @@ class TestAccountingVoucherE2E:
             admin_credito = accounting_entries[("2101-001", "CC-ADMIN")]["credito"]
 
             # Validate that debits match credits for each cost center
-            assert ventas_debito == ventas_credito, \
-                f"Ventas: debits ({ventas_debito}) must equal credits ({ventas_credito})"
-            assert admin_debito == admin_credito, \
-                f"Admin: debits ({admin_debito}) must equal credits ({admin_credito})"
+            assert (
+                ventas_debito == ventas_credito
+            ), f"Ventas: debits ({ventas_debito}) must equal credits ({ventas_credito})"
+            assert admin_debito == admin_credito, f"Admin: debits ({admin_debito}) must equal credits ({admin_credito})"
 
             # Validate that amounts are positive
             assert ventas_debito > Decimal("0"), "Ventas amount must be positive"
             assert admin_debito > Decimal("0"), "Admin amount must be positive"
 
             # Validate that admin has higher amount (12000 > 10000 base)
-            assert admin_debito > ventas_debito, \
-                "Admin salary should be higher than Ventas salary"
+            assert admin_debito > ventas_debito, "Admin salary should be higher than Ventas salary"
 
             # Validate balance
             total_debitos = sum(e["debito"] for e in accounting_entries.values())
             total_creditos = sum(e["credito"] for e in accounting_entries.values())
-            assert total_debitos == total_creditos, \
-                f"Debits ({total_debitos}) and credits ({total_creditos}) must be balanced"
-            assert abs(total_debitos - total_creditos) < Decimal("0.01"), \
-                f"Balance must be near zero, got {total_debitos - total_creditos}"
+            assert (
+                total_debitos == total_creditos
+            ), f"Debits ({total_debitos}) and credits ({total_creditos}) must be balanced"
+            assert abs(total_debitos - total_creditos) < Decimal(
+                "0.01"
+            ), f"Balance must be near zero, got {total_debitos - total_creditos}"

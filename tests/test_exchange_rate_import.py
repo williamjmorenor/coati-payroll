@@ -58,19 +58,19 @@ class TestExchangeRateImport:
         """Helper to create an Excel file with given data."""
         wb = Workbook()
         ws = wb.active
-        
+
         # Add header
         ws.append(["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"])
-        
+
         # Add data rows
         for row in data:
             ws.append(row)
-        
+
         # Save to BytesIO
         excel_file = BytesIO()
         wb.save(excel_file)
         excel_file.seek(0)
-        
+
         return excel_file
 
     def test_import_excel_get_shows_form(self, authenticated_client):
@@ -88,7 +88,7 @@ class TestExchangeRateImport:
             ["2024-01-15", "EUR", "USD", 1.095],
         ]
         excel_file = self.create_excel_file(excel_data)
-        
+
         response = authenticated_client.post(
             "/exchange_rate/import",
             data={"file": (excel_file, "test_rates.xlsx")},
@@ -107,15 +107,13 @@ class TestExchangeRateImport:
             # Check specific rate - get USD currency
             usd = db.session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
             nio = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one()
-            
+
             usd_nio_rate = db.session.execute(
                 db.select(TipoCambio).filter_by(
-                    moneda_origen_id=usd.id,
-                    moneda_destino_id=nio.id,
-                    fecha=date(2024, 1, 15)
+                    moneda_origen_id=usd.id, moneda_destino_id=nio.id, fecha=date(2024, 1, 15)
                 )
             ).scalar_one_or_none()
-            
+
             if usd_nio_rate:
                 assert float(usd_nio_rate.tasa) == 36.5
 
@@ -127,7 +125,7 @@ class TestExchangeRateImport:
             ["2024-01-16", "EUR", "USD", 1.0951],
         ]
         excel_file = self.create_excel_file(excel_data)
-        
+
         response = authenticated_client.post(
             "/exchange_rate/import",
             data={"file": (excel_file, "test_rates.xlsx")},
@@ -141,14 +139,11 @@ class TestExchangeRateImport:
             from coati_payroll.model import TipoCambio, Moneda, db
 
             usd_nio_rate = db.session.execute(
-                db.select(TipoCambio).join(
-                    TipoCambio.moneda_origen
-                ).filter(
-                    Moneda.codigo == "USD",
-                    TipoCambio.fecha == date(2024, 1, 15)
-                )
+                db.select(TipoCambio)
+                .join(TipoCambio.moneda_origen)
+                .filter(Moneda.codigo == "USD", TipoCambio.fecha == date(2024, 1, 15))
             ).scalar_one()
-            
+
             # Check that 4 decimals are preserved
             assert float(usd_nio_rate.tasa) == pytest.approx(36.5423, rel=1e-4)
 
@@ -175,7 +170,7 @@ class TestExchangeRateImport:
             ["2024-01-15", "USD", "NIO", 36.5],
         ]
         excel_file = self.create_excel_file(excel_data)
-        
+
         response = authenticated_client.post(
             "/exchange_rate/import",
             data={"file": (excel_file, "test_rates.xlsx")},
@@ -189,14 +184,11 @@ class TestExchangeRateImport:
             from coati_payroll.model import TipoCambio, Moneda, db
 
             rate = db.session.execute(
-                db.select(TipoCambio).join(
-                    TipoCambio.moneda_origen
-                ).filter(
-                    Moneda.codigo == "USD",
-                    TipoCambio.fecha == date(2024, 1, 15)
-                )
+                db.select(TipoCambio)
+                .join(TipoCambio.moneda_origen)
+                .filter(Moneda.codigo == "USD", TipoCambio.fecha == date(2024, 1, 15))
             ).scalar_one()
-            
+
             assert float(rate.tasa) == 36.5
 
     def test_import_excel_invalid_currency(self, authenticated_client, app):
@@ -205,7 +197,7 @@ class TestExchangeRateImport:
             ["2024-01-15", "USD", "XXX", 36.5],  # XXX is invalid
         ]
         excel_file = self.create_excel_file(excel_data)
-        
+
         response = authenticated_client.post(
             "/exchange_rate/import",
             data={"file": (excel_file, "test_rates.xlsx")},
@@ -213,7 +205,7 @@ class TestExchangeRateImport:
             follow_redirects=True,
         )
         assert response.status_code == 200
-        
+
         # Should show error about currency not found
         with app.app_context():
             from coati_payroll.model import TipoCambio, db
@@ -227,7 +219,7 @@ class TestExchangeRateImport:
             ["invalid-date", "USD", "NIO", 36.5],
         ]
         excel_file = self.create_excel_file(excel_data)
-        
+
         response = authenticated_client.post(
             "/exchange_rate/import",
             data={"file": (excel_file, "test_rates.xlsx")},
@@ -256,7 +248,7 @@ class TestExchangeRateImport:
     def test_import_excel_invalid_file_type(self, authenticated_client):
         """Test import with non-Excel file."""
         text_file = BytesIO(b"not an excel file")
-        
+
         response = authenticated_client.post(
             "/exchange_rate/import",
             data={"file": (text_file, "test.txt")},
@@ -272,7 +264,7 @@ class TestExchangeRateImport:
             ["15/01/2024", "USD", "NIO", 36.5],
         ]
         excel_file = self.create_excel_file(excel_data)
-        
+
         response = authenticated_client.post(
             "/exchange_rate/import",
             data={"file": (excel_file, "test_rates.xlsx")},

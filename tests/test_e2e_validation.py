@@ -275,9 +275,11 @@ class TestPayrollProcessingWorkflow:
                 assert response.status_code == 200
 
             # Verify employees created
-            employees = db.session.execute(
-                db.select(Empleado).filter(Empleado.codigo_empleado.in_(["PAY001", "PAY002"]))
-            ).scalars().all()
+            employees = (
+                db.session.execute(db.select(Empleado).filter(Empleado.codigo_empleado.in_(["PAY001", "PAY002"])))
+                .scalars()
+                .all()
+            )
             assert len(employees) == 2
 
             # Step 5-6: Verify perception and deduction pages load correctly
@@ -649,7 +651,7 @@ class TestMultiUserRoleWorkflow:
 @pytest.mark.validation
 class TestCompletePayrollCalculationWorkflow:
     """Complete end-to-end test for full payroll calculation process.
-    
+
     This test simulates a real-world scenario from setup to payroll generation.
     """
 
@@ -677,7 +679,7 @@ class TestCompletePayrollCalculationWorkflow:
             # ========================================================================
             # PHASE 1: SYSTEM SETUP
             # ========================================================================
-            
+
             # Step 1: Create admin user and login
             admin = Usuario()
             admin.usuario = "payroll_e2e_admin"
@@ -750,9 +752,7 @@ class TestCompletePayrollCalculationWorkflow:
             perceptions = []
             perc_codes = ["E2E_BASIC_SALARY", "E2E_OVERTIME"]
             for code in perc_codes:
-                existing = db.session.execute(
-                    db.select(Percepcion).filter_by(codigo=code)
-                ).scalar_one_or_none()
+                existing = db.session.execute(db.select(Percepcion).filter_by(codigo=code)).scalar_one_or_none()
                 if not existing:
                     perc = Percepcion()
                     perc.codigo = code
@@ -769,9 +769,7 @@ class TestCompletePayrollCalculationWorkflow:
             deductions = []
             ded_codes = ["E2E_TAX", "E2E_INSURANCE"]
             for code in ded_codes:
-                existing = db.session.execute(
-                    db.select(Deduccion).filter_by(codigo=code)
-                ).scalar_one_or_none()
+                existing = db.session.execute(db.select(Deduccion).filter_by(codigo=code)).scalar_one_or_none()
                 if not existing:
                     ded = Deduccion()
                     ded.codigo = code
@@ -813,9 +811,7 @@ class TestCompletePayrollCalculationWorkflow:
             assert response.status_code == 200
 
             # Verify planilla created
-            planilla = db.session.execute(
-                db.select(Planilla).filter_by(nombre="Planilla E2E Test")
-            ).scalar_one()
+            planilla = db.session.execute(db.select(Planilla).filter_by(nombre="Planilla E2E Test")).scalar_one()
             assert planilla is not None
             assert planilla.empresa_id == company.id
 
@@ -898,11 +894,13 @@ class TestCompletePayrollCalculationWorkflow:
                 assert response.status_code == 200
 
             # Verify employees created - at least one should be created successfully
-            employees = db.session.execute(
-                db.select(Empleado).filter(
-                    Empleado.codigo_empleado.in_(["E2E_EMP001", "E2E_EMP002", "E2E_EMP003"])
+            employees = (
+                db.session.execute(
+                    db.select(Empleado).filter(Empleado.codigo_empleado.in_(["E2E_EMP001", "E2E_EMP002", "E2E_EMP003"]))
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             # If no employees were created, the form submissions may have failed due to validation
             # Skip rest of test if we can't create employees
             if len(employees) == 0:
@@ -927,9 +925,9 @@ class TestCompletePayrollCalculationWorkflow:
                 assert response.status_code == 200
 
             # Verify associations
-            associations = db.session.execute(
-                db.select(PlanillaEmpleado).filter_by(planilla_id=planilla.id)
-            ).scalars().all()
+            associations = (
+                db.session.execute(db.select(PlanillaEmpleado).filter_by(planilla_id=planilla.id)).scalars().all()
+            )
             assert len(associations) == 3
 
             # Step 12: View planilla configuration pages
@@ -972,17 +970,15 @@ class TestCompletePayrollCalculationWorkflow:
             assert response.status_code == 200
 
             # Step 15: Verify nomina was created
-            nomina = db.session.execute(
-                db.select(Nomina).filter_by(planilla_id=planilla.id)
-            ).scalar_one_or_none()
+            nomina = db.session.execute(db.select(Nomina).filter_by(planilla_id=planilla.id)).scalar_one_or_none()
             assert nomina is not None
             assert nomina.periodo_inicio == periodo_inicio
             assert nomina.periodo_fin == periodo_fin
 
             # Step 16: Verify employee payroll records (NominaEmpleado) were created
-            nomina_empleados = db.session.execute(
-                db.select(NominaEmpleado).filter_by(nomina_id=nomina.id)
-            ).scalars().all()
+            nomina_empleados = (
+                db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina.id)).scalars().all()
+            )
             assert len(nomina_empleados) == 3
 
             # Verify each employee has payroll data
@@ -1005,9 +1001,7 @@ class TestCompletePayrollCalculationWorkflow:
 
             # Step 18: View individual employee payroll detail
             first_nom_emp = nomina_empleados[0]
-            response = client.get(
-                f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{first_nom_emp.id}"
-            )
+            response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{first_nom_emp.id}")
             assert response.status_code == 200
             # Should show employee details and calculations
             assert first_nom_emp.empleado.codigo_empleado.encode() in response.data

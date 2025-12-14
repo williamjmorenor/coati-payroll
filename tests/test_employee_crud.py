@@ -46,9 +46,6 @@ class TestEmployeeCRUD:
 
     def test_employee_edit_nonexistent_redirects(self, app, authenticated_client):
         """Test that editing nonexistent employee redirects."""
-        response = authenticated_client.get(
-            "/employee/edit/nonexistent-id-99999",
-            follow_redirects=False
-        )
+        response = authenticated_client.get("/employee/edit/nonexistent-id-99999", follow_redirects=False)
         # Should redirect or return 404, not crash
         assert response.status_code in (302, 404)

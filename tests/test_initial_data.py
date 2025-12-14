@@ -162,6 +162,7 @@ class TestInitialDataConstants:
         assert "THIRTEENTH_SALARY_PROVISION" in codes
         # Severance Pay - Common legal principle
         assert "SEVERANCE_PROVISION" in codes
+
     def test_payroll_types_not_empty(self):
         """Test that payroll types list is not empty."""
         assert len(PAYROLL_TYPES) > 0
@@ -396,6 +397,8 @@ class TestLoadBenefitConcepts:
 
             load_benefit_concepts()
             count_second = db.session.execute(db.select(Prestacion)).scalars().all()
+
+
 class TestLoadPayrollTypes:
     """Test payroll types loading functionality."""
 
@@ -413,9 +416,7 @@ class TestLoadPayrollTypes:
             assert len(types) >= len(PAYROLL_TYPES)
 
             # Check a specific payroll type
-            monthly = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="MONTHLY")
-            ).scalar_one_or_none()
+            monthly = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MONTHLY")).scalar_one_or_none()
             assert monthly is not None
             assert monthly.codigo == "MONTHLY"
             assert monthly.dias == 30
@@ -478,6 +479,7 @@ class TestLoadPayrollTypes:
                 db.select(Prestacion).filter_by(codigo="SEVERANCE_PROVISION")
             ).scalar_one_or_none()
             assert severance is not None
+
     def test_load_payroll_types_have_correct_properties(self, app):
         """Test that loaded payroll types have correct properties."""
         with app.app_context():
@@ -508,14 +510,10 @@ class TestLoadPayrollTypes:
             load_payroll_types()
 
             # Check specific types
-            monthly = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="MONTHLY")
-            ).scalar_one_or_none()
+            monthly = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="MONTHLY")).scalar_one_or_none()
             assert monthly is not None
 
-            biweekly = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="BIWEEKLY")
-            ).scalar_one_or_none()
+            biweekly = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="BIWEEKLY")).scalar_one_or_none()
             assert biweekly is not None
 
             fortnightly = db.session.execute(
@@ -523,9 +521,7 @@ class TestLoadPayrollTypes:
             ).scalar_one_or_none()
             assert fortnightly is not None
 
-            weekly = db.session.execute(
-                db.select(TipoPlanilla).filter_by(codigo="WEEKLY")
-            ).scalar_one_or_none()
+            weekly = db.session.execute(db.select(TipoPlanilla).filter_by(codigo="WEEKLY")).scalar_one_or_none()
             assert weekly is not None
 
 

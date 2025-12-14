@@ -83,9 +83,7 @@ class TestPlanillaCRUD:
             assert response.status_code == 200
 
             # Verify planilla was created
-            planilla = db.session.execute(
-                db.select(Planilla).filter_by(nombre="Test Planilla")
-            ).scalar_one_or_none()
+            planilla = db.session.execute(db.select(Planilla).filter_by(nombre="Test Planilla")).scalar_one_or_none()
             assert planilla is not None
 
     def test_planilla_config_empleados_loads(self, app, authenticated_client):

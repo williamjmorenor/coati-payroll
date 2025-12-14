@@ -32,13 +32,11 @@ def admin_user(app):
     """Create an admin user."""
     with app.app_context():
         # Check if user already exists
-        existing = db.session.execute(
-            db.select(Usuario).filter_by(usuario="admin_test")
-        ).scalar_one_or_none()
+        existing = db.session.execute(db.select(Usuario).filter_by(usuario="admin_test")).scalar_one_or_none()
         if existing:
             db.session.delete(existing)
             db.session.commit()
-        
+
         user = Usuario(
             usuario="admin_test",
             acceso=proteger_passwd("admin123"),
@@ -50,9 +48,9 @@ def admin_user(app):
         db.session.add(user)
         db.session.commit()
         user_id = user.id
-        
+
         yield user_id
-        
+
         # Cleanup
         user = db.session.get(Usuario, user_id)
         if user:
@@ -65,13 +63,11 @@ def hhrr_user(app):
     """Create an HR user."""
     with app.app_context():
         # Check if user already exists
-        existing = db.session.execute(
-            db.select(Usuario).filter_by(usuario="hhrr_test")
-        ).scalar_one_or_none()
+        existing = db.session.execute(db.select(Usuario).filter_by(usuario="hhrr_test")).scalar_one_or_none()
         if existing:
             db.session.delete(existing)
             db.session.commit()
-        
+
         user = Usuario(
             usuario="hhrr_test",
             acceso=proteger_passwd("hhrr123"),
@@ -83,9 +79,9 @@ def hhrr_user(app):
         db.session.add(user)
         db.session.commit()
         user_id = user.id
-        
+
         yield user_id
-        
+
         # Cleanup
         user = db.session.get(Usuario, user_id)
         if user:
@@ -98,13 +94,11 @@ def audit_user(app):
     """Create an audit user."""
     with app.app_context():
         # Check if user already exists
-        existing = db.session.execute(
-            db.select(Usuario).filter_by(usuario="audit_test")
-        ).scalar_one_or_none()
+        existing = db.session.execute(db.select(Usuario).filter_by(usuario="audit_test")).scalar_one_or_none()
         if existing:
             db.session.delete(existing)
             db.session.commit()
-        
+
         user = Usuario(
             usuario="audit_test",
             acceso=proteger_passwd("audit123"),
@@ -116,9 +110,9 @@ def audit_user(app):
         db.session.add(user)
         db.session.commit()
         user_id = user.id
-        
+
         yield user_id
-        
+
         # Cleanup
         user = db.session.get(Usuario, user_id)
         if user:
@@ -131,13 +125,11 @@ def sample_empresa(app):
     """Create a sample company."""
     with app.app_context():
         # Check if empresa already exists
-        existing = db.session.execute(
-            db.select(Empresa).filter_by(codigo="TEST-001")
-        ).scalar_one_or_none()
+        existing = db.session.execute(db.select(Empresa).filter_by(codigo="TEST-001")).scalar_one_or_none()
         if existing:
             db.session.delete(existing)
             db.session.commit()
-        
+
         empresa = Empresa(
             codigo="TEST-001",
             razon_social="Test Company",
@@ -147,9 +139,9 @@ def sample_empresa(app):
         db.session.add(empresa)
         db.session.commit()
         empresa_id = empresa.id
-        
+
         yield empresa_id
-        
+
         # Cleanup
         empresa = db.session.get(Empresa, empresa_id)
         if empresa:
@@ -162,13 +154,11 @@ def sample_currency(app):
     """Create a sample currency."""
     with app.app_context():
         # Check if currency already exists
-        existing = db.session.execute(
-            db.select(Moneda).filter_by(codigo="NIO")
-        ).scalar_one_or_none()
+        existing = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
         if existing:
             db.session.delete(existing)
             db.session.commit()
-        
+
         currency = Moneda(
             codigo="NIO",
             nombre="Córdoba",
@@ -178,9 +168,9 @@ def sample_currency(app):
         db.session.add(currency)
         db.session.commit()
         currency_id = currency.id
-        
+
         yield currency_id
-        
+
         # Cleanup
         currency = db.session.get(Moneda, currency_id)
         if currency:

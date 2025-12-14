@@ -51,9 +51,7 @@ class TestUserCRUD:
             assert response.status_code == 200
 
             # Verify user was created
-            user = db.session.execute(
-                db.select(Usuario).filter_by(usuario="newuser")
-            ).scalar_one_or_none()
+            user = db.session.execute(db.select(Usuario).filter_by(usuario="newuser")).scalar_one_or_none()
             assert user is not None
             assert user.nombre == "New"
             assert user.tipo == "hhrr"
