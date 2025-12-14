@@ -117,6 +117,112 @@ coati/
 
 ## 🔧 Configuración
 
+### Interfaz de Línea de Comandos (CLI)
+
+El sistema incluye la herramienta `payrollctl` para tareas administrativas comunes. También puede usar `flask` para comandos integrados.
+
+**Operaciones del Sistema:**
+
+```bash
+# Ver estado del sistema
+payrollctl system status
+
+# Ejecutar verificaciones del sistema
+payrollctl system check
+
+# Ver información del sistema
+payrollctl system info
+
+# Ver variables de entorno
+payrollctl system env
+```
+
+**Gestión de Base de Datos:**
+
+```bash
+# Ver estado de la base de datos
+payrollctl database status
+
+# Inicializar base de datos y crear usuario administrador
+payrollctl database init
+
+# Cargar datos iniciales (monedas, conceptos, etc.)
+payrollctl database seed
+
+# Crear respaldo de la base de datos usando herramientas nativas
+# SQLite: Copia el archivo | PostgreSQL: pg_dump | MySQL: mysqldump
+payrollctl database backup -o backup_$(date +%Y%m%d).sql
+
+# Restaurar base de datos desde respaldo
+payrollctl database restore backup.db
+
+# Migración de base de datos (requiere flask-migrate)
+payrollctl database migrate
+payrollctl database upgrade
+
+# Eliminar todas las tablas (¡CUIDADO!)
+payrollctl database drop
+```
+
+**Gestión de Usuarios:**
+
+```bash
+# Listar todos los usuarios
+payrollctl users list
+
+# Crear un nuevo usuario
+payrollctl users create
+
+# Deshabilitar un usuario
+payrollctl users disable username
+
+# Restablecer contraseña
+payrollctl users reset-password username
+
+# Crear o actualizar usuario administrador (desactiva otros admins)
+payrollctl users set-admin
+```
+
+**Gestión de Caché:**
+
+```bash
+# Limpiar cachés de la aplicación
+payrollctl cache clear
+
+# Precalentar cachés
+payrollctl cache warm
+
+# Ver estado del caché
+payrollctl cache status
+```
+
+**Tareas de Mantenimiento:**
+
+```bash
+# Limpiar sesiones expiradas
+payrollctl maintenance cleanup-sessions
+
+# Limpiar archivos temporales
+payrollctl maintenance cleanup-temp
+
+# Ejecutar trabajos pendientes en segundo plano
+payrollctl maintenance run-jobs
+```
+
+**Diagnóstico y Depuración:**
+
+```bash
+# Ver configuración de la aplicación
+payrollctl debug config
+
+# Listar todas las rutas de la aplicación
+payrollctl debug routes
+```
+
+**Nota**: Todos los comandos también funcionan con `flask` (ej: `flask system status`).
+
+**Respaldos Automatizados**: Para configurar respaldos diarios automáticos con systemd timers, consulte [Automated Backups Guide](docs/automated-backups.md).
+
 ### Variables de Entorno
 
 | Variable | Descripción | Valor por Defecto |

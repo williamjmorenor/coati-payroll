@@ -45,6 +45,7 @@ FROM python:3.11-slim-bookworm AS runtime
 
 # Install only runtime dependencies required by weasyprint and other libraries
 # Also install tini as a minimal init system for proper signal handling
+# Install PostgreSQL and MySQL clients for database backups
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
@@ -53,6 +54,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi8 \
     fonts-dejavu-core \
     tini \
+    postgresql-client \
+    default-mysql-client \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

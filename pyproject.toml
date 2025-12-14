@@ -4,9 +4,20 @@ requires-python = ">= 3.11"
 readme = "README.md"
 dynamic = ["version", "dependencies"]
 
+[project.scripts]
+payrollctl = "coati_payroll.cli:main"
+
 [build-system]
 requires = ["setuptools >= 68.0.0, < 70.0.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["coati_payroll*"]
+exclude = ["dev*", "tests*", "docs*"]
+
+[tool.setuptools.package-data]
+coati_payroll = ["static/*", "templates/**/*", "translations/**/*"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

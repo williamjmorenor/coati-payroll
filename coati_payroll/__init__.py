@@ -209,6 +209,10 @@ def create_app(config) -> Flask:
     app.register_blueprint(empresa_bp)
     app.register_blueprint(configuracion_bp)
 
+    # Register CLI commands
+    from coati_payroll.cli import register_cli_commands
+    register_cli_commands(app)
+
     return app
 
 
