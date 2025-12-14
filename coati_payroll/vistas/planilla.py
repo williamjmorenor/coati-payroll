@@ -2006,9 +2006,7 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
     output.seek(0)
 
     # Sanitize planilla name for filename
-
     safe_planilla_name = re.sub(r"[^\w\s-]", "", planilla.nombre).strip().replace(" ", "_")
-
     filename = f"comprobante_{safe_planilla_name}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
 
     # Save warnings to nomina log
@@ -2253,10 +2251,8 @@ def exportar_comprobante_detallado_excel(planilla_id: str, nomina_id: str):
     output.seek(0)
 
     # Sanitize planilla name for filename
-
     safe_planilla_name = re.sub(r"[^\w\s-]", "", planilla.nombre).strip().replace(" ", "_")
     date_str = nomina.periodo_inicio.strftime("%Y%m%d")
-
     filename = f"comprobante_detallado_{safe_planilla_name}_{date_str}_{nomina.id[:8]}.xlsx"
 
     return send_file(
