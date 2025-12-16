@@ -19,6 +19,8 @@ Contiene los formularios WTForms usados por la aplicación.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 # Terceros
 from flask_wtf import FlaskForm
 
@@ -912,6 +914,17 @@ class PrestacionForm(FlaskForm):
         default=False,
         description=_("¿Permitir modificar el monto durante la nómina?"),
     )
+    tipo_acumulacion = SelectField(
+        _("Tipo de Acumulación"),
+        choices=[
+            ("mensual", _("Mensual - Liquida cada mes")),
+            ("anual", _("Anual - Acumula durante el año")),
+            ("vida_laboral", _("Vida Laboral - Acumula durante toda la relación laboral")),
+        ],
+        validators=[DataRequired()],
+        default="mensual",
+        description=_("Define cómo se acumula esta prestación"),
+    )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
 
@@ -1275,4 +1288,78 @@ class EmpresaForm(FlaskForm):
         validators=[Optional(), Length(max=150)],
     )
     activo = BooleanField(_("Activo"), default=True)
+    submit = SubmitField(_("Guardar"))
+
+
+class CargaInicialPrestacionForm(FlaskForm):
+    """Form for initial benefit balance loading.
+
+    Used when implementing the system to load existing accumulated balances
+    for employees. Supports draft and applied states.
+    """
+
+    empleado_id = SelectField(
+        _("Empleado"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Seleccione el empleado"),
+    )
+    prestacion_id = SelectField(
+        _("Prestación"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Seleccione la prestación laboral"),
+    )
+    anio_corte = IntegerField(
+        _("Año de Corte"),
+        validators=[DataRequired(), NumberRange(min=1900, max=2100)],
+        description=_("Año del corte del saldo"),
+    )
+    mes_corte = SelectField(
+        _("Mes de Corte"),
+        validators=[DataRequired()],
+        coerce=int,
+        choices=[
+            (1, _("Enero")),
+            (2, _("Febrero")),
+            (3, _("Marzo")),
+            (4, _("Abril")),
+            (5, _("Mayo")),
+            (6, _("Junio")),
+            (7, _("Julio")),
+            (8, _("Agosto")),
+            (9, _("Septiembre")),
+            (10, _("Octubre")),
+            (11, _("Noviembre")),
+            (12, _("Diciembre")),
+        ],
+        description=_("Mes del corte del saldo"),
+    )
+    moneda_id = SelectField(
+        _("Moneda"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Moneda del saldo"),
+    )
+    saldo_acumulado = DecimalField(
+        _("Saldo Acumulado"),
+        validators=[DataRequired(), NumberRange(min=0)],
+        description=_("Saldo acumulado a la fecha de corte"),
+    )
+    tipo_cambio = DecimalField(
+        _("Tipo de Cambio"),
+        validators=[Optional(), NumberRange(min=0)],
+        default=Decimal("1.0"),
+        description=_("Tipo de cambio para conversión (opcional)"),
+    )
+    saldo_convertido = DecimalField(
+        _("Saldo Convertido"),
+        validators=[Optional(), NumberRange(min=0)],
+        description=_("Saldo convertido con el tipo de cambio propuesto"),
+    )
+    observaciones = StringField(
+        _("Observaciones"),
+        validators=[Optional(), Length(max=500)],
+        description=_("Notas adicionales sobre esta carga inicial"),
+    )
     submit = SubmitField(_("Guardar"))

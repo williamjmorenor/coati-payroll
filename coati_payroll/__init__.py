@@ -247,6 +247,7 @@ def create_app(config) -> Flask:
         prestamo_bp,
         empresa_bp,
         configuracion_bp,
+        carga_inicial_prestacion_bp,
     )
 
     app.register_blueprint(user_bp)
@@ -263,6 +264,7 @@ def create_app(config) -> Flask:
     app.register_blueprint(prestamo_bp)
     app.register_blueprint(empresa_bp)
     app.register_blueprint(configuracion_bp)
+    app.register_blueprint(carga_inicial_prestacion_bp)
 
     # Register CLI commands
     from coati_payroll.cli import register_cli_commands

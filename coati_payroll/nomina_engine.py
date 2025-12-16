@@ -47,6 +47,8 @@ from coati_payroll.model import (
     AdelantoAbono,
     AcumuladoAnual,
     TipoCambio,
+    Prestacion,
+    PrestacionAcumulada,
 )
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
@@ -358,6 +360,8 @@ class NominaEngine:
             nomina_empleado = self._crear_nomina_empleado(emp_calculo)
             # Update accumulated annual values
             self._actualizar_acumulados(emp_calculo, nomina_empleado)
+            # Create prestacion accumulation transactions
+            self._crear_transacciones_prestaciones(emp_calculo, nomina_empleado)
 
         return emp_calculo
 
@@ -1206,6 +1210,93 @@ class NominaEngine:
                 elif deduccion_obj.antes_impuesto:
                     acumulado.deducciones_antes_impuesto_acumulado += deduccion.monto
 
+    def _crear_transacciones_prestaciones(
+        self,
+        emp_calculo: EmpleadoCalculo,
+        nomina_empleado: NominaEmpleado,
+    ) -> None:
+        """Create transactional records for accumulated benefits.
+
+        This method creates immutable transaction records for each benefit
+        calculated in the payroll. Each transaction includes the previous balance,
+        the amount added, and the new balance for complete audit trail.
+
+        Args:
+            emp_calculo: Employee calculation container
+            nomina_empleado: The created NominaEmpleado record
+        """
+        if not self.nomina:
+            return
+
+        empleado = emp_calculo.empleado
+        periodo_anio = self.periodo_fin.year
+        periodo_mes = self.periodo_fin.month
+
+        # Get the payroll's currency
+        moneda_id = self.planilla.moneda_id
+
+        for prestacion_item in emp_calculo.prestaciones:
+            if not prestacion_item.prestacion_id:
+                continue
+
+            # Get the prestacion object to check accumulation type
+            prestacion = db.session.get(Prestacion, prestacion_item.prestacion_id)
+            if not prestacion:
+                continue
+
+            # Get the previous balance for this employee and prestacion
+            # Order by fecha_transaccion and creado (timestamp) to get the most recent transaction
+            ultima_transaccion = (
+                db.session.query(PrestacionAcumulada)
+                .filter(
+                    PrestacionAcumulada.empleado_id == empleado.id,
+                    PrestacionAcumulada.prestacion_id == prestacion.id,
+                )
+                .order_by(
+                    PrestacionAcumulada.fecha_transaccion.desc(),
+                    PrestacionAcumulada.creado.desc(),
+                )
+                .first()
+            )
+
+            saldo_anterior = ultima_transaccion.saldo_nuevo if ultima_transaccion else Decimal("0.00")
+
+            # For monthly settlement benefits, the balance resets each month
+            # So the previous balance should be 0 if we're in a new month
+            if prestacion.tipo_acumulacion == "mensual":
+                # Check if the last transaction was in a different month
+                if ultima_transaccion and (
+                    ultima_transaccion.anio != periodo_anio or ultima_transaccion.mes != periodo_mes
+                ):
+                    saldo_anterior = Decimal("0.00")
+
+            # Calculate new balance
+            monto_transaccion = prestacion_item.monto
+            saldo_nuevo = saldo_anterior + monto_transaccion
+
+            # Create the transaction record
+            transaccion = PrestacionAcumulada(
+                empleado_id=empleado.id,
+                prestacion_id=prestacion.id,
+                fecha_transaccion=self.fecha_calculo,
+                tipo_transaccion="adicion",  # Provision from payroll
+                anio=periodo_anio,
+                mes=periodo_mes,
+                moneda_id=moneda_id,
+                monto_transaccion=monto_transaccion,
+                saldo_anterior=saldo_anterior,
+                saldo_nuevo=saldo_nuevo,
+                nomina_id=self.nomina.id,
+                observaciones=(
+                    f"Provisión nómina {self.periodo_inicio.strftime('%Y-%m-%d')} - "
+                    f"{self.periodo_fin.strftime('%Y-%m-%d')}"
+                ),
+                procesado_por=self.nomina.generado_por,
+                creado_por=self.nomina.generado_por,
+            )
+
+            db.session.add(transaccion)
+
     def _calcular_totales(self) -> None:
         """Calculate grand totals for the nomina."""
         if not self.nomina:
@@ -1246,7 +1337,26 @@ def ejecutar_nomina(
     Returns:
         Tuple of (Nomina or None, list of errors, list of warnings)
     """
-    planilla = db.session.get(Planilla, planilla_id)
+    # Eagerly load all relationships needed for payroll processing
+    # This prevents DetachedInstanceError in test contexts
+    from sqlalchemy.orm import joinedload
+    from coati_payroll.model import PlanillaIngreso, PlanillaDeduccion, PlanillaPrestacion, PlanillaEmpleado
+
+    planilla = (
+        db.session.query(Planilla)
+        .options(
+            joinedload(Planilla.planilla_percepciones).joinedload(PlanillaIngreso.percepcion),
+            joinedload(Planilla.planilla_deducciones).joinedload(PlanillaDeduccion.deduccion),
+            joinedload(Planilla.planilla_prestaciones).joinedload(PlanillaPrestacion.prestacion),
+            joinedload(Planilla.planilla_empleados).joinedload(PlanillaEmpleado.empleado),
+            joinedload(Planilla.planilla_reglas_calculo),
+            joinedload(Planilla.tipo_planilla),
+            joinedload(Planilla.moneda),
+        )
+        .filter(Planilla.id == planilla_id)
+        .first()
+    )
+
     if not planilla:
         return None, ["Planilla no encontrada."], []
 

@@ -156,3 +156,38 @@ class NovedadEstado(StrEnum):
 
     PENDIENTE = "pendiente"  # Pending - not yet executed
     EJECUTADA = "ejecutada"  # Executed - nomina has been applied
+
+
+class TipoAcumulacionPrestacion(StrEnum):
+    """Types of benefit accumulation periods.
+
+    Defines how employee benefits (prestaciones) accumulate over time.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    MENSUAL = "mensual"  # Settled monthly (e.g., INSS, INATEC)
+    ANUAL = "anual"  # Accumulated annually (e.g., 13th month)
+    VIDA_LABORAL = "vida_laboral"  # Accumulated over employment lifetime (e.g., severance)
+
+
+class CargaInicialEstado(StrEnum):
+    """States for initial benefit balance loading.
+
+    Python 3.11+ StrEnum for type-safe initial balance status handling.
+    """
+
+    BORRADOR = "borrador"  # Draft - not yet applied
+    APLICADO = "aplicado"  # Applied - transferred to accumulated table
+
+
+class TipoTransaccionPrestacion(StrEnum):
+    """Transaction types for accumulated benefits.
+
+    Defines the types of transactions that can modify benefit balances.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    SALDO_INICIAL = "saldo_inicial"  # Initial balance
+    ADICION = "adicion"  # Addition (increase)
+    DISMINUCION = "disminucion"  # Decrease (reduction)
+    AJUSTE = "ajuste"  # Adjustment (can be positive or negative)

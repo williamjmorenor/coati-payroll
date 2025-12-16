@@ -579,11 +579,23 @@ class Prestacion(database.Model, BaseTabla):
 
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
+    # Accumulation configuration
+    # Defines how this benefit accumulates: monthly settlement, annually, or lifetime
+    tipo_acumulacion = database.Column(
+        database.String(20), nullable=False, default="mensual"
+    )  # mensual | anual | vida_laboral
+
     planillas = database.relationship(
         "PlanillaPrestacion",
         back_populates="prestacion",
     )
     nomina_detalles = database.relationship("NominaDetalle", back_populates="prestacion")
+    prestaciones_acumuladas = database.relationship(
+        "PrestacionAcumulada", back_populates="prestacion", cascade="all,delete-orphan"
+    )
+    cargas_iniciales = database.relationship(
+        "CargaInicialPrestacion", back_populates="prestacion", cascade="all,delete-orphan"
+    )
 
 
 # Definición de componentes de planilla
@@ -1274,3 +1286,159 @@ class ConfiguracionGlobal(database.Model, BaseTabla):
 
     # Additional global settings can be stored as JSON
     configuracion_adicional = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+
+
+# Prestaciones Acumuladas - Accumulated Benefits Tracking (Transactional)
+class PrestacionAcumulada(database.Model, BaseTabla):
+    """Transactional log of accumulated employee benefits over time.
+
+    IMPORTANT: This is a transactional (append-only) table for audit purposes.
+    Each record represents a single transaction that affects the benefit balance.
+    Never update or delete records - always insert new transactions.
+
+    This table maintains a complete audit trail of each benefit (prestacion) for each employee,
+    independent of which payroll (planilla) they are assigned to. This is critical because
+    employees can change payrolls while their benefit accumulations continue.
+
+    Transaction types:
+    - saldo_inicial: Initial balance loading
+    - adicion: Addition (increase) - typically from payroll provisions
+    - disminucion: Decrease (reduction) - typically from settlements/payments
+    - ajuste: Adjustment (can be positive or negative) - manual corrections
+
+    The accumulation respects the tipo_acumulacion setting:
+    - mensual: Settled and reset monthly (e.g., INSS, INATEC)
+    - anual: Accumulated annually based on payroll configuration
+    - vida_laboral: Accumulated over the employee's entire tenure (e.g., severance)
+    """
+
+    __tablename__ = "prestacion_acumulada"
+    __table_args__ = (
+        database.Index("ix_prestacion_acum_empleado_prestacion", "empleado_id", "prestacion_id"),
+        database.Index("ix_prestacion_acum_fecha", "fecha_transaccion"),
+        database.Index("ix_prestacion_acum_periodo", "anio", "mes"),
+    )
+
+    empleado_id = database.Column(
+        database.String(26),
+        database.ForeignKey("empleado.id"),
+        nullable=False,
+        index=True,
+    )
+    prestacion_id = database.Column(
+        database.String(26),
+        database.ForeignKey("prestacion.id"),
+        nullable=False,
+        index=True,
+    )
+
+    # Transaction details
+    fecha_transaccion = database.Column(database.Date, nullable=False, default=date.today, index=True)
+    tipo_transaccion = database.Column(
+        database.String(20), nullable=False, index=True
+    )  # saldo_inicial | adicion | disminucion | ajuste
+
+    # Period tracking (for reporting and grouping)
+    anio = database.Column(database.Integer, nullable=False, index=True)
+    mes = database.Column(database.Integer, nullable=False)  # 1-12
+
+    # Currency tracking
+    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=False)
+
+    # Transaction amounts
+    # For audit clarity, we store the transaction amount and running balance separately
+    monto_transaccion = database.Column(
+        database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )  # Can be positive (addition) or negative (deduction)
+    saldo_anterior = database.Column(
+        database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )  # Balance before this transaction
+    saldo_nuevo = database.Column(
+        database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )  # Balance after this transaction
+
+    # Reference to source document that created this transaction
+    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=True)
+    carga_inicial_id = database.Column(
+        database.String(26), database.ForeignKey("carga_inicial_prestacion.id"), nullable=True
+    )
+
+    # Reversal tracking (if this transaction reverses another)
+    transaccion_reversada_id = database.Column(database.String(26), nullable=True)  # FK to another transaction
+
+    # Audit trail
+    observaciones = database.Column(database.String(500), nullable=True)
+    procesado_por = database.Column(database.String(150), nullable=True)
+
+    # Relationships
+    empleado = database.relationship("Empleado")
+    prestacion = database.relationship("Prestacion", back_populates="prestaciones_acumuladas")
+    moneda = database.relationship("Moneda")
+    nomina = database.relationship("Nomina")
+    carga_inicial = database.relationship("CargaInicialPrestacion", back_populates="transacciones")
+
+
+# Carga Inicial de Prestaciones - Initial Benefit Balance Loading
+class CargaInicialPrestacion(database.Model, BaseTabla):
+    """Initial benefit balance loading for system implementation.
+
+    When implementing the system mid-year or mid-employment, this table allows
+    loading existing accumulated balances for employees. Once applied, these
+    balances are transferred to the PrestacionAcumulada table.
+
+    Workflow:
+    1. Create entry in 'borrador' (draft) status
+    2. Review and validate the data
+    3. Change status to 'aplicado' (applied)
+    4. System automatically creates corresponding PrestacionAcumulada record
+    """
+
+    __tablename__ = "carga_inicial_prestacion"
+    __table_args__ = (
+        database.UniqueConstraint(
+            "empleado_id",
+            "prestacion_id",
+            "anio_corte",
+            "mes_corte",
+            name="uq_carga_inicial_emp_prest_periodo",
+        ),
+    )
+
+    empleado_id = database.Column(
+        database.String(26),
+        database.ForeignKey("empleado.id"),
+        nullable=False,
+        index=True,
+    )
+    prestacion_id = database.Column(
+        database.String(26),
+        database.ForeignKey("prestacion.id"),
+        nullable=False,
+        index=True,
+    )
+
+    # Cutoff period (when this balance was calculated)
+    anio_corte = database.Column(database.Integer, nullable=False)
+    mes_corte = database.Column(database.Integer, nullable=False)  # 1-12
+
+    # Currency and exchange rate
+    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=False)
+    saldo_acumulado = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    tipo_cambio = database.Column(database.Numeric(24, 10), nullable=True, default=Decimal("1.0000000000"))
+    saldo_convertido = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+
+    # Status: borrador (draft) or aplicado (applied)
+    estado = database.Column(database.String(20), nullable=False, default="borrador")  # borrador | aplicado
+
+    # Application tracking
+    fecha_aplicacion = database.Column(database.DateTime, nullable=True)
+    aplicado_por = database.Column(database.String(150), nullable=True)
+
+    # Notes
+    observaciones = database.Column(database.String(500), nullable=True)
+
+    # Relationships
+    empleado = database.relationship("Empleado")
+    prestacion = database.relationship("Prestacion", back_populates="cargas_iniciales")
+    moneda = database.relationship("Moneda")
+    transacciones = database.relationship("PrestacionAcumulada", back_populates="carga_inicial")
