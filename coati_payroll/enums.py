@@ -191,3 +191,81 @@ class TipoTransaccionPrestacion(StrEnum):
     ADICION = "adicion"  # Addition (increase)
     DISMINUCION = "disminucion"  # Decrease (reduction)
     AJUSTE = "ajuste"  # Adjustment (can be positive or negative)
+
+
+# ============================================================================
+# Vacation Module Enums
+# ============================================================================
+
+
+class AccrualMethod(StrEnum):
+    """Methods for vacation accrual calculation.
+
+    Defines how vacation time is calculated and earned.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    PERIODIC = "periodic"  # Fixed amount per period (monthly, annually, etc.)
+    PROPORTIONAL = "proportional"  # Based on worked days/hours
+    SENIORITY = "seniority"  # Tiered by years of service
+
+
+class AccrualFrequency(StrEnum):
+    """Frequency of vacation accrual.
+
+    Determines how often vacation time is credited to employee accounts.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    MONTHLY = "monthly"  # Monthly accrual
+    BIWEEKLY = "biweekly"  # Every two weeks
+    ANNUAL = "annual"  # Once per year
+
+
+class AccrualBasis(StrEnum):
+    """Basis for proportional accrual calculation.
+
+    Used when accrual_method is PROPORTIONAL.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    DAYS_WORKED = "days_worked"  # Based on days actually worked
+    HOURS_WORKED = "hours_worked"  # Based on hours worked
+
+
+class VacationLedgerType(StrEnum):
+    """Types of vacation ledger entries.
+
+    All vacation balance changes must be recorded with one of these types.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    ACCRUAL = "accrual"  # Earned vacation time
+    USAGE = "usage"  # Vacation time taken
+    ADJUSTMENT = "adjustment"  # Manual adjustment (+ or -)
+    EXPIRATION = "expiration"  # Expired vacation time
+    PAYOUT = "payout"  # Paid out vacation (e.g., on termination)
+
+
+class VacationUnitType(StrEnum):
+    """Unit types for vacation balances.
+
+    Country-specific: some use days, some use hours.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    DAYS = "days"  # Calendar or working days
+    HOURS = "hours"  # Hours
+
+
+class ExpirationRule(StrEnum):
+    """Rules for vacation expiration.
+
+    Defines when unused vacation expires.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    NEVER = "never"  # Vacation never expires
+    FISCAL_YEAR_END = "fiscal_year_end"  # Expires at fiscal year end
+    ANNIVERSARY = "anniversary"  # Expires on employment anniversary
+    CUSTOM_DATE = "custom_date"  # Custom expiration date

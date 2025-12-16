@@ -834,12 +834,26 @@ class NominaNovedad(database.Model, BaseTabla):
     percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
     deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
 
+    # ---- Vacation Module Integration ----
+    # Flag to mark this novelty as vacation/time-off
+    es_descanso_vacaciones = database.Column(database.Boolean(), default=False, nullable=False)
+
+    # Reference to VacationNovelty if this is a vacation leave
+    vacation_novelty_id = database.Column(
+        database.String(26), database.ForeignKey("vacation_novelty.id"), nullable=True, index=True
+    )
+
+    # Dates for vacation period (when es_descanso_vacaciones=True)
+    fecha_inicio_descanso = database.Column(database.Date, nullable=True)
+    fecha_fin_descanso = database.Column(database.Date, nullable=True)
+
     # Estado de la novedad: 'pendiente' | 'ejecutada'
     # Se marca como 'ejecutada' cuando la nómina cambia a estado 'aplicado'
     estado = database.Column(database.String(20), nullable=False, default="pendiente")  # Use NovedadEstado enum values
 
     nomina = database.relationship("Nomina", back_populates="novedades")
     empleado = database.relationship("Empleado", back_populates="novedades_registradas")
+    vacation_novelty = database.relationship("VacationNovelty", foreign_keys=[vacation_novelty_id])
 
 
 # Comprobante Contable (Accounting Voucher)
@@ -1442,3 +1456,275 @@ class CargaInicialPrestacion(database.Model, BaseTabla):
     prestacion = database.relationship("Prestacion", back_populates="cargas_iniciales")
     moneda = database.relationship("Moneda")
     transacciones = database.relationship("PrestacionAcumulada", back_populates="carga_inicial")
+
+
+# ============================================================================
+# Vacation Module - Robust, Flexible, Country-Agnostic
+# ============================================================================
+
+
+class VacationPolicy(database.Model, BaseTabla):
+    """Vacation policy configuration (payroll/company-specific).
+
+    This model represents the policy engine for vacation management.
+    Policies are configurable and define how vacation is accrued, used, and expired.
+    Completely agnostic to country-specific laws - all rules are configuration-based.
+
+    Design principles:
+    - Policies are declarative, not hardcoded
+    - Support for all Americas (LATAM, USA, Canada)
+    - Flexible enough to handle diverse legal requirements
+    - Associated with Planillas (payrolls) to support multiple countries in consolidated companies
+    """
+
+    __tablename__ = "vacation_policy"
+    __table_args__ = (
+        database.UniqueConstraint("codigo", name="uq_vacation_policy_codigo"),
+        database.Index("ix_vacation_policy_empresa", "empresa_id"),
+        database.Index("ix_vacation_policy_planilla", "planilla_id"),
+    )
+
+    # Policy identification
+    codigo = database.Column(database.String(50), unique=True, nullable=False, index=True)
+    nombre = database.Column(database.String(200), nullable=False)
+    descripcion = database.Column(database.String(500), nullable=True)
+
+    # Payroll association (primary) - policies are tied to specific payrolls
+    # This allows different vacation rules for different payrolls in consolidated companies
+    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=True, index=True)
+    planilla = database.relationship("Planilla", backref="vacation_policies")
+
+    # Company association (secondary, optional) - for policies that apply to entire company
+    empresa_id = database.Column(database.String(26), database.ForeignKey("empresa.id"), nullable=True, index=True)
+    empresa = database.relationship("Empresa")
+
+    # Status
+    activo = database.Column(database.Boolean(), default=True, nullable=False)
+
+    # ---- Accrual Configuration ----
+    # How vacation is earned
+    accrual_method = database.Column(
+        database.String(20), nullable=False, default="periodic"
+    )  # periodic | proportional | seniority
+
+    # Amount earned per period (for periodic method)
+    accrual_rate = database.Column(database.Numeric(10, 4), nullable=False, default=Decimal("0.0000"))
+
+    # How often accrual happens
+    accrual_frequency = database.Column(
+        database.String(20), nullable=False, default="monthly"
+    )  # monthly | biweekly | annual
+
+    # Basis for proportional calculation
+    accrual_basis = database.Column(
+        database.String(20), nullable=True
+    )  # days_worked | hours_worked (used when accrual_method=proportional)
+
+    # Minimum service days before accrual begins
+    min_service_days = database.Column(database.Integer, nullable=False, default=0)
+
+    # Seniority tiers (JSON format for flexibility)
+    # Example: [{"years": 0, "rate": 10}, {"years": 2, "rate": 15}, {"years": 5, "rate": 20}]
+    seniority_tiers = database.Column(JSON, nullable=True)
+
+    # ---- Balance Limits ----
+    # Maximum balance allowed
+    max_balance = database.Column(database.Numeric(10, 4), nullable=True)
+
+    # Maximum that can be carried over to next period
+    carryover_limit = database.Column(database.Numeric(10, 4), nullable=True)
+
+    # Allow negative balance (advance vacation)
+    allow_negative = database.Column(database.Boolean(), default=False, nullable=False)
+
+    # ---- Expiration Rules ----
+    # When does unused vacation expire
+    expiration_rule = database.Column(
+        database.String(20), nullable=False, default="never"
+    )  # never | fiscal_year_end | anniversary | custom_date
+
+    # Months after accrual when vacation expires (used with fiscal_year_end, anniversary)
+    expiration_months = database.Column(database.Integer, nullable=True)
+
+    # Custom expiration date (used with custom_date rule)
+    expiration_date = database.Column(database.Date, nullable=True)
+
+    # ---- Termination Rules ----
+    # Pay out unused vacation on termination
+    payout_on_termination = database.Column(database.Boolean(), default=True, nullable=False)
+
+    # ---- Usage Configuration ----
+    # Unit type for vacation balances
+    unit_type = database.Column(database.String(10), nullable=False, default="days")  # days | hours
+
+    # Count weekends when calculating vacation days
+    count_weekends = database.Column(database.Boolean(), default=True, nullable=False)
+
+    # Count holidays when calculating vacation days
+    count_holidays = database.Column(database.Boolean(), default=True, nullable=False)
+
+    # Allow partial days/hours
+    partial_units_allowed = database.Column(database.Boolean(), default=False, nullable=False)
+
+    # Rounding rule (for partial units): up | down | nearest
+    rounding_rule = database.Column(database.String(10), nullable=True, default="nearest")
+
+    # Continue accruing during vacation leave
+    accrue_during_leave = database.Column(database.Boolean(), default=True, nullable=False)
+
+    # Additional configuration (JSON for future extensibility)
+    configuracion_adicional = database.Column(JSON, nullable=True)
+
+    # Relationships
+    accounts = database.relationship("VacationAccount", back_populates="policy")
+
+
+class VacationAccount(database.Model, BaseTabla):
+    """Vacation account per employee.
+
+    Represents the vacation balance for a single employee under a specific policy.
+    This is the control record that tracks current balance and last accrual.
+
+    IMPORTANT: Never update balance directly. All changes must go through VacationLedger.
+    """
+
+    __tablename__ = "vacation_account"
+    __table_args__ = (
+        database.UniqueConstraint("empleado_id", "policy_id", name="uq_vacation_account_emp_policy"),
+        database.Index("ix_vacation_account_empleado", "empleado_id"),
+        database.Index("ix_vacation_account_policy", "policy_id"),
+    )
+
+    # Employee and policy association
+    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    empleado = database.relationship("Empleado")
+
+    policy_id = database.Column(
+        database.String(26), database.ForeignKey("vacation_policy.id"), nullable=False, index=True
+    )
+    policy = database.relationship("VacationPolicy", back_populates="accounts")
+
+    # Current balance (calculated from ledger)
+    current_balance = database.Column(database.Numeric(10, 4), nullable=False, default=Decimal("0.0000"))
+
+    # Last accrual date (for automated accrual processing)
+    last_accrual_date = database.Column(database.Date, nullable=True)
+
+    # Status
+    activo = database.Column(database.Boolean(), default=True, nullable=False)
+
+    # Relationships
+    ledger_entries = database.relationship("VacationLedger", back_populates="account", order_by="VacationLedger.fecha")
+
+
+class VacationLedger(database.Model, BaseTabla):
+    """Immutable ledger of all vacation transactions.
+
+    This is the core of the vacation system - all vacation balance changes are recorded here.
+    The ledger is append-only (immutable) for full audit trail.
+
+    Design principle: Balance = SUM(ledger entries)
+
+    Entry types:
+    - ACCRUAL: Vacation earned
+    - USAGE: Vacation taken
+    - ADJUSTMENT: Manual adjustment
+    - EXPIRATION: Vacation expired
+    - PAYOUT: Vacation paid out (e.g., termination)
+    """
+
+    __tablename__ = "vacation_ledger"
+    __table_args__ = (
+        database.Index("ix_vacation_ledger_account", "account_id"),
+        database.Index("ix_vacation_ledger_fecha", "fecha"),
+        database.Index("ix_vacation_ledger_type", "entry_type"),
+        database.Index("ix_vacation_ledger_empleado", "empleado_id"),
+    )
+
+    # Account reference
+    account_id = database.Column(
+        database.String(26), database.ForeignKey("vacation_account.id"), nullable=False
+    )
+    account = database.relationship("VacationAccount", back_populates="ledger_entries")
+
+    # Employee reference (for easier querying)
+    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False)
+    empleado = database.relationship("Empleado")
+
+    # Transaction details
+    fecha = database.Column(database.Date, nullable=False, default=date.today)
+    entry_type = database.Column(
+        database.String(20), nullable=False
+    )  # accrual | usage | adjustment | expiration | payout
+
+    # Quantity (positive for additions, negative for deductions)
+    quantity = database.Column(database.Numeric(10, 4), nullable=False)
+
+    # Source of the transaction
+    source = database.Column(database.String(50), nullable=False)  # system | novelty | termination | manual
+
+    # Reference to source record (e.g., novelty_id, nomina_id)
+    reference_id = database.Column(database.String(26), nullable=True)
+    reference_type = database.Column(database.String(50), nullable=True)  # Type of reference (novelty, nomina, etc.)
+
+    # Notes/description
+    observaciones = database.Column(database.String(500), nullable=True)
+
+    # Balance after this transaction (for convenience, though can be calculated)
+    balance_after = database.Column(database.Numeric(10, 4), nullable=True)
+
+
+class VacationNovelty(database.Model, BaseTabla):
+    """Vacation leave request/novelty.
+
+    Represents a vacation leave request that affects the vacation balance.
+    When approved, it creates entries in the VacationLedger.
+
+    This integrates the vacation system with the existing novelty workflow.
+    """
+
+    __tablename__ = "vacation_novelty"
+    __table_args__ = (
+        database.Index("ix_vacation_novelty_empleado", "empleado_id"),
+        database.Index("ix_vacation_novelty_account", "account_id"),
+        database.Index("ix_vacation_novelty_estado", "estado"),
+        database.Index("ix_vacation_novelty_dates", "start_date", "end_date"),
+    )
+
+    # Employee and account
+    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    empleado = database.relationship("Empleado")
+
+    account_id = database.Column(
+        database.String(26), database.ForeignKey("vacation_account.id"), nullable=False, index=True
+    )
+    account = database.relationship("VacationAccount")
+
+    # Leave dates
+    start_date = database.Column(database.Date, nullable=False, index=True)
+    end_date = database.Column(database.Date, nullable=False, index=True)
+
+    # Units (days or hours, depending on policy)
+    units = database.Column(database.Numeric(10, 4), nullable=False)
+
+    # Status
+    estado = database.Column(
+        database.String(20), nullable=False, default="pendiente"
+    )  # pendiente | aprobado | rechazado | disfrutado
+
+    # Approval tracking
+    fecha_aprobacion = database.Column(database.Date, nullable=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+
+    # Link to ledger entry (when processed)
+    ledger_entry_id = database.Column(database.String(26), database.ForeignKey("vacation_ledger.id"), nullable=True)
+    ledger_entry = database.relationship("VacationLedger")
+
+    # Link to payroll novelty (NominaNovedad) when integrated with payroll
+    nomina_novedades = database.relationship(
+        "NominaNovedad", back_populates="vacation_novelty", foreign_keys="NominaNovedad.vacation_novelty_id"
+    )
+
+    # Notes
+    observaciones = database.Column(database.String(500), nullable=True)
+    motivo_rechazo = database.Column(database.String(500), nullable=True)

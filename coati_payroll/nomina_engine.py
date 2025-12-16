@@ -362,6 +362,8 @@ class NominaEngine:
             self._actualizar_acumulados(emp_calculo, nomina_empleado)
             # Create prestacion accumulation transactions
             self._crear_transacciones_prestaciones(emp_calculo, nomina_empleado)
+            # Process vacation accrual and usage
+            self._procesar_vacaciones(empleado, emp_calculo, nomina_empleado)
 
         return emp_calculo
 
@@ -1296,6 +1298,61 @@ class NominaEngine:
             )
 
             db.session.add(transaccion)
+
+    def _procesar_vacaciones(self, empleado: Empleado, emp_calculo: EmpleadoCalculo, nomina_empleado: NominaEmpleado) -> None:
+        """Process vacation accrual and usage for an employee.
+
+        This method:
+        1. Accumulates vacation time based on the vacation policy
+        2. Processes any vacation novelties (time off taken)
+
+        Args:
+            empleado: The employee
+            emp_calculo: Employee calculation data
+            nomina_empleado: The payroll record for this employee
+        """
+        try:
+            from coati_payroll.vacation_service import VacationService
+
+            vacation_service = VacationService(
+                planilla=self.planilla,
+                periodo_inicio=self.periodo_inicio,
+                periodo_fin=self.periodo_fin,
+            )
+
+            # Accumulate vacation time
+            accrued = vacation_service.acumular_vacaciones_empleado(
+                empleado=empleado,
+                nomina_empleado=nomina_empleado,
+                usuario=self.usuario,
+            )
+
+            if accrued > 0:
+                self._trace(
+                    f"Acumuladas {accrued} unidades de vacaciones para empleado "
+                    f"{empleado.codigo_empleado}"
+                )
+
+            # Process vacation novelties (time off taken)
+            used = vacation_service.procesar_novedades_vacaciones(
+                empleado=empleado,
+                novedades=emp_calculo.novedades,
+                usuario=self.usuario,
+            )
+
+            if used > 0:
+                self._trace(
+                    f"Procesadas {used} unidades de vacaciones usadas para empleado "
+                    f"{empleado.codigo_empleado}"
+                )
+
+        except Exception as e:
+            # Log error but don't fail payroll execution
+            log.error(f"Error procesando vacaciones para empleado {empleado.codigo_empleado}: {str(e)}")
+            self.warnings.append(
+                f"No se pudieron procesar vacaciones para {empleado.primer_nombre} "
+                f"{empleado.primer_apellido}: {str(e)}"
+            )
 
     def _calcular_totales(self) -> None:
         """Calculate grand totals for the nomina."""

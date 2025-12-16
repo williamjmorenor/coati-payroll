@@ -995,6 +995,24 @@ class NominaNovedadForm(FlaskForm):
         validators=[Optional()],
         description=_("Fecha en que ocurrió el evento (opcional, para auditoría)"),
     )
+    
+    # ---- Vacation Module Integration Fields ----
+    es_descanso_vacaciones = BooleanField(
+        _("Es Descanso de Vacaciones"),
+        default=False,
+        description=_("Marcar si esta novedad representa vacaciones/descanso del empleado"),
+    )
+    fecha_inicio_descanso = DateField(
+        _("Fecha Inicio Descanso"),
+        validators=[Optional()],
+        description=_("Fecha de inicio del período de vacaciones (si aplica)"),
+    )
+    fecha_fin_descanso = DateField(
+        _("Fecha Fin Descanso"),
+        validators=[Optional()],
+        description=_("Fecha de fin del período de vacaciones (si aplica)"),
+    )
+    
     submit = SubmitField(_("Guardar"))
 
 
@@ -1363,3 +1381,338 @@ class CargaInicialPrestacionForm(FlaskForm):
         description=_("Notas adicionales sobre esta carga inicial"),
     )
     submit = SubmitField(_("Guardar"))
+
+
+# ============================================================================
+# Vacation Module Forms
+# ============================================================================
+
+
+class VacationPolicyForm(FlaskForm):
+    """Form for creating and editing vacation policies."""
+
+    codigo = StringField(
+        _("Código"),
+        validators=[DataRequired(), Length(max=50)],
+        description=_("Código único de la política"),
+    )
+    nombre = StringField(
+        _("Nombre"),
+        validators=[DataRequired(), Length(max=200)],
+        description=_("Nombre descriptivo de la política"),
+    )
+    descripcion = StringField(
+        _("Descripción"),
+        validators=[Optional(), Length(max=500)],
+        description=_("Descripción detallada de la política"),
+    )
+    planilla_id = SelectField(
+        _("Planilla (Nómina)"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Planilla a la que aplica esta política (recomendado para políticas específicas por país)"),
+    )
+    empresa_id = SelectField(
+        _("Empresa"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Empresa a la que aplica esta política (opcional, para políticas globales)"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+
+    # Accrual configuration
+    accrual_method = SelectField(
+        _("Método de Acumulación"),
+        choices=[
+            ("periodic", _("Periódico")),
+            ("proportional", _("Proporcional")),
+            ("seniority", _("Por Antigüedad")),
+        ],
+        validators=[DataRequired()],
+        description=_("Cómo se acumulan las vacaciones"),
+    )
+    accrual_rate = DecimalField(
+        _("Tasa de Acumulación"),
+        validators=[DataRequired(), NumberRange(min=0)],
+        default=Decimal("0.0"),
+        description=_("Cantidad acumulada por período"),
+    )
+    accrual_frequency = SelectField(
+        _("Frecuencia de Acumulación"),
+        choices=[
+            ("monthly", _("Mensual")),
+            ("biweekly", _("Quincenal")),
+            ("annual", _("Anual")),
+        ],
+        validators=[DataRequired()],
+        description=_("Con qué frecuencia se acumula"),
+    )
+    accrual_basis = SelectField(
+        _("Base de Acumulación"),
+        choices=[
+            ("", _("N/A")),
+            ("days_worked", _("Días Trabajados")),
+            ("hours_worked", _("Horas Trabajadas")),
+        ],
+        validators=[Optional()],
+        description=_("Base para cálculo proporcional (opcional)"),
+    )
+    min_service_days = IntegerField(
+        _("Días Mínimos de Servicio"),
+        validators=[DataRequired(), NumberRange(min=0)],
+        default=0,
+        description=_("Días de servicio antes de comenzar a acumular"),
+    )
+
+    # Balance limits
+    max_balance = DecimalField(
+        _("Balance Máximo"),
+        validators=[Optional(), NumberRange(min=0)],
+        description=_("Balance máximo permitido (opcional)"),
+    )
+    carryover_limit = DecimalField(
+        _("Límite de Traspaso"),
+        validators=[Optional(), NumberRange(min=0)],
+        description=_("Máximo que puede traspasar al siguiente período (opcional)"),
+    )
+    allow_negative = BooleanField(
+        _("Permitir Balance Negativo"),
+        default=False,
+        description=_("Permitir adelanto de vacaciones"),
+    )
+
+    # Expiration rules
+    expiration_rule = SelectField(
+        _("Regla de Vencimiento"),
+        choices=[
+            ("never", _("Nunca")),
+            ("fiscal_year_end", _("Fin de Año Fiscal")),
+            ("anniversary", _("Aniversario")),
+            ("custom_date", _("Fecha Personalizada")),
+        ],
+        validators=[DataRequired()],
+        description=_("Cuándo vencen las vacaciones no usadas"),
+    )
+    expiration_months = IntegerField(
+        _("Meses para Vencimiento"),
+        validators=[Optional(), NumberRange(min=0)],
+        description=_("Meses después del acumulación antes de vencer (opcional)"),
+    )
+    expiration_date = DateField(
+        _("Fecha de Vencimiento"),
+        validators=[Optional()],
+        description=_("Fecha personalizada de vencimiento (opcional)"),
+    )
+
+    # Termination rules
+    payout_on_termination = BooleanField(
+        _("Pagar al Terminar"),
+        default=True,
+        description=_("Pagar vacaciones no usadas al terminar relación laboral"),
+    )
+
+    # Usage configuration
+    unit_type = SelectField(
+        _("Tipo de Unidad"),
+        choices=[
+            ("days", _("Días")),
+            ("hours", _("Horas")),
+        ],
+        validators=[DataRequired()],
+        description=_("Unidad para medir vacaciones"),
+    )
+    count_weekends = BooleanField(
+        _("Contar Fines de Semana"),
+        default=True,
+        description=_("Incluir fines de semana al calcular días de vacaciones"),
+    )
+    count_holidays = BooleanField(
+        _("Contar Feriados"),
+        default=True,
+        description=_("Incluir feriados al calcular días de vacaciones"),
+    )
+    partial_units_allowed = BooleanField(
+        _("Permitir Unidades Parciales"),
+        default=False,
+        description=_("Permitir fracciones de días/horas"),
+    )
+    rounding_rule = SelectField(
+        _("Regla de Redondeo"),
+        choices=[
+            ("nearest", _("Más Cercano")),
+            ("up", _("Hacia Arriba")),
+            ("down", _("Hacia Abajo")),
+        ],
+        validators=[Optional()],
+        description=_("Cómo redondear unidades parciales"),
+    )
+    accrue_during_leave = BooleanField(
+        _("Acumular Durante Vacaciones"),
+        default=True,
+        description=_("Continuar acumulando durante período de vacaciones"),
+    )
+
+    submit = SubmitField(_("Guardar"))
+
+
+class VacationAccountForm(FlaskForm):
+    """Form for creating vacation accounts."""
+
+    empleado_id = SelectField(
+        _("Empleado"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Empleado al que pertenece esta cuenta"),
+    )
+    policy_id = SelectField(
+        _("Política de Vacaciones"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Política que rige esta cuenta"),
+    )
+    current_balance = DecimalField(
+        _("Balance Inicial"),
+        validators=[DataRequired(), NumberRange(min=0)],
+        default=Decimal("0.0"),
+        description=_("Balance inicial de vacaciones"),
+    )
+    activo = BooleanField(_("Activo"), default=True)
+
+    submit = SubmitField(_("Guardar"))
+
+
+class VacationLeaveRequestForm(FlaskForm):
+    """Form for creating vacation leave requests."""
+
+    empleado_id = SelectField(
+        _("Empleado"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Empleado que solicita las vacaciones"),
+    )
+    start_date = DateField(
+        _("Fecha de Inicio"),
+        validators=[DataRequired()],
+        description=_("Primer día de vacaciones (inicio del período de descanso)"),
+    )
+    end_date = DateField(
+        _("Fecha de Fin"),
+        validators=[DataRequired()],
+        description=_("Último día de vacaciones (fin del período de descanso)"),
+    )
+    units = DecimalField(
+        _("Días/Horas de Vacaciones a Descontar"),
+        validators=[DataRequired(), NumberRange(min=0)],
+        description=_("IMPORTANTE: Días u horas reales a descontar del saldo (puede diferir de días calendario según política de la empresa)"),
+    )
+    observaciones = StringField(
+        _("Observaciones"),
+        validators=[Optional(), Length(max=500)],
+        description=_("Notas adicionales sobre la solicitud"),
+    )
+
+    submit = SubmitField(_("Solicitar"))
+
+
+class VacationTakenForm(FlaskForm):
+    """Form for registering vacation days actually taken (with automatic novelty creation).
+    
+    This form is used to register vacation time that has been taken by an employee,
+    automatically creating the vacation record and the associated novelty (NominaNovedad).
+    
+    IMPORTANT: 
+    - The 'dias_descontados' field represents the actual vacation days to deduct
+      from the employee's balance, which may differ from the calendar days in the date range
+      based on company policy (e.g., taking Friday+Monday = 4 calendar days but only 2 vacation days).
+    - The novelty MUST be associated with a Percepcion or Deduccion for payroll calculations.
+    """
+
+    empleado_id = SelectField(
+        _("Empleado"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Empleado que tomó las vacaciones"),
+    )
+    fecha_inicio = DateField(
+        _("Fecha Inicio del Descanso"),
+        validators=[DataRequired()],
+        description=_("Primer día del período de descanso (calendario)"),
+    )
+    fecha_fin = DateField(
+        _("Fecha Fin del Descanso"),
+        validators=[DataRequired()],
+        description=_("Último día del período de descanso (calendario)"),
+    )
+    dias_descontados = DecimalField(
+        _("Días/Horas a Descontar del Saldo"),
+        validators=[DataRequired(), NumberRange(min=0.01)],
+        places=2,
+        description=_("CRÍTICO: Días u horas reales a descontar según política (ej: viernes+lunes = 2 días, no 4)"),
+    )
+    
+    # Asociación con Percepción o Deducción (REQUERIDO)
+    tipo_concepto = SelectField(
+        _("Tipo de Concepto"),
+        choices=[
+            ("deduccion", _("Deducción (Descuento)")),
+            ("percepcion", _("Percepción (Pago de Vacaciones)")),
+        ],
+        validators=[DataRequired()],
+        description=_("Tipo de concepto al que se asocia la novedad"),
+    )
+    percepcion_id = SelectField(
+        _("Percepción"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Percepción asociada (si tipo_concepto es percepcion)"),
+    )
+    deduccion_id = SelectField(
+        _("Deducción"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Deducción asociada (si tipo_concepto es deduccion)"),
+    )
+    
+    observaciones = StringField(
+        _("Observaciones"),
+        validators=[Optional(), Length(max=500)],
+        description=_("Notas adicionales"),
+    )
+    
+    submit = SubmitField(_("Registrar Vacaciones"))
+
+
+class VacationInitialBalanceForm(FlaskForm):
+    """Form for loading initial vacation balance for an employee.
+    
+    Used during system implementation to set the initial accumulated vacation
+    balance for employees who already have vacation time earned before the
+    system goes live.
+    
+    Creates an ADJUSTMENT ledger entry with the initial balance.
+    """
+    
+    empleado_id = SelectField(
+        _("Empleado"),
+        validators=[DataRequired()],
+        coerce=str,
+        description=_("Empleado para cargar saldo inicial"),
+    )
+    saldo_inicial = DecimalField(
+        _("Saldo Inicial de Vacaciones"),
+        validators=[DataRequired(), NumberRange(min=0)],
+        places=2,
+        description=_("Días u horas de vacaciones acumuladas al momento de implementación"),
+    )
+    fecha_corte = DateField(
+        _("Fecha de Corte"),
+        validators=[DataRequired()],
+        description=_("Fecha a la que corresponde el saldo inicial (típicamente fecha de implementación del sistema)"),
+    )
+    observaciones = StringField(
+        _("Observaciones"),
+        validators=[Optional(), Length(max=500)],
+        description=_("Notas sobre el origen del saldo inicial"),
+    )
+    
+    submit = SubmitField(_("Cargar Saldo Inicial"))

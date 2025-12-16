@@ -84,6 +84,13 @@
                     </a>
                 </li>
 
+                <!-- Vacaciones -->
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="{{ url_for('vacation.dashboard') }}">
+                        <i class="bi bi-calendar-check me-2"></i><span><span>{{ _('Vacaciones') }}</span></span>
+                    </a>
+                </li>
+
                 <!-- Préstamos -->
                 <li class="nav-item">
                     <a class="nav-link d-flex align-items-center" href="{{ url_for('prestamo.index') }}">
