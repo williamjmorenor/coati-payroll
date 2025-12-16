@@ -95,6 +95,8 @@ nav:
     - Préstamos y Adelantos: guia/prestamos.md
     - Configuración de Planillas: guia/planillas.md
     - Ejecución de Nómina: guia/nomina.md
+    - Gestión de Vacaciones: guia/vacaciones.md
+    - Configuración Contable: guia/configuracion-contable.md
   - Tutorial Completo:
     - Paso a Paso - Nómina Completa: tutorial/nomina-completa.md
   - Características Avanzadas:
@@ -102,9 +104,17 @@ nav:
     - Procesamiento en Segundo Plano: background-payroll-processing.md
     - Compatibilidad de Base de Datos: database-compatibility.md
     - Implementación Agnóstica: database-agnostic-implementation.md
+    - Control de Acceso (RBAC): rbac.md
+    - Módulo de Vacaciones (Técnico): modulo-vacaciones.md
+    - Carga de Saldos Iniciales: CARGA_SALDOS_INICIALES.md
+    - Respaldos Automatizados: automated-backups.md
+    - Internacionalización: INTERNATIONALIZATION.md
+    - Traducciones: TRANSLATIONS.md
+    - Plantilla Excel Novedades: plantilla-excel-novedades.md
   - Referencia:
     - Glosario: referencia/glosario.md
     - Preguntas Frecuentes: referencia/faq.md
+    - Importación de Tipos de Cambio: referencia/importacion-tipos-de-cambio.md
 
 extra:
   social:

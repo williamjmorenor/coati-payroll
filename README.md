@@ -22,6 +22,10 @@ Coati Payroll es una aplicación web diseñada para facilitar la gestión comple
 - **Multi-moneda**: Soporte para múltiples monedas con tipos de cambio
 - **Motor de Cálculo**: Procesamiento automático de nóminas con fórmulas configurables
 - **Procesamiento en Segundo Plano**: Sistema de colas para nóminas grandes con Dramatiq/Huey
+- **Gestión de Vacaciones**: Módulo completo de acumulación, uso y auditoría de vacaciones con políticas configurables
+- **Control de Acceso Basado en Roles (RBAC)**: Sistema de permisos con roles Admin, HHRR y Audit
+- **Sistema de Reportes**: Reportes personalizados con permisos por rol y auditoría de ejecuciones
+- **Internacionalización**: Soporte multi-idioma con traducción de interfaz y contenidos
 
 ## 🚀 Instalación Rápida
 
@@ -89,10 +93,16 @@ mkdocs build
 
 - **[Guía de Inicio Rápido](docs/guia/inicio-rapido.md)**: 15 minutos desde instalación hasta su primera nómina - ideal para evaluar el sistema
 - **Guía de Instalación**: Requisitos, instalación y configuración inicial
-- **Guía de Uso**: Usuarios, empresas, monedas, empleados, campos personalizados, conceptos de nómina, reglas de cálculo
+- **Guía de Uso**: Usuarios, empresas, monedas, empleados, campos personalizados, conceptos de nómina, reglas de cálculo, préstamos, vacaciones, configuración contable
 - **Tutorial Completo**: Paso a paso para configurar y ejecutar una nómina con todos los componentes
-- **Características Avanzadas**: Sistema de colas, procesamiento en segundo plano, compatibilidad de bases de datos
-- **Referencia**: Glosario y preguntas frecuentes
+- **Características Avanzadas**: 
+  - Sistema de colas y procesamiento en segundo plano
+  - Compatibilidad de bases de datos (SQLite, PostgreSQL, MySQL/MariaDB)
+  - Control de acceso basado en roles (RBAC)
+  - Gestión de vacaciones con políticas configurables
+  - Sistema de reportes personalizados
+  - Internacionalización y traducción
+- **Referencia**: Glosario, preguntas frecuentes, importación de tipos de cambio
 
 ## 🏗️ Arquitectura
 
@@ -104,10 +114,15 @@ coati/
 │   ├── model.py           # Modelos de base de datos (SQLAlchemy)
 │   ├── nomina_engine.py   # Motor de cálculo de nómina
 │   ├── formula_engine.py  # Motor de fórmulas
+│   ├── vacation_service.py # Servicio de gestión de vacaciones
+│   ├── rbac.py            # Control de acceso basado en roles
+│   ├── report_engine.py   # Motor de reportes
 │   ├── forms.py           # Formularios WTForms
+│   ├── cli.py             # Interfaz de línea de comandos (payrollctl)
 │   ├── queue/             # Sistema de colas (Dramatiq/Huey)
 │   ├── vistas/            # Vistas/Controladores (Blueprints)
 │   ├── templates/         # Plantillas HTML (Jinja2)
+│   ├── translations/      # Archivos de traducción (i18n)
 │   └── static/            # Archivos estáticos
 ├── docs/                  # Documentación MkDocs
 ├── requirements.txt       # Dependencias de producción
@@ -313,17 +328,50 @@ pip install -r development.txt
 
 Los principales modelos son:
 
-- `Usuario`: Usuarios del sistema
+**Configuración del Sistema:**
+- `Usuario`: Usuarios del sistema con roles (Admin, HHRR, Audit)
 - `Empresa`: Empresas o entidades que contratan empleados
+- `Moneda`: Monedas del sistema
+- `TipoCambio`: Tipos de cambio entre monedas
+- `ConfiguracionGlobal`: Configuración global del sistema
+
+**Gestión de Personal:**
 - `Empleado`: Registro maestro de empleados
 - `CampoPersonalizado`: Campos personalizados para empleados
+- `HistorialSalario`: Historial de cambios salariales
+
+**Nómina:**
 - `Percepcion`: Conceptos de ingreso
 - `Deduccion`: Conceptos de descuento
 - `Prestacion`: Aportes patronales
 - `ReglaCalculo`: Reglas de cálculo con esquemas configurables
+- `TipoPlanilla`: Tipos de planilla (mensual, quincenal, etc.)
 - `Planilla`: Configuración de nómina
 - `Nomina`: Ejecución de nómina
-- `Adelanto`: Préstamos y adelantos
+- `NominaEmpleado`: Detalle de nómina por empleado
+- `NominaDetalle`: Líneas de detalle (percepciones, deducciones)
+- `NominaNovedad`: Novedades de nómina
+- `ComprobanteContable`: Comprobantes contables
+
+**Préstamos:**
+- `Adelanto`: Préstamos y adelantos a empleados
+- `AdelantoAbono`: Abonos a préstamos
+
+**Vacaciones:**
+- `VacationPolicy`: Políticas de vacaciones configurables
+- `VacationAccount`: Cuentas de vacaciones por empleado
+- `VacationLedger`: Libro mayor de vacaciones (auditoría)
+- `VacationNovelty`: Solicitudes y novedades de vacaciones
+- `ConfiguracionVacaciones`: Configuración de vacaciones (legacy)
+- `VacacionEmpleado`: Vacaciones por empleado (legacy)
+- `PrestacionAcumulada`: Prestaciones acumuladas
+- `CargaInicialPrestacion`: Carga inicial de prestaciones
+
+**Reportes:**
+- `Report`: Definición de reportes personalizados
+- `ReportRole`: Permisos de reportes por rol
+- `ReportExecution`: Historial de ejecuciones de reportes
+- `ReportAudit`: Auditoría de reportes
 
 ## 📄 Licencia
 

@@ -16,6 +16,10 @@ Coati Payroll es una aplicación web diseñada para facilitar la gestión comple
 - **Procesamiento en Segundo Plano**: Sistema de colas para nóminas grandes con feedback en tiempo real.
 - **Préstamos y Adelantos**: Control de préstamos a empleados con deducción automática de cuotas.
 - **Multi-moneda**: Soporte para múltiples monedas con tipos de cambio configurables.
+- **Gestión de Vacaciones**: Módulo robusto con políticas configurables, libro mayor auditable y acumulación automática.
+- **Control de Acceso (RBAC)**: Sistema de permisos con tres roles: Admin, HHRR y Audit.
+- **Sistema de Reportes**: Reportes personalizados con permisos por rol y auditoría completa.
+- **Internacionalización**: Soporte multi-idioma para interfaz y contenidos.
 
 ## Características Principales
 
@@ -158,6 +162,47 @@ Configure cálculos complejos usando esquemas estructurados:
 - Cualquier cálculo basado en tramos o tablas
 
 [:octicons-arrow-right-24: Guía de Reglas de Cálculo](guia/reglas-calculo.md)
+
+### Gestión de Vacaciones
+
+Módulo completo para gestionar vacaciones de empleados:
+
+- **Políticas configurables**: Adaptable a legislación de cualquier país
+- **Libro mayor auditable**: Trazabilidad completa de todos los movimientos
+- **Acumulación automática**: Se integra con el proceso de nómina
+- **Múltiples métodos**: Periódico, proporcional o por antigüedad
+- **Carga de saldos iniciales**: Importación individual o masiva desde Excel
+
+[:octicons-arrow-right-24: Guía de Vacaciones](guia/vacaciones.md) | [:octicons-arrow-right-24: Documentación Técnica](modulo-vacaciones.md)
+
+### Control de Acceso Basado en Roles (RBAC)
+
+Sistema de permisos robusto con tres niveles de acceso:
+
+- **Admin**: Acceso completo al sistema incluyendo configuración y usuarios
+- **HHRR**: Gestión de personal y nóminas sin acceso a configuración del sistema
+- **Audit**: Acceso de solo lectura para auditorías y revisiones
+
+[:octicons-arrow-right-24: Documentación RBAC](rbac.md)
+
+### Sistema de Reportes
+
+Reportes personalizados con control granular:
+
+- **Reportes definidos por usuario**: SQL personalizado o templates predefinidos
+- **Permisos por rol**: Control de acceso según tipo de usuario
+- **Auditoría completa**: Registro de todas las ejecuciones
+- **Exportación múltiple**: PDF, Excel, CSV
+
+### Internacionalización
+
+Soporte multi-idioma integrado:
+
+- **Interfaz traducible**: Todos los textos de interfaz soportan traducciones
+- **Babel integrado**: Sistema de traducción con archivos .po/.mo
+- **Fácil extensión**: Agregue nuevos idiomas sin modificar código
+
+[:octicons-arrow-right-24: Guía de Internacionalización](INTERNATIONALIZATION.md) | [:octicons-arrow-right-24: Guía de Traducciones](TRANSLATIONS.md)
 
 ## Licencia
 
