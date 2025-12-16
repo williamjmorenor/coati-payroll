@@ -798,6 +798,9 @@ class NominaEngine:
                 if saldo_disponible <= 0:
                     break
 
+                # Calculate and apply interest if applicable
+                self._calcular_interes_prestamo(prestamo)
+
                 monto_cuota = Decimal(str(prestamo.monto_por_cuota or 0))
                 if monto_cuota <= 0:
                     continue
@@ -842,6 +845,79 @@ class NominaEngine:
 
                 # Record the payment
                 self._registrar_abono_adelanto(adelanto, monto_aplicar)
+
+    def _calcular_interes_prestamo(self, prestamo: Adelanto) -> None:
+        """Calculate and apply interest for a loan.
+        
+        This method calculates interest for the days elapsed since the last
+        interest calculation and adds it to the loan balance.
+        
+        Args:
+            prestamo: The loan to calculate interest for
+        """
+        from coati_payroll.interes_engine import calcular_interes_periodo
+        from coati_payroll.model import InteresAdelanto
+        
+        # Only calculate interest if loan has interest rate
+        tasa_interes = prestamo.tasa_interes or Decimal("0.0000")
+        if tasa_interes <= 0:
+            return
+        
+        # Only calculate if loan has balance
+        if prestamo.saldo_pendiente <= 0:
+            return
+        
+        # Determine period for interest calculation
+        fecha_desde = prestamo.fecha_ultimo_calculo_interes
+        if not fecha_desde:
+            # First time calculating interest - use approval or disbursement date
+            fecha_desde = prestamo.fecha_desembolso or prestamo.fecha_aprobacion
+        
+        if not fecha_desde:
+            # If still no date, skip interest calculation
+            return
+        
+        fecha_hasta = self.fecha_calculo
+        
+        # Skip if already calculated for this period
+        if fecha_desde >= fecha_hasta:
+            return
+        
+        # Calculate interest for the period
+        tipo_interes = prestamo.tipo_interes or "simple"
+        interes_calculado, dias = calcular_interes_periodo(
+            saldo=prestamo.saldo_pendiente,
+            tasa_anual=tasa_interes,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta,
+            tipo_interes=tipo_interes
+        )
+        
+        if interes_calculado <= 0:
+            return
+        
+        # Record interest in journal
+        interes_entrada = InteresAdelanto(
+            adelanto_id=prestamo.id,
+            nomina_id=self.nomina.id if self.nomina else None,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta,
+            dias_transcurridos=dias,
+            saldo_base=prestamo.saldo_pendiente,
+            tasa_aplicada=tasa_interes,
+            interes_calculado=interes_calculado,
+            saldo_anterior=prestamo.saldo_pendiente,
+            saldo_posterior=prestamo.saldo_pendiente + interes_calculado,
+            observaciones=_(
+                "Interés calculado por nómina del {inicio} al {fin}"
+            ).format(inicio=self.periodo_inicio, fin=self.periodo_fin)
+        )
+        db.session.add(interes_entrada)
+        
+        # Update loan with interest
+        prestamo.saldo_pendiente += interes_calculado
+        prestamo.interes_acumulado = (prestamo.interes_acumulado or Decimal("0.00")) + interes_calculado
+        prestamo.fecha_ultimo_calculo_interes = fecha_hasta
 
     def _registrar_abono_adelanto(self, adelanto: Adelanto, monto: Decimal) -> None:
         """Record a payment towards a loan/advance.

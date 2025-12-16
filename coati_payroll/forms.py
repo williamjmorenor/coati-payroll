@@ -1074,6 +1074,16 @@ class PrestamoForm(FlaskForm):
         default="ninguno",
         description=_("Tipo de cálculo de interés"),
     )
+    metodo_amortizacion = SelectField(
+        _("Método de Amortización"),
+        choices=[
+            ("frances", _("Francés - Cuota Constante")),
+            ("aleman", _("Alemán - Amortización Constante")),
+        ],
+        validators=[Optional()],
+        default="frances",
+        description=_("Método para calcular las cuotas (solo aplica si hay interés)"),
+    )
     cuenta_debe = StringField(
         _("Cuenta Contable Débito"),
         validators=[Optional(), Length(max=64)],

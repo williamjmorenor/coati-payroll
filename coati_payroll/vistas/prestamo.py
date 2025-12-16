@@ -27,7 +27,6 @@ from datetime import date
 from decimal import Decimal
 from io import BytesIO
 
-from dateutil.relativedelta import relativedelta
 from flask import (
     Blueprint,
     flash,
@@ -138,6 +137,7 @@ def new():
         prestamo.cuotas_pactadas = form.cuotas_pactadas.data
         prestamo.tasa_interes = form.tasa_interes.data or Decimal("0.0000")
         prestamo.tipo_interes = form.tipo_interes.data
+        prestamo.metodo_amortizacion = form.metodo_amortizacion.data
         prestamo.cuenta_debe = form.cuenta_debe.data
         prestamo.cuenta_haber = form.cuenta_haber.data
         prestamo.motivo = form.motivo.data
@@ -163,6 +163,7 @@ def new():
         form.fecha_solicitud.data = date.today()
         form.tipo_interes.data = "ninguno"
         form.tasa_interes.data = Decimal("0.0000")
+        form.metodo_amortizacion.data = "frances"
 
     return render_template("modules/prestamo/form.html", form=form, prestamo=None)
 
@@ -187,12 +188,25 @@ def detail(prestamo_id):
         .scalars()
         .all()
     )
+    
+    # Get interest journal if loan has interest
+    from coati_payroll.model import InteresAdelanto
+    intereses = []
+    if prestamo.tasa_interes and prestamo.tasa_interes > 0:
+        intereses = (
+            db.session.execute(
+                db.select(InteresAdelanto).filter_by(adelanto_id=prestamo_id).order_by(InteresAdelanto.fecha_hasta.desc())
+            )
+            .scalars()
+            .all()
+        )
 
     return render_template(
         "modules/prestamo/detail.html",
         prestamo=prestamo,
         tabla_pago=tabla_pago,
         abonos=abonos,
+        intereses=intereses,
     )
 
 
@@ -242,6 +256,7 @@ def edit(prestamo_id):
         prestamo.cuotas_pactadas = form.cuotas_pactadas.data
         prestamo.tasa_interes = form.tasa_interes.data or Decimal("0.0000")
         prestamo.tipo_interes = form.tipo_interes.data
+        prestamo.metodo_amortizacion = form.metodo_amortizacion.data
         prestamo.cuenta_debe = form.cuenta_debe.data
         prestamo.cuenta_haber = form.cuenta_haber.data
         prestamo.motivo = form.motivo.data
@@ -306,19 +321,32 @@ def approve(prestamo_id):
             prestamo.estado = AdelantoEstado.APROBADO
             prestamo.aprobado_por = current_user.usuario
 
-            # Calculate installment amount
+            # Calculate installment amount based on amortization method
             if prestamo.cuotas_pactadas and prestamo.cuotas_pactadas > 0:
-                # Simple division for now - interest calculation not implemented
-                # TODO: Implement proper amortization formulas for loans with interest:
-                #   - French method (constant payment) for simple interest
-                #   - German method (constant principal) for alternative calculation
-                #   - Compound interest calculation based on tipo_interes field
-                prestamo.monto_por_cuota = prestamo.monto_aprobado / prestamo.cuotas_pactadas
+                from coati_payroll.interes_engine import calcular_cuota_frances
+                
+                tasa_interes = prestamo.tasa_interes or Decimal("0.0000")
+                metodo = prestamo.metodo_amortizacion or "frances"
+                
+                # For French method, calculate constant payment
+                # For German method, payment varies so we store the first payment
+                if metodo == "frances":
+                    prestamo.monto_por_cuota = calcular_cuota_frances(
+                        prestamo.monto_aprobado,
+                        tasa_interes,
+                        prestamo.cuotas_pactadas
+                    )
+                else:
+                    # For German method, store average payment for reference
+                    # Actual payment will be calculated per installment
+                    prestamo.monto_por_cuota = prestamo.monto_aprobado / prestamo.cuotas_pactadas
             else:
                 prestamo.monto_por_cuota = prestamo.monto_aprobado
 
-            # Set pending balance
+            # Set pending balance and initialize interest tracking
             prestamo.saldo_pendiente = prestamo.monto_aprobado
+            prestamo.interes_acumulado = Decimal("0.00")
+            prestamo.fecha_ultimo_calculo_interes = prestamo.fecha_aprobacion or date.today()
             prestamo.modificado_por = current_user.usuario
 
             db.session.commit()
@@ -735,49 +763,37 @@ def generar_tabla_pago(prestamo: Adelanto) -> list[dict]:
     if not monto_base or monto_base <= 0:
         return []
 
+    # Determine start date
+    fecha_inicio = prestamo.fecha_aprobacion or prestamo.fecha_solicitud or date.today()
+    
+    # Import interest engine
+    from coati_payroll.interes_engine import generar_tabla_amortizacion
+    
+    # Get interest rate and type
+    tasa_interes = prestamo.tasa_interes or Decimal("0.0000")
+    tipo_interes = prestamo.tipo_interes or "ninguno"
+    metodo_amortizacion = prestamo.metodo_amortizacion or "frances"
+    
+    # Generate amortization schedule using the interest engine
+    cuotas = generar_tabla_amortizacion(
+        principal=monto_base,
+        tasa_anual=tasa_interes,
+        num_cuotas=prestamo.cuotas_pactadas,
+        fecha_inicio=fecha_inicio,
+        metodo=metodo_amortizacion,
+        tipo_interes=tipo_interes
+    )
+    
+    # Convert to dict format for template
     tabla = []
-    saldo = monto_base
-    cuota_base = monto_base / prestamo.cuotas_pactadas
-
-    # Simple amortization (no interest for now)
-    # TODO: Implement proper interest calculation based on tipo_interes
-    for i in range(prestamo.cuotas_pactadas):
-        numero = i + 1
-
-        # For the last payment, adjust to clear remaining balance
-        if numero == prestamo.cuotas_pactadas:
-            capital = saldo
-            cuota = capital
-        else:
-            capital = cuota_base
-            cuota = cuota_base
-
-        # Interest calculation placeholder - not currently implemented
-        # TODO: Calculate interest based on prestamo.tipo_interes and prestamo.tasa_interes
-        #   - For simple interest: interes = saldo * (tasa_interes / 100) / 12
-        #   - For compound interest: use compound interest formula
-        interes = Decimal("0.00")
-        saldo_nuevo = saldo - capital
-
-        # Estimate payment date (assuming monthly payments)
-        # This is a simplified estimation based on payroll frequency
-        fecha_estimada = None
-        if prestamo.fecha_aprobacion:
-            fecha_estimada = prestamo.fecha_aprobacion + relativedelta(months=numero)
-        elif prestamo.fecha_solicitud:
-            fecha_estimada = prestamo.fecha_solicitud + relativedelta(months=numero)
-
-        tabla.append(
-            {
-                "numero": numero,
-                "fecha_estimada": fecha_estimada,
-                "cuota": cuota,
-                "interes": interes,
-                "capital": capital,
-                "saldo": saldo_nuevo,
-            }
-        )
-
-        saldo = saldo_nuevo
-
+    for cuota in cuotas:
+        tabla.append({
+            "numero": cuota.numero,
+            "fecha_estimada": cuota.fecha_estimada,
+            "cuota": cuota.cuota_total,
+            "interes": cuota.interes,
+            "capital": cuota.capital,
+            "saldo": cuota.saldo,
+        })
+    
     return tabla
