@@ -19,13 +19,13 @@ from tests.helpers.auth import login_user
 def test_settings_route_requires_authentication(client):
     """
     Test that the settings route requires authentication.
-
+    
     Setup:
         - Unauthenticated client
-
+    
     Action:
         - Request /settings/
-
+    
     Verification:
         - Redirects to login page
     """
@@ -36,26 +36,26 @@ def test_settings_route_requires_authentication(client):
 def test_settings_route_with_authenticated_user(app, client, admin_user, db_session):
     """
     Test that authenticated users can access the settings page.
-
+    
     Setup:
         - Authenticated admin user
-
+    
     Action:
         - Request /settings/
-
+    
     Verification:
         - Returns 200 OK
         - Contains expected links to configuration sections
     """
     with app.app_context():
         login_user(client, "admin-test", "admin-password")
-
+        
         response = client.get("/settings/", follow_redirects=True)
         assert response.status_code == 200
-
+        
         # Verify the page contains expected configuration links
         data = response.data.decode("utf-8")
-
+        
         # Check for key configuration sections
         assert "/empresa/" in data, "Should have link to companies"
         assert "/currency/" in data, "Should have link to currencies"
@@ -71,23 +71,23 @@ def test_settings_route_with_authenticated_user(app, client, admin_user, db_sess
 def test_settings_page_layout(app, client, admin_user, db_session):
     """
     Test that the settings page has the correct layout and structure.
-
+    
     Setup:
         - Authenticated admin user
-
+    
     Action:
         - Request /settings/
-
+    
     Verification:
         - Page has proper heading
         - Contains configuration cards
     """
     with app.app_context():
         login_user(client, "admin-test", "admin-password")
-
+        
         response = client.get("/settings/", follow_redirects=True)
         data = response.data.decode("utf-8")
-
+        
         # Check for presence of all configuration sections
         config_sections = [
             "Empresas",  # Companies (Spanish)
@@ -95,8 +95,7 @@ def test_settings_page_layout(app, client, admin_user, db_session):
             "Monedas",  # Currencies (Spanish)
             "Currencies",  # Currencies (English)
         ]
-
+        
         # At least some of these should be present depending on locale
-        assert any(
-            section in data for section in config_sections
-        ), "Settings page should contain configuration sections"
+        assert any(section in data for section in config_sections), \
+            "Settings page should contain configuration sections"

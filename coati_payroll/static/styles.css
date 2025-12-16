@@ -148,6 +148,19 @@ body{
   position: relative;
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: clip;
+}
+/* Defense-in-depth approach to hide text when sidebar is collapsed:
+   1. Outer span: width-based hiding prevents container from taking space
+   2. Inner span: opacity-based hiding ensures any overflow text is invisible */
+.sidebar .nav-link > span {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  transition: width var(--transition);
+}
+.sidebar:hover .nav-link > span {
+  width: auto;
 }
 .sidebar .nav-link span span {
   opacity: 0;
