@@ -1,0 +1,423 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Report management routes."""
+
+from __future__ import annotations
+
+from datetime import datetime
+
+from flask import Blueprint, flash, redirect, render_template, request, url_for, jsonify, send_file
+from flask_login import current_user
+
+from coati_payroll.enums import ReportType, ReportStatus, TipoUsuario
+from coati_payroll.i18n import _
+from coati_payroll.model import db, Report, ReportRole, ReportExecution, ReportAudit
+from coati_payroll.rbac import require_read_access, require_role
+from coati_payroll.report_engine import (
+    ReportExecutionManager,
+    can_view_report,
+    can_execute_report,
+    can_export_report,
+)
+from coati_payroll.report_export import export_report_to_excel, export_report_to_csv
+from coati_payroll.system_reports import get_system_report_metadata
+from coati_payroll.log import log
+from coati_payroll.vistas.constants import PER_PAGE
+
+report_bp = Blueprint("report", __name__, url_prefix="/report")
+
+
+# ============================================================================
+# Report List and Administration
+# ============================================================================
+
+
+@report_bp.route("/")
+@require_read_access()
+def index():
+    """List all available reports.
+
+    Shows reports based on user permissions.
+    """
+    page = request.args.get("page", 1, type=int)
+    category = request.args.get("category", "", type=str)
+    report_type = request.args.get("type", "", type=str)
+    status = request.args.get("status", "", type=str)
+
+    # Base query
+    query = db.session.query(Report)
+
+    # Apply filters
+    if category:
+        query = query.filter(Report.category == category)
+    if report_type:
+        query = query.filter(Report.type == report_type)
+    if status:
+        query = query.filter(Report.status == status)
+
+    # Only show enabled reports to non-admin users
+    if current_user.tipo != TipoUsuario.ADMIN:
+        query = query.filter(Report.status == ReportStatus.ENABLED)
+
+    # Filter by user permissions
+    if current_user.tipo != TipoUsuario.ADMIN:
+        # Filter reports where user has view permission
+        query = query.join(ReportRole).filter(
+            ReportRole.role == current_user.tipo, ReportRole.can_view == True  # noqa: E712
+        )
+
+    query = query.order_by(Report.category, Report.name)
+
+    # Paginate
+    pagination = query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+
+    # Get unique categories for filter
+    categories = (
+        db.session.query(Report.category).distinct().filter(Report.category.isnot(None)).order_by(Report.category).all()
+    )
+    categories = [c[0] for c in categories]
+
+    return render_template(
+        "modules/report/index.html",
+        reports=pagination.items,
+        pagination=pagination,
+        categories=categories,
+        current_category=category,
+        current_type=report_type,
+        current_status=status,
+    )
+
+
+@report_bp.route("/admin")
+@require_role(TipoUsuario.ADMIN)
+def admin_index():
+    """Administrative report list.
+
+    Only accessible to administrators.
+    Shows all reports with management options.
+    """
+    page = request.args.get("page", 1, type=int)
+    category = request.args.get("category", "", type=str)
+    report_type = request.args.get("type", "", type=str)
+    status = request.args.get("status", "", type=str)
+
+    # Base query - show all reports for admin
+    query = db.session.query(Report)
+
+    # Apply filters
+    if category:
+        query = query.filter(Report.category == category)
+    if report_type:
+        query = query.filter(Report.type == report_type)
+    if status:
+        query = query.filter(Report.status == status)
+
+    query = query.order_by(Report.category, Report.name)
+
+    # Paginate
+    pagination = query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+
+    # Get unique categories
+    categories = (
+        db.session.query(Report.category).distinct().filter(Report.category.isnot(None)).order_by(Report.category).all()
+    )
+    categories = [c[0] for c in categories]
+
+    return render_template(
+        "modules/report/admin_index.html",
+        reports=pagination.items,
+        pagination=pagination,
+        categories=categories,
+        current_category=category,
+        current_type=report_type,
+        current_status=status,
+    )
+
+
+# ============================================================================
+# Report Execution
+# ============================================================================
+
+
+@report_bp.route("/<report_id>/execute")
+@require_read_access()
+def execute_form(report_id: str):
+    """Show report execution form.
+
+    Displays form to input parameters and execute report.
+    """
+    report = db.session.get(Report, report_id)
+    if not report:
+        flash(_("Reporte no encontrado."), "danger")
+        return redirect(url_for("report.index"))
+
+    # Check if report is enabled
+    if report.status != ReportStatus.ENABLED and current_user.tipo != TipoUsuario.ADMIN:
+        flash(_("Este reporte está deshabilitado."), "warning")
+        return redirect(url_for("report.index"))
+
+    # Check view permission
+    if not can_view_report(report, current_user.tipo):
+        flash(_("No tiene permisos para ver este reporte."), "danger")
+        return redirect(url_for("report.index"))
+
+    # Check execute permission
+    if not can_execute_report(report, current_user.tipo):
+        flash(_("No tiene permisos para ejecutar este reporte."), "danger")
+        return redirect(url_for("report.index"))
+
+    # Get metadata for system reports
+    metadata = None
+    if report.type == ReportType.SYSTEM:
+        metadata = get_system_report_metadata(report.system_report_id)
+
+    return render_template("modules/report/execute.html", report=report, metadata=metadata)
+
+
+@report_bp.route("/<report_id>/run", methods=["POST"])
+@require_read_access()
+def run_report(report_id: str):
+    """Execute report and show results.
+
+    Processes parameters and executes report.
+    """
+    report = db.session.get(Report, report_id)
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
+
+    # Check permissions
+    if report.status != ReportStatus.ENABLED and current_user.tipo != TipoUsuario.ADMIN:
+        return jsonify({"error": "Report is disabled"}), 403
+
+    if not can_execute_report(report, current_user.tipo):
+        return jsonify({"error": "Permission denied"}), 403
+
+    # Get parameters from request
+    parameters = request.get_json() or {}
+
+    # Get pagination parameters
+    page = parameters.pop("page", 1)
+    per_page = parameters.pop("per_page", 100)
+
+    try:
+        # Execute report
+        manager = ReportExecutionManager(report, current_user.usuario)
+        results, total_count, execution = manager.execute(parameters, page, per_page)
+
+        return jsonify(
+            {
+                "success": True,
+                "results": results,
+                "total_count": total_count,
+                "execution_id": execution.id,
+                "execution_time_ms": execution.execution_time_ms,
+            }
+        )
+
+    except Exception as e:
+        log.error(f"Error executing report: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ============================================================================
+# Report Export
+# ============================================================================
+
+
+@report_bp.route("/<report_id>/export/<format>", methods=["POST"])
+@require_read_access()
+def export_report(report_id: str, format: str):
+    """Export report to specified format.
+
+    Args:
+        report_id: Report ID
+        format: Export format (excel, csv)
+    """
+    report = db.session.get(Report, report_id)
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
+
+    # Check export permission
+    if not can_export_report(report, current_user.tipo):
+        flash(_("No tiene permisos para exportar este reporte."), "danger")
+        return redirect(url_for("report.execute_form", report_id=report_id))
+
+    # Get parameters from request
+    parameters = request.get_json() or {}
+
+    try:
+        # Execute report (get all results, no pagination for export)
+        manager = ReportExecutionManager(report, current_user.usuario)
+        results, total_count, execution = manager.execute(parameters, page=1, per_page=50000)
+
+        # Export based on format
+        if format == "excel":
+            file_path = export_report_to_excel(report.name, results)
+        elif format == "csv":
+            file_path = export_report_to_csv(report.name, results)
+        else:
+            return jsonify({"error": "Invalid format"}), 400
+
+        # Update execution record with export info
+        execution.export_file_path = file_path
+        execution.export_format = format
+        db.session.commit()
+
+        # Send file
+        return send_file(file_path, as_attachment=True)
+
+    except Exception as e:
+        log.error(f"Error exporting report: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ============================================================================
+# Report Administration (Admin Only)
+# ============================================================================
+
+
+@report_bp.route("/<report_id>/toggle-status", methods=["POST"])
+@require_role(TipoUsuario.ADMIN)
+def toggle_status(report_id: str):
+    """Toggle report enabled/disabled status.
+
+    Only accessible to administrators.
+    """
+    report = db.session.get(Report, report_id)
+    if not report:
+        flash(_("Reporte no encontrado."), "danger")
+        return redirect(url_for("report.admin_index"))
+
+    # Toggle status
+    old_status = report.status
+    report.status = ReportStatus.DISABLED if report.status == ReportStatus.ENABLED else ReportStatus.ENABLED
+
+    # Create audit entry
+    audit = ReportAudit(
+        report_id=report.id,
+        action="status_changed",
+        performed_by=current_user.usuario,
+        changes={"old_status": old_status, "new_status": report.status},
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    flash(_("Estado del reporte actualizado."), "success")
+    return redirect(url_for("report.admin_index"))
+
+
+@report_bp.route("/<report_id>/permissions")
+@require_role(TipoUsuario.ADMIN)
+def permissions_form(report_id: str):
+    """Show report permissions form.
+
+    Allows administrators to configure role-based permissions.
+    """
+    report = db.session.get(Report, report_id)
+    if not report:
+        flash(_("Reporte no encontrado."), "danger")
+        return redirect(url_for("report.admin_index"))
+
+    # Get existing permissions
+    existing_permissions = {perm.role: perm for perm in report.permissions}
+
+    return render_template(
+        "modules/report/permissions.html", report=report, existing_permissions=existing_permissions, roles=TipoUsuario
+    )
+
+
+@report_bp.route("/<report_id>/permissions", methods=["POST"])
+@require_role(TipoUsuario.ADMIN)
+def update_permissions(report_id: str):
+    """Update report permissions.
+
+    Processes form and updates role-based permissions.
+    """
+    report = db.session.get(Report, report_id)
+    if not report:
+        flash(_("Reporte no encontrado."), "danger")
+        return redirect(url_for("report.admin_index"))
+
+    # Process permissions for each role
+    for role in [TipoUsuario.ADMIN, TipoUsuario.HHRR, TipoUsuario.AUDIT]:
+        can_view = request.form.get(f"{role}_can_view") == "on"
+        can_execute = request.form.get(f"{role}_can_execute") == "on"
+        can_export = request.form.get(f"{role}_can_export") == "on"
+
+        # Get or create permission record
+        perm = db.session.query(ReportRole).filter_by(report_id=report.id, role=role).first()
+
+        if perm:
+            # Update existing
+            perm.can_view = can_view
+            perm.can_execute = can_execute
+            perm.can_export = can_export
+        else:
+            # Create new
+            perm = ReportRole(
+                report_id=report.id, role=role, can_view=can_view, can_execute=can_execute, can_export=can_export
+            )
+            db.session.add(perm)
+
+    # Create audit entry
+    audit = ReportAudit(
+        report_id=report.id,
+        action="permissions_updated",
+        performed_by=current_user.usuario,
+        changes={"timestamp": datetime.now().isoformat()},
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    flash(_("Permisos actualizados correctamente."), "success")
+    return redirect(url_for("report.admin_index"))
+
+
+# ============================================================================
+# Report Detail
+# ============================================================================
+
+
+@report_bp.route("/<report_id>")
+@require_read_access()
+def detail(report_id: str):
+    """Show report details.
+
+    Displays report information, definition, and execution history.
+    """
+    report = db.session.get(Report, report_id)
+    if not report:
+        flash(_("Reporte no encontrado."), "danger")
+        return redirect(url_for("report.index"))
+
+    # Check view permission
+    if not can_view_report(report, current_user.tipo):
+        flash(_("No tiene permisos para ver este reporte."), "danger")
+        return redirect(url_for("report.index"))
+
+    # Get recent executions
+    executions = (
+        db.session.query(ReportExecution)
+        .filter_by(report_id=report.id)
+        .order_by(ReportExecution.created.desc())
+        .limit(10)
+        .all()
+    )
+
+    # Get metadata for system reports
+    metadata = None
+    if report.type == ReportType.SYSTEM:
+        metadata = get_system_report_metadata(report.system_report_id)
+
+    return render_template("modules/report/detail.html", report=report, executions=executions, metadata=metadata)

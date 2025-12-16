@@ -1728,3 +1728,137 @@ class VacationNovelty(database.Model, BaseTabla):
     # Notes
     observaciones = database.Column(database.String(500), nullable=True)
     motivo_rechazo = database.Column(database.String(500), nullable=True)
+
+
+# ============================================================================
+# Reports Module
+# ============================================================================
+
+
+class Report(database.Model, BaseTabla):
+    """Report definition and configuration.
+
+    Represents both System and Custom reports. System reports are pre-defined
+    in the application code with optimized queries. Custom reports are defined
+    by users through the UI using a declarative JSON-based configuration.
+    """
+
+    __tablename__ = "report"
+    __table_args__ = (database.UniqueConstraint("name", name="uq_report_name"),)
+
+    # Basic information
+    name = database.Column(database.String(150), nullable=False, unique=True, index=True)
+    description = database.Column(database.String(500), nullable=True)
+
+    # Report type: SYSTEM or CUSTOM
+    type = database.Column(database.String(20), nullable=False, default="custom")  # system | custom
+
+    # Administrative status
+    status = database.Column(database.String(20), nullable=False, default="enabled")  # enabled | disabled
+
+    # Base entity for the report (e.g., Employee, Nomina, Vacation)
+    base_entity = database.Column(database.String(100), nullable=False)
+
+    # Report definition (JSON, nullable for System reports as they're coded)
+    # For Custom reports: contains columns, filters, sorting, expressions
+    definition = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+
+    # System report identifier (for system reports only)
+    # Used to identify the report implementation in code
+    system_report_id = database.Column(database.String(100), nullable=True, unique=True, index=True)
+
+    # Category for organization (e.g., "payroll", "employee", "vacation")
+    category = database.Column(database.String(50), nullable=True, index=True)
+
+    # Relationships
+    permissions = database.relationship("ReportRole", back_populates="report", cascade="all,delete-orphan")
+    executions = database.relationship("ReportExecution", back_populates="report", cascade="all,delete-orphan")
+    audit_entries = database.relationship("ReportAudit", back_populates="report", cascade="all,delete-orphan")
+
+
+class ReportRole(database.Model, BaseTabla):
+    """Report permissions by user role.
+
+    Defines which user types (admin, hhrr, audit) can view, execute, and
+    export a specific report.
+    """
+
+    __tablename__ = "report_role"
+    __table_args__ = (database.UniqueConstraint("report_id", "role", name="uq_report_role"),)
+
+    # Foreign key to report
+    report_id = database.Column(database.String(26), database.ForeignKey("report.id"), nullable=False)
+    report = database.relationship("Report", back_populates="permissions")
+
+    # User role (admin, hhrr, audit)
+    role = database.Column(database.String(20), nullable=False, index=True)
+
+    # Permissions
+    can_view = database.Column(database.Boolean(), nullable=False, default=True)
+    can_execute = database.Column(database.Boolean(), nullable=False, default=True)
+    can_export = database.Column(database.Boolean(), nullable=False, default=False)
+
+
+class ReportExecution(database.Model, BaseTabla):
+    """Report execution history and status.
+
+    Tracks report executions including status, parameters, results,
+    and performance metrics. Used for auditing and async execution.
+    """
+
+    __tablename__ = "report_execution"
+
+    # Foreign key to report
+    report_id = database.Column(database.String(26), database.ForeignKey("report.id"), nullable=False)
+    report = database.relationship("Report", back_populates="executions")
+
+    # Execution status
+    status = database.Column(
+        database.String(20), nullable=False, default="queued"
+    )  # queued | running | completed | failed | cancelled
+
+    # Execution parameters (filters applied by user)
+    parameters = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+
+    # User who requested the execution
+    executed_by = database.Column(database.String(150), nullable=False, index=True)
+
+    # Execution timestamps
+    started_at = database.Column(database.DateTime, nullable=True)
+    completed_at = database.Column(database.DateTime, nullable=True)
+
+    # Results
+    row_count = database.Column(database.Integer, nullable=True)
+    execution_time_ms = database.Column(database.Integer, nullable=True)  # in milliseconds
+
+    # Error information (if failed)
+    error_message = database.Column(database.String(1000), nullable=True)
+
+    # Export file path (if exported)
+    export_file_path = database.Column(database.String(500), nullable=True)
+    export_format = database.Column(database.String(20), nullable=True)  # excel, csv, pdf
+
+
+class ReportAudit(database.Model, BaseTabla):
+    """Audit trail for report configuration changes.
+
+    Records all changes to report definitions, status, and permissions
+    for compliance and debugging.
+    """
+
+    __tablename__ = "report_audit"
+
+    # Foreign key to report
+    report_id = database.Column(database.String(26), database.ForeignKey("report.id"), nullable=False)
+    report = database.relationship("Report", back_populates="audit_entries")
+
+    # Action performed
+    action = database.Column(database.String(50), nullable=False, index=True)  # created | updated | status_changed | etc
+
+    # User who performed the action
+    performed_by = database.Column(database.String(150), nullable=False, index=True)
+
+    # Changes (JSON storing before/after values)
+    changes = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+
+    # Timestamp is inherited from BaseTabla

@@ -31,6 +31,8 @@ from coati_payroll.vistas.empresa import empresa_bp
 from coati_payroll.vistas.configuracion import configuracion_bp
 from coati_payroll.vistas.carga_inicial_prestacion import carga_inicial_prestacion_bp
 from coati_payroll.vistas.vacation import vacation_bp
+from coati_payroll.vistas.prestacion import prestacion_management_bp
+from coati_payroll.vistas.report import report_bp
 
 __all__ = [
     "user_bp",
@@ -49,4 +51,6 @@ __all__ = [
     "configuracion_bp",
     "carga_inicial_prestacion_bp",
     "vacation_bp",
+    "prestacion_management_bp",
+    "report_bp",
 ]

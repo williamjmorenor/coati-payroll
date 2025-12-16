@@ -269,3 +269,45 @@ class ExpirationRule(StrEnum):
     FISCAL_YEAR_END = "fiscal_year_end"  # Expires at fiscal year end
     ANNIVERSARY = "anniversary"  # Expires on employment anniversary
     CUSTOM_DATE = "custom_date"  # Custom expiration date
+
+
+# ============================================================================
+# Reports Module Enums
+# ============================================================================
+
+
+class ReportType(StrEnum):
+    """Types of reports in the system.
+
+    System reports are pre-defined, optimized reports built into the core.
+    Custom reports are user-defined reports created through the UI.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    SYSTEM = "system"  # System-defined report
+    CUSTOM = "custom"  # User-defined custom report
+
+
+class ReportStatus(StrEnum):
+    """Administrative status of a report.
+
+    Controls whether a report is available for execution.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    ENABLED = "enabled"  # Report is available for execution
+    DISABLED = "disabled"  # Report is not available
+
+
+class ReportExecutionStatus(StrEnum):
+    """Status of a report execution.
+
+    Tracks the lifecycle of a report execution from queued to completed.
+    Python 3.11+ StrEnum for type safety.
+    """
+
+    QUEUED = "queued"  # Report execution is queued
+    RUNNING = "running"  # Report is currently executing
+    COMPLETED = "completed"  # Report execution completed successfully
+    FAILED = "failed"  # Report execution failed
+    CANCELLED = "cancelled"  # Report execution was cancelled
