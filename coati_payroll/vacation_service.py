@@ -80,10 +80,7 @@ class VacationService:
             .filter(
                 (VacationAccount.policy.has(planilla_id=self.planilla.id))
                 | (VacationAccount.policy.has(empresa_id=self.planilla.empresa_id))
-                | (
-                    (VacationAccount.policy.has(planilla_id=None))
-                    & (VacationAccount.policy.has(empresa_id=None))
-                )
+                | ((VacationAccount.policy.has(planilla_id=None)) & (VacationAccount.policy.has(empresa_id=None)))
             )
             .first()
         )

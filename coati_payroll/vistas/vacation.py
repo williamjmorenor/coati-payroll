@@ -82,9 +82,7 @@ def policy_new():
 
     # Populate empresa choices
     empresas = db.session.query(Empresa).filter(Empresa.activo.is_(True)).order_by(Empresa.razon_social).all()
-    form.empresa_id.choices = [("", _("-- Seleccionar Empresa --"))] + [
-        (e.id, e.razon_social) for e in empresas
-    ]
+    form.empresa_id.choices = [("", _("-- Seleccionar Empresa --"))] + [(e.id, e.razon_social) for e in empresas]
 
     if form.validate_on_submit():
         policy = VacationPolicy()
@@ -129,9 +127,7 @@ def policy_edit(policy_id):
 
     # Populate empresa choices
     empresas = db.session.query(Empresa).filter(Empresa.activo.is_(True)).order_by(Empresa.razon_social).all()
-    form.empresa_id.choices = [("", _("-- Seleccionar Empresa --"))] + [
-        (e.id, e.razon_social) for e in empresas
-    ]
+    form.empresa_id.choices = [("", _("-- Seleccionar Empresa --"))] + [(e.id, e.razon_social) for e in empresas]
 
     if form.validate_on_submit():
         form.populate_obj(policy)
@@ -163,9 +159,9 @@ def policy_detail(policy_id):
         return redirect(url_for("vacation.policy_index"))
 
     # Get statistics
-    total_accounts = db.session.query(func.count(VacationAccount.id)).filter(
-        VacationAccount.policy_id == policy_id
-    ).scalar() or 0
+    total_accounts = (
+        db.session.query(func.count(VacationAccount.id)).filter(VacationAccount.policy_id == policy_id).scalar() or 0
+    )
 
     return render_template(
         "modules/vacation/policy_detail.html",
@@ -223,10 +219,7 @@ def account_detail(account_id):
     # Get pending leave requests
     pending_requests = (
         db.session.query(VacationNovelty)
-        .filter(
-            VacationNovelty.account_id == account_id,
-            VacationNovelty.estado == "pendiente"
-        )
+        .filter(VacationNovelty.account_id == account_id, VacationNovelty.estado == "pendiente")
         .order_by(VacationNovelty.start_date)
         .all()
     )
@@ -308,10 +301,11 @@ def leave_request_new():
 
     if form.validate_on_submit():
         # Validate that employee has a vacation account
-        account = db.session.query(VacationAccount).filter(
-            VacationAccount.empleado_id == form.empleado_id.data,
-            VacationAccount.activo.is_(True)
-        ).first()
+        account = (
+            db.session.query(VacationAccount)
+            .filter(VacationAccount.empleado_id == form.empleado_id.data, VacationAccount.activo.is_(True))
+            .first()
+        )
 
         if not account:
             flash(_("El empleado no tiene una cuenta de vacaciones activa."), "danger")
@@ -462,11 +456,11 @@ def leave_request_reject(request_id):
 @require_write_access()
 def register_vacation_taken():
     """Register vacation days taken by an employee (creates vacation record + novelty).
-    
+
     This is an alternative method to register novelties from the vacation module.
     The novelty is created using the existing infrastructure (NominaNovedad) and MUST
     be associated with either a Percepcion or Deduccion for payroll calculations.
-    
+
     Workflow:
     1. Creates a VacationNovelty record (vacation tracking)
     2. Creates a linked NominaNovedad record (payroll integration)
@@ -478,27 +472,26 @@ def register_vacation_taken():
     from coati_payroll.model import NominaNovedad, Percepcion, Deduccion
 
     form = VacationTakenForm()
-    
+
     # Populate employee choices
-    empleados = db.session.query(Empleado).filter(Empleado.activo.is_(True)).order_by(
-        Empleado.primer_apellido, Empleado.primer_nombre
-    ).all()
+    empleados = (
+        db.session.query(Empleado)
+        .filter(Empleado.activo.is_(True))
+        .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
+        .all()
+    )
     form.empleado_id.choices = [("", _("-- Seleccionar Empleado --"))] + [
         (e.id, f"{e.codigo_empleado} - {e.primer_nombre} {e.primer_apellido}") for e in empleados
     ]
-    
+
     # Populate percepcion choices
-    percepciones = db.session.query(Percepcion).filter(Percepcion.activo.is_(True)).order_by(
-        Percepcion.codigo
-    ).all()
+    percepciones = db.session.query(Percepcion).filter(Percepcion.activo.is_(True)).order_by(Percepcion.codigo).all()
     form.percepcion_id.choices = [("", _("-- Seleccionar Percepción --"))] + [
         (p.id, f"{p.codigo} - {p.nombre}") for p in percepciones
     ]
-    
+
     # Populate deduccion choices
-    deducciones = db.session.query(Deduccion).filter(Deduccion.activo.is_(True)).order_by(
-        Deduccion.codigo
-    ).all()
+    deducciones = db.session.query(Deduccion).filter(Deduccion.activo.is_(True)).order_by(Deduccion.codigo).all()
     form.deduccion_id.choices = [("", _("-- Seleccionar Deducción --"))] + [
         (d.id, f"{d.codigo} - {d.nombre}") for d in deducciones
     ]
@@ -506,7 +499,7 @@ def register_vacation_taken():
     if form.validate_on_submit():
         empleado_id = form.empleado_id.data
         empleado = db.session.get(Empleado, empleado_id)
-        
+
         if not empleado:
             flash(_("Empleado no encontrado."), "danger")
             return render_template(
@@ -519,7 +512,7 @@ def register_vacation_taken():
         tipo_concepto = form.tipo_concepto.data
         percepcion_id = form.percepcion_id.data if tipo_concepto == "percepcion" else None
         deduccion_id = form.deduccion_id.data if tipo_concepto == "deduccion" else None
-        
+
         if tipo_concepto == "percepcion" and not percepcion_id:
             flash(_("Debe seleccionar una percepción cuando el tipo de concepto es percepción."), "danger")
             return render_template(
@@ -527,7 +520,7 @@ def register_vacation_taken():
                 form=form,
                 titulo=_("Registrar Vacaciones Descansadas"),
             )
-        
+
         if tipo_concepto == "deduccion" and not deduccion_id:
             flash(_("Debe seleccionar una deducción cuando el tipo de concepto es deducción."), "danger")
             return render_template(
@@ -535,7 +528,7 @@ def register_vacation_taken():
                 form=form,
                 titulo=_("Registrar Vacaciones Descansadas"),
             )
-        
+
         # Get the concepto for codigo
         if tipo_concepto == "percepcion":
             concepto = db.session.get(Percepcion, percepcion_id)
@@ -545,10 +538,11 @@ def register_vacation_taken():
             codigo_concepto = concepto.codigo if concepto else "AUSENCIA"
 
         # Validate that employee has a vacation account
-        account = db.session.query(VacationAccount).filter(
-            VacationAccount.empleado_id == empleado_id,
-            VacationAccount.activo.is_(True)
-        ).first()
+        account = (
+            db.session.query(VacationAccount)
+            .filter(VacationAccount.empleado_id == empleado_id, VacationAccount.activo.is_(True))
+            .first()
+        )
 
         if not account:
             flash(_("El empleado no tiene una cuenta de vacaciones activa. Cree una cuenta primero."), "danger")
@@ -564,7 +558,7 @@ def register_vacation_taken():
             if not account.policy.allow_negative:
                 flash(
                     _(f"Saldo insuficiente. Balance actual: {account.current_balance}, Solicitado: {dias_descontados}"),
-                    "danger"
+                    "danger",
                 )
                 return render_template(
                     "modules/vacation/register_taken_form.html",
@@ -585,7 +579,7 @@ def register_vacation_taken():
             observaciones=form.observaciones.data,
             creado_por=current_user.usuario,
         )
-        
+
         db.session.add(vacation_novelty)
         db.session.flush()  # Get ID
 
@@ -599,10 +593,10 @@ def register_vacation_taken():
             source="direct_registration",
             reference_id=vacation_novelty.id,
             reference_type="vacation_novelty",
-            observaciones=f"Vacaciones del {form.fecha_inicio.data} al {form.fecha_fin.data} - {dias_descontados} días descontados",
+            observaciones=f"Vacaciones {form.fecha_inicio.data} - {form.fecha_fin.data} - {dias_descontados} descontados",
             creado_por=current_user.usuario,
         )
-        
+
         # Update account balance
         account.current_balance = account.current_balance - abs(dias_descontados)
         account.modificado_por = current_user.usuario
@@ -611,7 +605,7 @@ def register_vacation_taken():
         db.session.flush()
 
         ledger_entry.balance_after = account.current_balance
-        
+
         # Link ledger entry to vacation novelty
         vacation_novelty.ledger_entry_id = ledger_entry.id
         vacation_novelty.estado = "disfrutado"
@@ -626,7 +620,7 @@ def register_vacation_taken():
             valor_cantidad=dias_descontados,
             fecha_novedad=form.fecha_inicio.data,
             percepcion_id=percepcion_id,  # Required association
-            deduccion_id=deduccion_id,    # Required association
+            deduccion_id=deduccion_id,  # Required association
             es_descanso_vacaciones=True,
             vacation_novelty_id=vacation_novelty.id,
             fecha_inicio_descanso=form.fecha_inicio.data,
@@ -634,15 +628,12 @@ def register_vacation_taken():
             estado="pendiente",  # Will be processed when nomina is calculated
             creado_por=current_user.usuario,
         )
-        
+
         db.session.add(nomina_novedad)
 
         try:
             db.session.commit()
-            flash(
-                _(f"Vacaciones registradas exitosamente. {dias_descontados} días descontados del saldo."),
-                "success"
-            )
+            flash(_(f"Vacaciones registradas exitosamente. {dias_descontados} días descontados del saldo."), "success")
             return redirect(url_for("vacation.account_detail", account_id=account.id))
         except Exception as e:
             db.session.rollback()
@@ -665,17 +656,17 @@ def register_vacation_taken():
 def dashboard():
     """Vacation management dashboard."""
     # Statistics
-    total_policies = db.session.query(func.count(VacationPolicy.id)).filter(
-        VacationPolicy.activo.is_(True)
-    ).scalar() or 0
+    total_policies = (
+        db.session.query(func.count(VacationPolicy.id)).filter(VacationPolicy.activo.is_(True)).scalar() or 0
+    )
 
-    total_accounts = db.session.query(func.count(VacationAccount.id)).filter(
-        VacationAccount.activo.is_(True)
-    ).scalar() or 0
+    total_accounts = (
+        db.session.query(func.count(VacationAccount.id)).filter(VacationAccount.activo.is_(True)).scalar() or 0
+    )
 
-    pending_requests = db.session.query(func.count(VacationNovelty.id)).filter(
-        VacationNovelty.estado == "pendiente"
-    ).scalar() or 0
+    pending_requests = (
+        db.session.query(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == "pendiente").scalar() or 0
+    )
 
     # Recent activity
     recent_requests = (
@@ -704,19 +695,22 @@ def dashboard():
 @login_required
 def api_employee_balance(employee_id):
     """Get employee vacation balance (AJAX endpoint)."""
-    account = db.session.query(VacationAccount).filter(
-        VacationAccount.empleado_id == employee_id,
-        VacationAccount.activo.is_(True)
-    ).first()
+    account = (
+        db.session.query(VacationAccount)
+        .filter(VacationAccount.empleado_id == employee_id, VacationAccount.activo.is_(True))
+        .first()
+    )
 
     if not account:
         return jsonify({"error": "No vacation account found"}), 404
 
-    return jsonify({
-        "balance": float(account.current_balance),
-        "unit_type": account.policy.unit_type,
-        "policy_name": account.policy.nombre,
-    })
+    return jsonify(
+        {
+            "balance": float(account.current_balance),
+            "unit_type": account.policy.unit_type,
+            "policy_name": account.policy.nombre,
+        }
+    )
 
 
 # ============================================================================
@@ -728,65 +722,70 @@ def api_employee_balance(employee_id):
 @require_role(TipoUsuario.ADMIN)
 def initial_balance_form():
     """Load initial vacation balance for a single employee.
-    
+
     Used during system implementation to set the initial accumulated vacation
     balance for employees who already have vacation time earned before the
     system goes live.
-    
+
     Creates an ADJUSTMENT ledger entry with the initial balance and sets
     the account's current_balance to match.
     """
     from coati_payroll.forms import VacationInitialBalanceForm
-    
+
     form = VacationInitialBalanceForm()
-    
+
     # Populate employee choices
-    empleados = db.session.query(Empleado).filter(Empleado.activo.is_(True)).order_by(
-        Empleado.primer_apellido, Empleado.primer_nombre
-    ).all()
+    empleados = (
+        db.session.query(Empleado)
+        .filter(Empleado.activo.is_(True))
+        .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
+        .all()
+    )
     form.empleado_id.choices = [("", _("-- Seleccionar Empleado --"))] + [
         (e.id, f"{e.codigo_empleado} - {e.primer_nombre} {e.primer_apellido}") for e in empleados
     ]
-    
+
     if form.validate_on_submit():
         empleado_id = form.empleado_id.data
         saldo_inicial = form.saldo_inicial.data
         fecha_corte = form.fecha_corte.data
         observaciones = form.observaciones.data or "Carga de saldo inicial al implementar el sistema"
-        
+
         # Get employee and their vacation account
         empleado = db.session.get(Empleado, empleado_id)
         if not empleado:
             flash(_("Empleado no encontrado."), "danger")
             return redirect(url_for("vacation.initial_balance_form"))
-        
+
         # Check if employee has an active vacation account
-        account = db.session.query(VacationAccount).filter(
-            VacationAccount.empleado_id == empleado_id,
-            VacationAccount.activo.is_(True)
-        ).first()
-        
+        account = (
+            db.session.query(VacationAccount)
+            .filter(VacationAccount.empleado_id == empleado_id, VacationAccount.activo.is_(True))
+            .first()
+        )
+
         if not account:
             flash(
-                _("El empleado {} no tiene una cuenta de vacaciones activa. "
-                  "Por favor, cree una cuenta primero.").format(empleado.codigo_empleado),
-                "warning"
+                _(
+                    "El empleado {} no tiene una cuenta de vacaciones activa. " "Por favor, cree una cuenta primero."
+                ).format(empleado.codigo_empleado),
+                "warning",
             )
             return redirect(url_for("vacation.account_index"))
-        
+
         # Check if there are already ledger entries for this account
-        existing_entries = db.session.query(VacationLedger).filter(
-            VacationLedger.account_id == account.id
-        ).count()
-        
+        existing_entries = db.session.query(VacationLedger).filter(VacationLedger.account_id == account.id).count()
+
         if existing_entries > 0:
             flash(
-                _("La cuenta de vacaciones del empleado {} ya tiene movimientos registrados. "
-                  "No se puede cargar un saldo inicial para cuentas con historial.").format(empleado.codigo_empleado),
-                "warning"
+                _(
+                    "La cuenta de vacaciones del empleado {} ya tiene movimientos registrados. "
+                    "No se puede cargar un saldo inicial para cuentas con historial."
+                ).format(empleado.codigo_empleado),
+                "warning",
             )
             return redirect(url_for("vacation.account_detail", account_id=account.id))
-        
+
         # Create ledger entry for initial balance
         ledger_entry = VacationLedger(
             account_id=account.id,
@@ -799,29 +798,29 @@ def initial_balance_form():
             observaciones=observaciones,
             creado_por=current_user.usuario,
         )
-        
+
         # Set account balance to initial balance
         account.current_balance = saldo_inicial
         account.last_accrual_date = fecha_corte
         account.modificado_por = current_user.usuario
-        
+
         ledger_entry.balance_after = account.current_balance
-        
+
         db.session.add(ledger_entry)
-        
+
         try:
             db.session.commit()
             flash(
                 _("Saldo inicial de {} {} cargado exitosamente para {}.").format(
                     saldo_inicial, account.policy.unit_type, empleado.codigo_empleado
                 ),
-                "success"
+                "success",
             )
             return redirect(url_for("vacation.account_detail", account_id=account.id))
         except Exception as e:
             db.session.rollback()
             flash(_("Error al cargar saldo inicial: {}").format(str(e)), "danger")
-    
+
     return render_template("modules/vacation/initial_balance_form.html", form=form)
 
 
@@ -829,11 +828,11 @@ def initial_balance_form():
 @require_role(TipoUsuario.ADMIN)
 def initial_balance_bulk():
     """Bulk load initial vacation balances from Excel.
-    
+
     Used during system implementation for companies with many employees.
     Allows uploading an Excel file with initial vacation balances for multiple
     employees at once.
-    
+
     Expected Excel format (without headers, data starts on row 1):
     - Column A: Código de Empleado
     - Column B: Saldo Inicial (días/horas)
@@ -845,42 +844,42 @@ def initial_balance_bulk():
         if "file" not in request.files:
             flash(_("No se seleccionó ningún archivo."), "warning")
             return redirect(url_for("vacation.initial_balance_bulk"))
-        
+
         file = request.files["file"]
-        
+
         if file.filename == "":
             flash(_("No se seleccionó ningún archivo."), "warning")
             return redirect(url_for("vacation.initial_balance_bulk"))
-        
+
         if not file.filename.endswith((".xlsx", ".xls")):
             flash(_("Por favor, suba un archivo Excel (.xlsx o .xls)."), "warning")
             return redirect(url_for("vacation.initial_balance_bulk"))
-        
+
         try:
             import openpyxl
             from datetime import datetime as dt
-            
+
             # Load Excel file
             workbook = openpyxl.load_workbook(file, data_only=True)
             sheet = workbook.active
-            
+
             success_count = 0
             error_count = 0
             errors = []
-            
+
             # Process each row (data starts at row 1, no headers expected)
             for row_num, row in enumerate(sheet.iter_rows(min_row=1, values_only=True), start=1):
                 codigo_empleado = row[0]
                 saldo_inicial = row[1]
                 fecha_corte = row[2]
                 observaciones = row[3] if len(row) > 3 else "Carga masiva de saldo inicial"
-                
+
                 # Validate required fields
                 if not codigo_empleado or saldo_inicial is None or not fecha_corte:
                     errors.append(f"Fila {row_num}: Faltan campos requeridos")
                     error_count += 1
                     continue
-                
+
                 # Convert fecha_corte if it's a datetime object
                 if isinstance(fecha_corte, dt):
                     fecha_corte = fecha_corte.date()
@@ -891,39 +890,41 @@ def initial_balance_bulk():
                         errors.append(f"Fila {row_num}: Formato de fecha inválido (use DD/MM/YYYY)")
                         error_count += 1
                         continue
-                
+
                 # Find employee
-                empleado = db.session.query(Empleado).filter(
-                    Empleado.codigo_empleado == codigo_empleado,
-                    Empleado.activo.is_(True)
-                ).first()
-                
+                empleado = (
+                    db.session.query(Empleado)
+                    .filter(Empleado.codigo_empleado == codigo_empleado, Empleado.activo.is_(True))
+                    .first()
+                )
+
                 if not empleado:
                     errors.append(f"Fila {row_num}: Empleado {codigo_empleado} no encontrado")
                     error_count += 1
                     continue
-                
+
                 # Check if employee has an active vacation account
-                account = db.session.query(VacationAccount).filter(
-                    VacationAccount.empleado_id == empleado.id,
-                    VacationAccount.activo.is_(True)
-                ).first()
-                
+                account = (
+                    db.session.query(VacationAccount)
+                    .filter(VacationAccount.empleado_id == empleado.id, VacationAccount.activo.is_(True))
+                    .first()
+                )
+
                 if not account:
                     errors.append(f"Fila {row_num}: Empleado {codigo_empleado} no tiene cuenta de vacaciones activa")
                     error_count += 1
                     continue
-                
+
                 # Check if account already has ledger entries
-                existing_entries = db.session.query(VacationLedger).filter(
-                    VacationLedger.account_id == account.id
-                ).count()
-                
+                existing_entries = (
+                    db.session.query(VacationLedger).filter(VacationLedger.account_id == account.id).count()
+                )
+
                 if existing_entries > 0:
                     errors.append(f"Fila {row_num}: Empleado {codigo_empleado} ya tiene movimientos en su cuenta")
                     error_count += 1
                     continue
-                
+
                 try:
                     # Create ledger entry for initial balance
                     ledger_entry = VacationLedger(
@@ -937,46 +938,46 @@ def initial_balance_bulk():
                         observaciones=str(observaciones) if observaciones else "Carga masiva de saldo inicial",
                         creado_por=current_user.usuario,
                     )
-                    
+
                     # Set account balance to initial balance
                     account.current_balance = Decimal(str(saldo_inicial))
                     account.last_accrual_date = fecha_corte
                     account.modificado_por = current_user.usuario
-                    
+
                     ledger_entry.balance_after = account.current_balance
-                    
+
                     db.session.add(ledger_entry)
                     success_count += 1
-                    
+
                 except Exception as e:
                     errors.append(f"Fila {row_num}: Error al procesar {codigo_empleado}: {str(e)}")
                     error_count += 1
                     # Don't rollback here, continue adding successful entries
                     continue
-            
+
             # Commit all changes
             try:
                 db.session.commit()
                 flash(
                     _("Carga completada: {} registros exitosos, {} errores.").format(success_count, error_count),
-                    "success" if error_count == 0 else "warning"
+                    "success" if error_count == 0 else "warning",
                 )
-                
+
                 if errors:
                     error_details = "<br>".join(errors[:10])  # Show first 10 errors
                     if len(errors) > 10:
                         error_details += f"<br>...y {len(errors) - 10} errores más"
                     flash(error_details, "warning")
-                
+
             except Exception as e:
                 db.session.rollback()
                 flash(_("Error al guardar los cambios: {}").format(str(e)), "danger")
-        
+
         except ImportError:
             flash(_("Error: La librería openpyxl no está instalada. Contacte al administrador."), "danger")
         except Exception as e:
             flash(_("Error al procesar el archivo Excel: {}").format(str(e)), "danger")
-        
+
         return redirect(url_for("vacation.initial_balance_bulk"))
-    
+
     return render_template("modules/vacation/initial_balance_bulk.html")

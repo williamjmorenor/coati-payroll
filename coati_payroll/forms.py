@@ -995,7 +995,7 @@ class NominaNovedadForm(FlaskForm):
         validators=[Optional()],
         description=_("Fecha en que ocurrió el evento (opcional, para auditoría)"),
     )
-    
+
     # ---- Vacation Module Integration Fields ----
     es_descanso_vacaciones = BooleanField(
         _("Es Descanso de Vacaciones"),
@@ -1012,7 +1012,7 @@ class NominaNovedadForm(FlaskForm):
         validators=[Optional()],
         description=_("Fecha de fin del período de vacaciones (si aplica)"),
     )
-    
+
     submit = SubmitField(_("Guardar"))
 
 
@@ -1613,7 +1613,7 @@ class VacationLeaveRequestForm(FlaskForm):
     units = DecimalField(
         _("Días/Horas de Vacaciones a Descontar"),
         validators=[DataRequired(), NumberRange(min=0)],
-        description=_("IMPORTANTE: Días u horas reales a descontar del saldo (puede diferir de días calendario según política de la empresa)"),
+        description=_("IMPORTANTE: Días u horas reales a descontar del saldo acumulado de vacaciones."),
     )
     observaciones = StringField(
         _("Observaciones"),
@@ -1626,11 +1626,11 @@ class VacationLeaveRequestForm(FlaskForm):
 
 class VacationTakenForm(FlaskForm):
     """Form for registering vacation days actually taken (with automatic novelty creation).
-    
+
     This form is used to register vacation time that has been taken by an employee,
     automatically creating the vacation record and the associated novelty (NominaNovedad).
-    
-    IMPORTANT: 
+
+    IMPORTANT:
     - The 'dias_descontados' field represents the actual vacation days to deduct
       from the employee's balance, which may differ from the calendar days in the date range
       based on company policy (e.g., taking Friday+Monday = 4 calendar days but only 2 vacation days).
@@ -1659,7 +1659,7 @@ class VacationTakenForm(FlaskForm):
         places=2,
         description=_("CRÍTICO: Días u horas reales a descontar según política (ej: viernes+lunes = 2 días, no 4)"),
     )
-    
+
     # Asociación con Percepción o Deducción (REQUERIDO)
     tipo_concepto = SelectField(
         _("Tipo de Concepto"),
@@ -1682,26 +1682,26 @@ class VacationTakenForm(FlaskForm):
         coerce=str,
         description=_("Deducción asociada (si tipo_concepto es deduccion)"),
     )
-    
+
     observaciones = StringField(
         _("Observaciones"),
         validators=[Optional(), Length(max=500)],
         description=_("Notas adicionales"),
     )
-    
+
     submit = SubmitField(_("Registrar Vacaciones"))
 
 
 class VacationInitialBalanceForm(FlaskForm):
     """Form for loading initial vacation balance for an employee.
-    
+
     Used during system implementation to set the initial accumulated vacation
     balance for employees who already have vacation time earned before the
     system goes live.
-    
+
     Creates an ADJUSTMENT ledger entry with the initial balance.
     """
-    
+
     empleado_id = SelectField(
         _("Empleado"),
         validators=[DataRequired()],
@@ -1724,5 +1724,5 @@ class VacationInitialBalanceForm(FlaskForm):
         validators=[Optional(), Length(max=500)],
         description=_("Notas sobre el origen del saldo inicial"),
     )
-    
+
     submit = SubmitField(_("Cargar Saldo Inicial"))

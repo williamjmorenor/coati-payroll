@@ -9,10 +9,7 @@ packages = ["cargo", "fontconfig", "gh", "ghostscript", "glib", "harfbuzz", "lib
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 40317
-externalPort = 3000
+exposeLocalhost = true
 
 [workflows]
 runButton = "Project"

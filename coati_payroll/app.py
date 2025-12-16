@@ -60,7 +60,7 @@ def index():
 @app.route("/health")
 def health():
     """Health check endpoint for container orchestration.
-    
+
     Returns a simple OK response to indicate the application is running.
     This endpoint does not require authentication and does not check database connectivity.
     """
@@ -70,7 +70,7 @@ def health():
 @app.route("/ready")
 def ready():
     """Readiness check endpoint for container orchestration.
-    
+
     Returns OK if the application is ready to serve traffic (database is accessible).
     This endpoint does not require authentication.
     """

@@ -848,41 +848,41 @@ class NominaEngine:
 
     def _calcular_interes_prestamo(self, prestamo: Adelanto) -> None:
         """Calculate and apply interest for a loan.
-        
+
         This method calculates interest for the days elapsed since the last
         interest calculation and adds it to the loan balance.
-        
+
         Args:
             prestamo: The loan to calculate interest for
         """
         from coati_payroll.interes_engine import calcular_interes_periodo
         from coati_payroll.model import InteresAdelanto
-        
+
         # Only calculate interest if loan has interest rate
         tasa_interes = prestamo.tasa_interes or Decimal("0.0000")
         if tasa_interes <= 0:
             return
-        
+
         # Only calculate if loan has balance
         if prestamo.saldo_pendiente <= 0:
             return
-        
+
         # Determine period for interest calculation
         fecha_desde = prestamo.fecha_ultimo_calculo_interes
         if not fecha_desde:
             # First time calculating interest - use approval or disbursement date
             fecha_desde = prestamo.fecha_desembolso or prestamo.fecha_aprobacion
-        
+
         if not fecha_desde:
             # If still no date, skip interest calculation
             return
-        
+
         fecha_hasta = self.fecha_calculo
-        
+
         # Skip if already calculated for this period
         if fecha_desde >= fecha_hasta:
             return
-        
+
         # Calculate interest for the period
         tipo_interes = prestamo.tipo_interes or "simple"
         interes_calculado, dias = calcular_interes_periodo(
@@ -890,12 +890,12 @@ class NominaEngine:
             tasa_anual=tasa_interes,
             fecha_desde=fecha_desde,
             fecha_hasta=fecha_hasta,
-            tipo_interes=tipo_interes
+            tipo_interes=tipo_interes,
         )
-        
+
         if interes_calculado <= 0:
             return
-        
+
         # Record interest in journal
         interes_entrada = InteresAdelanto(
             adelanto_id=prestamo.id,
@@ -908,12 +908,12 @@ class NominaEngine:
             interes_calculado=interes_calculado,
             saldo_anterior=prestamo.saldo_pendiente,
             saldo_posterior=prestamo.saldo_pendiente + interes_calculado,
-            observaciones=_(
-                "Interés calculado por nómina del {inicio} al {fin}"
-            ).format(inicio=self.periodo_inicio, fin=self.periodo_fin)
+            observaciones=_("Interés calculado por nómina del {inicio} al {fin}").format(
+                inicio=self.periodo_inicio, fin=self.periodo_fin
+            ),
         )
         db.session.add(interes_entrada)
-        
+
         # Update loan with interest
         prestamo.saldo_pendiente += interes_calculado
         prestamo.interes_acumulado = (prestamo.interes_acumulado or Decimal("0.00")) + interes_calculado
@@ -1375,7 +1375,9 @@ class NominaEngine:
 
             db.session.add(transaccion)
 
-    def _procesar_vacaciones(self, empleado: Empleado, emp_calculo: EmpleadoCalculo, nomina_empleado: NominaEmpleado) -> None:
+    def _procesar_vacaciones(
+        self, empleado: Empleado, emp_calculo: EmpleadoCalculo, nomina_empleado: NominaEmpleado
+    ) -> None:
         """Process vacation accrual and usage for an employee.
 
         This method:
@@ -1404,10 +1406,7 @@ class NominaEngine:
             )
 
             if accrued > 0:
-                self._trace(
-                    f"Acumuladas {accrued} unidades de vacaciones para empleado "
-                    f"{empleado.codigo_empleado}"
-                )
+                self._trace(f"Acumuladas {accrued} unidades de vacaciones para empleado " f"{empleado.codigo_empleado}")
 
             # Process vacation novelties (time off taken)
             used = vacation_service.procesar_novedades_vacaciones(
@@ -1418,8 +1417,7 @@ class NominaEngine:
 
             if used > 0:
                 self._trace(
-                    f"Procesadas {used} unidades de vacaciones usadas para empleado "
-                    f"{empleado.codigo_empleado}"
+                    f"Procesadas {used} unidades de vacaciones usadas para empleado " f"{empleado.codigo_empleado}"
                 )
 
         except Exception as e:

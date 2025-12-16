@@ -104,10 +104,10 @@ class TipoInteres(StrEnum):
 
 class MetodoAmortizacion(StrEnum):
     """Amortization methods for loans with interest.
-    
+
     Using Python 3.11+ StrEnum for type safety.
     """
-    
+
     FRANCES = "frances"  # French method - constant payment (cuota constante)
     ALEMAN = "aleman"  # German method - constant amortization (amortización constante)
 

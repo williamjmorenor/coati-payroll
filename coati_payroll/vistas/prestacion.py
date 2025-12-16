@@ -53,19 +53,18 @@ prestacion_management_bp = Blueprint("prestacion_management", __name__, url_pref
 def dashboard():
     """Prestacion management dashboard."""
     # Statistics
-    total_prestaciones = db.session.query(func.count(Prestacion.id)).filter(
-        Prestacion.activo.is_(True)
-    ).scalar() or 0
+    total_prestaciones = db.session.query(func.count(Prestacion.id)).filter(Prestacion.activo.is_(True)).scalar() or 0
 
     # Count employees with benefit balances
-    total_accounts = db.session.query(
-        func.count(func.distinct(PrestacionAcumulada.empleado_id))
-    ).scalar() or 0
+    total_accounts = db.session.query(func.count(func.distinct(PrestacionAcumulada.empleado_id))).scalar() or 0
 
     # Count pending initial loads
-    pending_loads = db.session.query(func.count(CargaInicialPrestacion.id)).filter(
-        CargaInicialPrestacion.estado == "borrador"
-    ).scalar() or 0
+    pending_loads = (
+        db.session.query(func.count(CargaInicialPrestacion.id))
+        .filter(CargaInicialPrestacion.estado == "borrador")
+        .scalar()
+        or 0
+    )
 
     # Recent activity - latest transactions
     recent_transactions = (
@@ -94,11 +93,11 @@ def dashboard():
 @require_role(TipoUsuario.ADMIN)
 def initial_balance_bulk():
     """Bulk load initial prestacion balances from Excel.
-    
+
     Used during system implementation for companies with many employees.
     Allows uploading an Excel file with initial prestacion balances for multiple
     employees at once.
-    
+
     Expected Excel format (without headers, data starts on row 1):
     - Column A: Código de Empleado
     - Column B: Código de Prestación
@@ -114,28 +113,28 @@ def initial_balance_bulk():
         if "file" not in request.files:
             flash(_("No se seleccionó ningún archivo."), "warning")
             return redirect(url_for("prestacion_management.initial_balance_bulk"))
-        
+
         file = request.files["file"]
-        
+
         if file.filename == "":
             flash(_("No se seleccionó ningún archivo."), "warning")
             return redirect(url_for("prestacion_management.initial_balance_bulk"))
-        
+
         if not file.filename.endswith((".xlsx", ".xls")):
             flash(_("Por favor, suba un archivo Excel (.xlsx o .xls)."), "warning")
             return redirect(url_for("prestacion_management.initial_balance_bulk"))
-        
+
         try:
             import openpyxl
-            
+
             # Load Excel file
             workbook = openpyxl.load_workbook(file, data_only=True)
             sheet = workbook.active
-            
+
             success_count = 0
             error_count = 0
             errors = []
-            
+
             # Process each row (data starts at row 1, no headers expected)
             for row_num, row in enumerate(sheet.iter_rows(min_row=1, values_only=True), start=1):
                 codigo_empleado = row[0]
@@ -146,63 +145,79 @@ def initial_balance_bulk():
                 saldo_acumulado = row[5]
                 tipo_cambio = row[6] if len(row) > 6 and row[6] is not None else Decimal("1.0")
                 observaciones = row[7] if len(row) > 7 else "Carga masiva de saldo inicial"
-                
+
                 # Validate required fields
-                if not all([codigo_empleado, codigo_prestacion, anio_corte, mes_corte, codigo_moneda, saldo_acumulado is not None]):
+                if not all(
+                    [
+                        codigo_empleado,
+                        codigo_prestacion,
+                        anio_corte,
+                        mes_corte,
+                        codigo_moneda,
+                        saldo_acumulado is not None,
+                    ]
+                ):
                     errors.append(f"Fila {row_num}: Faltan campos requeridos")
                     error_count += 1
                     continue
-                
+
                 # Find employee
-                empleado = db.session.query(Empleado).filter(
-                    Empleado.codigo_empleado == codigo_empleado,
-                    Empleado.activo.is_(True)
-                ).first()
-                
+                empleado = (
+                    db.session.query(Empleado)
+                    .filter(Empleado.codigo_empleado == codigo_empleado, Empleado.activo.is_(True))
+                    .first()
+                )
+
                 if not empleado:
                     errors.append(f"Fila {row_num}: Empleado {codigo_empleado} no encontrado")
                     error_count += 1
                     continue
-                
+
                 # Find prestacion
-                prestacion = db.session.query(Prestacion).filter(
-                    Prestacion.codigo == codigo_prestacion,
-                    Prestacion.activo.is_(True)
-                ).first()
-                
+                prestacion = (
+                    db.session.query(Prestacion)
+                    .filter(Prestacion.codigo == codigo_prestacion, Prestacion.activo.is_(True))
+                    .first()
+                )
+
                 if not prestacion:
                     errors.append(f"Fila {row_num}: Prestación {codigo_prestacion} no encontrada")
                     error_count += 1
                     continue
-                
+
                 # Find moneda
-                moneda = db.session.query(Moneda).filter(
-                    Moneda.codigo == codigo_moneda,
-                    Moneda.activo.is_(True)
-                ).first()
-                
+                moneda = (
+                    db.session.query(Moneda).filter(Moneda.codigo == codigo_moneda, Moneda.activo.is_(True)).first()
+                )
+
                 if not moneda:
                     errors.append(f"Fila {row_num}: Moneda {codigo_moneda} no encontrada")
                     error_count += 1
                     continue
-                
+
                 # Check for duplicate
-                existing = db.session.query(CargaInicialPrestacion).filter(
-                    CargaInicialPrestacion.empleado_id == empleado.id,
-                    CargaInicialPrestacion.prestacion_id == prestacion.id,
-                    CargaInicialPrestacion.anio_corte == anio_corte,
-                    CargaInicialPrestacion.mes_corte == mes_corte,
-                ).first()
-                
+                existing = (
+                    db.session.query(CargaInicialPrestacion)
+                    .filter(
+                        CargaInicialPrestacion.empleado_id == empleado.id,
+                        CargaInicialPrestacion.prestacion_id == prestacion.id,
+                        CargaInicialPrestacion.anio_corte == anio_corte,
+                        CargaInicialPrestacion.mes_corte == mes_corte,
+                    )
+                    .first()
+                )
+
                 if existing:
-                    errors.append(f"Fila {row_num}: Ya existe carga para empleado {codigo_empleado}, prestación {codigo_prestacion}, período {mes_corte}/{anio_corte}")
+                    errors.append(
+                        f"Fila {row_num}: Ya existe registro {codigo_empleado}, {codigo_prestacion}, {mes_corte}/{anio_corte}"
+                    )
                     error_count += 1
                     continue
-                
+
                 try:
                     # Calculate saldo_convertido
                     saldo_convertido = Decimal(str(saldo_acumulado)) * Decimal(str(tipo_cambio))
-                    
+
                     # Create CargaInicialPrestacion
                     carga = CargaInicialPrestacion(
                         empleado_id=empleado.id,
@@ -217,38 +232,40 @@ def initial_balance_bulk():
                         estado="borrador",
                         creado_por=current_user.usuario if current_user.is_authenticated else None,
                     )
-                    
+
                     db.session.add(carga)
                     success_count += 1
-                    
+
                 except Exception as e:
                     errors.append(f"Fila {row_num}: Error al procesar {codigo_empleado}: {str(e)}")
                     error_count += 1
                     continue
-            
+
             # Commit all changes
             try:
                 db.session.commit()
                 flash(
-                    _("Carga completada: {} registros exitosos en estado borrador, {} errores.").format(success_count, error_count),
-                    "success" if error_count == 0 else "warning"
+                    _("Carga completada: {} registros exitosos en estado borrador, {} errores.").format(
+                        success_count, error_count
+                    ),
+                    "success" if error_count == 0 else "warning",
                 )
-                
+
                 if errors:
                     error_details = "<br>".join(errors[:MAX_DISPLAYED_ERRORS])
                     if len(errors) > MAX_DISPLAYED_ERRORS:
                         error_details += f"<br>...y {len(errors) - MAX_DISPLAYED_ERRORS} errores más"
                     flash(error_details, "warning")
-                
+
             except Exception as e:
                 db.session.rollback()
                 flash(_("Error al guardar los cambios: {}").format(str(e)), "danger")
-        
+
         except ImportError:
             flash(_("Error: La librería openpyxl no está instalada. Contacte al administrador."), "danger")
         except Exception as e:
             flash(_("Error al procesar el archivo Excel: {}").format(str(e)), "danger")
-        
+
         return redirect(url_for("prestacion_management.initial_balance_bulk"))
-    
+
     return render_template("modules/prestacion_management/initial_balance_bulk.html")

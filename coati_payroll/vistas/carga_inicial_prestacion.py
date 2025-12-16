@@ -35,9 +35,7 @@ from coati_payroll.model import (
 from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.vistas.constants import PER_PAGE
 
-carga_inicial_prestacion_bp = Blueprint(
-    "carga_inicial_prestacion", __name__, url_prefix="/carga-inicial-prestaciones"
-)
+carga_inicial_prestacion_bp = Blueprint("carga_inicial_prestacion", __name__, url_prefix="/carga-inicial-prestaciones")
 
 
 @carga_inicial_prestacion_bp.route("/")
@@ -167,7 +165,9 @@ def editar(carga_id):
         carga.moneda_id = form.moneda_id.data
         carga.saldo_acumulado = form.saldo_acumulado.data if form.saldo_acumulado.data is not None else Decimal("0.00")
         carga.tipo_cambio = form.tipo_cambio.data if form.tipo_cambio.data is not None else Decimal("1.0")
-        carga.saldo_convertido = form.saldo_convertido.data if form.saldo_convertido.data is not None else Decimal("0.00")
+        carga.saldo_convertido = (
+            form.saldo_convertido.data if form.saldo_convertido.data is not None else Decimal("0.00")
+        )
         carga.observaciones = form.observaciones.data
         carga.modificado_por = current_user.usuario if current_user.is_authenticated else None
 
@@ -299,6 +299,7 @@ def reporte():
 def reporte_excel():
     """Export accumulated benefits report to Excel."""
     import io
+
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill

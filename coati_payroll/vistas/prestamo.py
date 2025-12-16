@@ -188,14 +188,17 @@ def detail(prestamo_id):
         .scalars()
         .all()
     )
-    
+
     # Get interest journal if loan has interest
     from coati_payroll.model import InteresAdelanto
+
     intereses = []
     if prestamo.tasa_interes and prestamo.tasa_interes > 0:
         intereses = (
             db.session.execute(
-                db.select(InteresAdelanto).filter_by(adelanto_id=prestamo_id).order_by(InteresAdelanto.fecha_hasta.desc())
+                db.select(InteresAdelanto)
+                .filter_by(adelanto_id=prestamo_id)
+                .order_by(InteresAdelanto.fecha_hasta.desc())
             )
             .scalars()
             .all()
@@ -324,17 +327,15 @@ def approve(prestamo_id):
             # Calculate installment amount based on amortization method
             if prestamo.cuotas_pactadas and prestamo.cuotas_pactadas > 0:
                 from coati_payroll.interes_engine import calcular_cuota_frances
-                
+
                 tasa_interes = prestamo.tasa_interes or Decimal("0.0000")
                 metodo = prestamo.metodo_amortizacion or "frances"
-                
+
                 # For French method, calculate constant payment
                 # For German method, payment varies so we store the first payment
                 if metodo == "frances":
                     prestamo.monto_por_cuota = calcular_cuota_frances(
-                        prestamo.monto_aprobado,
-                        tasa_interes,
-                        prestamo.cuotas_pactadas
+                        prestamo.monto_aprobado, tasa_interes, prestamo.cuotas_pactadas
                     )
                 else:
                     # For German method, store average payment for reference
@@ -765,15 +766,15 @@ def generar_tabla_pago(prestamo: Adelanto) -> list[dict]:
 
     # Determine start date
     fecha_inicio = prestamo.fecha_aprobacion or prestamo.fecha_solicitud or date.today()
-    
+
     # Import interest engine
     from coati_payroll.interes_engine import generar_tabla_amortizacion
-    
+
     # Get interest rate and type
     tasa_interes = prestamo.tasa_interes or Decimal("0.0000")
     tipo_interes = prestamo.tipo_interes or "ninguno"
     metodo_amortizacion = prestamo.metodo_amortizacion or "frances"
-    
+
     # Generate amortization schedule using the interest engine
     cuotas = generar_tabla_amortizacion(
         principal=monto_base,
@@ -781,19 +782,21 @@ def generar_tabla_pago(prestamo: Adelanto) -> list[dict]:
         num_cuotas=prestamo.cuotas_pactadas,
         fecha_inicio=fecha_inicio,
         metodo=metodo_amortizacion,
-        tipo_interes=tipo_interes
+        tipo_interes=tipo_interes,
     )
-    
+
     # Convert to dict format for template
     tabla = []
     for cuota in cuotas:
-        tabla.append({
-            "numero": cuota.numero,
-            "fecha_estimada": cuota.fecha_estimada,
-            "cuota": cuota.cuota_total,
-            "interes": cuota.interes,
-            "capital": cuota.capital,
-            "saldo": cuota.saldo,
-        })
-    
+        tabla.append(
+            {
+                "numero": cuota.numero,
+                "fecha_estimada": cuota.fecha_estimada,
+                "cuota": cuota.cuota_total,
+                "interes": cuota.interes,
+                "capital": cuota.capital,
+                "saldo": cuota.saldo,
+            }
+        )
+
     return tabla

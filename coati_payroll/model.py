@@ -1041,19 +1041,17 @@ class Adelanto(database.Model, BaseTabla):
         database.Numeric(5, 4), nullable=True, default=Decimal("0.0000")
     )  # e.g., 0.0500 = 5%
     tipo_interes = database.Column(database.String(20), nullable=True, default="ninguno")  # ninguno, simple, compuesto
-    
+
     # Amortization method (for loans with interest)
     metodo_amortizacion = database.Column(
         database.String(20), nullable=True, default="frances"
     )  # frances (constant payment), aleman (constant amortization)
-    
+
     # Interest tracking
     interes_acumulado = database.Column(
         database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
     )  # Total interest accumulated
-    fecha_ultimo_calculo_interes = database.Column(
-        database.Date, nullable=True
-    )  # Last date interest was calculated
+    fecha_ultimo_calculo_interes = database.Column(database.Date, nullable=True)  # Last date interest was calculated
 
     # Accounting fields for initial disbursement
     cuenta_debe = database.Column(database.String(64), nullable=True)
@@ -1133,17 +1131,17 @@ class AdelantoAbono(database.Model, BaseTabla):
 # Interest journal for loans
 class InteresAdelanto(database.Model, BaseTabla):
     """Interest calculation journal for loans.
-    
+
     Tracks interest calculations for each loan during payroll processing.
     Each payroll execution calculates interest for the days elapsed since
     the last calculation and records it here.
-    
+
     This provides a complete audit trail of interest calculations and ensures
     interest is properly tracked and applied to the loan balance.
     """
-    
+
     __tablename__ = "interes_adelanto"
-    
+
     adelanto_id = database.Column(
         database.String(26),
         database.ForeignKey("adelanto.id"),
@@ -1151,12 +1149,12 @@ class InteresAdelanto(database.Model, BaseTabla):
         index=True,
     )
     nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=True)
-    
+
     # Calculation period
     fecha_desde = database.Column(database.Date, nullable=False)
     fecha_hasta = database.Column(database.Date, nullable=False)
     dias_transcurridos = database.Column(database.Integer, nullable=False)
-    
+
     # Interest calculation
     saldo_base = database.Column(
         database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
@@ -1167,7 +1165,7 @@ class InteresAdelanto(database.Model, BaseTabla):
     interes_calculado = database.Column(
         database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
     )  # Interest amount calculated
-    
+
     # Balance tracking
     saldo_anterior = database.Column(
         database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
@@ -1175,9 +1173,9 @@ class InteresAdelanto(database.Model, BaseTabla):
     saldo_posterior = database.Column(
         database.Numeric(14, 2), nullable=False, default=Decimal("0.00")
     )  # Balance after interest
-    
+
     observaciones = database.Column(database.String(500), nullable=True)
-    
+
     adelanto = database.relationship("Adelanto", back_populates="intereses")
     nomina = database.relationship("Nomina")
 
@@ -1708,9 +1706,7 @@ class VacationLedger(database.Model, BaseTabla):
     )
 
     # Account reference
-    account_id = database.Column(
-        database.String(26), database.ForeignKey("vacation_account.id"), nullable=False
-    )
+    account_id = database.Column(database.String(26), database.ForeignKey("vacation_account.id"), nullable=False)
     account = database.relationship("VacationAccount", back_populates="ledger_entries")
 
     # Employee reference (for easier querying)
@@ -1919,7 +1915,9 @@ class ReportAudit(database.Model, BaseTabla):
     report = database.relationship("Report", back_populates="audit_entries")
 
     # Action performed
-    action = database.Column(database.String(50), nullable=False, index=True)  # created | updated | status_changed | etc
+    action = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # created | updated | status_changed | etc
 
     # User who performed the action
     performed_by = database.Column(database.String(150), nullable=False, index=True)
