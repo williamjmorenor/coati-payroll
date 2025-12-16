@@ -25,6 +25,7 @@ from __future__ import annotations
 from flask import Blueprint, render_template
 from flask_login import login_required
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 
 # <-------------------------------------------------------------------------> #
 # Local modules
@@ -54,3 +55,33 @@ def index():
         total_nominas=total_nominas,
         recent_nominas=recent_nominas,
     )
+
+
+@app.route("/health")
+def health():
+    """Health check endpoint for container orchestration.
+    
+    Returns a simple OK response to indicate the application is running.
+    This endpoint does not require authentication and does not check database connectivity.
+    """
+    return {"status": "ok"}, 200
+
+
+@app.route("/ready")
+def ready():
+    """Readiness check endpoint for container orchestration.
+    
+    Returns OK if the application is ready to serve traffic (database is accessible).
+    This endpoint does not require authentication.
+    """
+    try:
+        # Test database connectivity using a fresh connection
+        # This avoids issues with session state from other parts of the application
+        with db.engine.connect() as connection:
+            connection.execute(db.text("SELECT 1")).scalar()
+        return {"status": "ok"}, 200
+    except SQLAlchemyError:
+        return {"status": "unavailable"}, 503
+    except Exception:
+        # Catch any other exception that might occur
+        return {"status": "unavailable"}, 503
