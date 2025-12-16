@@ -20,13 +20,13 @@ from coati_payroll.model import Report, ReportRole, ReportExecution, ReportAudit
 def test_create_system_report(app, db_session):
     """
     Test creating a system report.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Create a system report with required fields
-    
+
     Verification:
         - Report is created with correct attributes
     """
@@ -42,7 +42,7 @@ def test_create_system_report(app, db_session):
         )
         db_session.add(report)
         db_session.commit()
-        
+
         assert report.id is not None
         assert report.name == "Test System Report"
         assert report.type == ReportType.SYSTEM
@@ -55,13 +55,13 @@ def test_create_system_report(app, db_session):
 def test_create_custom_report(app, db_session):
     """
     Test creating a custom report with definition.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Create a custom report with JSON definition
-    
+
     Verification:
         - Report is created with definition
     """
@@ -71,14 +71,10 @@ def test_create_custom_report(app, db_session):
                 {"type": "field", "entity": "Employee", "field": "primer_nombre"},
                 {"type": "field", "entity": "Employee", "field": "primer_apellido"},
             ],
-            "filters": [
-                {"field": "activo", "operator": "=", "value": True}
-            ],
-            "sorting": [
-                {"field": "primer_apellido", "direction": "asc"}
-            ]
+            "filters": [{"field": "activo", "operator": "=", "value": True}],
+            "sorting": [{"field": "primer_apellido", "direction": "asc"}],
         }
-        
+
         report = Report(
             name="Test Custom Report",
             description="A test custom report",
@@ -90,7 +86,7 @@ def test_create_custom_report(app, db_session):
         )
         db_session.add(report)
         db_session.commit()
-        
+
         assert report.id is not None
         assert report.type == ReportType.CUSTOM
         assert report.definition is not None
@@ -101,13 +97,13 @@ def test_create_custom_report(app, db_session):
 def test_report_role_permissions(app, db_session):
     """
     Test creating report role permissions.
-    
+
     Setup:
         - Create a report
-    
+
     Action:
         - Create role permissions for the report
-    
+
     Verification:
         - Permissions are created correctly
     """
@@ -121,7 +117,7 @@ def test_report_role_permissions(app, db_session):
         )
         db_session.add(report)
         db_session.commit()
-        
+
         role = ReportRole(
             report_id=report.id,
             role="admin",
@@ -131,7 +127,7 @@ def test_report_role_permissions(app, db_session):
         )
         db_session.add(role)
         db_session.commit()
-        
+
         assert role.id is not None
         assert role.report_id == report.id
         assert role.role == "admin"
@@ -143,13 +139,13 @@ def test_report_role_permissions(app, db_session):
 def test_report_execution(app, db_session):
     """
     Test creating a report execution record.
-    
+
     Setup:
         - Create a report
-    
+
     Action:
         - Create an execution record
-    
+
     Verification:
         - Execution record is created
     """
@@ -163,7 +159,7 @@ def test_report_execution(app, db_session):
         )
         db_session.add(report)
         db_session.commit()
-        
+
         execution = ReportExecution(
             report_id=report.id,
             status=ReportExecutionStatus.COMPLETED,
@@ -173,7 +169,7 @@ def test_report_execution(app, db_session):
         )
         db_session.add(execution)
         db_session.commit()
-        
+
         assert execution.id is not None
         assert execution.report_id == report.id
         assert execution.status == ReportExecutionStatus.COMPLETED
@@ -185,13 +181,13 @@ def test_report_execution(app, db_session):
 def test_report_audit(app, db_session):
     """
     Test creating a report audit record.
-    
+
     Setup:
         - Create a report
-    
+
     Action:
         - Create an audit record
-    
+
     Verification:
         - Audit record is created
     """
@@ -205,7 +201,7 @@ def test_report_audit(app, db_session):
         )
         db_session.add(report)
         db_session.commit()
-        
+
         audit = ReportAudit(
             report_id=report.id,
             action="status_changed",
@@ -214,7 +210,7 @@ def test_report_audit(app, db_session):
         )
         db_session.add(audit)
         db_session.commit()
-        
+
         assert audit.id is not None
         assert audit.report_id == report.id
         assert audit.action == "status_changed"
@@ -225,13 +221,13 @@ def test_report_audit(app, db_session):
 def test_report_relationships(app, db_session):
     """
     Test report relationships with other entities.
-    
+
     Setup:
         - Create a report with permissions and executions
-    
+
     Action:
         - Access relationships
-    
+
     Verification:
         - Relationships work correctly
     """
@@ -245,7 +241,7 @@ def test_report_relationships(app, db_session):
         )
         db_session.add(report)
         db_session.commit()
-        
+
         # Add permissions
         role1 = ReportRole(
             report_id=report.id,
@@ -263,7 +259,7 @@ def test_report_relationships(app, db_session):
         )
         db_session.add(role1)
         db_session.add(role2)
-        
+
         # Add execution
         execution = ReportExecution(
             report_id=report.id,
@@ -272,10 +268,10 @@ def test_report_relationships(app, db_session):
         )
         db_session.add(execution)
         db_session.commit()
-        
+
         # Refresh to load relationships
         db_session.refresh(report)
-        
+
         assert len(report.permissions) == 2
         assert len(report.executions) == 1
         assert report.permissions[0].role in ["admin", "hhrr"]
@@ -285,13 +281,13 @@ def test_report_relationships(app, db_session):
 def test_disabled_report(app, db_session):
     """
     Test creating a disabled report.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Create a report with DISABLED status
-    
+
     Verification:
         - Report is created with disabled status
     """
@@ -305,20 +301,20 @@ def test_disabled_report(app, db_session):
         )
         db_session.add(report)
         db_session.commit()
-        
+
         assert report.status == ReportStatus.DISABLED
 
 
 def test_report_unique_name(app, db_session):
     """
     Test that report names must be unique.
-    
+
     Setup:
         - Create a report
-    
+
     Action:
         - Try to create another report with the same name
-    
+
     Verification:
         - Second report creation fails
     """
@@ -332,7 +328,7 @@ def test_report_unique_name(app, db_session):
         )
         db_session.add(report1)
         db_session.commit()
-        
+
         report2 = Report(
             name="Unique Report",  # Same name
             type=ReportType.SYSTEM,
@@ -341,7 +337,7 @@ def test_report_unique_name(app, db_session):
             system_report_id="unique_report_2",
         )
         db_session.add(report2)
-        
+
         try:
             db_session.commit()
             assert False, "Should have raised an exception for duplicate name"

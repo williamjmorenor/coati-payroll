@@ -16,14 +16,23 @@
 from coati_payroll.model import Empresa
 
 
-def create_company(db_session, codigo, razon_social, ruc, nombre_comercial=None,
-                   direccion=None, telefono=None, correo=None, activo=True):
+def create_company(
+    db_session,
+    codigo,
+    razon_social,
+    ruc,
+    nombre_comercial=None,
+    direccion=None,
+    telefono=None,
+    correo=None,
+    activo=True,
+):
     """
     Create a company in the database.
-    
+
     This is a simple factory function that creates a company with the given
     parameters. No implicit data creation or side effects.
-    
+
     Args:
         db_session: SQLAlchemy session
         codigo: Unique company code
@@ -34,7 +43,7 @@ def create_company(db_session, codigo, razon_social, ruc, nombre_comercial=None,
         telefono: Phone number (optional)
         correo: Email (optional)
         activo: Active status (default: True)
-    
+
     Returns:
         Empresa: Created company instance with ID assigned
     """
@@ -47,9 +56,9 @@ def create_company(db_session, codigo, razon_social, ruc, nombre_comercial=None,
     empresa.telefono = telefono
     empresa.correo = correo
     empresa.activo = activo
-    
+
     db_session.add(empresa)
     db_session.commit()
     db_session.refresh(empresa)
-    
+
     return empresa

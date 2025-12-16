@@ -17,12 +17,12 @@
 def login_user(client, username, password):
     """
     Log in a user via the login form.
-    
+
     Args:
         client: Flask test client
         username: Username to log in with
         password: Password to log in with
-    
+
     Returns:
         Response: Response from the login POST request
     """
@@ -39,10 +39,10 @@ def login_user(client, username, password):
 def logout_user(client):
     """
     Log out the current user.
-    
+
     Args:
         client: Flask test client
-    
+
     Returns:
         Response: Response from the logout request
     """

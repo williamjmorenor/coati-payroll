@@ -17,14 +17,15 @@ from coati_payroll.model import Usuario
 from coati_payroll.auth import proteger_passwd
 
 
-def create_user(db_session, usuario, password, nombre="Test", apellido="User",
-                correo_electronico=None, tipo="user", activo=True):
+def create_user(
+    db_session, usuario, password, nombre="Test", apellido="User", correo_electronico=None, tipo="user", activo=True
+):
     """
     Create a user in the database.
-    
+
     This is a simple factory function that creates a user with the given
     parameters. No implicit data creation or side effects.
-    
+
     Args:
         db_session: SQLAlchemy session
         usuario: Username (unique identifier)
@@ -34,7 +35,7 @@ def create_user(db_session, usuario, password, nombre="Test", apellido="User",
         correo_electronico: Email address (optional)
         tipo: User type (default: "user")
         activo: Active status (default: True)
-    
+
     Returns:
         Usuario: Created user instance with ID assigned
     """
@@ -46,9 +47,9 @@ def create_user(db_session, usuario, password, nombre="Test", apellido="User",
     user.correo_electronico = correo_electronico
     user.tipo = tipo
     user.activo = activo
-    
+
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
-    
+
     return user

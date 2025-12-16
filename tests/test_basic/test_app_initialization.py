@@ -17,13 +17,13 @@
 def test_app_is_created(app):
     """
     Test that the Flask application is created successfully.
-    
+
     Setup:
         - Use the app fixture
-    
+
     Action:
         - Verify app exists and is in testing mode
-    
+
     Verification:
         - App is not None
         - TESTING flag is True
@@ -35,13 +35,13 @@ def test_app_is_created(app):
 def test_database_is_sqlite_memory(app):
     """
     Test that the database is configured to use SQLite in memory.
-    
+
     Setup:
         - Use the app fixture
-    
+
     Action:
         - Check the database URI
-    
+
     Verification:
         - Database URI uses SQLite in-memory
     """
@@ -51,24 +51,24 @@ def test_database_is_sqlite_memory(app):
 def test_database_tables_exist(app, db_session):
     """
     Test that database tables are created.
-    
+
     Setup:
         - Use app and db_session fixtures
-    
+
     Action:
         - Query table names from database
-    
+
     Verification:
         - Usuario table exists
         - Other essential tables exist
     """
     from coati_payroll.model import db
-    
+
     with app.app_context():
         # Get all table names
         inspector = db.inspect(db.engine)
         tables = inspector.get_table_names()
-        
+
         # Verify essential tables exist
         assert "usuario" in tables
         assert "empresa" in tables
@@ -78,13 +78,13 @@ def test_database_tables_exist(app, db_session):
 def test_csrf_is_disabled_in_testing(app):
     """
     Test that CSRF protection is disabled for testing.
-    
+
     Setup:
         - Use the app fixture
-    
+
     Action:
         - Check CSRF configuration
-    
+
     Verification:
         - WTF_CSRF_ENABLED is False
     """
@@ -94,21 +94,21 @@ def test_csrf_is_disabled_in_testing(app):
 def test_session_isolation(app, db_session):
     """
     Test that each test has isolated database session.
-    
+
     Setup:
         - Use app and db_session fixtures
-    
+
     Action:
         - Create a user in the session
         - Don't commit
-    
+
     Verification:
         - User exists in current session
         - Will be rolled back after test
     """
     from coati_payroll.model import Usuario
     from coati_payroll.auth import proteger_passwd
-    
+
     with app.app_context():
         user = Usuario()
         user.usuario = "test-isolation"
@@ -117,10 +117,10 @@ def test_session_isolation(app, db_session):
         user.apellido = "Isolation"
         user.tipo = "user"
         user.activo = True
-        
+
         db_session.add(user)
         db_session.flush()
-        
+
         # Verify user exists in current session
         found = db_session.query(Usuario).filter_by(usuario="test-isolation").first()
         assert found is not None

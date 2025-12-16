@@ -14,12 +14,10 @@
 """Tests for report export functionality."""
 
 import os
-import tempfile
 from pathlib import Path
 
 from coati_payroll.report_export import (
     ReportExporter,
-    export_report_to_excel,
     export_report_to_csv,
 )
 
@@ -27,13 +25,13 @@ from coati_payroll.report_export import (
 def test_report_exporter_initialization():
     """
     Test ReportExporter initialization.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Create ReportExporter instance
-    
+
     Verification:
         - Instance created with correct attributes
     """
@@ -41,9 +39,9 @@ def test_report_exporter_initialization():
         {"Name": "John", "Age": 30},
         {"Name": "Jane", "Age": 25},
     ]
-    
+
     exporter = ReportExporter("Test Report", results)
-    
+
     assert exporter.report_name == "Test Report"
     assert len(exporter.results) == 2
 
@@ -51,13 +49,13 @@ def test_report_exporter_initialization():
 def test_export_to_csv(tmpdir):
     """
     Test CSV export functionality.
-    
+
     Setup:
         - Create test results
-    
+
     Action:
         - Export to CSV
-    
+
     Verification:
         - File is created
         - Contains correct data
@@ -66,14 +64,14 @@ def test_export_to_csv(tmpdir):
         {"Name": "John", "Age": 30, "City": "NYC"},
         {"Name": "Jane", "Age": 25, "City": "LA"},
     ]
-    
+
     output_path = str(tmpdir.join("test_report.csv"))
-    
+
     exporter = ReportExporter("Test Report", results)
     file_path = exporter.to_csv(output_path)
-    
+
     assert os.path.exists(file_path)
-    
+
     # Read and verify contents
     with open(file_path, "r") as f:
         content = f.read()
@@ -85,23 +83,23 @@ def test_export_to_csv(tmpdir):
 def test_export_to_csv_with_empty_results(tmpdir):
     """
     Test CSV export with empty results.
-    
+
     Setup:
         - Empty results list
-    
+
     Action:
         - Export to CSV
-    
+
     Verification:
         - File path is returned (even if empty)
     """
     results = []
-    
+
     output_path = str(tmpdir.join("empty_report.csv"))
-    
+
     exporter = ReportExporter("Empty Report", results)
     file_path = exporter.to_csv(output_path)
-    
+
     # Empty results may not create file in some implementations
     # Just verify path is returned
     assert file_path == output_path
@@ -110,51 +108,51 @@ def test_export_to_csv_with_empty_results(tmpdir):
 def test_export_report_to_csv_convenience_function(tmpdir):
     """
     Test export_report_to_csv convenience function.
-    
+
     Setup:
         - Create test results
-    
+
     Action:
         - Use convenience function
-    
+
     Verification:
         - File is created
     """
     results = [
         {"Product": "Widget", "Price": 10.99},
     ]
-    
+
     output_path = str(tmpdir.join("convenience_test.csv"))
-    
+
     file_path = export_report_to_csv("Convenience Test", results, output_path)
-    
+
     assert os.path.exists(file_path)
 
 
 def test_csv_export_handles_special_characters(tmpdir):
     """
     Test CSV export handles special characters.
-    
+
     Setup:
         - Results with special characters
-    
+
     Action:
         - Export to CSV
-    
+
     Verification:
         - File contains special characters correctly
     """
     results = [
         {"Name": "José García", "Description": "Test, with comma"},
     ]
-    
+
     output_path = str(tmpdir.join("special_chars.csv"))
-    
+
     exporter = ReportExporter("Special Chars", results)
     file_path = exporter.to_csv(output_path)
-    
+
     assert os.path.exists(file_path)
-    
+
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
         assert "José García" in content
@@ -163,21 +161,21 @@ def test_csv_export_handles_special_characters(tmpdir):
 def test_csv_export_generates_filename():
     """
     Test CSV export generates filename when not provided.
-    
+
     Setup:
         - Results data
-    
+
     Action:
         - Export without specifying path
-    
+
     Verification:
         - File is created with auto-generated name
     """
     results = [{"Col1": "Value1"}]
-    
+
     exporter = ReportExporter("Auto Name Test", results)
     file_path = exporter.to_csv()
-    
+
     try:
         assert os.path.exists(file_path)
         assert "Auto_Name_Test" in file_path or "Auto Name Test" in file_path
@@ -198,13 +196,13 @@ def test_csv_export_generates_filename():
 def test_report_exporter_with_numeric_data(tmpdir):
     """
     Test exporter with numeric data types.
-    
+
     Setup:
         - Results with integers and floats
-    
+
     Action:
         - Export to CSV
-    
+
     Verification:
         - Numeric values are exported correctly
     """
@@ -212,12 +210,12 @@ def test_report_exporter_with_numeric_data(tmpdir):
         {"ID": 1, "Value": 123.45, "Count": 10},
         {"ID": 2, "Value": 678.90, "Count": 20},
     ]
-    
+
     output_path = str(tmpdir.join("numeric_data.csv"))
-    
+
     exporter = ReportExporter("Numeric Test", results)
     file_path = exporter.to_csv(output_path)
-    
+
     with open(file_path, "r") as f:
         content = f.read()
         assert "123.45" in content
@@ -228,13 +226,13 @@ def test_report_exporter_with_numeric_data(tmpdir):
 def test_report_exporter_with_none_values(tmpdir):
     """
     Test exporter handles None values.
-    
+
     Setup:
         - Results with None values
-    
+
     Action:
         - Export to CSV
-    
+
     Verification:
         - None values are handled gracefully
     """
@@ -242,33 +240,33 @@ def test_report_exporter_with_none_values(tmpdir):
         {"Name": "John", "Email": None},
         {"Name": "Jane", "Email": "jane@example.com"},
     ]
-    
+
     output_path = str(tmpdir.join("with_none.csv"))
-    
+
     exporter = ReportExporter("None Test", results)
     file_path = exporter.to_csv(output_path)
-    
+
     assert os.path.exists(file_path)
 
 
 def test_safe_filename_generation():
     """
     Test that unsafe characters in report name are handled.
-    
+
     Setup:
         - Report name with special characters
-    
+
     Action:
         - Create exporter
-    
+
     Verification:
         - Exporter handles name correctly
     """
     unsafe_name = "Report/With\\Special:Chars*"
     results = [{"A": 1}]
-    
+
     exporter = ReportExporter(unsafe_name, results)
-    
+
     # Should not raise error
     assert exporter.report_name == unsafe_name
 
@@ -276,13 +274,13 @@ def test_safe_filename_generation():
 def test_csv_export_with_boolean_values(tmpdir):
     """
     Test CSV export with boolean values.
-    
+
     Setup:
         - Results with boolean values
-    
+
     Action:
         - Export to CSV
-    
+
     Verification:
         - Booleans are exported
     """
@@ -290,12 +288,12 @@ def test_csv_export_with_boolean_values(tmpdir):
         {"Name": "Item1", "Active": True},
         {"Name": "Item2", "Active": False},
     ]
-    
+
     output_path = str(tmpdir.join("boolean_test.csv"))
-    
+
     exporter = ReportExporter("Boolean Test", results)
     file_path = exporter.to_csv(output_path)
-    
+
     with open(file_path, "r") as f:
         content = f.read()
         assert "True" in content or "true" in content.lower()
@@ -305,21 +303,21 @@ def test_csv_export_with_boolean_values(tmpdir):
 def test_export_creates_directory_structure():
     """
     Test that export creates necessary directory structure.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Export without providing path (auto-generate)
-    
+
     Verification:
         - Directory structure is created
     """
     results = [{"Test": "Data"}]
-    
+
     exporter = ReportExporter("Dir Test", results)
     file_path = exporter.to_csv()
-    
+
     try:
         # Should create exports/reports/ directory
         assert os.path.exists(file_path)
@@ -340,24 +338,24 @@ def test_export_creates_directory_structure():
 def test_multiple_exports_different_names():
     """
     Test multiple exports with different names don't conflict.
-    
+
     Setup:
         - Same results, different report names
-    
+
     Action:
         - Export twice
-    
+
     Verification:
         - Two different files created
     """
     results = [{"Data": "Value"}]
-    
+
     exporter1 = ReportExporter("Report A", results)
     exporter2 = ReportExporter("Report B", results)
-    
+
     file1 = exporter1.to_csv()
     file2 = exporter2.to_csv()
-    
+
     try:
         assert os.path.exists(file1)
         assert os.path.exists(file2)

@@ -25,13 +25,13 @@ from coati_payroll.model import (
 def test_generador_de_codigos_unicos_returns_string():
     """
     Test that ULID generator returns a string.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call generador_de_codigos_unicos()
-    
+
     Verification:
         - Result is a string
     """
@@ -42,13 +42,13 @@ def test_generador_de_codigos_unicos_returns_string():
 def test_generador_de_codigos_unicos_length():
     """
     Test that ULID has correct length of 26 characters.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call generador_de_codigos_unicos()
-    
+
     Verification:
         - Result length is 26
     """
@@ -59,13 +59,13 @@ def test_generador_de_codigos_unicos_length():
 def test_generador_de_codigos_unicos_unique():
     """
     Test that multiple calls produce unique codes.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Generate 100 codes
-    
+
     Verification:
         - All codes are unique
     """
@@ -76,13 +76,13 @@ def test_generador_de_codigos_unicos_unique():
 def test_generador_de_codigos_unicos_alphanumeric():
     """
     Test that ULID contains only alphanumeric characters.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call generador_de_codigos_unicos()
-    
+
     Verification:
         - Result is alphanumeric
     """
@@ -93,13 +93,13 @@ def test_generador_de_codigos_unicos_alphanumeric():
 def test_generador_codigo_empleado_returns_string():
     """
     Test that employee code generator returns a string.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call generador_codigo_empleado()
-    
+
     Verification:
         - Result is a string
     """
@@ -110,13 +110,13 @@ def test_generador_codigo_empleado_returns_string():
 def test_generador_codigo_empleado_has_prefix():
     """
     Test that employee code has EMP- prefix.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call generador_codigo_empleado()
-    
+
     Verification:
         - Result starts with "EMP-"
     """
@@ -127,13 +127,13 @@ def test_generador_codigo_empleado_has_prefix():
 def test_generador_codigo_empleado_format():
     """
     Test that employee code has format EMP-XXXXXX.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call generador_codigo_empleado()
-    
+
     Verification:
         - Format is EMP- followed by 6 characters
     """
@@ -147,13 +147,13 @@ def test_generador_codigo_empleado_format():
 def test_generador_codigo_empleado_uppercase():
     """
     Test that suffix is uppercase alphanumeric.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call generador_codigo_empleado()
-    
+
     Verification:
         - Suffix is uppercase and alphanumeric
     """
@@ -166,13 +166,13 @@ def test_generador_codigo_empleado_uppercase():
 def test_generador_codigo_empleado_unique():
     """
     Test that multiple calls produce unique codes.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Generate 100 employee codes
-    
+
     Verification:
         - All codes are unique
     """
@@ -183,13 +183,13 @@ def test_generador_codigo_empleado_unique():
 def test_utc_now_returns_datetime():
     """
     Test that utc_now returns a datetime object.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call utc_now()
-    
+
     Verification:
         - Result is a datetime
     """
@@ -200,13 +200,13 @@ def test_utc_now_returns_datetime():
 def test_utc_now_has_timezone():
     """
     Test that utc_now returns timezone-aware datetime.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Call utc_now()
-    
+
     Verification:
         - Result has timezone info
         - Timezone is UTC

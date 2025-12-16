@@ -19,13 +19,13 @@ from coati_payroll.auth import proteger_passwd, ph
 def test_proteger_passwd_returns_bytes():
     """
     Test that proteger_passwd returns bytes.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Hash a password
-    
+
     Verification:
         - Result is bytes
     """
@@ -36,13 +36,13 @@ def test_proteger_passwd_returns_bytes():
 def test_different_passwords_different_hashes():
     """
     Test that different passwords produce different hashes.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Hash two different passwords
-    
+
     Verification:
         - Hashes are different
     """
@@ -54,13 +54,13 @@ def test_different_passwords_different_hashes():
 def test_same_password_different_hashes():
     """
     Test that same password produces different hashes due to salt.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Hash the same password twice
-    
+
     Verification:
         - Hashes are different (argon2 includes random salt)
     """
@@ -72,13 +72,13 @@ def test_same_password_different_hashes():
 def test_hash_can_be_verified():
     """
     Test that generated hash can be verified with argon2.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Hash a password and verify it
-    
+
     Verification:
         - Verification succeeds
     """
@@ -91,13 +91,13 @@ def test_hash_can_be_verified():
 def test_empty_password_works():
     """
     Test that empty password still produces a hash.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Hash empty password
-    
+
     Verification:
         - Hash is created (non-empty bytes)
     """
@@ -109,13 +109,13 @@ def test_empty_password_works():
 def test_special_characters_password():
     """
     Test password with special characters.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Hash password with special characters
-    
+
     Verification:
         - Hash is created and can be verified
     """
@@ -128,13 +128,13 @@ def test_special_characters_password():
 def test_unicode_password():
     """
     Test password with unicode characters.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Hash password with unicode
-    
+
     Verification:
         - Hash is created and can be verified
     """
@@ -147,13 +147,13 @@ def test_unicode_password():
 def test_long_password():
     """
     Test very long password.
-    
+
     Setup:
         - None
-    
+
     Action:
         - Hash 1000 character password
-    
+
     Verification:
         - Hash is created and can be verified
     """

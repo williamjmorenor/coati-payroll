@@ -21,13 +21,13 @@ from tests.helpers.assertions import assert_user_exists
 def test_create_user_with_factory(app, db_session):
     """
     Test creating a user using the factory function.
-    
+
     Setup:
         - Clean database
-    
+
     Action:
         - Create user with factory
-    
+
     Verification:
         - User exists in database
         - User has correct attributes
@@ -42,7 +42,7 @@ def test_create_user_with_factory(app, db_session):
             correo_electronico="john@example.com",
             tipo="user",
         )
-        
+
         # Verify user was created
         assert user.id is not None
         assert user.usuario == "testuser"
@@ -56,13 +56,13 @@ def test_create_user_with_factory(app, db_session):
 def test_user_persists_in_database(app, db_session):
     """
     Test that created user persists in database.
-    
+
     Setup:
         - Create user with factory
-    
+
     Action:
         - Query database for user
-    
+
     Verification:
         - User can be retrieved from database
         - All attributes match
@@ -76,10 +76,10 @@ def test_user_persists_in_database(app, db_session):
             nombre="Jane",
             apellido="Smith",
         )
-        
+
         # Query database directly
         found_user = assert_user_exists(db_session, "persistuser")
-        
+
         # Verify attributes
         assert found_user.id == created_user.id
         assert found_user.nombre == "Jane"
@@ -89,13 +89,13 @@ def test_user_persists_in_database(app, db_session):
 def test_multiple_users_can_be_created(app, db_session):
     """
     Test creating multiple users in the same test.
-    
+
     Setup:
         - Clean database
-    
+
     Action:
         - Create multiple users
-    
+
     Verification:
         - All users exist in database
         - Users have unique IDs
@@ -104,12 +104,12 @@ def test_multiple_users_can_be_created(app, db_session):
         user1 = create_user(db_session, "user1", "pass1", nombre="User", apellido="One")
         user2 = create_user(db_session, "user2", "pass2", nombre="User", apellido="Two")
         user3 = create_user(db_session, "user3", "pass3", nombre="User", apellido="Three")
-        
+
         # Verify all exist
         assert_user_exists(db_session, "user1")
         assert_user_exists(db_session, "user2")
         assert_user_exists(db_session, "user3")
-        
+
         # Verify unique IDs
         assert user1.id != user2.id
         assert user2.id != user3.id
@@ -119,13 +119,13 @@ def test_multiple_users_can_be_created(app, db_session):
 def test_admin_user_can_be_created(app, db_session):
     """
     Test creating an admin user.
-    
+
     Setup:
         - Clean database
-    
+
     Action:
         - Create admin user
-    
+
     Verification:
         - User type is 'admin'
         - User exists in database
@@ -137,9 +137,9 @@ def test_admin_user_can_be_created(app, db_session):
             password="adminpass",
             tipo="admin",
         )
-        
+
         assert admin.tipo == "admin"
-        
+
         # Verify in database
         found = assert_user_exists(db_session, "admin123")
         assert found.tipo == "admin"
@@ -148,13 +148,13 @@ def test_admin_user_can_be_created(app, db_session):
 def test_user_with_minimal_data(app, db_session):
     """
     Test creating user with only required fields.
-    
+
     Setup:
         - Clean database
-    
+
     Action:
         - Create user with minimal data
-    
+
     Verification:
         - User is created successfully
         - Optional fields have default values
@@ -165,7 +165,7 @@ def test_user_with_minimal_data(app, db_session):
             usuario="minimaluser",
             password="password",
         )
-        
+
         assert user.id is not None
         assert user.usuario == "minimaluser"
         assert user.nombre == "Test"  # Default
@@ -177,17 +177,17 @@ def test_user_with_minimal_data(app, db_session):
 def test_users_in_parallel_tests_are_isolated(app, db_session):
     """
     Test that users created in this test don't affect other tests.
-    
+
     This test demonstrates the isolation principle - each test
     starts with a clean database and its changes are rolled back.
-    
+
     Setup:
         - Clean database
-    
+
     Action:
         - Create users
         - Verify they exist
-    
+
     Verification:
         - Users exist in current test
         - Will be rolled back and won't affect other tests
@@ -196,13 +196,13 @@ def test_users_in_parallel_tests_are_isolated(app, db_session):
         # Create users in this test
         create_user(db_session, "isolated1", "pass1")
         create_user(db_session, "isolated2", "pass2")
-        
+
         # Verify they exist in current session
         assert_user_exists(db_session, "isolated1")
         assert_user_exists(db_session, "isolated2")
-        
+
         # Count total users
         total = db_session.query(Usuario).count()
         assert total == 2
-        
+
         # These users will be rolled back after this test completes

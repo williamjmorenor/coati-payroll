@@ -19,16 +19,25 @@ from decimal import Decimal
 from coati_payroll.model import Empleado
 
 
-def create_employee(db_session, empresa_id, codigo=None, primer_nombre="Juan",
-                    segundo_nombre=None, primer_apellido="Perez", segundo_apellido=None,
-                    identificacion_personal=None, salario_base=Decimal("1000.00"), 
-                    fecha_ingreso=None, activo=True):
+def create_employee(
+    db_session,
+    empresa_id,
+    codigo=None,
+    primer_nombre="Juan",
+    segundo_nombre=None,
+    primer_apellido="Perez",
+    segundo_apellido=None,
+    identificacion_personal=None,
+    salario_base=Decimal("1000.00"),
+    fecha_ingreso=None,
+    activo=True,
+):
     """
     Create an employee in the database.
-    
+
     This is a simple factory function that creates an employee with the given
     parameters. No implicit data creation or side effects.
-    
+
     Args:
         db_session: SQLAlchemy session
         empresa_id: ID of the company (required)
@@ -41,12 +50,12 @@ def create_employee(db_session, empresa_id, codigo=None, primer_nombre="Juan",
         salario_base: Base salary (default: 1000.00)
         fecha_ingreso: Hire date (default: today)
         activo: Active status (default: True)
-    
+
     Returns:
         Empleado: Created employee instance with ID assigned
     """
     from coati_payroll.model import generador_de_codigos_unicos
-    
+
     empleado = Empleado()
     empleado.empresa_id = empresa_id
     if codigo:
@@ -60,9 +69,9 @@ def create_employee(db_session, empresa_id, codigo=None, primer_nombre="Juan",
     empleado.salario_base = salario_base
     empleado.fecha_ingreso = fecha_ingreso or date.today()
     empleado.activo = activo
-    
+
     db_session.add(empleado)
     db_session.commit()
     db_session.refresh(empleado)
-    
+
     return empleado

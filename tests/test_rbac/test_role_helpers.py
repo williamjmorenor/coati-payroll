@@ -14,7 +14,6 @@
 """Tests for RBAC helper functions."""
 
 from coati_payroll.enums import TipoUsuario
-from coati_payroll.rbac import is_admin, is_hhrr, is_audit, can_write
 from tests.factories.user_factory import create_user
 from tests.helpers.auth import login_user
 
@@ -22,26 +21,26 @@ from tests.helpers.auth import login_user
 def test_is_admin_with_admin_user(app, client, db_session):
     """
     Test is_admin returns True for admin user.
-    
+
     Setup:
         - Create and login admin user
-    
+
     Action:
         - Call is_admin()
-    
+
     Verification:
         - Returns True
     """
     with app.app_context():
         create_user(db_session, "admin1", "pass", tipo=TipoUsuario.ADMIN)
-    
+
     login_user(client, "admin1", "pass")
-    
+
     with client.application.test_request_context():
         with client.session_transaction() as sess:
             # Simulate being in a request context with logged in user
             pass
-    
+
     # Note: These functions require current_user from flask_login
     # They need to be tested in the context of actual routes
     # This test validates the logic exists
@@ -50,13 +49,13 @@ def test_is_admin_with_admin_user(app, client, db_session):
 def test_is_hhrr_with_hhrr_user(app, db_session):
     """
     Test is_hhrr returns True for HHRR user.
-    
+
     Setup:
         - Create HHRR user
-    
+
     Action:
         - Check user type
-    
+
     Verification:
         - User has HHRR type
     """
@@ -68,13 +67,13 @@ def test_is_hhrr_with_hhrr_user(app, db_session):
 def test_is_audit_with_audit_user(app, db_session):
     """
     Test is_audit returns True for audit user.
-    
+
     Setup:
         - Create audit user
-    
+
     Action:
         - Check user type
-    
+
     Verification:
         - User has AUDIT type
     """
@@ -86,13 +85,13 @@ def test_is_audit_with_audit_user(app, db_session):
 def test_admin_user_can_write(app, db_session):
     """
     Test admin user has write permissions.
-    
+
     Setup:
         - Create admin user
-    
+
     Action:
         - Check user can write
-    
+
     Verification:
         - User type allows writing
     """
@@ -104,13 +103,13 @@ def test_admin_user_can_write(app, db_session):
 def test_hhrr_user_can_write(app, db_session):
     """
     Test HHRR user has write permissions.
-    
+
     Setup:
         - Create HHRR user
-    
+
     Action:
         - Check user can write
-    
+
     Verification:
         - User type allows writing
     """
@@ -122,13 +121,13 @@ def test_hhrr_user_can_write(app, db_session):
 def test_audit_user_cannot_write(app, db_session):
     """
     Test audit user does not have write permissions.
-    
+
     Setup:
         - Create audit user
-    
+
     Action:
         - Check user can write
-    
+
     Verification:
         - User type does not allow writing
     """
