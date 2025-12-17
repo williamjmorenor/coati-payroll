@@ -99,6 +99,9 @@ nav:
     - Configuración Contable: guia/configuracion-contable.md
   - Tutorial Completo:
     - Paso a Paso - Nómina Completa: tutorial/nomina-completa.md
+  - Guías Locales:
+    - Implementación para Nicaragua: local_guides/nicaragua.md
+    - Cálculo del IR Nicaragua - Paso a Paso: local_guides/nicaragua-ir-paso-a-paso.md
   - Características Avanzadas:
     - Sistema de Colas: queue_system.md
     - Procesamiento en Segundo Plano: background-payroll-processing.md
