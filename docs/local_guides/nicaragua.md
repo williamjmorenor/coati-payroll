@@ -776,13 +776,7 @@ Para validar la configuración:
 
 ### Herramienta de Validación
 
-Puede usar la calculadora incluida en `/tmp/tax-engine.py` para validar cálculos:
-
-```bash
-python /tmp/tax-engine.py
-```
-
-O crear un script de prueba personalizado:
+Puede crear un script de prueba personalizado para validar los cálculos:
 
 ```python
 def calcular_nomina_nicaragua(salario_bruto):
@@ -899,6 +893,110 @@ Cada una con su prioridad y configuración específica. Consulte la guía de **D
 El sistema incluye una vista previa de nómina donde puede simular cálculos antes de ejecutar la planilla oficial.
 
 También puede usar la herramienta `tax-engine.py` proporcionada en este documento para validaciones offline.
+
+## Herramienta de Validación - Tax Engine
+
+Para validar los cálculos de IR, puede usar el siguiente script de Python que implementa la lógica exacta de los auditores:
+
+```python
+import json
+from dataclasses import dataclass
+
+@dataclass
+class TaxBracket:
+    min: float
+    max: float | None
+    rate: float
+    fixed: float = 0.0
+
+@dataclass
+class DeductionRule:
+    name: str
+    type: str  # "fixed", "percent"
+    value: float
+
+@dataclass
+class TaxConfig:
+    version: str
+    currency: str
+    brackets: list[TaxBracket]
+    deductions: list[DeductionRule]
+
+class TaxEngine:
+    def __init__(self, config: TaxConfig):
+        self.config = config
+
+    def compute_deductions(self, income: float) -> dict:
+        deduction_results = {}
+        total = 0.0
+        
+        for d in self.config.deductions:
+            if d.type == "fixed":
+                amount = d.value
+            elif d.type == "percent":
+                amount = income * (d.value / 100.0)
+            else:
+                raise ValueError(f"Unknown deduction type: {d.type}")
+            
+            deduction_results[d.name] = amount
+            total += amount
+        
+        return {"items": deduction_results, "total": total}
+
+    def compute_tax(self, taxable_income: float) -> dict:
+        if taxable_income <= 0:
+            return {"tax": 0.0, "applied_bracket": None}
+        
+        for bracket in self.config.brackets:
+            if bracket.max is None or taxable_income <= bracket.max:
+                tax = bracket.fixed + (taxable_income - bracket.min) * bracket.rate
+                return {"tax": max(tax, 0.0), "applied_bracket": bracket}
+        
+        raise RuntimeError("No bracket matched — malformed tax table.")
+
+    def evaluate(self, income: float) -> dict:
+        deductions = self.compute_deductions(income)
+        taxable_income = max(income - deductions["total"], 0)
+        tax_result = self.compute_tax(taxable_income)
+        
+        return {
+            "income": income,
+            "currency": self.config.currency,
+            "deductions": deductions,
+            "taxable_income": taxable_income,
+            "tax": tax_result["tax"],
+            "bracket": tax_result["applied_bracket"]
+        }
+
+# Configuración Nicaragua
+nicaragua_config = TaxConfig(
+    version="2024",
+    currency="NIO",
+    brackets=[
+        TaxBracket(min=0, max=100000, rate=0.0, fixed=0),
+        TaxBracket(min=100000, max=200000, rate=0.15, fixed=0),
+        TaxBracket(min=200000, max=350000, rate=0.20, fixed=15000),
+        TaxBracket(min=350000, max=500000, rate=0.25, fixed=45000),
+        TaxBracket(min=500000, max=None, rate=0.30, fixed=82500)
+    ],
+    deductions=[
+        DeductionRule(name="INSS", type="percent", value=7)
+    ]
+)
+
+# Ejemplo de uso
+engine = TaxEngine(nicaragua_config)
+salario_anual = 300000
+result = engine.evaluate(salario_anual)
+
+print(f"\nIngreso anual: {result['income']} {result['currency']}")
+print(f"INSS (7%): {result['deductions']['items']['INSS']:.2f}")
+print(f"Ingreso gravable: {result['taxable_income']:.2f}")
+print(f"IR anual: {result['tax']:.2f}")
+print(f"IR mensual: {result['tax']/12:.2f}")
+```
+
+Guarde este script como `validar_ir_nicaragua.py` y ejecútelo con diferentes salarios para verificar los cálculos.
 
 ## Recursos Adicionales
 

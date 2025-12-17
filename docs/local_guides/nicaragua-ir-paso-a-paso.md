@@ -507,13 +507,9 @@ Sí, si tu renta neta anual es menor o igual a C$ 100,000 (aproximadamente C$ 8,
 
 ## Validación de Cálculos
 
-Para validar que tus cálculos son correctos, puedes usar el archivo `tax-engine.py` proporcionado por los auditores, que es consistente con las tablas de Excel oficiales:
+Para validar que tus cálculos son correctos, consulta la [Guía de Implementación para Nicaragua](nicaragua.md#herramienta-de-validacion-tax-engine) donde encontrarás un script completo de validación que implementa exactamente la misma lógica explicada en esta guía.
 
-```bash
-python tax-engine.py
-```
-
-Este script implementa exactamente la misma lógica explicada en esta guía y es la referencia oficial para validar cálculos de IR en Nicaragua.
+El script es consistente con las tablas de Excel que usan los auditores para validar los cálculos de IR en Nicaragua.
 
 ---
 
