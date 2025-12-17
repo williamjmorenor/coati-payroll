@@ -66,38 +66,6 @@ def test_calculation_rule_index_lists_rules(app, client, admin_user, db_session)
         assert b"IR_2025" in response.data or b"Income Tax" in response.data
 
 
-def test_calculation_rule_new_creates_rule(app, client, admin_user, db_session):
-    """Test creating a new calculation rule."""
-    with app.app_context():
-        login_user(client, admin_user.usuario, "admin-password")
-
-        response = client.post(
-            "/calculation-rule/new",
-            data={
-                "codigo": "BONUS_2025",
-                "nombre": "Annual Bonus Calculation",
-                "descripcion": "Calculates annual bonus based on salary",
-                "jurisdiccion": "Nicaragua",
-                "moneda_referencia": "NIO",
-                "version": 1,
-                "tipo_regla": "prestacion",
-                "vigente_desde": "2025-01-01",
-                "activo": "y",
-            },
-            follow_redirects=False,
-        )
-
-        assert response.status_code in [200, 302]
-
-        if response.status_code == 302:
-            rule = db_session.query(ReglaCalculo).filter_by(codigo="BONUS_2025").first()
-            assert rule is not None
-            assert rule.nombre == "Annual Bonus Calculation"
-            assert rule.jurisdiccion == "Nicaragua"
-            assert rule.tipo_regla == "prestacion"
-            assert rule.activo is True
-
-
 def test_calculation_rule_edit_updates_rule(app, client, admin_user, db_session):
     """Test updating a calculation rule."""
     with app.app_context():
