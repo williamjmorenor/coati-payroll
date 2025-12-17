@@ -16,10 +16,10 @@
 from datetime import date, timedelta
 
 from coati_payroll.system_reports import (
+    SYSTEM_REPORT_METADATA,
+    SYSTEM_REPORTS,
     get_system_report,
     get_system_report_metadata,
-    SYSTEM_REPORTS,
-    SYSTEM_REPORT_METADATA,
 )
 from tests.factories.company_factory import create_company
 from tests.factories.employee_factory import create_employee

@@ -13,8 +13,8 @@
 # limitations under the License.
 """Tests for Report models."""
 
-from coati_payroll.enums import ReportType, ReportStatus, ReportExecutionStatus
-from coati_payroll.model import Report, ReportRole, ReportExecution, ReportAudit
+from coati_payroll.enums import ReportExecutionStatus, ReportStatus, ReportType
+from coati_payroll.model import Report, ReportAudit, ReportExecution, ReportRole
 
 
 def test_create_system_report(app, db_session):

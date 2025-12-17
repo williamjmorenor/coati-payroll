@@ -13,7 +13,7 @@
 # limitations under the License.
 """Tests for password hashing functionality."""
 
-from coati_payroll.auth import proteger_passwd, ph
+from coati_payroll.auth import ph, proteger_passwd
 
 
 def test_proteger_passwd_returns_bytes():

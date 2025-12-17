@@ -16,15 +16,14 @@
 from datetime import date
 from decimal import Decimal
 
-
+from coati_payroll.enums import MetodoAmortizacion, TipoInteres
 from coati_payroll.interes_engine import (
-    calcular_interes_simple,
-    calcular_interes_compuesto,
     calcular_cuota_frances,
+    calcular_interes_compuesto,
     calcular_interes_periodo,
+    calcular_interes_simple,
     generar_tabla_amortizacion,
 )
-from coati_payroll.enums import MetodoAmortizacion, TipoInteres
 
 
 class TestInteresSimple:

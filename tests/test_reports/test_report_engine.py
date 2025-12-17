@@ -15,17 +15,17 @@
 
 from decimal import Decimal
 
-from coati_payroll.enums import ReportType, ReportStatus, ReportExecutionStatus
+from coati_payroll.enums import ReportExecutionStatus, ReportStatus, ReportType
 from coati_payroll.model import Report, ReportRole
 from coati_payroll.report_engine import (
-    CustomReportBuilder,
-    ReportExecutionManager,
-    can_view_report,
-    can_execute_report,
-    can_export_report,
     ALLOWED_ENTITIES,
     ALLOWED_FIELDS,
     ALLOWED_OPERATORS,
+    CustomReportBuilder,
+    ReportExecutionManager,
+    can_execute_report,
+    can_export_report,
+    can_view_report,
 )
 from tests.factories.company_factory import create_company
 from tests.factories.employee_factory import create_employee

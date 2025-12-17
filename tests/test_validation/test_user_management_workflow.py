@@ -18,8 +18,8 @@ import pytest
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.model import Usuario
 from tests.factories.user_factory import create_user
-from tests.helpers.auth import login_user, logout_user
 from tests.helpers.assertions import assert_user_exists
+from tests.helpers.auth import login_user, logout_user
 
 
 @pytest.mark.validation

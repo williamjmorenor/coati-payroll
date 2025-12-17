@@ -14,7 +14,6 @@
 """Tests for instance creation - ensuring main classes can be instantiated correctly."""
 
 
-
 def test_usuario_can_be_instantiated():
     """
     Test that Usuario instances can be created.

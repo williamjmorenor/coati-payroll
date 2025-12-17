@@ -11,16 +11,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Helper functions for tests."""
-
-from tests.helpers.assertions import assert_redirected_to, assert_user_exists
-from tests.helpers.auth import login_user, logout_user
-from tests.helpers.http import follow_redirects_once
-
-__all__ = [
-    "login_user",
-    "logout_user",
-    "assert_user_exists",
-    "assert_redirected_to",
-    "follow_redirects_once",
-]
+"""Tests for coati_payroll/vistas module."""

@@ -209,15 +209,15 @@ def test_all_model_classes_are_db_models():
         - All classes have __tablename__ attribute
     """
     from coati_payroll.model import (
-        Usuario,
-        Empresa,
-        Empleado,
-        Nomina,
-        Planilla,
-        Percepcion,
         Deduccion,
-        Prestacion,
+        Empleado,
+        Empresa,
         Moneda,
+        Nomina,
+        Percepcion,
+        Planilla,
+        Prestacion,
+        Usuario,
     )
 
     models = [Usuario, Empresa, Empleado, Nomina, Planilla, Percepcion, Deduccion, Prestacion, Moneda]
@@ -275,7 +275,7 @@ def test_validation_error_inherits_from_formula_engine_error():
     Verification:
         - ValidationError inherits from FormulaEngineError
     """
-    from coati_payroll.formula_engine import ValidationError, FormulaEngineError
+    from coati_payroll.formula_engine import FormulaEngineError, ValidationError
 
     assert issubclass(ValidationError, FormulaEngineError), "ValidationError should inherit from FormulaEngineError"
 

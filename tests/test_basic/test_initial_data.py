@@ -37,10 +37,10 @@ def test_initial_data_constants_are_defined():
         - PAYROLL_TYPES list exists and is not empty
     """
     from coati_payroll.initial_data import (
-        CURRENCIES,
-        INCOME_CONCEPTS,
-        DEDUCTION_CONCEPTS,
         BENEFIT_CONCEPTS,
+        CURRENCIES,
+        DEDUCTION_CONCEPTS,
+        INCOME_CONCEPTS,
         PAYROLL_TYPES,
     )
 
@@ -227,7 +227,7 @@ def test_load_currencies_is_idempotent(app, db_session):
         - No duplicate currencies are created
         - Currency count is correct after both calls
     """
-    from coati_payroll.initial_data import load_currencies, CURRENCIES
+    from coati_payroll.initial_data import CURRENCIES, load_currencies
     from coati_payroll.model import Moneda, db
 
     with app.app_context():
@@ -290,7 +290,7 @@ def test_load_income_concepts_is_idempotent(app, db_session):
         - No duplicate concepts are created
         - Concept count is correct after both calls
     """
-    from coati_payroll.initial_data import load_income_concepts, INCOME_CONCEPTS
+    from coati_payroll.initial_data import INCOME_CONCEPTS, load_income_concepts
     from coati_payroll.model import Percepcion, db
 
     with app.app_context():
@@ -330,7 +330,9 @@ def test_load_deduction_concepts_creates_concepts(app, db_session):
         load_deduction_concepts()
 
         # Verify SALARY_ADVANCE concept exists
-        salary_advance = db.session.execute(db.select(Deduccion).filter_by(codigo="SALARY_ADVANCE")).scalar_one_or_none()
+        salary_advance = db.session.execute(
+            db.select(Deduccion).filter_by(codigo="SALARY_ADVANCE")
+        ).scalar_one_or_none()
 
         assert salary_advance is not None
         assert salary_advance.codigo == "SALARY_ADVANCE"
@@ -353,7 +355,7 @@ def test_load_deduction_concepts_is_idempotent(app, db_session):
         - No duplicate concepts are created
         - Concept count is correct after both calls
     """
-    from coati_payroll.initial_data import load_deduction_concepts, DEDUCTION_CONCEPTS
+    from coati_payroll.initial_data import DEDUCTION_CONCEPTS, load_deduction_concepts
     from coati_payroll.model import Deduccion, db
 
     with app.app_context():
@@ -393,9 +395,9 @@ def test_load_benefit_concepts_creates_concepts(app, db_session):
         load_benefit_concepts()
 
         # Verify PAID_VACATION_PROVISION concept exists
-        vacation_provision = (
-            db.session.execute(db.select(Prestacion).filter_by(codigo="PAID_VACATION_PROVISION")).scalar_one_or_none()
-        )
+        vacation_provision = db.session.execute(
+            db.select(Prestacion).filter_by(codigo="PAID_VACATION_PROVISION")
+        ).scalar_one_or_none()
 
         assert vacation_provision is not None
         assert vacation_provision.codigo == "PAID_VACATION_PROVISION"
@@ -417,7 +419,7 @@ def test_load_benefit_concepts_is_idempotent(app, db_session):
         - No duplicate concepts are created
         - Concept count is correct after both calls
     """
-    from coati_payroll.initial_data import load_benefit_concepts, BENEFIT_CONCEPTS
+    from coati_payroll.initial_data import BENEFIT_CONCEPTS, load_benefit_concepts
     from coati_payroll.model import Prestacion, db
 
     with app.app_context():
@@ -481,7 +483,7 @@ def test_load_payroll_types_is_idempotent(app, db_session):
         - No duplicate types are created
         - Type count is correct after both calls
     """
-    from coati_payroll.initial_data import load_payroll_types, PAYROLL_TYPES
+    from coati_payroll.initial_data import PAYROLL_TYPES, load_payroll_types
     from coati_payroll.model import TipoPlanilla, db
 
     with app.app_context():
@@ -516,14 +518,14 @@ def test_load_initial_data_loads_all_data(app, db_session):
         - Payroll types are loaded
     """
     from coati_payroll.initial_data import (
-        load_initial_data,
-        CURRENCIES,
-        INCOME_CONCEPTS,
-        DEDUCTION_CONCEPTS,
         BENEFIT_CONCEPTS,
+        CURRENCIES,
+        DEDUCTION_CONCEPTS,
+        INCOME_CONCEPTS,
         PAYROLL_TYPES,
+        load_initial_data,
     )
-    from coati_payroll.model import Moneda, Percepcion, Deduccion, Prestacion, TipoPlanilla, db
+    from coati_payroll.model import Deduccion, Moneda, Percepcion, Prestacion, TipoPlanilla, db
 
     with app.app_context():
         # Load all initial data
@@ -558,7 +560,7 @@ def test_load_initial_data_is_idempotent(app, db_session):
         - All counts remain the same after second call
     """
     from coati_payroll.initial_data import load_initial_data
-    from coati_payroll.model import Moneda, Percepcion, Deduccion, Prestacion, TipoPlanilla, db
+    from coati_payroll.model import Deduccion, Moneda, Percepcion, Prestacion, TipoPlanilla, db
 
     with app.app_context():
         # Load initial data first time

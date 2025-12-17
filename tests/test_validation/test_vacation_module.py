@@ -18,25 +18,25 @@ from decimal import Decimal
 
 import pytest
 
+from coati_payroll.enums import (
+    AccrualFrequency,
+    AccrualMethod,
+    VacationLedgerType,
+    VacationUnitType,
+)
 from coati_payroll.model import (
     Empleado,
     Empresa,
     Moneda,
-    TipoPlanilla,
     Planilla,
-    VacationPolicy,
+    PlanillaEmpleado,
+    TipoPlanilla,
     VacationAccount,
     VacationLedger,
     VacationNovelty,
-    PlanillaEmpleado,
+    VacationPolicy,
 )
 from coati_payroll.nomina_engine import ejecutar_nomina
-from coati_payroll.enums import (
-    AccrualMethod,
-    AccrualFrequency,
-    VacationLedgerType,
-    VacationUnitType,
-)
 
 
 @pytest.mark.validation

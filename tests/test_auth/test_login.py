@@ -13,8 +13,8 @@
 # limitations under the License.
 """Tests for authentication and login functionality."""
 
-from tests.helpers.auth import login_user
 from tests.helpers.assertions import assert_redirected_to
+from tests.helpers.auth import login_user
 
 
 def test_login_page_accessible(client):

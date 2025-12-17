@@ -106,8 +106,8 @@ def test_session_isolation(app, db_session):
         - User exists in current session
         - Will be rolled back after test
     """
-    from coati_payroll.model import Usuario
     from coati_payroll.auth import proteger_passwd
+    from coati_payroll.model import Usuario
 
     with app.app_context():
         user = Usuario()

@@ -149,9 +149,9 @@ def admin_user(app, db_session):
     Returns:
         Usuario: Admin user instance
     """
-    from coati_payroll.model import Usuario
     from coati_payroll.auth import proteger_passwd
     from coati_payroll.enums import TipoUsuario
+    from coati_payroll.model import Usuario
 
     with app.app_context():
         admin = Usuario()

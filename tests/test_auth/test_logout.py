@@ -13,8 +13,8 @@
 # limitations under the License.
 """Tests for logout functionality."""
 
-from tests.helpers.auth import login_user, logout_user
 from tests.helpers.assertions import assert_redirected_to
+from tests.helpers.auth import login_user, logout_user
 
 
 def test_logout_redirects_to_login(client, app, admin_user):

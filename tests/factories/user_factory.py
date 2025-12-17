@@ -13,8 +13,8 @@
 # limitations under the License.
 """Factory functions for creating users."""
 
-from coati_payroll.model import Usuario
 from coati_payroll.auth import proteger_passwd
+from coati_payroll.model import Usuario
 
 
 def create_user(

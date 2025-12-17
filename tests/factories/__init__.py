@@ -13,9 +13,9 @@
 # limitations under the License.
 """Factory functions for creating test data."""
 
-from tests.factories.user_factory import create_user
-from tests.factories.employee_factory import create_employee
 from tests.factories.company_factory import create_company
+from tests.factories.employee_factory import create_employee
+from tests.factories.user_factory import create_user
 
 __all__ = [
     "create_user",

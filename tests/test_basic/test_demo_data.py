@@ -15,32 +15,29 @@
 
 from datetime import date, timedelta
 from decimal import Decimal
+
 from dateutil.relativedelta import relativedelta
 
-from coati_payroll.model import (
-    db,
-    Empresa,
-    Empleado,
-    Moneda,
-    TipoPlanilla,
-    Planilla,
-    PlanillaEmpleado,
-    PlanillaIngreso,
-    PlanillaDeduccion,
-    PlanillaPrestacion,
-    Percepcion,
-    Deduccion,
-    Prestacion,
-    Nomina,
-    NominaNovedad,
-)
 from coati_payroll.demo_data import (
-    load_demo_companies,
-    load_demo_employees,
-    load_demo_payrolls,
     create_demo_nomina,
     create_demo_novelties,
+    load_demo_companies,
     load_demo_data,
+    load_demo_employees,
+    load_demo_payrolls,
+)
+from coati_payroll.model import (
+    Deduccion,
+    Empleado,
+    Empresa,
+    Moneda,
+    Nomina,
+    NominaNovedad,
+    Percepcion,
+    Planilla,
+    PlanillaEmpleado,
+    TipoPlanilla,
+    db,
 )
 
 
@@ -82,15 +79,11 @@ def test_load_demo_companies(app, db_session):
         assert empresa2.activo is True
 
         # Verify companies exist in database
-        found1 = db_session.execute(
-            db.select(Empresa).filter_by(codigo="DEMO001")
-        ).scalar_one_or_none()
+        found1 = db_session.execute(db.select(Empresa).filter_by(codigo="DEMO001")).scalar_one_or_none()
         assert found1 is not None
         assert found1.id == empresa1.id
 
-        found2 = db_session.execute(
-            db.select(Empresa).filter_by(codigo="DEMO002")
-        ).scalar_one_or_none()
+        found2 = db_session.execute(db.select(Empresa).filter_by(codigo="DEMO002")).scalar_one_or_none()
         assert found2 is not None
         assert found2.id == empresa2.id
 
@@ -121,9 +114,7 @@ def test_load_demo_companies_idempotent(app, db_session):
         assert empresa2_first.id == empresa2_second.id
 
         # Verify only 2 companies exist
-        count = db_session.execute(
-            db.select(db.func.count()).select_from(Empresa)
-        ).scalar()
+        count = db_session.execute(db.select(db.func.count()).select_from(Empresa)).scalar()
         assert count == 2
 
 
@@ -180,9 +171,7 @@ def test_load_demo_employees(app, db_session):
         assert emp2_count == 7  # Last 7 employees for company 2
 
         # Verify employees exist in database
-        db_count = db_session.execute(
-            db.select(db.func.count()).select_from(Empleado)
-        ).scalar()
+        db_count = db_session.execute(db.select(db.func.count()).select_from(Empleado)).scalar()
         assert db_count == 15
 
 
@@ -212,9 +201,7 @@ def test_load_demo_employees_no_currency(app, db_session):
         assert len(empleados) == 0
 
         # Verify no employees in database
-        db_count = db_session.execute(
-            db.select(db.func.count()).select_from(Empleado)
-        ).scalar()
+        db_count = db_session.execute(db.select(db.func.count()).select_from(Empleado)).scalar()
         assert db_count == 0
 
 
@@ -254,9 +241,7 @@ def test_load_demo_employees_idempotent(app, db_session):
         assert len(empleados_first) == len(empleados_second) == 15
 
         # Verify only 15 employees exist
-        db_count = db_session.execute(
-            db.select(db.func.count()).select_from(Empleado)
-        ).scalar()
+        db_count = db_session.execute(db.select(db.func.count()).select_from(Empleado)).scalar()
         assert db_count == 15
 
 
@@ -318,14 +303,14 @@ def test_load_demo_payrolls(app, db_session):
         assert planilla2.activo is True
 
         # Verify employees are assigned
-        asignaciones1 = db_session.execute(
-            db.select(PlanillaEmpleado).filter_by(planilla_id=planilla1.id)
-        ).scalars().all()
+        asignaciones1 = (
+            db_session.execute(db.select(PlanillaEmpleado).filter_by(planilla_id=planilla1.id)).scalars().all()
+        )
         assert len(asignaciones1) == 8  # Company 1 has 8 employees
 
-        asignaciones2 = db_session.execute(
-            db.select(PlanillaEmpleado).filter_by(planilla_id=planilla2.id)
-        ).scalars().all()
+        asignaciones2 = (
+            db_session.execute(db.select(PlanillaEmpleado).filter_by(planilla_id=planilla2.id)).scalars().all()
+        )
         assert len(asignaciones2) == 7  # Company 2 has 7 employees
 
 
@@ -422,9 +407,7 @@ def test_create_demo_nomina(app, db_session):
         assert nomina.periodo_fin == next_month_end
 
         # Verify nomina exists in database
-        found = db_session.execute(
-            db.select(Nomina).filter_by(id=nomina.id)
-        ).scalar_one_or_none()
+        found = db_session.execute(db.select(Nomina).filter_by(id=nomina.id)).scalar_one_or_none()
         assert found is not None
 
 
@@ -479,11 +462,9 @@ def test_create_demo_nomina_idempotent(app, db_session):
         next_month_end = (next_month_start + relativedelta(months=1)) - timedelta(days=1)
 
         count = db_session.execute(
-            db.select(db.func.count()).select_from(Nomina).filter_by(
-                planilla_id=planilla1.id,
-                periodo_inicio=next_month_start,
-                periodo_fin=next_month_end
-            )
+            db.select(db.func.count())
+            .select_from(Nomina)
+            .filter_by(planilla_id=planilla1.id, periodo_inicio=next_month_start, periodo_fin=next_month_end)
         ).scalar()
         assert count == 1
 
@@ -545,22 +526,22 @@ def test_create_demo_novelties(app, db_session):
         create_demo_novelties(empleados)
 
         # Verify overtime novelties created
-        overtime_novelties = db_session.execute(
-            db.select(NominaNovedad).filter_by(
-                nomina_id=nomina.id,
-                codigo_concepto="OVERTIME"
-            )
-        ).scalars().all()
+        overtime_novelties = (
+            db_session.execute(db.select(NominaNovedad).filter_by(nomina_id=nomina.id, codigo_concepto="OVERTIME"))
+            .scalars()
+            .all()
+        )
         # Should create overtime for employees at indices 0, 1, 4
         assert len(overtime_novelties) == 3
 
         # Verify absence novelties created
-        absence_novelties = db_session.execute(
-            db.select(NominaNovedad).filter_by(
-                nomina_id=nomina.id,
-                codigo_concepto="UNPAID_ABSENCES"
+        absence_novelties = (
+            db_session.execute(
+                db.select(NominaNovedad).filter_by(nomina_id=nomina.id, codigo_concepto="UNPAID_ABSENCES")
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         # Should create absences for employees at indices 2, 3
         assert len(absence_novelties) == 2
 
@@ -623,9 +604,7 @@ def test_create_demo_novelties_insufficient_employees(app, db_session):
         create_demo_novelties(empleados)
 
         # Verify no novelties created
-        count = db_session.execute(
-            db.select(db.func.count()).select_from(NominaNovedad)
-        ).scalar()
+        count = db_session.execute(db.select(db.func.count()).select_from(NominaNovedad)).scalar()
         assert count == 0
 
 
@@ -678,27 +657,19 @@ def test_load_demo_data(app, db_session):
         load_demo_data()
 
         # Verify companies created
-        companies_count = db_session.execute(
-            db.select(db.func.count()).select_from(Empresa)
-        ).scalar()
+        companies_count = db_session.execute(db.select(db.func.count()).select_from(Empresa)).scalar()
         assert companies_count == 2
 
         # Verify employees created
-        employees_count = db_session.execute(
-            db.select(db.func.count()).select_from(Empleado)
-        ).scalar()
+        employees_count = db_session.execute(db.select(db.func.count()).select_from(Empleado)).scalar()
         assert employees_count == 15
 
         # Verify payrolls created
-        payrolls_count = db_session.execute(
-            db.select(db.func.count()).select_from(Planilla)
-        ).scalar()
+        payrolls_count = db_session.execute(db.select(db.func.count()).select_from(Planilla)).scalar()
         assert payrolls_count == 2
 
         # Verify nomina created
-        nomina_count = db_session.execute(
-            db.select(db.func.count()).select_from(Nomina)
-        ).scalar()
+        nomina_count = db_session.execute(db.select(db.func.count()).select_from(Nomina)).scalar()
         assert nomina_count == 1  # Only one nomina is created for planilla1
 
 
@@ -736,29 +707,17 @@ def test_load_demo_data_idempotent(app, db_session):
         load_demo_data()
 
         # Get counts after first call
-        companies_count1 = db_session.execute(
-            db.select(db.func.count()).select_from(Empresa)
-        ).scalar()
-        employees_count1 = db_session.execute(
-            db.select(db.func.count()).select_from(Empleado)
-        ).scalar()
-        payrolls_count1 = db_session.execute(
-            db.select(db.func.count()).select_from(Planilla)
-        ).scalar()
+        companies_count1 = db_session.execute(db.select(db.func.count()).select_from(Empresa)).scalar()
+        employees_count1 = db_session.execute(db.select(db.func.count()).select_from(Empleado)).scalar()
+        payrolls_count1 = db_session.execute(db.select(db.func.count()).select_from(Planilla)).scalar()
 
         # Second call
         load_demo_data()
 
         # Get counts after second call
-        companies_count2 = db_session.execute(
-            db.select(db.func.count()).select_from(Empresa)
-        ).scalar()
-        employees_count2 = db_session.execute(
-            db.select(db.func.count()).select_from(Empleado)
-        ).scalar()
-        payrolls_count2 = db_session.execute(
-            db.select(db.func.count()).select_from(Planilla)
-        ).scalar()
+        companies_count2 = db_session.execute(db.select(db.func.count()).select_from(Empresa)).scalar()
+        employees_count2 = db_session.execute(db.select(db.func.count()).select_from(Empleado)).scalar()
+        payrolls_count2 = db_session.execute(db.select(db.func.count()).select_from(Planilla)).scalar()
 
         # Counts should be the same
         assert companies_count1 == companies_count2 == 2
