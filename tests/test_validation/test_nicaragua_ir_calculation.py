@@ -202,7 +202,7 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
 
         # Create currency (Córdoba)
         nio = Moneda(
-            codigo_empleado="NIO",
+            codigo="NIO",
             nombre="Córdoba Nicaragüense",
             simbolo="C$",
             activo=True,
@@ -212,7 +212,7 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
 
         # Create company
         empresa = Empresa(
-            codigo_empleado="NIC-001",
+            codigo="NIC-001",
             razon_social="Empresa Test Nicaragua S.A.",
             nombre_comercial="Test Nicaragua",
             ruc="J-11111111-1",
@@ -280,10 +280,10 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
             codigo_empleado="EMP-NIC-001",
             primer_nombre="Juan",
             primer_apellido="Pérez",
+            identificacion_personal="001-150185-0001P",
             fecha_alta=date(2025, 1, 1),
-            salario_mensual=Decimal("25000.00"),
-            tipo_salario="mensual",
-            moneda_salario_id=nio.id,
+            salario_base=Decimal("25000.00"),
+            moneda_id=nio.id,
             empresa_id=empresa.id,
             activo=True,
         )

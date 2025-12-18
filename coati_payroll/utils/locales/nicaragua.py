@@ -319,13 +319,13 @@ def ejecutar_test_nomina_nicaragua(
 
             # Create employee
             empleado = Empleado(
-                codigo=employee_config.get("codigo", "EMP-TEST"),
+                codigo_empleado=employee_config.get("codigo", "EMP-TEST"),
                 primer_nombre=employee_config.get("nombre", "Test"),
                 primer_apellido=employee_config.get("apellido", "Employee"),
+                identificacion_personal=employee_config.get("identificacion", "ID-TEST-001"),
                 fecha_alta=fiscal_year_start,
-                salario_mensual=Decimal(str(employee_config.get("salario_base", 25000.00))),
-                tipo_salario="mensual",
-                moneda_salario_id=nio.id,
+                salario_base=Decimal(str(employee_config.get("salario_base", 25000.00))),
+                moneda_id=nio.id,
                 empresa_id=empresa.id,
                 activo=True,
             )
@@ -363,7 +363,7 @@ def ejecutar_test_nomina_nicaragua(
                         print(f"Salario Ocasional: C$ {salario_ocasional:,.2f}")
 
                 # Update employee salary for this month
-                empleado.salario_mensual = salario_ordinario
+                empleado.salario_base = salario_ordinario
                 db_session.commit()
 
                 # Calculate period dates
@@ -381,15 +381,13 @@ def ejecutar_test_nomina_nicaragua(
 
                 # Create planilla for this month
                 planilla = Planilla(
-                    codigo=f"NIC-{fiscal_year_start.year}-{month_num:02d}",
+                    nombre=f"NIC-{fiscal_year_start.year}-{month_num:02d}",
                     descripcion=f"Nómina {_get_month_name(month_num)} {fiscal_year_start.year}",
                     tipo_planilla_id=tipo_planilla.id,
                     empresa_id=empresa.id,
                     moneda_id=nio.id,
-                    periodo_inicio=periodo_inicio,
-                    periodo_fin=periodo_fin,
-                    fecha_pago=periodo_fin,
-                    estado="borrador",
+                    periodo_fiscal_inicio=fiscal_year_start,
+                    periodo_fiscal_fin=date(fiscal_year_start.year, 12, 31),
                     activo=True,
                 )
                 db_session.add(planilla)
@@ -426,6 +424,8 @@ def ejecutar_test_nomina_nicaragua(
                 # Execute payroll
                 engine = NominaEngine(
                     planilla=planilla,
+                    periodo_inicio=periodo_inicio,
+                    periodo_fin=periodo_fin,
                     fecha_calculo=periodo_fin,
                     usuario=usuario,
                 )
