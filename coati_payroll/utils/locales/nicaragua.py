@@ -25,6 +25,12 @@ for Nicaragua's progressive IR tax table (5 tiers: 0%, 15%, 20%, 25%, 30%).
 This validates that the system can properly configure and execute tax calculations
 using JSON schemas that users would enter through the UI interface.
 Nothing is hardcoded - all configuration is done via ReglaCalculo model.
+
+VALUABLE FOR IMPLEMENTERS: The function accepts an optional `regla_calculo_schema`
+parameter, allowing implementers to pass their own JSON schemas for calculation rules.
+This makes it a powerful tool for testing and validating custom tax configurations
+before deploying them to production systems. Implementers can verify that their
+JSON schemas produce the expected results across multiple payroll periods.
 """
 
 from datetime import date, timedelta
@@ -58,6 +64,7 @@ def ejecutar_test_nomina_nicaragua(
     test_data: Dict[str, Any],
     db_session: Any,
     app: Any,
+    regla_calculo_schema: Dict[str, Any] = None,
     verbose: bool = True,
 ) -> Dict[str, Any]:
     """
@@ -71,6 +78,11 @@ def ejecutar_test_nomina_nicaragua(
     The ReglaCalculo JSON schema created here represents exactly what a user would configure
     through the system's UI, proving the system can handle complex tax calculations without
     any hardcoded logic.
+
+    IMPORTANT: By passing a custom regla_calculo_schema, implementers can test different
+    calculation rules and verify that their JSON schemas produce expected results. This makes
+    this utility a valuable tool for validating tax calculation configurations before
+    deploying them to production.
 
     Args:
         test_data: Dictionary containing test configuration and monthly data.
@@ -96,6 +108,11 @@ def ejecutar_test_nomina_nicaragua(
                    }
         db_session: SQLAlchemy database session
         app: Flask application context
+        regla_calculo_schema: Optional custom JSON schema for ReglaCalculo.
+                              If None, uses the default Nicaragua IR schema with
+                              5-tier progressive tax table (0%, 15%, 20%, 25%, 30%).
+                              This allows implementers to test their own calculation
+                              rules and validate results.
         verbose: If True, print progress information
 
     Returns:
@@ -179,70 +196,79 @@ def ejecutar_test_nomina_nicaragua(
 
             # Create ReglaCalculo for IR Nicaragua (Progressive Tax Table)
             # This JSON schema represents what a user would configure through the UI
-            ir_json_schema = {
-                "meta": {
-                    "name": "IR Nicaragua - Método Acumulado",
-                    "legal_reference": "Ley 891 - Art. 23 LCT",
-                    "calculation_method": "accumulated_average"
-                },
-                "inputs": [
-                    {"name": "salario_bruto", "type": "decimal",
-                     "source": "empleado.salario_base"},
-                    {"name": "salario_bruto_acumulado", "type": "decimal",
-                     "source": "acumulado.salario_bruto_acumulado"},
-                    {"name": "deducciones_antes_impuesto_acumulado",
-                     "type": "decimal",
-                     "source": "acumulado.deducciones_antes_impuesto_acumulado"},
-                    {"name": "ir_retenido_acumulado", "type": "decimal",
-                     "source": "acumulado.impuesto_retenido_acumulado"},
-                    {"name": "meses_trabajados", "type": "integer",
-                     "source": "acumulado.periodos_procesados"}
-                ],
-                "steps": [
-                    {"name": "inss_mes", "type": "calculation",
-                     "formula": "salario_bruto * 0.07", "output": "inss_mes"},
-                    {"name": "salario_neto_mes", "type": "calculation",
-                     "formula": "salario_bruto - inss_mes",
-                     "output": "salario_neto_mes"},
-                    {"name": "salario_neto_total", "type": "calculation",
-                     "formula": "(salario_bruto_acumulado + salario_bruto) - "
-                                "(deducciones_antes_impuesto_acumulado + inss_mes)",
-                     "output": "salario_neto_total"},
-                    {"name": "meses_totales", "type": "calculation",
-                     "formula": "meses_trabajados + 1",
-                     "output": "meses_totales"},
-                    {"name": "promedio_mensual", "type": "calculation",
-                     "formula": "salario_neto_total / meses_totales",
-                     "output": "promedio_mensual"},
-                    {"name": "expectativa_anual", "type": "calculation",
-                     "formula": "promedio_mensual * 12",
-                     "output": "expectativa_anual"},
-                    {"name": "ir_anual", "type": "tax_lookup",
-                     "table": "tabla_ir", "input": "expectativa_anual",
-                     "output": "ir_anual"},
-                    {"name": "ir_proporcional", "type": "calculation",
-                     "formula": "(ir_anual / 12) * meses_totales",
-                     "output": "ir_proporcional"},
-                    {"name": "ir_final", "type": "calculation",
-                     "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)",
-                     "output": "ir_final"}
-                ],
-                "tax_tables": {
-                    "tabla_ir": [
-                        {"min": 0, "max": 100000, "rate": 0.00,
-                         "fixed": 0, "over": 0},
-                        {"min": 100000, "max": 200000, "rate": 0.15,
-                         "fixed": 0, "over": 100000},
-                        {"min": 200000, "max": 350000, "rate": 0.20,
-                         "fixed": 15000, "over": 200000},
-                        {"min": 350000, "max": 500000, "rate": 0.25,
-                         "fixed": 45000, "over": 350000},
-                        {"min": 500000, "max": None, "rate": 0.30,
-                         "fixed": 82500, "over": 500000}
-                    ]
-                },
-                "output": "ir_final"
-            }
+            # If a custom schema was provided, use it; otherwise use the default Nicaragua schema
+            if regla_calculo_schema is None:
+                if verbose:
+                    print("\nUsing default Nicaragua IR schema (5-tier progressive: 0%, 15%, 20%, 25%, 30%)")
+                ir_json_schema = {
+                    "meta": {
+                        "name": "IR Nicaragua - Método Acumulado",
+                        "legal_reference": "Ley 891 - Art. 23 LCT",
+                        "calculation_method": "accumulated_average"
+                    },
+                    "inputs": [
+                        {"name": "salario_bruto", "type": "decimal",
+                         "source": "empleado.salario_base"},
+                        {"name": "salario_bruto_acumulado", "type": "decimal",
+                         "source": "acumulado.salario_bruto_acumulado"},
+                        {"name": "deducciones_antes_impuesto_acumulado",
+                         "type": "decimal",
+                         "source": "acumulado.deducciones_antes_impuesto_acumulado"},
+                        {"name": "ir_retenido_acumulado", "type": "decimal",
+                         "source": "acumulado.impuesto_retenido_acumulado"},
+                        {"name": "meses_trabajados", "type": "integer",
+                         "source": "acumulado.periodos_procesados"}
+                    ],
+                    "steps": [
+                        {"name": "inss_mes", "type": "calculation",
+                         "formula": "salario_bruto * 0.07", "output": "inss_mes"},
+                        {"name": "salario_neto_mes", "type": "calculation",
+                         "formula": "salario_bruto - inss_mes",
+                         "output": "salario_neto_mes"},
+                        {"name": "salario_neto_total", "type": "calculation",
+                         "formula": "(salario_bruto_acumulado + salario_bruto) - "
+                                    "(deducciones_antes_impuesto_acumulado + inss_mes)",
+                         "output": "salario_neto_total"},
+                        {"name": "meses_totales", "type": "calculation",
+                         "formula": "meses_trabajados + 1",
+                         "output": "meses_totales"},
+                        {"name": "promedio_mensual", "type": "calculation",
+                         "formula": "salario_neto_total / meses_totales",
+                         "output": "promedio_mensual"},
+                        {"name": "expectativa_anual", "type": "calculation",
+                         "formula": "promedio_mensual * 12",
+                         "output": "expectativa_anual"},
+                        {"name": "ir_anual", "type": "tax_lookup",
+                         "table": "tabla_ir", "input": "expectativa_anual",
+                         "output": "ir_anual"},
+                        {"name": "ir_proporcional", "type": "calculation",
+                         "formula": "(ir_anual / 12) * meses_totales",
+                         "output": "ir_proporcional"},
+                        {"name": "ir_final", "type": "calculation",
+                         "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)",
+                         "output": "ir_final"}
+                    ],
+                    "tax_tables": {
+                        "tabla_ir": [
+                            {"min": 0, "max": 100000, "rate": 0.00,
+                             "fixed": 0, "over": 0},
+                            {"min": 100000, "max": 200000, "rate": 0.15,
+                             "fixed": 0, "over": 100000},
+                            {"min": 200000, "max": 350000, "rate": 0.20,
+                             "fixed": 15000, "over": 200000},
+                            {"min": 350000, "max": 500000, "rate": 0.25,
+                             "fixed": 45000, "over": 350000},
+                            {"min": 500000, "max": None, "rate": 0.30,
+                             "fixed": 82500, "over": 500000}
+                        ]
+                    },
+                    "output": "ir_final"
+                }
+            else:
+                if verbose:
+                    schema_name = regla_calculo_schema.get("meta", {}).get("name", "Custom")
+                    print(f"\nUsing custom ReglaCalculo schema: {schema_name}")
+                ir_json_schema = regla_calculo_schema
 
             regla_ir = ReglaCalculo(
                 codigo="IR_NICARAGUA",

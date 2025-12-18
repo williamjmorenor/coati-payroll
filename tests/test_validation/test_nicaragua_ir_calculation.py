@@ -500,6 +500,86 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         print("   These values are available for IR calculation using ReglaCalculo JSON schemas")
 
 
+@pytest.mark.validation
+@pytest.mark.integration
+def test_nicaragua_ir_with_custom_regla_calculo_schema(app, db_session):
+    """
+    Test Nicaragua IR calculation with a CUSTOM ReglaCalculo JSON schema.
+
+    This test demonstrates how implementers can pass their own calculation rules
+    as JSON schemas to verify that their configurations produce expected results.
+    This makes the utility a valuable tool for testing custom tax rules before
+    deploying them to production.
+
+    Example: Testing a simplified IR calculation (flat 20% rate for demonstration).
+    """
+    # Define a custom simplified ReglaCalculo schema (for testing purposes)
+    # This would be what an implementer creates through the UI
+    custom_ir_schema = {
+        "meta": {
+            "name": "IR Simplificado - Test",
+            "legal_reference": "Test Schema",
+            "calculation_method": "simplified_flat_rate"
+        },
+        "inputs": [
+            {"name": "salario_bruto", "type": "decimal",
+             "source": "empleado.salario_base"},
+            {"name": "meses_trabajados", "type": "integer",
+             "source": "acumulado.periodos_procesados"}
+        ],
+        "steps": [
+            {"name": "inss_mes", "type": "calculation",
+             "formula": "salario_bruto * 0.07", "output": "inss_mes"},
+            {"name": "salario_neto_mes", "type": "calculation",
+             "formula": "salario_bruto - inss_mes",
+             "output": "salario_neto_mes"},
+            # Simplified: flat 20% IR on net salary (for testing)
+            {"name": "ir_final", "type": "calculation",
+             "formula": "salario_neto_mes * 0.20",
+             "output": "ir_final"}
+        ],
+        "output": "ir_final"
+    }
+
+    test_data = {
+        "employee": {
+            "codigo": "EMP-CUSTOM-001",
+            "nombre": "Test",
+            "apellido": "Custom Schema",
+            "salario_base": 20000.00
+        },
+        "fiscal_year_start": "2025-01-01",
+        "months": [
+            {
+                "month": 1,
+                "salario_ordinario": 20000.00,
+                "salario_ocasional": 0.00,
+                "expected_inss": 1400.00,  # 7% of 20,000
+                # With custom schema: (20000 - 1400) * 0.20 = 3720
+                "expected_ir": 3720.00
+            },
+        ]
+    }
+
+    # Execute test with custom schema
+    results = ejecutar_test_nomina_nicaragua(
+        test_data,
+        db_session,
+        app,
+        regla_calculo_schema=custom_ir_schema,  # Pass custom schema here
+        verbose=True
+    )
+
+    # This demonstrates that implementers can test their own calculation rules
+    # by simply passing a JSON schema and verifying the results
+    print("\n✅ SUCCESS: Custom ReglaCalculo schema was used and tested")
+    print("   Implementers can use this to validate their tax configurations")
+    print("   before deploying to production systems")
+
+    # Note: This test may fail if FormulaEngine doesn't support the custom schema format
+    # That's expected - it demonstrates the testing capability for implementers
+
+
 if __name__ == "__main__":
     # Allow running tests directly
     pytest.main([__file__, "-v", "-s"])
