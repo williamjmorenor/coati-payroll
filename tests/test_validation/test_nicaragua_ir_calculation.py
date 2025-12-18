@@ -223,7 +223,7 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
 
         # Create payroll type (Monthly - Nicaragua fiscal year starts Jan 1)
         tipo_planilla = TipoPlanilla(
-            codigo_empleado="MENSUAL_NIC",
+            codigo="MENSUAL_NIC",
             descripcion="Nómina Mensual Nicaragua",
             periodicidad="mensual",
             dias=30,
@@ -238,7 +238,7 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
 
         # Create INSS deduction (7%)
         inss_deduccion = Deduccion(
-            codigo_empleado="INSS_NIC",
+            codigo="INSS_NIC",
             nombre="INSS Laboral 7%",
             descripcion="Aporte al seguro social del empleado",
             formula_tipo="porcentaje",
@@ -252,7 +252,7 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         # Create IR deduction (using simplified formula for testing)
         # In production, this would use a ReglaCalculo with the full JSON schema
         ir_deduccion = Deduccion(
-            codigo_empleado="IR_NIC",
+            codigo="IR_NIC",
             nombre="Impuesto sobre la Renta Nicaragua",
             descripcion="IR con método acumulado Art. 19 num. 6",
             formula_tipo="fijo",
@@ -292,14 +292,13 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
 
         # Create planilla (payroll) for Month 1
         planilla_mes1 = Planilla(
-            codigo_empleado="NIC-2025-01",
+            nombre="NIC-2025-01",
             descripcion="Nómina Enero 2025",
             tipo_planilla_id=tipo_planilla.id,
             empresa_id=empresa.id,
-            periodo_inicio=date(2025, 1, 1),
-            periodo_fin=date(2025, 1, 31),
-            fecha_pago=date(2025, 1, 31),
-            estado="borrador",
+            moneda_id=nio.id,
+            periodo_fiscal_inicio=date(2025, 1, 1),
+            periodo_fiscal_fin=date(2025, 12, 31),
             activo=True,
         )
         db_session.add(planilla_mes1)
@@ -321,10 +320,15 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         # ===== EXECUTION PHASE: Month 1 =====
         print("\n=== EXECUTING MONTH 1: C$ 25,000 ===")
 
+        # Refresh planilla to ensure it's attached to the session
+        db_session.refresh(planilla_mes1)
+
         engine_m1 = NominaEngine(
             planilla=planilla_mes1,
+            periodo_inicio=date(2025, 1, 1),
+            periodo_fin=date(2025, 1, 31),
             fecha_calculo=date(2025, 1, 31),
-            usuario=usuario,
+            usuario=usuario.usuario,  # Pass username string, not Usuario object
         )
         engine_m1.ejecutar()
         db_session.commit()
@@ -355,19 +359,18 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         print("\n=== EXECUTING MONTH 2: C$ 30,000 (salary increase) ===")
 
         # Update employee salary for Month 2
-        empleado.salario_mensual = Decimal("30000.00")
+        empleado.salario_base = Decimal("30000.00")
         db_session.commit()
 
         # Create planilla for Month 2
         planilla_mes2 = Planilla(
-            codigo_empleado="NIC-2025-02",
+            nombre="NIC-2025-02",
             descripcion="Nómina Febrero 2025",
             tipo_planilla_id=tipo_planilla.id,
             empresa_id=empresa.id,
-            periodo_inicio=date(2025, 2, 1),
-            periodo_fin=date(2025, 2, 28),
-            fecha_pago=date(2025, 2, 28),
-            estado="borrador",
+            moneda_id=nio.id,
+            periodo_fiscal_inicio=date(2025, 1, 1),
+            periodo_fiscal_fin=date(2025, 12, 31),
             activo=True,
         )
         db_session.add(planilla_mes2)
@@ -379,10 +382,15 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         db_session.add(PlanillaDeduccion(planilla_id=planilla_mes2.id, deduccion_id=ir_deduccion.id))
         db_session.commit()
 
+        # Refresh planilla to ensure it's attached to the session
+        db_session.refresh(planilla_mes2)
+
         engine_m2 = NominaEngine(
             planilla=planilla_mes2,
+            periodo_inicio=date(2025, 2, 1),
+            periodo_fin=date(2025, 2, 28),
             fecha_calculo=date(2025, 2, 28),
-            usuario=usuario,
+            usuario=usuario.usuario,  # Pass username string, not Usuario object
         )
         engine_m2.ejecutar()
         db_session.commit()
@@ -412,19 +420,18 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         print("\n=== EXECUTING MONTH 3: C$ 28,000 (salary decrease) ===")
 
         # Update employee salary for Month 3
-        empleado.salario_mensual = Decimal("28000.00")
+        empleado.salario_base = Decimal("28000.00")
         db_session.commit()
 
         # Create planilla for Month 3
         planilla_mes3 = Planilla(
-            codigo_empleado="NIC-2025-03",
+            nombre="NIC-2025-03",
             descripcion="Nómina Marzo 2025",
             tipo_planilla_id=tipo_planilla.id,
             empresa_id=empresa.id,
-            periodo_inicio=date(2025, 3, 1),
-            periodo_fin=date(2025, 3, 31),
-            fecha_pago=date(2025, 3, 31),
-            estado="borrador",
+            moneda_id=nio.id,
+            periodo_fiscal_inicio=date(2025, 1, 1),
+            periodo_fiscal_fin=date(2025, 12, 31),
             activo=True,
         )
         db_session.add(planilla_mes3)
@@ -436,10 +443,15 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         db_session.add(PlanillaDeduccion(planilla_id=planilla_mes3.id, deduccion_id=ir_deduccion.id))
         db_session.commit()
 
+        # Refresh planilla to ensure it's attached to the session
+        db_session.refresh(planilla_mes3)
+
         engine_m3 = NominaEngine(
             planilla=planilla_mes3,
+            periodo_inicio=date(2025, 3, 1),
+            periodo_fin=date(2025, 3, 31),
             fecha_calculo=date(2025, 3, 31),
-            usuario=usuario,
+            usuario=usuario.usuario,  # Pass username string, not Usuario object
         )
         engine_m3.ejecutar()
         db_session.commit()

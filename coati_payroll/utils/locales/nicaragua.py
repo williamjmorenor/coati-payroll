@@ -421,13 +421,16 @@ def ejecutar_test_nomina_nicaragua(
 
                 db_session.commit()
 
+                # Refresh planilla to ensure it's attached to the session before execution
+                db_session.refresh(planilla)
+
                 # Execute payroll
                 engine = NominaEngine(
                     planilla=planilla,
                     periodo_inicio=periodo_inicio,
                     periodo_fin=periodo_fin,
                     fecha_calculo=periodo_fin,
-                    usuario=usuario,
+                    usuario=usuario.usuario,  # Pass username string, not Usuario object
                 )
 
                 # Add occasional income as novelty if present
