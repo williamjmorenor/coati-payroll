@@ -1265,11 +1265,17 @@ class ReglaCalculo(database.Model, BaseTabla):
 
 # Acumulados anuales por empleado (para cálculos como IR en Nicaragua)
 class AcumuladoAnual(database.Model, BaseTabla):
-    """Annual accumulated values per employee per payroll type.
+    """Annual accumulated values per employee per payroll type per company.
 
     Stores running totals of salary, deductions, and taxes for each employee
-    per fiscal year and payroll type. This is essential for progressive tax
+    per fiscal year, payroll type, and company. This is essential for progressive tax
     calculations like Nicaragua's IR which requires annual accumulated values.
+
+    IMPORTANT: Accumulated values are tracked per company (empresa_id) to support
+    employees who change companies mid-year. Each company maintains separate
+    accumulated values since they are distinct legal entities. For tax calculations
+    that require total annual income across all employers, the initial accumulated
+    values in the Empleado model represent the sum from all previous employers.
 
     The fiscal year period is defined in the TipoPlanilla (payroll type) to
     support different fiscal periods (not just Jan-Dec).
@@ -1282,8 +1288,9 @@ class AcumuladoAnual(database.Model, BaseTabla):
         database.UniqueConstraint(
             "empleado_id",
             "tipo_planilla_id",
+            "empresa_id",
             "periodo_fiscal_inicio",
-            name="uq_acumulado_empleado_tipo_periodo",
+            name="uq_acumulado_empleado_tipo_empresa_periodo",
         ),
     )
 
@@ -1298,6 +1305,15 @@ class AcumuladoAnual(database.Model, BaseTabla):
     tipo_planilla_id = database.Column(
         database.String(26),
         database.ForeignKey("tipo_planilla.id"),
+        nullable=False,
+        index=True,
+    )
+
+    # Company association - critical for employees who change companies
+    # Each company tracks accumulated values separately as they are distinct legal entities
+    empresa_id = database.Column(
+        database.String(26),
+        database.ForeignKey("empresa.id"),
         nullable=False,
         index=True,
     )
@@ -1337,6 +1353,7 @@ class AcumuladoAnual(database.Model, BaseTabla):
 
     empleado = database.relationship("Empleado", backref="acumulados_anuales")
     tipo_planilla = database.relationship("TipoPlanilla", back_populates="acumulados")
+    empresa = database.relationship("Empresa")
 
     def reset_mes_acumulado_if_needed(self, periodo_fin: date) -> None:
         """Reset monthly accumulated salary if entering a new month.
@@ -1441,6 +1458,15 @@ class PrestacionAcumulada(database.Model, BaseTabla):
         database.String(26), database.ForeignKey("carga_inicial_prestacion.id"), nullable=True
     )
 
+    # Company association - for employees who change companies
+    # Balances accumulate per company as they are distinct legal entities
+    empresa_id = database.Column(
+        database.String(26),
+        database.ForeignKey("empresa.id"),
+        nullable=True,
+        index=True,
+    )
+
     # Reversal tracking (if this transaction reverses another)
     transaccion_reversada_id = database.Column(database.String(26), nullable=True)  # FK to another transaction
 
@@ -1454,6 +1480,7 @@ class PrestacionAcumulada(database.Model, BaseTabla):
     moneda = database.relationship("Moneda")
     nomina = database.relationship("Nomina")
     carga_inicial = database.relationship("CargaInicialPrestacion", back_populates="transacciones")
+    empresa = database.relationship("Empresa")
 
 
 # Carga Inicial de Prestaciones - Initial Benefit Balance Loading

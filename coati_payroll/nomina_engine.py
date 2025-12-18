@@ -569,6 +569,26 @@ class NominaEngine:
             variables["ir_retenido_acumulado"] += Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
             variables["salario_acumulado_mes"] = Decimal(str(acumulado.salario_acumulado_mes or 0))
 
+            # Additional accumulated values for progressive tax calculations (e.g., Nicaragua IR)
+            variables["salario_bruto_acumulado"] = Decimal(str(acumulado.salario_bruto_acumulado or 0))
+            variables["salario_gravable_acumulado"] = Decimal(str(acumulado.salario_gravable_acumulado or 0))
+            variables["deducciones_antes_impuesto_acumulado"] = Decimal(
+                str(acumulado.deducciones_antes_impuesto_acumulado or 0)
+            )
+            variables["periodos_procesados"] = Decimal(str(acumulado.periodos_procesados or 0))
+            variables["meses_trabajados"] = Decimal(str(acumulado.periodos_procesados or 0))  # Alias for clarity
+
+            # Calculate net accumulated salary (gross - pre-tax deductions like INSS)
+            variables["salario_neto_acumulado"] = (
+                Decimal(str(acumulado.salario_bruto_acumulado or 0)) -
+                Decimal(str(acumulado.deducciones_antes_impuesto_acumulado or 0))
+            )
+
+        # Include initial accumulated values from employee (for mid-year implementations)
+        # These values represent pre-system salary/tax amounts when implementing mid-fiscal-year
+        variables["salario_inicial_acumulado"] = Decimal(str(empleado.salario_acumulado or 0))
+        variables["impuesto_inicial_acumulado"] = Decimal(str(empleado.impuesto_acumulado or 0))
+
         return variables
 
     def _obtener_acumulado_anual(self, empleado: Empleado) -> AcumuladoAnual | None:
@@ -596,10 +616,13 @@ class NominaEngine:
         periodo_fiscal_inicio = date(anio, mes_inicio, dia_inicio)
 
         # Look up existing accumulated record
+        # IMPORTANT: Filter by empresa_id to keep separate accumulations when employee
+        # changes companies, as they are distinct legal entities
         acumulado = db.session.execute(
             db.select(AcumuladoAnual).filter(
                 AcumuladoAnual.empleado_id == empleado.id,
                 AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
+                AcumuladoAnual.empresa_id == self.planilla.empresa_id,
                 AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
             )
         ).scalar()
@@ -1247,16 +1270,23 @@ class NominaEngine:
         ).scalar()
 
         if not acumulado:
+            # Initialize with pre-system accumulated values for mid-year implementations
+            # These values come from the employee record and represent work done before
+            # the system was deployed (e.g., Jan-June when system starts in July)
+            salario_inicial = empleado.salario_acumulado or Decimal("0.00")
+            impuesto_inicial = empleado.impuesto_acumulado or Decimal("0.00")
+            
             acumulado = AcumuladoAnual(
                 empleado_id=empleado.id,
                 tipo_planilla_id=tipo_planilla.id,
+                empresa_id=self.planilla.empresa_id,
                 periodo_fiscal_inicio=periodo_fiscal_inicio,
                 periodo_fiscal_fin=periodo_fiscal_fin,
-                salario_bruto_acumulado=Decimal("0.00"),
-                salario_gravable_acumulado=Decimal("0.00"),
-                deducciones_antes_impuesto_acumulado=Decimal("0.00"),
-                impuesto_retenido_acumulado=Decimal("0.00"),
-                periodos_procesados=0,
+                salario_bruto_acumulado=salario_inicial,
+                salario_gravable_acumulado=Decimal("0.00"),  # Will be calculated
+                deducciones_antes_impuesto_acumulado=impuesto_inicial,
+                impuesto_retenido_acumulado=Decimal("0.00"),  # IR will be calculated
+                periodos_procesados=0,  # Only counts periods processed in system
                 salario_acumulado_mes=Decimal("0.00"),
                 mes_actual=self.periodo_fin.month,
             )
