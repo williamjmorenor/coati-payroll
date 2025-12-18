@@ -584,6 +584,11 @@ class NominaEngine:
                 Decimal(str(acumulado.deducciones_antes_impuesto_acumulado or 0))
             )
 
+        # Include initial accumulated values from employee (for mid-year implementations)
+        # These values represent pre-system salary/tax amounts when implementing mid-fiscal-year
+        variables["salario_inicial_acumulado"] = Decimal(str(empleado.salario_acumulado or 0))
+        variables["impuesto_inicial_acumulado"] = Decimal(str(empleado.impuesto_acumulado or 0))
+
         return variables
 
     def _obtener_acumulado_anual(self, empleado: Empleado) -> AcumuladoAnual | None:

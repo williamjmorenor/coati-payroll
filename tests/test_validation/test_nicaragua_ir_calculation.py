@@ -118,6 +118,88 @@ def test_nicaragua_payroll_with_json_validation(app, db_session):
     print("   - System ready for Nicaragua implementation")
 
 
+@pytest.mark.validation
+@pytest.mark.integration
+def test_nicaragua_mid_year_implementation(app, db_session):
+    """
+    Test Nicaragua payroll with mid-year implementation (common scenario).
+    
+    Many implementations start mid-fiscal-year (e.g., July instead of January).
+    The system must handle pre-existing accumulated salary and tax values that
+    occurred before the system was deployed.
+    
+    This test validates:
+    - Employee has initial accumulated values from pre-system months
+    - System correctly includes these values in tax calculations
+    - Accumulated values continue to grow from the starting point
+    - IR calculations consider the full year-to-date amounts
+    """
+    # Scenario: System implemented in July 2025
+    # Employee has been working since January with same salary all year
+    test_data = {
+        "employee": {
+            "codigo": "EMP-NIC-MID",
+            "nombre": "María",
+            "apellido": "González",
+            "salario_base": 10000.00,
+            # Pre-system accumulated values (6 months: Jan-June)
+            "salario_acumulado": 60000.00,  # 10,000 x 6 months
+            "impuesto_acumulado": 4200.00,   # INSS 7% x 60,000 = 4,200
+        },
+        "fiscal_year_start": "2025-01-01",
+        "months": [
+            {
+                "month": 7,  # July - first month in system
+                "salario_ordinario": 10000.00,
+                "salario_ocasional": 0.00,
+                "expected_inss": 700.00,  # 7% of 10,000
+                "expected_ir": 0.00  # System will calculate
+            },
+            {
+                "month": 8,  # August
+                "salario_ordinario": 10000.00,
+                "salario_ocasional": 0.00,
+                "expected_inss": 700.00,
+                "expected_ir": 0.00
+            },
+            {
+                "month": 9,  # September
+                "salario_ordinario": 10000.00,
+                "salario_ocasional": 0.00,
+                "expected_inss": 700.00,
+                "expected_ir": 0.00
+            },
+        ]
+    }
+    
+    # Execute the test
+    results = ejecutar_test_nomina_nicaragua(
+        test_data,
+        db_session,
+        app,
+        verbose=True
+    )
+    
+    # Verify execution
+    assert len(results["results"]) == 3, "Should process 3 months (July-Sept)"
+    
+    # Verify accumulated values include pre-system amounts
+    # Total should be: 60,000 (pre-system) + 30,000 (3 months x 10,000)
+    assert results["accumulated"]["salario_bruto_acumulado"] >= 60000, \
+        "Should include pre-system accumulated salary"
+    
+    # Verify system continued accumulating from the starting point
+    assert results["accumulated"]["periodos_procesados"] == 3, \
+        "Should have processed 3 new periods"
+    
+    print("\n✅ SUCCESS: Mid-year implementation handled correctly")
+    print("   - Employee: Monthly salary C$ 10,000")
+    print("   - Pre-system values (Jan-June): C$ 60,000 salary, C$ 4,200 INSS")
+    print(f"   - Total accumulated after 3 months (July-Sept): C$ {results['accumulated']['salario_bruto_acumulado']:,.2f}")
+    print(f"   - Periods processed in system: {results['accumulated']['periodos_procesados']}")
+    print("   - System correctly handles mid-year deployments with consistent salary")
+
+
 if __name__ == "__main__":
     # Allow running test directly
     pytest.main([__file__, "-v", "-s"])

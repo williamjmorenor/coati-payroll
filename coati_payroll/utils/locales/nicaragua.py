@@ -211,13 +211,21 @@ def ejecutar_test_nomina_nicaragua(
                          "source": "empleado.salario_base"},
                         {"name": "salario_bruto_acumulado", "type": "decimal",
                          "source": "acumulado.salario_bruto_acumulado"},
+                        {"name": "salario_acumulado_mes", "type": "decimal",
+                         "source": "acumulado.salario_acumulado_mes"},
                         {"name": "deducciones_antes_impuesto_acumulado",
                          "type": "decimal",
                          "source": "acumulado.deducciones_antes_impuesto_acumulado"},
                         {"name": "ir_retenido_acumulado", "type": "decimal",
                          "source": "acumulado.impuesto_retenido_acumulado"},
                         {"name": "meses_trabajados", "type": "integer",
-                         "source": "acumulado.periodos_procesados"}
+                         "source": "acumulado.periodos_procesados"},
+                        {"name": "salario_inicial_acumulado", "type": "decimal",
+                         "source": "empleado.salario_acumulado",
+                         "description": "Pre-system accumulated salary for mid-year implementations"},
+                        {"name": "impuesto_inicial_acumulado", "type": "decimal",
+                         "source": "empleado.impuesto_acumulado",
+                         "description": "Pre-system accumulated tax for mid-year implementations"}
                     ],
                     "steps": [
                         {"name": "inss_mes", "type": "calculation",
