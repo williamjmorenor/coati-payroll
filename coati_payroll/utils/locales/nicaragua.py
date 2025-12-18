@@ -19,6 +19,12 @@ including INSS (7%) and IR (progressive income tax) with accumulated method.
 
 The main function `ejecutar_test_nomina_nicaragua()` allows running payroll tests
 based on JSON test data, making it easy to validate different scenarios.
+
+IMPORTANT: This utility creates a complete ReglaCalculo with the full JSON schema
+for Nicaragua's progressive IR tax table (5 tiers: 0%, 15%, 20%, 25%, 30%).
+This validates that the system can properly configure and execute tax calculations
+using JSON schemas that users would enter through the UI interface.
+Nothing is hardcoded - all configuration is done via ReglaCalculo model.
 """
 
 from datetime import date, timedelta
@@ -40,6 +46,8 @@ from coati_payroll.model import (
     PlanillaDeduccion,
     PlanillaEmpleado,
     PlanillaIngreso,
+    PlanillaReglaCalculo,
+    ReglaCalculo,
     TipoPlanilla,
     Usuario,
 )
@@ -56,8 +64,13 @@ def ejecutar_test_nomina_nicaragua(
     Execute Nicaragua payroll test based on JSON test data.
 
     This reusable function creates all necessary entities (employee, company, deductions, etc.)
+    including a complete ReglaCalculo with the JSON schema for Nicaragua's progressive IR tax,
     and executes payroll for multiple months based on the provided test data. It validates
     that the calculated INSS and IR values match the expected values.
+
+    The ReglaCalculo JSON schema created here represents exactly what a user would configure
+    through the system's UI, proving the system can handle complex tax calculations without
+    any hardcoded logic.
 
     Args:
         test_data: Dictionary containing test configuration and monthly data.
@@ -164,17 +177,106 @@ def ejecutar_test_nomina_nicaragua(
             db_session.add(inss_deduccion)
             db_session.flush()
 
-            # Create IR deduction (placeholder - would use ReglaCalculo in production)
+            # Create ReglaCalculo for IR Nicaragua (Progressive Tax Table)
+            # This JSON schema represents what a user would configure through the UI
+            ir_json_schema = {
+                "meta": {
+                    "name": "IR Nicaragua - Método Acumulado",
+                    "legal_reference": "Ley 891 - Art. 23 LCT",
+                    "calculation_method": "accumulated_average"
+                },
+                "inputs": [
+                    {"name": "salario_bruto", "type": "decimal",
+                     "source": "empleado.salario_base"},
+                    {"name": "salario_bruto_acumulado", "type": "decimal",
+                     "source": "acumulado.salario_bruto_acumulado"},
+                    {"name": "deducciones_antes_impuesto_acumulado",
+                     "type": "decimal",
+                     "source": "acumulado.deducciones_antes_impuesto_acumulado"},
+                    {"name": "ir_retenido_acumulado", "type": "decimal",
+                     "source": "acumulado.impuesto_retenido_acumulado"},
+                    {"name": "meses_trabajados", "type": "integer",
+                     "source": "acumulado.periodos_procesados"}
+                ],
+                "steps": [
+                    {"name": "inss_mes", "type": "calculation",
+                     "formula": "salario_bruto * 0.07", "output": "inss_mes"},
+                    {"name": "salario_neto_mes", "type": "calculation",
+                     "formula": "salario_bruto - inss_mes",
+                     "output": "salario_neto_mes"},
+                    {"name": "salario_neto_total", "type": "calculation",
+                     "formula": "(salario_bruto_acumulado + salario_bruto) - "
+                                "(deducciones_antes_impuesto_acumulado + inss_mes)",
+                     "output": "salario_neto_total"},
+                    {"name": "meses_totales", "type": "calculation",
+                     "formula": "meses_trabajados + 1",
+                     "output": "meses_totales"},
+                    {"name": "promedio_mensual", "type": "calculation",
+                     "formula": "salario_neto_total / meses_totales",
+                     "output": "promedio_mensual"},
+                    {"name": "expectativa_anual", "type": "calculation",
+                     "formula": "promedio_mensual * 12",
+                     "output": "expectativa_anual"},
+                    {"name": "ir_anual", "type": "tax_lookup",
+                     "table": "tabla_ir", "input": "expectativa_anual",
+                     "output": "ir_anual"},
+                    {"name": "ir_proporcional", "type": "calculation",
+                     "formula": "(ir_anual / 12) * meses_totales",
+                     "output": "ir_proporcional"},
+                    {"name": "ir_final", "type": "calculation",
+                     "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)",
+                     "output": "ir_final"}
+                ],
+                "tax_tables": {
+                    "tabla_ir": [
+                        {"min": 0, "max": 100000, "rate": 0.00,
+                         "fixed": 0, "over": 0},
+                        {"min": 100000, "max": 200000, "rate": 0.15,
+                         "fixed": 0, "over": 100000},
+                        {"min": 200000, "max": 350000, "rate": 0.20,
+                         "fixed": 15000, "over": 200000},
+                        {"min": 350000, "max": 500000, "rate": 0.25,
+                         "fixed": 45000, "over": 350000},
+                        {"min": 500000, "max": None, "rate": 0.30,
+                         "fixed": 82500, "over": 500000}
+                    ]
+                },
+                "output": "ir_final"
+            }
+
+            regla_ir = ReglaCalculo(
+                codigo="IR_NICARAGUA",
+                nombre="IR Nicaragua - Tabla Progresiva 2025",
+                descripcion=(
+                    "Impuesto sobre la Renta con método acumulado "
+                    "según Art. 19 numeral 6 de la Ley de Concertación Tributaria"
+                ),
+                jurisdiccion="Nicaragua",
+                moneda_referencia="NIO",
+                version="1.0.0",
+                tipo_regla="impuesto",
+                esquema_json=ir_json_schema,
+                vigente_desde=fiscal_year_start,
+                vigente_hasta=None,
+                activo=True,
+            )
+            db_session.add(regla_ir)
+            db_session.flush()
+
+            # Create IR deduction linked to ReglaCalculo
             ir_deduccion = Deduccion(
                 codigo="IR_NIC",
                 nombre="Impuesto sobre la Renta Nicaragua",
                 descripcion="IR con método acumulado Art. 19 num. 6",
-                formula_tipo="fijo",
-                monto_default=Decimal("0.00"),
+                formula_tipo="regla_calculo",
                 es_impuesto=True,
                 activo=True,
             )
             db_session.add(ir_deduccion)
+            db_session.flush()
+
+            # Link ReglaCalculo to Deduccion
+            regla_ir.deduccion_id = ir_deduccion.id
             db_session.flush()
 
             # Create test user
@@ -271,8 +373,20 @@ def ejecutar_test_nomina_nicaragua(
                 db_session.add(PlanillaEmpleado(planilla_id=planilla.id, empleado_id=empleado.id))
 
                 # Link deductions to planilla
-                db_session.add(PlanillaDeduccion(planilla_id=planilla.id, deduccion_id=inss_deduccion.id))
-                db_session.add(PlanillaDeduccion(planilla_id=planilla.id, deduccion_id=ir_deduccion.id))
+                db_session.add(PlanillaDeduccion(
+                    planilla_id=planilla.id,
+                    deduccion_id=inss_deduccion.id
+                ))
+                db_session.add(PlanillaDeduccion(
+                    planilla_id=planilla.id,
+                    deduccion_id=ir_deduccion.id
+                ))
+
+                # Link ReglaCalculo to planilla
+                db_session.add(PlanillaReglaCalculo(
+                    planilla_id=planilla.id,
+                    regla_calculo_id=regla_ir.id
+                ))
 
                 # Link occasional income if present
                 if salario_ocasional > 0 and percepcion_ocasional:
