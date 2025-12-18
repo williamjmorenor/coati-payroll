@@ -616,10 +616,13 @@ class NominaEngine:
         periodo_fiscal_inicio = date(anio, mes_inicio, dia_inicio)
 
         # Look up existing accumulated record
+        # IMPORTANT: Filter by empresa_id to keep separate accumulations when employee
+        # changes companies, as they are distinct legal entities
         acumulado = db.session.execute(
             db.select(AcumuladoAnual).filter(
                 AcumuladoAnual.empleado_id == empleado.id,
                 AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
+                AcumuladoAnual.empresa_id == self.planilla.empresa_id,
                 AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
             )
         ).scalar()
@@ -1270,6 +1273,7 @@ class NominaEngine:
             acumulado = AcumuladoAnual(
                 empleado_id=empleado.id,
                 tipo_planilla_id=tipo_planilla.id,
+                empresa_id=self.planilla.empresa_id,
                 periodo_fiscal_inicio=periodo_fiscal_inicio,
                 periodo_fiscal_fin=periodo_fiscal_fin,
                 salario_bruto_acumulado=Decimal("0.00"),
