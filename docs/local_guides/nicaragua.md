@@ -28,7 +28,9 @@ La legislación laboral nicaragüense establece un sistema de nómina con dos ti
 2. **IR (Impuesto sobre la Renta)**: Tasa progresiva según tramos de renta anual
 
 !!! important "Nota Importante"
-    Todos los ingresos (ordinarios y extraordinarios) están sujetos tanto a INSS como a IR. El sistema debe calcularlos sobre el salario bruto total.
+    En general todos los ingresos (ordinarios y extraordinarios) que perciba un trabajador están sujetos tanto a INSS como a IR.
+    El sistema debe calcularlos sobre el salario bruto total. Hay algunos conceptos que se pueden pagar al empleado que no pagan
+    Impuestos o Aportes al seguro social, ante cualquier consulta recomendamos confirmar con un experto local en la materia.
 
 ## Marco Legal
 
@@ -36,12 +38,12 @@ La legislación laboral nicaragüense establece un sistema de nómina con dos ti
 
 La legislación nicaragüense establece el cálculo del IR mediante una tarifa progresiva anual. Las referencias legales principales son:
 
-- **Artículo 19**: Obligación de retener, liquidar, declarar y enterar el IR
+- **Artículo 20**: Base Imponible.
 - **Artículo 21**: Deducciones autorizadas (principalmente INSS)
 - **Artículo 23**: Tarifa progresiva del IR (reformado por Ley No 891)
 - **Artículo 25**: Períodos fiscales y metodologías de cálculo
 
-### Tarifa Progresiva del IR (2024)
+### Tarifa Progresiva del IR vigente al 2025.
 
 La tarifa progresiva actual del Impuesto sobre la Renta en Nicaragua es:
 
@@ -68,7 +70,7 @@ Son los ingresos regulares y recurrentes que percibe el empleado:
 - **Gravable**: Sí (INSS + IR)
 
 **Configuración en Coati Payroll:**
-- Este es el campo "Salario Mensual" del empleado
+- Este es el campo "Salario Mensual" del empleado y debe estar definido en la configuración del empleado.
 - No requiere configuración adicional como percepción
 
 #### 2. Horas Extra
@@ -76,14 +78,12 @@ Son los ingresos regulares y recurrentes que percibe el empleado:
 Las horas extra se calculan según el Código del Trabajo:
 
 - **Horas extra diurnas**: 100% adicional al salario hora
-- **Horas extra nocturnas**: 150% adicional al salario hora
 - **Gravable**: Sí (INSS + IR)
 
 **Fórmula de cálculo:**
 ```
 Salario Hora = Salario Mensual / 240 horas
 Hora Extra Diurna = Salario Hora × 2
-Hora Extra Nocturna = Salario Hora × 2.5
 ```
 
 #### 3. Comisiones
