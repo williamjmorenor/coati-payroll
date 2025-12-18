@@ -30,6 +30,8 @@ from decimal import Decimal
 
 import pytest
 
+from coati_payroll.auth import proteger_passwd
+from coati_payroll.enums import TipoUsuario
 from coati_payroll.utils.locales.nicaragua import ejecutar_test_nomina_nicaragua
 
 
@@ -195,7 +197,7 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         
         # Create currency (Córdoba)
         nio = Moneda(
-            codigo="NIO",
+            codigo_empleado="NIO",
             nombre="Córdoba Nicaragüense",
             simbolo="C$",
             activo=True,
@@ -205,11 +207,10 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         
         # Create company
         empresa = Empresa(
-            codigo="NIC-001",
+            codigo_empleado="NIC-001",
             razon_social="Empresa Test Nicaragua S.A.",
             nombre_comercial="Test Nicaragua",
             ruc="J-11111111-1",
-            pais="Nicaragua",
             activo=True,
         )
         db_session.add(empresa)
@@ -217,7 +218,7 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         
         # Create payroll type (Monthly - Nicaragua fiscal year starts Jan 1)
         tipo_planilla = TipoPlanilla(
-            codigo="MENSUAL_NIC",
+            codigo_empleado="MENSUAL_NIC",
             descripcion="Nómina Mensual Nicaragua",
             periodicidad="mensual",
             dias=30,
@@ -225,7 +226,6 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
             mes_inicio_fiscal=1,  # January
             dia_inicio_fiscal=1,
             acumula_anual=True,
-            moneda_id=nio.id,
             activo=True,
         )
         db_session.add(tipo_planilla)
@@ -233,14 +233,12 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         
         # Create INSS deduction (7%)
         inss_deduccion = Deduccion(
-            codigo="INSS_NIC",
+            codigo_empleado="INSS_NIC",
             nombre="INSS Laboral 7%",
             descripcion="Aporte al seguro social del empleado",
-            tipo_formula="porcentaje",
-            formula="7",  # 7%
-            es_obligatoria=True,
+            formula_tipo="porcentaje",
+            porcentaje=Decimal("7.00"),  # 7%
             antes_impuesto=True,
-            prioridad=1,
             activo=True,
         )
         db_session.add(inss_deduccion)
@@ -249,34 +247,32 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         # Create IR deduction (using simplified formula for testing)
         # In production, this would use a ReglaCalculo with the full JSON schema
         ir_deduccion = Deduccion(
-            codigo="IR_NIC",
+            codigo_empleado="IR_NIC",
             nombre="Impuesto sobre la Renta Nicaragua",
             descripcion="IR con método acumulado Art. 19 num. 6",
-            tipo_formula="formula_personalizada",
-            formula="0",  # Placeholder - real calculation would use ReglaCalculo
-            es_obligatoria=True,
+            formula_tipo="fijo",
+            monto_default=Decimal("0.00"),  # Placeholder - real calculation would use ReglaCalculo
             es_impuesto=True,
-            prioridad=2,
             activo=True,
         )
         db_session.add(ir_deduccion)
         db_session.flush()
         
         # Create test user
-        usuario = Usuario(
-            usuario="test_nic",
-            nombre="Test",
-            apellido="Nicaragua",
-            correo="test@nicaragua.test",
-            password_hash="test",
-            activo=True,
-        )
+        usuario = Usuario()
+        usuario.usuario = "test_nic"
+        usuario.nombre = "Test"
+        usuario.apellido = "Nicaragua"
+        usuario.correo_electronico = "test@nicaragua.test"
+        usuario.acceso = proteger_passwd("test-password")
+        usuario.tipo = TipoUsuario.ADMIN
+        usuario.activo = True
         db_session.add(usuario)
         db_session.flush()
         
         # Create employee
         empleado = Empleado(
-            codigo="EMP-NIC-001",
+            codigo_empleado="EMP-NIC-001",
             primer_nombre="Juan",
             primer_apellido="Pérez",
             fecha_alta=date(2025, 1, 1),
@@ -291,11 +287,10 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         
         # Create planilla (payroll) for Month 1
         planilla_mes1 = Planilla(
-            codigo="NIC-2025-01",
+            codigo_empleado="NIC-2025-01",
             descripcion="Nómina Enero 2025",
             tipo_planilla_id=tipo_planilla.id,
             empresa_id=empresa.id,
-            moneda_id=nio.id,
             periodo_inicio=date(2025, 1, 1),
             periodo_fin=date(2025, 1, 31),
             fecha_pago=date(2025, 1, 31),
@@ -360,11 +355,10 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         
         # Create planilla for Month 2
         planilla_mes2 = Planilla(
-            codigo="NIC-2025-02",
+            codigo_empleado="NIC-2025-02",
             descripcion="Nómina Febrero 2025",
             tipo_planilla_id=tipo_planilla.id,
             empresa_id=empresa.id,
-            moneda_id=nio.id,
             periodo_inicio=date(2025, 2, 1),
             periodo_fin=date(2025, 2, 28),
             fecha_pago=date(2025, 2, 28),
@@ -418,11 +412,10 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         
         # Create planilla for Month 3
         planilla_mes3 = Planilla(
-            codigo="NIC-2025-03",
+            codigo_empleado="NIC-2025-03",
             descripcion="Nómina Marzo 2025",
             tipo_planilla_id=tipo_planilla.id,
             empresa_id=empresa.id,
-            moneda_id=nio.id,
             periodo_inicio=date(2025, 3, 1),
             periodo_fin=date(2025, 3, 31),
             fecha_pago=date(2025, 3, 31),
