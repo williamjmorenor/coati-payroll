@@ -336,6 +336,9 @@ def ejecutar_test_nomina_nicaragua(
                 moneda_id=nio.id,
                 empresa_id=empresa.id,
                 activo=True,
+                # Mid-year implementation support: pre-system accumulated values
+                salario_acumulado=Decimal(str(employee_config.get("salario_acumulado", 0.00))),
+                impuesto_acumulado=Decimal(str(employee_config.get("impuesto_acumulado", 0.00))),
             )
             db_session.add(empleado)
             db_session.flush()

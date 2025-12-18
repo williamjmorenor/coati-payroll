@@ -1270,17 +1270,23 @@ class NominaEngine:
         ).scalar()
 
         if not acumulado:
+            # Initialize with pre-system accumulated values for mid-year implementations
+            # These values come from the employee record and represent work done before
+            # the system was deployed (e.g., Jan-June when system starts in July)
+            salario_inicial = empleado.salario_acumulado or Decimal("0.00")
+            impuesto_inicial = empleado.impuesto_acumulado or Decimal("0.00")
+            
             acumulado = AcumuladoAnual(
                 empleado_id=empleado.id,
                 tipo_planilla_id=tipo_planilla.id,
                 empresa_id=self.planilla.empresa_id,
                 periodo_fiscal_inicio=periodo_fiscal_inicio,
                 periodo_fiscal_fin=periodo_fiscal_fin,
-                salario_bruto_acumulado=Decimal("0.00"),
-                salario_gravable_acumulado=Decimal("0.00"),
-                deducciones_antes_impuesto_acumulado=Decimal("0.00"),
-                impuesto_retenido_acumulado=Decimal("0.00"),
-                periodos_procesados=0,
+                salario_bruto_acumulado=salario_inicial,
+                salario_gravable_acumulado=Decimal("0.00"),  # Will be calculated
+                deducciones_antes_impuesto_acumulado=impuesto_inicial,
+                impuesto_retenido_acumulado=Decimal("0.00"),  # IR will be calculated
+                periodos_procesados=0,  # Only counts periods processed in system
                 salario_acumulado_mes=Decimal("0.00"),
                 mes_actual=self.periodo_fin.month,
             )
