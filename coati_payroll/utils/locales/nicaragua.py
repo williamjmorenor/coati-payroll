@@ -421,24 +421,25 @@ def ejecutar_test_nomina_nicaragua(
 
                 db_session.commit()
 
-                # Refresh planilla to ensure it's attached to the session before execution
-                db_session.refresh(planilla)
-
-                # Execute payroll
-                engine = NominaEngine(
-                    planilla=planilla,
+                # Execute payroll using the convenience function that handles eager loading
+                from coati_payroll.nomina_engine import ejecutar_nomina
+                planilla_id = planilla.id
+                nomina, errors, warnings = ejecutar_nomina(
+                    planilla_id=planilla_id,
                     periodo_inicio=periodo_inicio,
                     periodo_fin=periodo_fin,
                     fecha_calculo=periodo_fin,
-                    usuario=usuario.usuario,  # Pass username string, not Usuario object
+                    usuario=usuario.usuario,
                 )
 
-                # Add occasional income as novelty if present
-                if salario_ocasional > 0:
-                    # In a real scenario, this would be added through the novedades system
-                    pass
+                if errors:
+                    error_msg = f"Errors executing payroll for month {month_num}: {', '.join(errors)}"
+                    if verbose:
+                        print(f"❌ {error_msg}")
+                    results["errors"].append(error_msg)
+                    results["success"] = False
+                    continue
 
-                engine.ejecutar()
                 db_session.commit()
 
                 # Get accumulated values after this month
@@ -458,12 +459,12 @@ def ejecutar_test_nomina_nicaragua(
                 actual_ir = Decimal("0")
 
                 if nomina_empleado:
-                    # Get INSS from deducciones
-                    for deduccion_item in nomina_empleado.deducciones_items:
-                        if deduccion_item.deduccion_id == inss_deduccion.id:
-                            actual_inss = deduccion_item.monto
-                        elif deduccion_item.deduccion_id == ir_deduccion.id:
-                            actual_ir = deduccion_item.monto
+                    # Get INSS and IR from nomina details
+                    for detalle in nomina_empleado.nomina_detalles:
+                        if detalle.deduccion_id == inss_deduccion.id:
+                            actual_inss = detalle.monto
+                        elif detalle.deduccion_id == ir_deduccion.id:
+                            actual_ir = detalle.monto
 
                 # Validate results
                 month_result = {

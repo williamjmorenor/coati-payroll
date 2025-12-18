@@ -320,17 +320,16 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         # ===== EXECUTION PHASE: Month 1 =====
         print("\n=== EXECUTING MONTH 1: C$ 25,000 ===")
 
-        # Refresh planilla to ensure it's attached to the session
-        db_session.refresh(planilla_mes1)
-
-        engine_m1 = NominaEngine(
-            planilla=planilla_mes1,
+        # Execute payroll using the convenience function that handles eager loading
+        from coati_payroll.nomina_engine import ejecutar_nomina
+        nomina_m1, errors_m1, warnings_m1 = ejecutar_nomina(
+            planilla_id=planilla_mes1.id,
             periodo_inicio=date(2025, 1, 1),
             periodo_fin=date(2025, 1, 31),
             fecha_calculo=date(2025, 1, 31),
-            usuario=usuario.usuario,  # Pass username string, not Usuario object
+            usuario=usuario.usuario,
         )
-        engine_m1.ejecutar()
+        assert nomina_m1 is not None, f"Month 1 execution failed: {errors_m1}"
         db_session.commit()
 
         # Verify Month 1 results
@@ -382,17 +381,15 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         db_session.add(PlanillaDeduccion(planilla_id=planilla_mes2.id, deduccion_id=ir_deduccion.id))
         db_session.commit()
 
-        # Refresh planilla to ensure it's attached to the session
-        db_session.refresh(planilla_mes2)
-
-        engine_m2 = NominaEngine(
-            planilla=planilla_mes2,
+        # Execute payroll using the convenience function that handles eager loading
+        nomina_m2, errors_m2, warnings_m2 = ejecutar_nomina(
+            planilla_id=planilla_mes2.id,
             periodo_inicio=date(2025, 2, 1),
             periodo_fin=date(2025, 2, 28),
             fecha_calculo=date(2025, 2, 28),
-            usuario=usuario.usuario,  # Pass username string, not Usuario object
+            usuario=usuario.usuario,
         )
-        engine_m2.ejecutar()
+        assert nomina_m2 is not None, f"Month 2 execution failed: {errors_m2}"
         db_session.commit()
 
         # Verify Month 2 results
@@ -443,17 +440,15 @@ def test_nicaragua_ir_legacy_direct_execution(app, db_session):
         db_session.add(PlanillaDeduccion(planilla_id=planilla_mes3.id, deduccion_id=ir_deduccion.id))
         db_session.commit()
 
-        # Refresh planilla to ensure it's attached to the session
-        db_session.refresh(planilla_mes3)
-
-        engine_m3 = NominaEngine(
-            planilla=planilla_mes3,
+        # Execute payroll using the convenience function that handles eager loading
+        nomina_m3, errors_m3, warnings_m3 = ejecutar_nomina(
+            planilla_id=planilla_mes3.id,
             periodo_inicio=date(2025, 3, 1),
             periodo_fin=date(2025, 3, 31),
             fecha_calculo=date(2025, 3, 31),
-            usuario=usuario.usuario,  # Pass username string, not Usuario object
+            usuario=usuario.usuario,
         )
-        engine_m3.ejecutar()
+        assert nomina_m3 is not None, f"Month 3 execution failed: {errors_m3}"
         db_session.commit()
 
         # Verify Month 3 results
