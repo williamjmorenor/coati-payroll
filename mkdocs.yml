@@ -100,8 +100,11 @@ nav:
   - Tutorial Completo:
     - Paso a Paso - Nómina Completa: tutorial/nomina-completa.md
   - Guías Locales:
-    - Implementación para Nicaragua: local_guides/nicaragua.md
-    - Cálculo del IR Nicaragua - Paso a Paso: local_guides/nicaragua-ir-paso-a-paso.md
+    - Introducción: local_guides/README.md
+    - Nicaragua:
+      - Guía de Implementación: local_guides/nicaragua.md
+      - Guía Técnica para Implementadores: local_guides/nicaragua-implementacion-tecnica.md
+      - Cálculo del IR - Paso a Paso: local_guides/nicaragua-ir-paso-a-paso.md
   - Características Avanzadas:
     - Sistema de Colas: queue_system.md
     - Procesamiento en Segundo Plano: background-payroll-processing.md
