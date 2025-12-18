@@ -347,6 +347,14 @@ def ejecutar_test_nomina_nicaragua(
 
             db_session.commit()
 
+            # Refresh all objects to avoid DetachedInstanceError
+            db_session.refresh(empresa)
+            db_session.refresh(nio)
+            db_session.refresh(tipo_planilla)
+            db_session.refresh(empleado)
+            db_session.refresh(inss_deduccion)
+            db_session.refresh(ir_deduccion)
+
             # ===== EXECUTION PHASE: Process each month =====
 
             for month_data in months_data:
@@ -365,6 +373,12 @@ def ejecutar_test_nomina_nicaragua(
                 # Update employee salary for this month
                 empleado.salario_base = salario_ordinario
                 db_session.commit()
+
+                # Refresh objects after commit to avoid DetachedInstanceError
+                db_session.refresh(empresa)
+                db_session.refresh(nio)
+                db_session.refresh(tipo_planilla)
+                db_session.refresh(empleado)
 
                 # Calculate period dates
                 if month_num == 1:
