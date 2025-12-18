@@ -347,13 +347,14 @@ def ejecutar_test_nomina_nicaragua(
 
             db_session.commit()
 
-            # Refresh all objects to avoid DetachedInstanceError
-            db_session.refresh(empresa)
-            db_session.refresh(nio)
-            db_session.refresh(tipo_planilla)
-            db_session.refresh(empleado)
-            db_session.refresh(inss_deduccion)
-            db_session.refresh(ir_deduccion)
+            # Store IDs before objects become detached
+            empresa_id = empresa.id
+            nio_id = nio.id
+            tipo_planilla_id_stored = tipo_planilla.id
+            empleado_id = empleado.id
+            inss_deduccion_id = inss_deduccion.id
+            ir_deduccion_id = ir_deduccion.id
+            regla_ir_id = regla_ir.id
 
             # ===== EXECUTION PHASE: Process each month =====
 
@@ -370,15 +371,10 @@ def ejecutar_test_nomina_nicaragua(
                     if salario_ocasional > 0:
                         print(f"Salario Ocasional: C$ {salario_ocasional:,.2f}")
 
-                # Update employee salary for this month
+                # Update employee salary for this month  
+                empleado = db_session.query(Empleado).get(empleado_id)
                 empleado.salario_base = salario_ordinario
                 db_session.commit()
-
-                # Refresh objects after commit to avoid DetachedInstanceError
-                db_session.refresh(empresa)
-                db_session.refresh(nio)
-                db_session.refresh(tipo_planilla)
-                db_session.refresh(empleado)
 
                 # Calculate period dates
                 if month_num == 1:
@@ -397,9 +393,9 @@ def ejecutar_test_nomina_nicaragua(
                 planilla = Planilla(
                     nombre=f"NIC-{fiscal_year_start.year}-{month_num:02d}",
                     descripcion=f"Nómina {_get_month_name(month_num)} {fiscal_year_start.year}",
-                    tipo_planilla_id=tipo_planilla.id,
-                    empresa_id=empresa.id,
-                    moneda_id=nio.id,
+                    tipo_planilla_id=tipo_planilla_id_stored,
+                    empresa_id=empresa_id,
+                    moneda_id=nio_id,
                     periodo_fiscal_inicio=fiscal_year_start,
                     periodo_fiscal_fin=date(fiscal_year_start.year, 12, 31),
                     activo=True,
@@ -408,22 +404,22 @@ def ejecutar_test_nomina_nicaragua(
                 db_session.flush()
 
                 # Link employee to planilla
-                db_session.add(PlanillaEmpleado(planilla_id=planilla.id, empleado_id=empleado.id))
+                db_session.add(PlanillaEmpleado(planilla_id=planilla.id, empleado_id=empleado_id))
 
                 # Link deductions to planilla
                 db_session.add(PlanillaDeduccion(
                     planilla_id=planilla.id,
-                    deduccion_id=inss_deduccion.id
+                    deduccion_id=inss_deduccion_id
                 ))
                 db_session.add(PlanillaDeduccion(
                     planilla_id=planilla.id,
-                    deduccion_id=ir_deduccion.id
+                    deduccion_id=ir_deduccion_id
                 ))
 
                 # Link ReglaCalculo to planilla
                 db_session.add(PlanillaReglaCalculo(
                     planilla_id=planilla.id,
-                    regla_calculo_id=regla_ir.id
+                    regla_calculo_id=regla_ir_id
                 ))
 
                 # Link occasional income if present
@@ -475,9 +471,9 @@ def ejecutar_test_nomina_nicaragua(
                 if nomina_empleado:
                     # Get INSS and IR from nomina details
                     for detalle in nomina_empleado.nomina_detalles:
-                        if detalle.deduccion_id == inss_deduccion.id:
+                        if detalle.deduccion_id == inss_deduccion_id:
                             actual_inss = detalle.monto
-                        elif detalle.deduccion_id == ir_deduccion.id:
+                        elif detalle.deduccion_id == ir_deduccion_id:
                             actual_ir = detalle.monto
 
                 # Validate results
