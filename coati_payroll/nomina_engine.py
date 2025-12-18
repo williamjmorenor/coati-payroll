@@ -568,6 +568,19 @@ class NominaEngine:
             variables["impuesto_acumulado"] += Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
             variables["ir_retenido_acumulado"] += Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
             variables["salario_acumulado_mes"] = Decimal(str(acumulado.salario_acumulado_mes or 0))
+            
+            # Additional accumulated values for progressive tax calculations (e.g., Nicaragua IR)
+            variables["salario_bruto_acumulado"] = Decimal(str(acumulado.salario_bruto_acumulado or 0))
+            variables["salario_gravable_acumulado"] = Decimal(str(acumulado.salario_gravable_acumulado or 0))
+            variables["deducciones_antes_impuesto_acumulado"] = Decimal(str(acumulado.deducciones_antes_impuesto_acumulado or 0))
+            variables["periodos_procesados"] = Decimal(str(acumulado.periodos_procesados or 0))
+            variables["meses_trabajados"] = Decimal(str(acumulado.periodos_procesados or 0))  # Alias for clarity
+            
+            # Calculate net accumulated salary (gross - pre-tax deductions like INSS)
+            variables["salario_neto_acumulado"] = (
+                Decimal(str(acumulado.salario_bruto_acumulado or 0)) - 
+                Decimal(str(acumulado.deducciones_antes_impuesto_acumulado or 0))
+            )
 
         return variables
 

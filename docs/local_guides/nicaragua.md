@@ -140,9 +140,78 @@ El IR es un impuesto progresivo que se calcula sobre la renta neta anual proyect
 
 #### Metodología de Cálculo según Artículo 19 LCT
 
-##### 1. Retención Mensual Regular (Art. 19, numeral 1)
+!!! warning "Método de Cálculo Acumulado"
+    Nicaragua utiliza un método de cálculo acumulado que considera los ingresos de todos los meses anteriores para calcular el IR. Esto es diferente a una simple proyección anual del salario del mes actual.
 
-Para períodos fiscales completos con un solo empleador:
+##### 1. Retención Mensual con Método Acumulado (Art. 19, numeral 6)
+
+Este es el método estándar para empleados con un solo empleador, especialmente cuando hay variaciones en los ingresos mensuales:
+
+**Paso a paso:**
+
+**Mes 1:**
+1. Calcular salario neto del mes: `Salario Bruto - INSS (7%)`
+2. Proyectar a anual: `Salario Neto × 12`
+3. Aplicar tarifa progresiva para obtener IR anual
+4. Retención del mes: `IR Anual / 12`
+
+**Meses 2 en adelante:**
+1. **Acumular salario neto:** Sumar el salario neto del mes actual a los meses anteriores
+2. **Calcular promedio mensual:** `Salario Neto Acumulado / Meses Transcurridos`
+3. **Proyectar expectativa anual:** `Promedio Mensual × 12`
+4. **Aplicar tarifa progresiva** a la expectativa anual para obtener nuevo IR anual
+5. **Calcular IR proporcional a meses trabajados:** `(IR Anual / 12) × Meses Transcurridos`
+6. **Restar retenciones acumuladas** de meses anteriores
+7. **Retención del mes actual:** Diferencia del paso anterior
+
+**Ejemplo Detallado:**
+
+Un empleado con salario variable:
+
+**Mes 1:** Salario Bruto = C$ 25,000
+```
+1. Salario Neto Mes 1: C$ 25,000 - C$ 1,750 (INSS) = C$ 23,250
+2. Acumulado: C$ 23,250
+3. Promedio: C$ 23,250 / 1 = C$ 23,250
+4. Expectativa Anual: C$ 23,250 × 12 = C$ 279,000
+5. IR Anual: C$ 15,000 + (C$ 279,000 - C$ 200,000) × 0.20 = C$ 30,800
+6. IR Proporcional (1 mes): (C$ 30,800 / 12) × 1 = C$ 2,567
+7. Retenciones Previas: C$ 0
+8. IR Mes 1: C$ 2,567 - C$ 0 = C$ 2,567
+```
+
+**Mes 2:** Salario Bruto = C$ 30,000
+```
+1. Salario Neto Mes 2: C$ 30,000 - C$ 2,100 (INSS) = C$ 27,900
+2. Acumulado: C$ 23,250 + C$ 27,900 = C$ 51,150
+3. Promedio: C$ 51,150 / 2 = C$ 25,575
+4. Expectativa Anual: C$ 25,575 × 12 = C$ 306,900
+5. IR Anual: C$ 15,000 + (C$ 306,900 - C$ 200,000) × 0.20 = C$ 36,380
+6. IR Proporcional (2 meses): (C$ 36,380 / 12) × 2 = C$ 6,063
+7. Retenciones Previas: C$ 2,567
+8. IR Mes 2: C$ 6,063 - C$ 2,567 = C$ 3,496
+```
+
+**Mes 3:** Salario Bruto = C$ 28,000
+```
+1. Salario Neto Mes 3: C$ 28,000 - C$ 1,960 (INSS) = C$ 26,040
+2. Acumulado: C$ 51,150 + C$ 26,040 = C$ 77,190
+3. Promedio: C$ 77,190 / 3 = C$ 25,730
+4. Expectativa Anual: C$ 25,730 × 12 = C$ 308,760
+5. IR Anual: C$ 15,000 + (C$ 308,760 - C$ 200,000) × 0.20 = C$ 36,752
+6. IR Proporcional (3 meses): (C$ 36,752 / 12) × 3 = C$ 9,188
+7. Retenciones Previas: C$ 2,567 + C$ 3,496 = C$ 6,063
+8. IR Mes 3: C$ 9,188 - C$ 6,063 = C$ 3,125
+```
+
+**Ventajas de este método:**
+- Se ajusta automáticamente a variaciones en el ingreso
+- Evita retenciones excesivas o insuficientes
+- Al final del año, las retenciones mensuales suman exactamente el IR anual correcto
+
+##### 2. Retención para Salario Fijo (Art. 19, numeral 1)
+
+Si el empleado tiene un salario completamente fijo (sin variaciones), se puede usar un método simplificado:
 
 **Paso a paso:**
 
@@ -165,33 +234,42 @@ Para períodos fiscales completos con un solo empleador:
    IR Mensual = IR Anual / 12
    ```
 
-**Ejemplo:**
+!!! note "Salario Fijo vs Variable"
+    El método simplificado (numeral 1) solo es válido si el salario es exactamente igual todos los meses. En la práctica, la mayoría de empleados tienen variaciones (horas extra, comisiones, bonos), por lo que el método acumulado (numeral 6) es el más adecuado y el que debe implementarse en el sistema.
 
-Para un salario bruto de C$ 25,000:
+#### Valores Acumulados Requeridos (Origen: Base de Datos)
 
+Para implementar correctamente el cálculo del IR según el método acumulado, el sistema debe almacenar y mantener los siguientes valores en la tabla `AcumuladoAnual`:
+
+| Campo en Base de Datos | Descripción | Uso en Cálculo IR |
+|------------------------|-------------|-------------------|
+| `salario_bruto_acumulado` | Suma de todos los salarios brutos del año fiscal | Base para calcular salario neto acumulado |
+| `deducciones_antes_impuesto_acumulado` | Suma de INSS y otras deducciones pre-impuesto | Se resta del bruto para obtener neto |
+| `impuesto_retenido_acumulado` | Suma de todas las retenciones de IR del año | Se resta para calcular IR del mes actual |
+| `periodos_procesados` | Número de nóminas procesadas en el año fiscal | Equivale a "meses transcurridos" |
+| `salario_gravable_acumulado` | Suma de ingresos gravables (ordinarios + extraordinarios) | Para separar conceptos gravables |
+| `datos_adicionales` (JSON) | Campos adicionales flexibles | Puede almacenar datos específicos por país |
+
+**Cálculo del Salario Neto Acumulado:**
 ```
-1. Salario Bruto:        C$ 25,000.00
-2. INSS (7%):            C$  1,750.00
-3. Salario Neto:         C$ 23,250.00
-4. Renta Anual:          C$ 279,000.00  (23,250 × 12)
-
-5. Aplicar tarifa progresiva:
-   Tramo: C$ 200,000 - C$ 350,000
-   IR Anual = 15,000 + (279,000 - 200,000) × 0.20
-   IR Anual = 15,000 + 79,000 × 0.20
-   IR Anual = 15,000 + 15,800
-   IR Anual = C$ 30,800.00
-
-6. IR Mensual:           C$ 2,566.67  (30,800 / 12)
+Salario Neto Acumulado = salario_bruto_acumulado - deducciones_antes_impuesto_acumulado
 ```
 
-**Resultado Final:**
+**Campos adicionales recomendados en `datos_adicionales` para Nicaragua:**
+```json
+{
+  "inss_acumulado": 0.00,
+  "ingresos_eventuales_brutos": 0.00,
+  "ingresos_eventuales_netos": 0.00,
+  "salario_neto_acumulado": 0.00,
+  "promedio_mensual": 0.00
+}
 ```
-Salario Bruto:           C$ 25,000.00
-- INSS (7%):            (C$  1,750.00)
-- IR:                   (C$  2,566.67)
-= Salario Neto:          C$ 20,683.33
-```
+
+!!! warning "Importante para la Implementación"
+    El sistema Coati Payroll ya cuenta con la tabla `AcumuladoAnual` que almacena estos valores. Sin embargo, la **ReglaCalculo del IR** debe configurarse para utilizar estos valores acumulados en lugar de hacer una simple proyección del mes actual × 12.
+    
+    La fórmula de IR debe acceder a estas variables:
 
 ##### 2. Pagos Ocasionales (Art. 19, numeral 2)
 
@@ -274,30 +352,64 @@ Para empleados con varios empleadores simultáneos:
 !!! note "Implementación en Coati"
     El sistema Coati maneja automáticamente casos 1 y 2. Los casos 3 y 4 requieren ajustes manuales o novedades especiales.
 
-#### Fórmula Simplificada para Cálculo en el Sistema
+#### Fórmula Correcta con Valores Acumulados
+
+El cálculo correcto del IR debe usar los valores acumulados de la base de datos:
 
 ```python
-# 1. Calcular salario neto mensual
-salario_neto = salario_bruto - (salario_bruto * 0.07)
+# NOTA: Esta fórmula debe implementarse en ReglaCalculo del sistema
+# Las variables provienen de la tabla AcumuladoAnual
 
-# 2. Proyectar a anual
-renta_anual = salario_neto * 12
+# 1. Obtener valores acumulados (desde base de datos)
+salario_bruto_acumulado = acumulado.salario_bruto_acumulado
+inss_acumulado = acumulado.deducciones_antes_impuesto_acumulado
+ir_retenido_acumulado = acumulado.impuesto_retenido_acumulado
+meses_trabajados = acumulado.periodos_procesados
 
-# 3. Aplicar tramos progresivos
-if renta_anual <= 100000:
+# 2. Calcular salario neto del mes actual
+salario_neto_mes = salario_bruto - (salario_bruto * 0.07)
+
+# 3. Calcular salario neto acumulado
+salario_neto_acumulado = (salario_bruto_acumulado + salario_bruto) - (inss_acumulado + (salario_bruto * 0.07))
+
+# 4. Calcular promedio mensual
+promedio_mensual = salario_neto_acumulado / (meses_trabajados + 1)
+
+# 5. Proyectar expectativa anual
+expectativa_anual = promedio_mensual * 12
+
+# 6. Aplicar tramos progresivos
+if expectativa_anual <= 100000:
     ir_anual = 0
-elif renta_anual <= 200000:
-    ir_anual = (renta_anual - 100000) * 0.15
-elif renta_anual <= 350000:
-    ir_anual = 15000 + (renta_anual - 200000) * 0.20
-elif renta_anual <= 500000:
-    ir_anual = 45000 + (renta_anual - 350000) * 0.25
+elif expectativa_anual <= 200000:
+    ir_anual = (expectativa_anual - 100000) * 0.15
+elif expectativa_anual <= 350000:
+    ir_anual = 15000 + (expectativa_anual - 200000) * 0.20
+elif expectativa_anual <= 500000:
+    ir_anual = 45000 + (expectativa_anual - 350000) * 0.25
 else:
-    ir_anual = 82500 + (renta_anual - 500000) * 0.30
+    ir_anual = 82500 + (expectativa_anual - 500000) * 0.30
 
-# 4. Calcular retención mensual
-ir_mensual = ir_anual / 12
+# 7. Calcular IR proporcional a meses trabajados
+ir_proporcional = (ir_anual / 12) * (meses_trabajados + 1)
+
+# 8. Calcular IR del mes actual
+ir_mes_actual = ir_proporcional - ir_retenido_acumulado
+
+# Asegurar que no sea negativo
+ir_mes_actual = max(ir_mes_actual, 0)
 ```
+
+!!! danger "Método Incorrecto (NO USAR)"
+    El siguiente método de proyección simple está **incorrecto** para Nicaragua y puede resultar en retenciones excesivas o insuficientes:
+    ```python
+    # ❌ INCORRECTO - No usar
+    salario_neto = salario_bruto - (salario_bruto * 0.07)
+    renta_anual = salario_neto * 12  # ← Proyecta solo el mes actual
+    ir_anual = aplicar_tramos(renta_anual)
+    ir_mensual = ir_anual / 12
+    ```
+    Este método ignora los ingresos de meses anteriores y no se ajusta a variaciones.
 
 ## Configuración del Sistema
 
@@ -377,61 +489,344 @@ El IR requiere una Regla de Cálculo con tramos progresivos.
    - **Vigente Desde**: `2024-01-01`
    - **Vigente Hasta**: (dejar vacío)
 
-**Esquema JSON:**
+**Esquema JSON Completo con Método Acumulado:**
 
 ```json
 {
-  "tipo": "tramos",
-  "descripcion": "Impuesto sobre la Renta Nicaragua - Tarifa Progresiva 2024",
-  "base_calculo": "anual",
-  "deducciones_previas": ["INSS_LABORAL"],
-  "tramos": [
+  "meta": {
+    "name": "IR Nicaragua - Método Acumulado",
+    "description": "Cálculo de IR según Art. 19 numeral 6 LCT - Método acumulado con promedio mensual",
+    "jurisdiction": "Nicaragua",
+    "reference_currency": "NIO",
+    "version": "2025.1",
+    "legal_reference": "Ley 891 - Art. 23 LCT"
+  },
+  "inputs": [
     {
-      "desde": 0,
-      "hasta": 100000,
-      "tasa": 0.00,
-      "base_fija": 0,
-      "descripcion": "Exento - Hasta C$ 100,000"
+      "name": "salario_bruto",
+      "type": "decimal",
+      "source": "empleado.salario_base",
+      "description": "Salario bruto del mes actual"
     },
     {
-      "desde": 100000,
-      "hasta": 200000,
-      "tasa": 0.15,
-      "base_fija": 0,
-      "descripcion": "15% sobre exceso de C$ 100,000"
+      "name": "salario_bruto_acumulado",
+      "type": "decimal",
+      "source": "acumulado.salario_bruto_acumulado",
+      "description": "Salario bruto acumulado de meses anteriores (origen: base de datos)"
     },
     {
-      "desde": 200000,
-      "hasta": 350000,
-      "tasa": 0.20,
-      "base_fija": 15000,
-      "descripcion": "C$ 15,000 + 20% sobre exceso de C$ 200,000"
+      "name": "deducciones_antes_impuesto_acumulado",
+      "type": "decimal",
+      "source": "acumulado.deducciones_antes_impuesto_acumulado",
+      "description": "INSS y otras deducciones pre-impuesto acumuladas (origen: base de datos)"
     },
     {
-      "desde": 350000,
-      "hasta": 500000,
-      "tasa": 0.25,
-      "base_fija": 45000,
-      "descripcion": "C$ 45,000 + 25% sobre exceso de C$ 350,000"
+      "name": "ir_retenido_acumulado",
+      "type": "decimal",
+      "source": "acumulado.impuesto_retenido_acumulado",
+      "description": "IR retenido en meses anteriores (origen: base de datos)"
     },
     {
-      "desde": 500000,
-      "hasta": null,
-      "tasa": 0.30,
-      "base_fija": 82500,
-      "descripcion": "C$ 82,500 + 30% sobre exceso de C$ 500,000"
+      "name": "meses_trabajados",
+      "type": "integer",
+      "source": "acumulado.periodos_procesados",
+      "description": "Número de meses trabajados en el año fiscal (origen: base de datos)"
     }
   ],
-  "periodicidad": "mensual",
-  "factor_anual": 12,
-  "notas": "Conforme Art. 23 LCT, reformado por Ley No 891"
+  "steps": [
+    {
+      "name": "paso_1_inss_mes_actual",
+      "type": "calculation",
+      "description": "Calcular INSS del mes actual (7%)",
+      "formula": "salario_bruto * 0.07",
+      "output": "inss_mes_actual"
+    },
+    {
+      "name": "paso_2_salario_neto_mes",
+      "type": "calculation",
+      "description": "Calcular salario neto del mes actual",
+      "formula": "salario_bruto - inss_mes_actual",
+      "output": "salario_neto_mes"
+    },
+    {
+      "name": "paso_3_salario_neto_acumulado_total",
+      "type": "calculation",
+      "description": "Sumar salario neto del mes a los acumulados anteriores",
+      "formula": "(salario_bruto_acumulado + salario_bruto) - (deducciones_antes_impuesto_acumulado + inss_mes_actual)",
+      "output": "salario_neto_acumulado_total"
+    },
+    {
+      "name": "paso_4_meses_totales",
+      "type": "calculation",
+      "description": "Total de meses incluyendo el actual",
+      "formula": "meses_trabajados + 1",
+      "output": "meses_totales"
+    },
+    {
+      "name": "paso_5_promedio_mensual",
+      "type": "calculation",
+      "description": "Calcular promedio mensual de salario neto",
+      "formula": "salario_neto_acumulado_total / meses_totales",
+      "output": "promedio_mensual"
+    },
+    {
+      "name": "paso_6_expectativa_anual",
+      "type": "calculation",
+      "description": "Proyectar expectativa anual basada en promedio",
+      "formula": "promedio_mensual * 12",
+      "output": "expectativa_anual"
+    },
+    {
+      "name": "paso_7_ir_anual",
+      "type": "tax_lookup",
+      "description": "Aplicar tabla progresiva de IR",
+      "table": "tabla_ir_nicaragua",
+      "input": "expectativa_anual",
+      "output": "ir_anual"
+    },
+    {
+      "name": "paso_8_ir_proporcional",
+      "type": "calculation",
+      "description": "Calcular IR proporcional a meses trabajados",
+      "formula": "(ir_anual / 12) * meses_totales",
+      "output": "ir_proporcional"
+    },
+    {
+      "name": "paso_9_ir_mes_actual",
+      "type": "calculation",
+      "description": "Restar retenciones previas para obtener IR del mes",
+      "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)",
+      "output": "ir_mes_actual"
+    }
+  ],
+  "tax_tables": {
+    "tabla_ir_nicaragua": [
+      {
+        "min": 0,
+        "max": 100000,
+        "rate": 0.00,
+        "fixed": 0,
+        "over": 0,
+        "description": "Exento - Hasta C$ 100,000"
+      },
+      {
+        "min": 100000,
+        "max": 200000,
+        "rate": 0.15,
+        "fixed": 0,
+        "over": 100000,
+        "description": "15% sobre exceso de C$ 100,000"
+      },
+      {
+        "min": 200000,
+        "max": 350000,
+        "rate": 0.20,
+        "fixed": 15000,
+        "over": 200000,
+        "description": "C$ 15,000 + 20% sobre exceso de C$ 200,000"
+      },
+      {
+        "min": 350000,
+        "max": 500000,
+        "rate": 0.25,
+        "fixed": 45000,
+        "over": 350000,
+        "description": "C$ 45,000 + 25% sobre exceso de C$ 350,000"
+      },
+      {
+        "min": 500000,
+        "max": null,
+        "rate": 0.30,
+        "fixed": 82500,
+        "over": 500000,
+        "description": "C$ 82,500 + 30% sobre exceso de C$ 500,000"
+      }
+    ]
+  },
+  "output": "ir_mes_actual"
 }
 ```
 
-!!! tip "Esquema Completo"
-    El esquema incluye campos adicionales como `base_calculo`, `deducciones_previas`, y `factor_anual` que ayudan al motor de cálculo a entender cómo aplicar la regla correctamente.
+!!! warning "Evaluación de Implementabilidad para Usuario de RRHH"
+    **Complejidad:** ⚠️ **ALTA - Requiere soporte técnico**
+    
+    El esquema JSON anterior es **técnicamente correcto** pero **demasiado complejo** para que un usuario de Recursos Humanos lo implemente sin ayuda técnica. 
+    
+    **Razones:**
+    - Requiere entender 9 pasos de cálculo encadenados
+    - Necesita conocimiento de variables de base de datos
+    - La lógica de promedio acumulado no es intuitiva
+    - Alto riesgo de error en la configuración
+    
+    **Recomendación:** Este esquema debe ser **pre-configurado por el equipo de desarrollo** o **importado desde una plantilla validada**.
 
-#### 3.2. Crear Deducción de IR
+#### Alternativa Simplificada para RRHH (NO RECOMENDADA para Nicaragua)
+
+Si un usuario de RRHH debe configurar manualmente el IR, esta es una versión simplificada (aunque **incorrecta** según la ley nicaragüense):
+
+```json
+{
+  "meta": {
+    "name": "IR Nicaragua - Versión Simplificada",
+    "description": "ADVERTENCIA: Esta versión NO cumple con Art. 19 numeral 6. Solo usar si la empresa acepta el riesgo.",
+    "version": "simple-1.0",
+    "warning": "No considera acumulados correctamente"
+  },
+  "inputs": [
+    {"name": "salario_bruto", "type": "decimal", "source": "empleado.salario_base"}
+  ],
+  "steps": [
+    {
+      "name": "calcular_inss",
+      "type": "calculation",
+      "formula": "salario_bruto * 0.07",
+      "output": "inss"
+    },
+    {
+      "name": "calcular_salario_neto",
+      "type": "calculation",
+      "formula": "salario_bruto - inss",
+      "output": "salario_neto"
+    },
+    {
+      "name": "proyectar_anual",
+      "type": "calculation",
+      "formula": "salario_neto * 12",
+      "output": "renta_anual"
+    },
+    {
+      "name": "aplicar_tabla_ir",
+      "type": "tax_lookup",
+      "table": "tabla_ir",
+      "input": "renta_anual",
+      "output": "ir_anual"
+    },
+    {
+      "name": "calcular_mensual",
+      "type": "calculation",
+      "formula": "ir_anual / 12",
+      "output": "ir_mensual"
+    }
+  ],
+  "tax_tables": {
+    "tabla_ir": [
+      {"min": 0, "max": 100000, "rate": 0.00, "fixed": 0, "over": 0},
+      {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+      {"min": 200000, "max": 350000, "rate": 0.20, "fixed": 15000, "over": 200000},
+      {"min": 350000, "max": 500000, "rate": 0.25, "fixed": 45000, "over": 350000},
+      {"min": 500000, "max": null, "rate": 0.30, "fixed": 82500, "over": 500000}
+    ]
+  },
+  "output": "ir_mensual"
+}
+```
+
+**❌ Problemas de esta versión simplificada:**
+- No considera ingresos de meses anteriores
+- No ajusta por variaciones mensuales
+- Puede resultar en retenciones incorrectas
+- **No cumple con la legislación nicaragüense**
+- Puede generar multas de la DGI
+
+!!! success "Variables Acumuladas Disponibles desde Base de Datos"
+    Para el esquema completo (recomendado), las siguientes variables están disponibles desde la tabla `AcumuladoAnual`:
+    
+    - `salario_bruto_acumulado` - Suma de salarios brutos de meses anteriores
+    - `salario_gravable_acumulado` - Suma de ingresos gravables
+    - `deducciones_antes_impuesto_acumulado` - Suma de INSS y otras deducciones pre-impuesto
+    - `ir_retenido_acumulado` - Suma de IR retenido en meses anteriores
+    - `meses_trabajados` (= `periodos_procesados`) - Cantidad de meses procesados
+    - `salario_neto_acumulado` - Calculado automáticamente (bruto - deducciones)
+
+#### 3.2. Estrategia de Implementación Recomendada
+
+!!! tip "Opciones de Implementación"
+    Debido a la complejidad del cálculo acumulado del IR, existen tres enfoques:
+
+**Opción 1: Pre-configuración por Desarrollo (RECOMENDADO)**
+- El equipo de desarrollo crea la ReglaCalculo con el esquema JSON completo
+- Se incluye como parte de la configuración inicial del sistema
+- Usuario de RRHH solo necesita activar/desactivar la regla
+- ✅ **Ventajas:** Garantiza cálculo correcto, sin riesgo de error
+- ❌ **Desventajas:** Requiere acceso de desarrollo
+
+**Opción 2: Importar Plantilla Validada**
+- Proporcionar un archivo JSON de importación validado
+- Usuario de RRHH importa la configuración completa
+- Sistema valida el esquema antes de aplicar
+- ✅ **Ventajas:** Balance entre facilidad y corrección
+- ❌ **Desventajas:** Requiere función de importación
+
+**Opción 3: Configuración Manual por RRHH (NO RECOMENDADO)**
+- Usuario debe crear el esquema paso a paso
+- Alto riesgo de error humano
+- Difícil de validar sin conocimientos técnicos
+- ❌ **No recomendado para Nicaragua** debido a complejidad legal
+
+**Recomendación Final:**
+Para Nicaragua, use la **Opción 1** o **Opción 2**. El cálculo del IR con método acumulado es demasiado complejo para configuración manual y los errores pueden resultar en problemas legales con la DGI.
+
+#### 3.3. Archivo de Importación para ReglaCalculo IR Nicaragua
+
+Para facilitar la implementación, se puede proporcionar el siguiente archivo JSON listo para importar:
+
+**Archivo: `ir_nicaragua_2025.json`**
+```json
+{
+  "codigo": "IR_NICARAGUA",
+  "nombre": "Impuesto sobre la Renta Nicaragua",
+  "descripcion": "Cálculo de IR según Art. 19 numeral 6 LCT con método acumulado",
+  "jurisdiccion": "Nicaragua",
+  "moneda_referencia": "NIO",
+  "version": "2025.1",
+  "tipo_regla": "impuesto",
+  "vigente_desde": "2025-01-01",
+  "esquema_json": {
+    "meta": {
+      "name": "IR Nicaragua - Método Acumulado",
+      "legal_reference": "Ley 891 - Art. 23 LCT",
+      "calculation_method": "accumulated_average"
+    },
+    "inputs": [
+      {"name": "salario_bruto", "type": "decimal", "source": "empleado.salario_base"},
+      {"name": "salario_bruto_acumulado", "type": "decimal", "source": "acumulado.salario_bruto_acumulado"},
+      {"name": "deducciones_antes_impuesto_acumulado", "type": "decimal", "source": "acumulado.deducciones_antes_impuesto_acumulado"},
+      {"name": "ir_retenido_acumulado", "type": "decimal", "source": "acumulado.impuesto_retenido_acumulado"},
+      {"name": "meses_trabajados", "type": "integer", "source": "acumulado.periodos_procesados"}
+    ],
+    "steps": [
+      {"name": "inss_mes", "type": "calculation", "formula": "salario_bruto * 0.07", "output": "inss_mes"},
+      {"name": "salario_neto_mes", "type": "calculation", "formula": "salario_bruto - inss_mes", "output": "salario_neto_mes"},
+      {"name": "salario_neto_total", "type": "calculation", "formula": "(salario_bruto_acumulado + salario_bruto) - (deducciones_antes_impuesto_acumulado + inss_mes)", "output": "salario_neto_total"},
+      {"name": "meses_totales", "type": "calculation", "formula": "meses_trabajados + 1", "output": "meses_totales"},
+      {"name": "promedio_mensual", "type": "calculation", "formula": "salario_neto_total / meses_totales", "output": "promedio_mensual"},
+      {"name": "expectativa_anual", "type": "calculation", "formula": "promedio_mensual * 12", "output": "expectativa_anual"},
+      {"name": "ir_anual", "type": "tax_lookup", "table": "tabla_ir", "input": "expectativa_anual", "output": "ir_anual"},
+      {"name": "ir_proporcional", "type": "calculation", "formula": "(ir_anual / 12) * meses_totales", "output": "ir_proporcional"},
+      {"name": "ir_final", "type": "calculation", "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)", "output": "ir_final"}
+    ],
+    "tax_tables": {
+      "tabla_ir": [
+        {"min": 0, "max": 100000, "rate": 0.00, "fixed": 0, "over": 0},
+        {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+        {"min": 200000, "max": 350000, "rate": 0.20, "fixed": 15000, "over": 200000},
+        {"min": 350000, "max": 500000, "rate": 0.25, "fixed": 45000, "over": 350000},
+        {"min": 500000, "max": null, "rate": 0.30, "fixed": 82500, "over": 500000}
+      ]
+    },
+    "output": "ir_final"
+  }
+}
+```
+
+**Instrucciones de Importación:**
+1. Guardar el JSON anterior en un archivo
+2. Acceder a **Configuración** → **Reglas de Cálculo** → **Importar**
+3. Seleccionar el archivo `ir_nicaragua_2025.json`
+4. Verificar que todos los campos sean correctos
+5. Guardar y activar la regla
+
+#### 3.4. Crear Deducción de IR
 
 1. Acceda a **Configuración** → **Deducciones**
 2. Cree una nueva deducción:
