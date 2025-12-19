@@ -223,7 +223,7 @@ class NominaEngine:
         existing_nominas = db.session.execute(
             db.select(Nomina).filter(
                 Nomina.planilla_id == self.planilla.id,
-                Nomina.estado.in_([NominaEstado.GENERADO, NominaEstado.APROBADO, NominaEstado.PAGADO]),
+                Nomina.estado.in_([NominaEstado.GENERADO, NominaEstado.APROBADO, NominaEstado.APLICADO]),
                 db.or_(
                     # Existing start falls within our period
                     db.and_(
@@ -311,6 +311,66 @@ class NominaEngine:
 
         return self.nomina
 
+    def _validar_empleado_para_pago(self, empleado: Empleado) -> tuple[bool, list[str]]:
+        """Validate that an employee is eligible for payroll processing.
+        
+        CRITICAL validations to prevent incorrect payments.
+        
+        Args:
+            empleado: Employee to validate
+            
+        Returns:
+            Tuple of (is_valid, list_of_errors)
+        """
+        errors = []
+        
+        # 1. Employee must be active
+        if not empleado.activo:
+            errors.append(f"Empleado {empleado.codigo_empleado} no está activo")
+            
+        # 2. Employee must have valid hire date (not in future, not after period)
+        if empleado.fecha_alta:
+            if empleado.fecha_alta > date.today():
+                errors.append(
+                    f"Empleado {empleado.codigo_empleado}: fecha de ingreso ({empleado.fecha_alta}) "
+                    f"es posterior a la fecha actual"
+                )
+            if empleado.fecha_alta > self.periodo_fin:
+                errors.append(
+                    f"Empleado {empleado.codigo_empleado}: fecha de ingreso ({empleado.fecha_alta}) "
+                    f"es posterior al período a procesar ({self.periodo_fin})"
+                )
+        else:
+            errors.append(f"Empleado {empleado.codigo_empleado} no tiene fecha de ingreso definida")
+            
+        # 3. If employee has termination date, validate it's not before period
+        if empleado.fecha_baja:
+            if empleado.fecha_baja < self.periodo_inicio:
+                errors.append(
+                    f"Empleado {empleado.codigo_empleado}: fecha de salida ({empleado.fecha_baja}) "
+                    f"es anterior al inicio del período ({self.periodo_inicio})"
+                )
+                
+        # 4. Employee must have unique identification
+        if not empleado.identificacion_personal:
+            errors.append(f"Empleado {empleado.codigo_empleado} no tiene identificación personal")
+            
+        # 5. Employee must have a valid base salary
+        if empleado.salario_base <= Decimal("0.00"):
+            errors.append(
+                f"Empleado {empleado.codigo_empleado} tiene salario base inválido ({empleado.salario_base})"
+            )
+            
+        # 6. Employee must be assigned to active company
+        if not empleado.empresa_id:
+            errors.append(f"Empleado {empleado.codigo_empleado} no está asignado a ninguna empresa")
+            
+        # 7. Employee must have currency defined
+        if not empleado.moneda_id:
+            errors.append(f"Empleado {empleado.codigo_empleado} no tiene moneda definida")
+            
+        return (len(errors) == 0, errors)
+
     def _procesar_empleado(self, empleado: Empleado) -> EmpleadoCalculo:
         """Process a single employee's payroll.
 
@@ -320,6 +380,13 @@ class NominaEngine:
         Returns:
             EmpleadoCalculo with all calculations
         """
+        # CRITICAL: Validate employee before processing
+        is_valid, validation_errors = self._validar_empleado_para_pago(empleado)
+        if not is_valid:
+            for error in validation_errors:
+                self.errors.append(error)
+            raise ValidationError(f"Empleado {empleado.codigo_empleado} no cumple validaciones requeridas")
+            
         emp_calculo = EmpleadoCalculo(empleado, self.planilla)
 
         self._trace(
@@ -449,6 +516,17 @@ class NominaEngine:
 
         # Calculate actual days in this pay period
         dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
+        
+        # CRITICAL VALIDATION: Period days must be positive and reasonable
+        if dias_periodo <= 0:
+            raise ValidationError(
+                f"Período inválido: inicio ({self.periodo_inicio}) posterior a fin ({self.periodo_fin})"
+            )
+        if dias_periodo > 366:  # More than a year
+            raise ValidationError(
+                f"Período excesivamente largo: {dias_periodo} días. "
+                f"Los períodos no deben exceder 366 días."
+            )
 
         # For monthly payrolls (30 days), return full salary to avoid rounding
         # Check the periodicidad to determine if this is a monthly payroll
