@@ -200,6 +200,60 @@ class NominaEngine:
             self.errors.append("La planilla no tiene una moneda configurada.")
             return False
 
+        # Validate that there are no overlapping payroll periods already paid
+        # CRITICAL: Prevents paying the same days multiple times
+        if not self._validar_periodo_no_duplicado():
+            return False
+
+        return True
+
+    def _validar_periodo_no_duplicado(self) -> bool:
+        """Validate that the payroll period doesn't overlap with existing paid payrolls.
+
+        This is CRITICAL to prevent paying employees twice for the same days.
+
+        Returns:
+            True if no overlap exists, False if overlap detected
+        """
+        # Query for existing nominas for this planilla that overlap with the period
+        # An overlap exists if:
+        # - Existing nomina's start date is within our period, OR
+        # - Existing nomina's end date is within our period, OR  
+        # - Our period is completely contained within an existing nomina's period
+        existing_nominas = db.session.execute(
+            db.select(Nomina).filter(
+                Nomina.planilla_id == self.planilla.id,
+                Nomina.estado.in_([NominaEstado.GENERADO, NominaEstado.APROBADO, NominaEstado.APLICADO]),
+                db.or_(
+                    # Existing start falls within our period
+                    db.and_(
+                        Nomina.periodo_inicio >= self.periodo_inicio,
+                        Nomina.periodo_inicio <= self.periodo_fin
+                    ),
+                    # Existing end falls within our period
+                    db.and_(
+                        Nomina.periodo_fin >= self.periodo_inicio,
+                        Nomina.periodo_fin <= self.periodo_fin
+                    ),
+                    # Our period is completely within existing period
+                    db.and_(
+                        Nomina.periodo_inicio <= self.periodo_inicio,
+                        Nomina.periodo_fin >= self.periodo_fin
+                    )
+                )
+            )
+        ).scalars().all()
+
+        if existing_nominas:
+            for nomina in existing_nominas:
+                self.errors.append(
+                    f"El período {self.periodo_inicio} al {self.periodo_fin} se solapa con "
+                    f"una nómina existente (ID: {nomina.id}) del {nomina.periodo_inicio} al "
+                    f"{nomina.periodo_fin} en estado {nomina.estado}. "
+                    f"No se puede procesar la misma fecha en múltiples nóminas."
+                )
+            return False
+
         return True
 
     def ejecutar(self) -> Nomina | None:
@@ -257,6 +311,66 @@ class NominaEngine:
 
         return self.nomina
 
+    def _validar_empleado_para_pago(self, empleado: Empleado) -> tuple[bool, list[str]]:
+        """Validate that an employee is eligible for payroll processing.
+        
+        CRITICAL validations to prevent incorrect payments.
+        
+        Args:
+            empleado: Employee to validate
+            
+        Returns:
+            Tuple of (is_valid, list_of_errors)
+        """
+        errors = []
+        
+        # 1. Employee must be active
+        if not empleado.activo:
+            errors.append(f"Empleado {empleado.codigo_empleado} no está activo")
+            
+        # 2. Employee must have valid hire date (not in future, not after period)
+        if empleado.fecha_alta:
+            if empleado.fecha_alta > date.today():
+                errors.append(
+                    f"Empleado {empleado.codigo_empleado}: fecha de ingreso ({empleado.fecha_alta}) "
+                    f"es posterior a la fecha actual"
+                )
+            if empleado.fecha_alta > self.periodo_fin:
+                errors.append(
+                    f"Empleado {empleado.codigo_empleado}: fecha de ingreso ({empleado.fecha_alta}) "
+                    f"es posterior al período a procesar ({self.periodo_fin})"
+                )
+        else:
+            errors.append(f"Empleado {empleado.codigo_empleado} no tiene fecha de ingreso definida")
+            
+        # 3. If employee has termination date, validate it's not before period
+        if empleado.fecha_baja:
+            if empleado.fecha_baja < self.periodo_inicio:
+                errors.append(
+                    f"Empleado {empleado.codigo_empleado}: fecha de salida ({empleado.fecha_baja}) "
+                    f"es anterior al inicio del período ({self.periodo_inicio})"
+                )
+                
+        # 4. Employee must have unique identification
+        if not empleado.identificacion_personal:
+            errors.append(f"Empleado {empleado.codigo_empleado} no tiene identificación personal")
+            
+        # 5. Employee must have a valid base salary
+        if empleado.salario_base <= Decimal("0.00"):
+            errors.append(
+                f"Empleado {empleado.codigo_empleado} tiene salario base inválido ({empleado.salario_base})"
+            )
+            
+        # 6. Employee must be assigned to active company
+        if not empleado.empresa_id:
+            errors.append(f"Empleado {empleado.codigo_empleado} no está asignado a ninguna empresa")
+            
+        # 7. Employee must have currency defined
+        if not empleado.moneda_id:
+            errors.append(f"Empleado {empleado.codigo_empleado} no tiene moneda definida")
+            
+        return (len(errors) == 0, errors)
+
     def _procesar_empleado(self, empleado: Empleado) -> EmpleadoCalculo:
         """Process a single employee's payroll.
 
@@ -266,6 +380,13 @@ class NominaEngine:
         Returns:
             EmpleadoCalculo with all calculations
         """
+        # CRITICAL: Validate employee before processing
+        is_valid, validation_errors = self._validar_empleado_para_pago(empleado)
+        if not is_valid:
+            for error in validation_errors:
+                self.errors.append(error)
+            raise ValidationError(f"Empleado {empleado.codigo_empleado} no cumple validaciones requeridas")
+            
         emp_calculo = EmpleadoCalculo(empleado, self.planilla)
 
         self._trace(
@@ -344,10 +465,12 @@ class NominaEngine:
 
         # Ensure net salary is not negative
         if emp_calculo.salario_neto < 0:
+            exceso_deducciones = emp_calculo.total_deducciones - emp_calculo.salario_bruto
             self.warnings.append(
                 f"Empleado {empleado.primer_nombre} {empleado.primer_apellido}: "
-                f"Salario neto negativo ({emp_calculo.salario_neto}). "
-                f"Ajustando a 0.00"
+                f"Las deducciones totales ({emp_calculo.total_deducciones}) exceden el salario bruto "
+                f"({emp_calculo.salario_bruto}) por {exceso_deducciones}. "
+                f"Salario neto ajustado a 0.00. Revise las deducciones para este empleado."
             )
             emp_calculo.salario_neto = Decimal("0.00")
 
@@ -393,6 +516,17 @@ class NominaEngine:
 
         # Calculate actual days in this pay period
         dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
+        
+        # CRITICAL VALIDATION: Period days must be positive and reasonable
+        if dias_periodo <= 0:
+            raise ValidationError(
+                f"Período inválido: inicio ({self.periodo_inicio}) posterior a fin ({self.periodo_fin})"
+            )
+        if dias_periodo > 366:  # More than a year
+            raise ValidationError(
+                f"Período excesivamente largo: {dias_periodo} días. "
+                f"Los períodos no deben exceder 366 días."
+            )
 
         # For monthly payrolls (30 days), return full salary to avoid rounding
         # Check the periodicidad to determine if this is a monthly payroll
@@ -1048,116 +1182,131 @@ class NominaEngine:
             unidad_calculo: Unit of calculation (horas, dias, etc.)
 
         Returns:
-            Calculated amount
+            Calculated amount (always >= 0)
         """
         # Use overrides if provided
         if monto_override:
-            return Decimal(str(monto_override))
-
-        if porcentaje_override:
-            return (emp_calculo.salario_base * Decimal(str(porcentaje_override)) / Decimal("100")).quantize(
+            monto_calculado = Decimal(str(monto_override))
+        elif porcentaje_override:
+            monto_calculado = (emp_calculo.salario_base * Decimal(str(porcentaje_override)) / Decimal("100")).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
             )
+        else:
+            match formula_tipo:
+                case FormulaType.FIJO:
+                    monto_calculado = Decimal(str(monto_default or 0))
 
-        match formula_tipo:
-            case FormulaType.FIJO:
-                return Decimal(str(monto_default or 0))
+                case FormulaType.PORCENTAJE_SALARIO | FormulaType.PORCENTAJE:
+                    if porcentaje:
+                        monto_calculado = (emp_calculo.salario_base * Decimal(str(porcentaje)) / Decimal("100")).quantize(
+                            Decimal("0.01"), rounding=ROUND_HALF_UP
+                        )
+                    else:
+                        monto_calculado = Decimal("0.00")
 
-            case FormulaType.PORCENTAJE_SALARIO | FormulaType.PORCENTAJE:
-                if porcentaje:
-                    return (emp_calculo.salario_base * Decimal(str(porcentaje)) / Decimal("100")).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
-                return Decimal("0.00")
+                case FormulaType.PORCENTAJE_BRUTO:
+                    if porcentaje:
+                        monto_calculado = (emp_calculo.salario_bruto * Decimal(str(porcentaje)) / Decimal("100")).quantize(
+                            Decimal("0.01"), rounding=ROUND_HALF_UP
+                        )
+                    else:
+                        monto_calculado = Decimal("0.00")
 
-            case FormulaType.PORCENTAJE_BRUTO:
-                if porcentaje:
-                    return (emp_calculo.salario_bruto * Decimal(str(porcentaje)) / Decimal("100")).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
-                return Decimal("0.00")
+                case FormulaType.HORAS:
+                    # Calculate based on hours from novedades
+                    # Formula: (base_salary / dias_base / horas_dia) * percentage * hours
+                    if not codigo_concepto or codigo_concepto not in emp_calculo.novedades:
+                        monto_calculado = Decimal("0.00")
+                    else:
+                        horas = emp_calculo.novedades[codigo_concepto]
+                        if horas <= 0:
+                            monto_calculado = Decimal("0.00")
+                        else:
+                            # Determine base for calculation
+                            if base_calculo == "salario_bruto":
+                                base = emp_calculo.salario_bruto
+                            else:
+                                # Use monthly salary for hourly rate calculation
+                                # salario_mensual is the full monthly salary before period proration
+                                base = emp_calculo.salario_mensual
 
-            case FormulaType.HORAS:
-                # Calculate based on hours from novedades
-                # Formula: (base_salary / dias_base / horas_dia) * percentage * hours
-                if not codigo_concepto or codigo_concepto not in emp_calculo.novedades:
-                    return Decimal("0.00")
+                            # Calculate hourly rate
+                            # Always use 30 days/month, 8 hours/day (HORAS_TRABAJO_DIA constant)
+                            dias_base = Decimal("30")
+                            tasa_hora = (base / dias_base / HORAS_TRABAJO_DIA).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-                horas = emp_calculo.novedades[codigo_concepto]
-                if horas <= 0:
-                    return Decimal("0.00")
+                            # Apply percentage (e.g., 100% for normal overtime, 200% for special)
+                            if porcentaje:
+                                tasa_hora = (tasa_hora * Decimal(str(porcentaje)) / Decimal("100")).quantize(
+                                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                                )
 
-                # Determine base for calculation
-                if base_calculo == "salario_bruto":
-                    base = emp_calculo.salario_bruto
-                else:
-                    # Use monthly salary for hourly rate calculation
-                    # salario_mensual is the full monthly salary before period proration
-                    base = emp_calculo.salario_mensual
+                            # Calculate total for hours
+                            monto_calculado = (tasa_hora * horas).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-                # Calculate hourly rate
-                # Always use 30 days/month, 8 hours/day (HORAS_TRABAJO_DIA constant)
-                dias_base = Decimal("30")
-                tasa_hora = (base / dias_base / HORAS_TRABAJO_DIA).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                case FormulaType.DIAS:
+                    # Calculate based on days from novedades
+                    # Formula: (base_salary / dias_base) * percentage * days
+                    if not codigo_concepto or codigo_concepto not in emp_calculo.novedades:
+                        monto_calculado = Decimal("0.00")
+                    else:
+                        dias = emp_calculo.novedades[codigo_concepto]
+                        if dias <= 0:
+                            monto_calculado = Decimal("0.00")
+                        else:
+                            # Determine base for calculation
+                            if base_calculo == "salario_bruto":
+                                base = emp_calculo.salario_bruto
+                            else:
+                                # Use monthly salary for daily rate calculation
+                                # salario_mensual is the full monthly salary before period proration
+                                base = emp_calculo.salario_mensual
 
-                # Apply percentage (e.g., 100% for normal overtime, 200% for special)
-                if porcentaje:
-                    tasa_hora = (tasa_hora * Decimal(str(porcentaje)) / Decimal("100")).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
+                            # Calculate daily rate - always use 30-day month
+                            dias_base = Decimal("30")
+                            tasa_dia = (base / dias_base).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-                # Calculate total for hours
-                return (tasa_hora * horas).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                            # Apply percentage
+                            if porcentaje:
+                                tasa_dia = (tasa_dia * Decimal(str(porcentaje)) / Decimal("100")).quantize(
+                                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                                )
 
-            case FormulaType.DIAS:
-                # Calculate based on days from novedades
-                # Formula: (base_salary / dias_base) * percentage * days
-                if not codigo_concepto or codigo_concepto not in emp_calculo.novedades:
-                    return Decimal("0.00")
+                            # Calculate total for days
+                            monto_calculado = (tasa_dia * dias).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-                dias = emp_calculo.novedades[codigo_concepto]
-                if dias <= 0:
-                    return Decimal("0.00")
+                case FormulaType.FORMULA:
+                    if formula and isinstance(formula, dict):
+                        try:
+                            # Merge variables with formula inputs
+                            inputs = {**emp_calculo.variables_calculo}
+                            inputs["salario_bruto"] = emp_calculo.salario_bruto
+                            inputs["total_percepciones"] = emp_calculo.total_percepciones
 
-                # Determine base for calculation
-                if base_calculo == "salario_bruto":
-                    base = emp_calculo.salario_bruto
-                else:
-                    # Use monthly salary for daily rate calculation
-                    # salario_mensual is the full monthly salary before period proration
-                    base = emp_calculo.salario_mensual
+                            engine = FormulaEngine(formula)
+                            result = engine.execute(inputs)
+                            monto_calculado = Decimal(str(result.get("output", 0))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                        except FormulaEngineError as e:
+                            self.warnings.append(f"Error en fórmula: {str(e)}")
+                            monto_calculado = Decimal("0.00")
+                    else:
+                        monto_calculado = Decimal("0.00")
 
-                # Calculate daily rate - always use 30-day month
-                dias_base = Decimal("30")
-                tasa_dia = (base / dias_base).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                case _:
+                    monto_calculado = Decimal(str(monto_default or 0))
 
-                # Apply percentage
-                if porcentaje:
-                    tasa_dia = (tasa_dia * Decimal(str(porcentaje)) / Decimal("100")).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
+        # CRITICAL: Ensure calculated amounts are never negative
+        # Negative values in deductions/perceptions would cause incorrect calculations
+        # (e.g., negative deduction would add to salary instead of subtracting)
+        if monto_calculado < 0:
+            self.warnings.append(
+                f"Concepto '{codigo_concepto or 'desconocido'}': Configuración incorrecta resultó en "
+                f"monto negativo ({monto_calculado}). Ajustando a 0.00. "
+                f"Verifique la configuración del concepto (porcentaje o monto)."
+            )
+            return Decimal("0.00")
 
-                # Calculate total for days
-                return (tasa_dia * dias).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-            case FormulaType.FORMULA:
-                if formula and isinstance(formula, dict):
-                    try:
-                        # Merge variables with formula inputs
-                        inputs = {**emp_calculo.variables_calculo}
-                        inputs["salario_bruto"] = emp_calculo.salario_bruto
-                        inputs["total_percepciones"] = emp_calculo.total_percepciones
-
-                        engine = FormulaEngine(formula)
-                        result = engine.execute(inputs)
-                        return Decimal(str(result.get("output", 0))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-                    except FormulaEngineError as e:
-                        self.warnings.append(f"Error en fórmula: {str(e)}")
-                        return Decimal("0.00")
-                return Decimal("0.00")
-
-            case _:
-                return Decimal(str(monto_default or 0))
+        return monto_calculado
 
     def _crear_nomina_empleado(self, emp_calculo: EmpleadoCalculo) -> NominaEmpleado:
         """Create the NominaEmpleado record with all details.
