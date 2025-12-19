@@ -220,10 +220,18 @@ class NominaEngine:
         # - Existing nomina's start date is within our period, OR
         # - Existing nomina's end date is within our period, OR  
         # - Our period is completely contained within an existing nomina's period
+        # 
+        # We check all active states (GENERADO, APROBADO, APLICADO, PAGADO) but exclude
+        # ANULADO (cancelled) and ERROR states since those don't represent actual payments
         existing_nominas = db.session.execute(
             db.select(Nomina).filter(
                 Nomina.planilla_id == self.planilla.id,
-                Nomina.estado.in_([NominaEstado.GENERADO, NominaEstado.APROBADO, NominaEstado.APLICADO]),
+                Nomina.estado.in_([
+                    NominaEstado.GENERADO, 
+                    NominaEstado.APROBADO, 
+                    NominaEstado.APLICADO,
+                    NominaEstado.PAGADO
+                ]),
                 db.or_(
                     # Existing start falls within our period
                     db.and_(
