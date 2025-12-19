@@ -259,9 +259,10 @@ def test_get_language_handles_invalid_db_value(app, db_session):
     with app.app_context():
         invalidate_language_cache()
 
-        # Manually set invalid language directly in DB to test error handling
+        # Manually set invalid language directly in DB to simulate database corruption
         # This bypasses set_language_in_db() validation to test the fallback behavior
-        # when corrupted/invalid data exists in the database
+        # when corrupted/invalid data exists in the database (e.g., from manual edits
+        # or data migration issues). This ensures robust error handling.
         config = ConfiguracionGlobal()
         config.idioma = "invalid"
         db.session.add(config)
