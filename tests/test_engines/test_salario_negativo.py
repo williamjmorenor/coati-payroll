@@ -113,6 +113,7 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(deduccion2)
+            db_session.flush()
             
             planilla_ded1 = PlanillaDeduccion(
                 planilla_id=planilla.id,
@@ -241,6 +242,7 @@ class TestSalarioNegativoPrevencion:
                     activo=True
                 )
                 db_session.add(deduccion)
+                db_session.flush()
                 
                 planilla_ded = PlanillaDeduccion(
                     planilla_id=planilla.id,
@@ -350,6 +352,7 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(deduccion)
+            db_session.flush()
             
             planilla_ded = PlanillaDeduccion(
                 planilla_id=planilla.id,
@@ -466,6 +469,7 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(deduccion_ir)
+            db_session.flush()
             
             planilla_ded_inss = PlanillaDeduccion(
                 planilla_id=planilla.id,
@@ -591,6 +595,7 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(deduccion_ir)
+            db_session.flush()
             
             planilla_ded_inss = PlanillaDeduccion(
                 planilla_id=planilla.id,
@@ -782,6 +787,7 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(deduccion)
+            db_session.flush()
             
             planilla_ded = PlanillaDeduccion(
                 planilla_id=planilla.id,
