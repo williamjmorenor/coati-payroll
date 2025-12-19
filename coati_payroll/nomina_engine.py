@@ -220,10 +220,18 @@ class NominaEngine:
         # - Existing nomina's start date is within our period, OR
         # - Existing nomina's end date is within our period, OR  
         # - Our period is completely contained within an existing nomina's period
+        # 
+        # We check all active states (GENERADO, APROBADO, APLICADO, PAGADO) but exclude
+        # ANULADO (cancelled) and ERROR states since those don't represent actual payments
         existing_nominas = db.session.execute(
             db.select(Nomina).filter(
                 Nomina.planilla_id == self.planilla.id,
-                Nomina.estado.in_([NominaEstado.GENERADO, NominaEstado.APROBADO, NominaEstado.APLICADO]),
+                Nomina.estado.in_([
+                    NominaEstado.GENERADO, 
+                    NominaEstado.APROBADO, 
+                    NominaEstado.APLICADO,
+                    NominaEstado.PAGADO
+                ]),
                 db.or_(
                     # Existing start falls within our period
                     db.and_(
@@ -1409,11 +1417,23 @@ class NominaEngine:
         periodo_fiscal_inicio = date(anio, mes_inicio, dia_inicio)
         periodo_fiscal_fin = date(anio + 1, mes_inicio, dia_inicio)
 
+        # Determine empresa_id: prefer planilla's empresa, fallback to employee's empresa
+        # This is critical because AcumuladoAnual requires empresa_id (NOT NULL constraint)
+        # and tracks separate accumulations when employees change companies
+        empresa_id = self.planilla.empresa_id or empleado.empresa_id
+        if not empresa_id:
+            raise ValidationError(
+                _("No se puede crear acumulado anual: ni la planilla ni el empleado tienen empresa_id asignado")
+            )
+
         # Get or create accumulated record
+        # IMPORTANT: Must filter by empresa_id to match the unique constraint and
+        # ensure separate accumulations for different companies
         acumulado = db.session.execute(
             db.select(AcumuladoAnual).filter(
                 AcumuladoAnual.empleado_id == empleado.id,
                 AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
+                AcumuladoAnual.empresa_id == empresa_id,
                 AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
             )
         ).scalar()
@@ -1428,7 +1448,7 @@ class NominaEngine:
             acumulado = AcumuladoAnual(
                 empleado_id=empleado.id,
                 tipo_planilla_id=tipo_planilla.id,
-                empresa_id=self.planilla.empresa_id,
+                empresa_id=empresa_id,
                 periodo_fiscal_inicio=periodo_fiscal_inicio,
                 periodo_fiscal_fin=periodo_fiscal_fin,
                 salario_bruto_acumulado=salario_inicial,
