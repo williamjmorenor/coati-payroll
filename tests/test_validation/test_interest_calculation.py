@@ -72,6 +72,36 @@ class TestInteresSimple:
 
         assert interes == Decimal("0.00")
 
+    def test_calcular_interes_simple_principal_negativo(self):
+        """Test simple interest with negative principal."""
+        principal = Decimal("-1000.00")
+        tasa_anual = Decimal("12.0")
+        dias = 30
+
+        interes = calcular_interes_simple(principal, tasa_anual, dias)
+
+        assert interes == Decimal("0.00")
+
+    def test_calcular_interes_simple_tasa_negativa(self):
+        """Test simple interest with negative rate."""
+        principal = Decimal("1000.00")
+        tasa_anual = Decimal("-12.0")
+        dias = 30
+
+        interes = calcular_interes_simple(principal, tasa_anual, dias)
+
+        assert interes == Decimal("0.00")
+
+    def test_calcular_interes_simple_dias_negativos(self):
+        """Test simple interest with negative days."""
+        principal = Decimal("1000.00")
+        tasa_anual = Decimal("12.0")
+        dias = -30
+
+        interes = calcular_interes_simple(principal, tasa_anual, dias)
+
+        assert interes == Decimal("0.00")
+
 
 class TestInteresCompuesto:
     """Tests for compound interest calculations."""
@@ -93,6 +123,26 @@ class TestInteresCompuesto:
         principal = Decimal("1000.00")
         tasa_anual = Decimal("0.0")
         dias = 30
+
+        interes = calcular_interes_compuesto(principal, tasa_anual, dias)
+
+        assert interes == Decimal("0.00")
+
+    def test_calcular_interes_compuesto_principal_negativo(self):
+        """Test compound interest with negative principal."""
+        principal = Decimal("-1000.00")
+        tasa_anual = Decimal("12.0")
+        dias = 30
+
+        interes = calcular_interes_compuesto(principal, tasa_anual, dias)
+
+        assert interes == Decimal("0.00")
+
+    def test_calcular_interes_compuesto_sin_dias(self):
+        """Test compound interest with zero days."""
+        principal = Decimal("1000.00")
+        tasa_anual = Decimal("12.0")
+        dias = 0
 
         interes = calcular_interes_compuesto(principal, tasa_anual, dias)
 
@@ -138,6 +188,26 @@ class TestCuotaFrances:
         # 1000 + (1000 * 0.01) = 1010
         assert cuota == Decimal("1010.00")
 
+    def test_calcular_cuota_frances_principal_cero(self):
+        """Test French method with zero principal."""
+        principal = Decimal("0.00")
+        tasa_anual = Decimal("12.0")
+        num_cuotas = 12
+
+        cuota = calcular_cuota_frances(principal, tasa_anual, num_cuotas)
+
+        assert cuota == Decimal("0.00")
+
+    def test_calcular_cuota_frances_cuotas_cero(self):
+        """Test French method with zero installments."""
+        principal = Decimal("1000.00")
+        tasa_anual = Decimal("12.0")
+        num_cuotas = 0
+
+        cuota = calcular_cuota_frances(principal, tasa_anual, num_cuotas)
+
+        assert cuota == Decimal("0.00")
+
 
 class TestIntersPeriodo:
     """Tests for interest calculation over a period."""
@@ -178,6 +248,28 @@ class TestIntersPeriodo:
         interes, dias = calcular_interes_periodo(saldo, tasa_anual, fecha_desde, fecha_hasta)
 
         assert dias == 0
+        assert interes == Decimal("0.00")
+
+    def test_calcular_interes_periodo_saldo_cero(self):
+        """Test interest calculation with zero balance."""
+        saldo = Decimal("0.00")
+        tasa_anual = Decimal("12.0")
+        fecha_desde = date(2024, 1, 1)
+        fecha_hasta = date(2024, 1, 31)
+
+        interes, dias = calcular_interes_periodo(saldo, tasa_anual, fecha_desde, fecha_hasta)
+
+        assert interes == Decimal("0.00")
+
+    def test_calcular_interes_periodo_tasa_cero(self):
+        """Test interest calculation with zero rate."""
+        saldo = Decimal("10000.00")
+        tasa_anual = Decimal("0.0")
+        fecha_desde = date(2024, 1, 1)
+        fecha_hasta = date(2024, 1, 31)
+
+        interes, dias = calcular_interes_periodo(saldo, tasa_anual, fecha_desde, fecha_hasta)
+
         assert interes == Decimal("0.00")
 
 
@@ -268,3 +360,25 @@ class TestTablaAmortizacion:
         assert tabla[0].fecha_estimada == date(2024, 2, 15)
         assert tabla[1].fecha_estimada == date(2024, 3, 15)
         assert tabla[2].fecha_estimada == date(2024, 4, 15)
+
+    def test_generar_tabla_principal_cero(self):
+        """Test amortization table with zero principal."""
+        principal = Decimal("0.00")
+        tasa_anual = Decimal("12.0")
+        num_cuotas = 12
+        fecha_inicio = date(2024, 1, 1)
+
+        tabla = generar_tabla_amortizacion(principal, tasa_anual, num_cuotas, fecha_inicio)
+
+        assert len(tabla) == 0
+
+    def test_generar_tabla_cuotas_cero(self):
+        """Test amortization table with zero installments."""
+        principal = Decimal("12000.00")
+        tasa_anual = Decimal("12.0")
+        num_cuotas = 0
+        fecha_inicio = date(2024, 1, 1)
+
+        tabla = generar_tabla_amortizacion(principal, tasa_anual, num_cuotas, fecha_inicio)
+
+        assert len(tabla) == 0

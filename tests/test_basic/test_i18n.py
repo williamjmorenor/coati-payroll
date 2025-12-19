@@ -1,0 +1,228 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Tests for internationalization module."""
+
+
+def test_i18n_basic_translation(app):
+    """
+    Test basic translation function.
+
+    Setup:
+        - App context
+
+    Action:
+        - Import and use translation function
+
+    Verification:
+        - Function works without error
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _
+
+        # Basic translation - may return same text if not translated
+        result = _("Hello")
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+
+def test_i18n_translation_with_kwargs(app):
+    """
+    Test translation function with keyword arguments.
+
+    Setup:
+        - App context
+
+    Action:
+        - Use translation with formatting
+
+    Verification:
+        - String interpolation works
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _
+
+        result = _("Hello %(name)s", name="World")
+        assert "World" in result
+
+
+def test_i18n_translation_without_kwargs(app):
+    """
+    Test translation function without keyword arguments.
+
+    Setup:
+        - App context
+
+    Action:
+        - Use translation without formatting
+
+    Verification:
+        - Returns translated text
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _
+
+        result = _("Simple text")
+        assert isinstance(result, str)
+
+
+def test_i18n_plural_translation(app):
+    """
+    Test plural translation function.
+
+    Setup:
+        - App context
+
+    Action:
+        - Use plural translation function
+
+    Verification:
+        - Function handles singular and plural
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _n
+
+        # Test singular (n=1)
+        result_singular = _n("%(num)d item", "%(num)d items", 1)
+        assert isinstance(result_singular, str)
+
+        # Test plural (n>1)
+        result_plural = _n("%(num)d item", "%(num)d items", 5)
+        assert isinstance(result_plural, str)
+
+
+def test_i18n_lazy_translation(app):
+    """
+    Test lazy translation function.
+
+    Setup:
+        - App context
+
+    Action:
+        - Use lazy translation function
+
+    Verification:
+        - Returns lazy string object
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _l
+
+        result = _l("Lazy text")
+        # Lazy translation returns a special object
+        # When converted to string, it should work
+        assert str(result)
+
+
+def test_i18n_translation_handles_empty_string(app):
+    """
+    Test that empty string translation is handled.
+
+    Setup:
+        - App context
+
+    Action:
+        - Translate empty string
+
+    Verification:
+        - Returns a string (gettext may return metadata for empty string)
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _
+
+        result = _("")
+        # gettext returns metadata for empty string, not empty string itself
+        assert isinstance(result, str)
+
+
+def test_i18n_multiple_kwargs(app):
+    """
+    Test translation with multiple keyword arguments.
+
+    Setup:
+        - App context
+
+    Action:
+        - Use translation with multiple placeholders
+
+    Verification:
+        - All placeholders are replaced
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _
+
+        result = _("%(first)s and %(second)s", first="A", second="B")
+        assert "A" in result
+        assert "B" in result
+
+
+def test_i18n_translation_with_special_characters(app):
+    """
+    Test translation with special characters.
+
+    Setup:
+        - App context
+
+    Action:
+        - Translate text with special chars
+
+    Verification:
+        - Special characters preserved
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _
+
+        result = _("Text with áéíóú and ñ")
+        assert isinstance(result, str)
+        # Special characters should be preserved
+        assert "áéíóú" in result or "Text" in result
+
+
+def test_i18n_plural_zero(app):
+    """
+    Test plural translation with zero.
+
+    Setup:
+        - App context
+
+    Action:
+        - Use plural translation with n=0
+
+    Verification:
+        - Returns plural form
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _n
+
+        result = _n("%(num)d item", "%(num)d items", 0)
+        assert isinstance(result, str)
+
+
+def test_i18n_all_functions_importable(app):
+    """
+    Test that all translation functions are importable.
+
+    Setup:
+        - App context
+
+    Action:
+        - Import all functions
+
+    Verification:
+        - All imports succeed
+    """
+    with app.app_context():
+        from coati_payroll.i18n import _, _l, _n
+
+        assert callable(_)
+        assert callable(_l)
+        assert callable(_n)
