@@ -7,7 +7,7 @@
 
 Sistema de administración de nóminas y planillas desarrollado por BMO Soluciones, S.A.
 
-## 📋 Descripción
+## Descripción
 
 Coati Payroll es una aplicación web diseñada para facilitar la gestión completa del proceso de nómina de una empresa. El sistema permite configurar y ejecutar nóminas con percepciones, deducciones, prestaciones patronales y préstamos a empleados.
 
@@ -29,7 +29,7 @@ Coati Payroll es una aplicación web diseñada para facilitar la gestión comple
 - **Sistema de Reportes**: Reportes personalizados con permisos por rol y auditoría de ejecuciones
 - **Internacionalización**: Soporte multi-idioma con traducción de interfaz y contenidos
 
-## 🚀 Instalación Rápida
+## Instalación Rápida
 
 ### Requisitos
 
@@ -74,9 +74,9 @@ Abra su navegador en `http://localhost:5000`
 - Usuario: `coati-admin`
 - Contraseña: `coati-admin`
 
-> ⚠️ **Importante**: Cambie las credenciales por defecto en entornos de producción.
+> **Importante**: Cambie las credenciales por defecto en entornos de producción.
 
-## 📖 Documentación
+## Documentación
 
 La documentación completa está disponible en el directorio `docs/` y puede ser generada con MkDocs:
 
@@ -106,7 +106,7 @@ mkdocs build
   - Internacionalización y traducción
 - **Referencia**: Glosario, preguntas frecuentes, importación de tipos de cambio
 
-## 🏗️ Arquitectura
+## Arquitectura
 
 ```
 coati/
@@ -132,7 +132,7 @@ coati/
 └── docs.txt               # Dependencias de documentación
 ```
 
-## 🔧 Configuración
+## Configuración
 
 ### Interfaz de Línea de Comandos (CLI)
 
@@ -276,7 +276,7 @@ Para operaciones de larga duración, el sistema incluye un **sistema de colas de
 
 Para más información, consulte la [Documentación del Sistema de Colas](docs/queue_system.md) y [Procesamiento de Nómina en Segundo Plano](docs/background-payroll-processing.md).
 
-## 📊 Flujo de Trabajo
+## Flujo de Trabajo
 
 ```mermaid
 graph LR
@@ -289,7 +289,7 @@ graph LR
     G --> H[Aplicar Nómina]
 ```
 
-## 🧮 Cálculo de Nómina
+## Cálculo de Nómina
 
 El motor de nómina procesa en este orden:
 
@@ -318,7 +318,7 @@ Prestaciones Patronales:
 = COSTO TOTAL EMPRESA:   C$ 32,140.35
 ```
 
-## 🛠️ Desarrollo
+## Desarrollo
 
 ### Instalar dependencias de desarrollo
 
@@ -375,11 +375,11 @@ Los principales modelos son:
 - `ReportExecution`: Historial de ejecuciones de reportes
 - `ReportAudit`: Auditoría de reportes
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto está licenciado bajo la [Licencia Apache 2.0](LICENSE).
 
-## 👥 Contribuir
+## Contribuir
 
 Las contribuciones son bienvenidas. Por favor:
 
@@ -389,7 +389,7 @@ Las contribuciones son bienvenidas. Por favor:
 4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Abra un Pull Request
 
-## 📞 Soporte
+## Soporte
 
 Para reportar problemas o solicitar funcionalidades, por favor abra un [Issue en GitHub](https://github.com/williamjmorenor/coati/issues).
 
