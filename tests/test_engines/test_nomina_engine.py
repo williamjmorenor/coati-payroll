@@ -57,24 +57,24 @@ class TestEmpleadoCalculo:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Company",
+                codigo="TEST001",
                 razon_social="Test Company SA",
-                identificacion_fiscal="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Test",
@@ -84,17 +84,21 @@ class TestEmpleadoCalculo:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             # Test EmpleadoCalculo initialization
@@ -130,24 +134,24 @@ class TestNominaEngineInitialization:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
-                nombre="Quincenal",
+                descripcion="Quincenal",
                 periodicidad="quincenal",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Quincenal",
@@ -157,6 +161,7 @@ class TestNominaEngineInitialization:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             db_session.commit()
             
             periodo_inicio = date(2025, 1, 1)
@@ -189,24 +194,24 @@ class TestNominaEngineInitialization:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -216,6 +221,7 @@ class TestNominaEngineInitialization:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -239,24 +245,24 @@ class TestPlanillaValidation:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Inactive Planilla",
@@ -266,6 +272,7 @@ class TestPlanillaValidation:
                 activo=False  # Inactive!
             )
             db_session.add(planilla)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -288,24 +295,24 @@ class TestPlanillaValidation:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Empty Planilla",
@@ -315,6 +322,7 @@ class TestPlanillaValidation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -341,24 +349,24 @@ class TestSalarioPeriodoCalculation:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Mensual",
@@ -368,6 +376,7 @@ class TestSalarioPeriodoCalculation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -391,24 +400,24 @@ class TestSalarioPeriodoCalculation:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
-                nombre="Quincenal",
+                descripcion="Quincenal",
                 periodicidad="quincenal",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Quincenal",
@@ -418,6 +427,7 @@ class TestSalarioPeriodoCalculation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -441,24 +451,24 @@ class TestSalarioPeriodoCalculation:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Mensual",
@@ -468,6 +478,7 @@ class TestSalarioPeriodoCalculation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -497,24 +508,24 @@ class TestCalculoConcepto:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -524,17 +535,21 @@ class TestCalculoConcepto:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -569,24 +584,24 @@ class TestCalculoConcepto:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -596,17 +611,21 @@ class TestCalculoConcepto:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -642,24 +661,24 @@ class TestCalculoConcepto:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -669,17 +688,21 @@ class TestCalculoConcepto:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -719,24 +742,24 @@ class TestHorasYDiasCalculation:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -746,17 +769,21 @@ class TestHorasYDiasCalculation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("24000.00"),  # Monthly salary
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -797,24 +824,24 @@ class TestHorasYDiasCalculation:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -824,17 +851,21 @@ class TestHorasYDiasCalculation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("24000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -872,24 +903,24 @@ class TestHorasYDiasCalculation:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -899,17 +930,21 @@ class TestHorasYDiasCalculation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("30000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -953,24 +988,24 @@ class TestBadInputNominaEngine:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -980,17 +1015,21 @@ class TestBadInputNominaEngine:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -1026,24 +1065,24 @@ class TestBadInputNominaEngine:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -1053,17 +1092,21 @@ class TestBadInputNominaEngine:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("0.00"),  # Zero salary!
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(
@@ -1099,24 +1142,24 @@ class TestBadInputNominaEngine:
             db_session.add(moneda)
             
             empresa = Empresa(
-                nombre="Test Corp",
+                codigo="TEST001",
                 razon_social="Test Corp Inc",
-                identificacion_fiscal="1234567",
-                moneda_id=moneda.id
+                ruc="1234567"
             )
             db_session.add(empresa)
-            
+            db_session.flush()
+                        
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
-                nombre="Test",
+                descripcion="Test",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
-                dia_inicio_fiscal=1,
-                empresa_id=empresa.id
-            )
+                dia_inicio_fiscal=1)
             db_session.add(tipo_planilla)
+            
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Test Planilla",
@@ -1126,17 +1169,21 @@ class TestBadInputNominaEngine:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("24000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             engine = NominaEngine(

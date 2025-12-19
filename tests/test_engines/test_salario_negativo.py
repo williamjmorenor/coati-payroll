@@ -47,22 +47,22 @@ class TestSalarioNegativoPrevencion:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Test",
@@ -72,17 +72,21 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),  # Low salary
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -172,22 +176,22 @@ class TestSalarioNegativoPrevencion:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Test",
@@ -197,17 +201,21 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="María",
                 primer_apellido="López",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -285,22 +293,22 @@ class TestSalarioNegativoPrevencion:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Test",
@@ -310,17 +318,21 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Carlos",
                 primer_apellido="Ruiz",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -386,22 +398,22 @@ class TestSalarioNegativoPrevencion:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Test",
@@ -411,18 +423,22 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             # Employee with very small salary (part-time or new hire)
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Ana",
                 primer_apellido="Martínez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("2000.00"),  # Very small salary
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -509,22 +525,22 @@ class TestSalarioNegativoPrevencion:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Test",
@@ -534,17 +550,21 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Luis",
                 primer_apellido="García",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("20000.00"),  # Normal salary
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -628,22 +648,22 @@ class TestSalarioNegativoPrevencion:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Test",
@@ -653,17 +673,21 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             db_session.commit()
             
             # Create EmpleadoCalculo
@@ -702,22 +726,22 @@ class TestSalarioNegativoPrevencion:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Test",
@@ -727,17 +751,21 @@ class TestSalarioNegativoPrevencion:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Roberto",
                 primer_apellido="Hernández",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("5000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,

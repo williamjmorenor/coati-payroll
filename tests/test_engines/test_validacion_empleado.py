@@ -172,7 +172,7 @@ class TestValidacionFechaIngreso:
                 salario_base=Decimal("18000.00"),
                 fecha_alta=future_date,  # Future date!
                 moneda_id=moneda.id,
-                
+                empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
@@ -253,7 +253,7 @@ class TestValidacionFechaIngreso:
                 salario_base=Decimal("20000.00"),
                 fecha_alta=date(2025, 2, 15),  # After period end (Jan 31)
                 moneda_id=moneda.id,
-                
+                empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
@@ -339,7 +339,7 @@ class TestValidacionFechaSalida:
                 fecha_alta=date(2024, 1, 1),
                 fecha_baja=date(2024, 12, 31),  # Terminated before period (Jan 2025)
                 moneda_id=moneda.id,
-                
+                empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
@@ -426,7 +426,7 @@ class TestValidacionDatosEmpleado:
                 salario_base=Decimal("14000.00"),
                 fecha_alta=date(2024, 1, 1),
                 moneda_id=moneda.id,
-                
+                empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
@@ -507,7 +507,7 @@ class TestValidacionDatosEmpleado:
                 salario_base=Decimal("0.00"),  # Invalid!
                 fecha_alta=date(2024, 1, 1),
                 moneda_id=moneda.id,
-                
+                empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
@@ -672,7 +672,7 @@ class TestValidacionPeriodo:
                 salario_base=Decimal("15000.00"),
                 fecha_alta=date(2024, 1, 1),
                 moneda_id=moneda.id,
-                
+                empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
@@ -695,9 +695,12 @@ class TestValidacionPeriodo:
                 usuario="admin"
             )
             
-            # Should raise error during calculation
-            with pytest.raises(ValidationError, match="Período inválido"):
-                nomina = engine.ejecutar()
+            # Should have error about invalid period
+            nomina = engine.ejecutar()
+            assert nomina is not None
+            assert len(engine.errors) > 0
+            error_found = any("Período inválido" in e for e in engine.errors)
+            assert error_found, f"Expected error about invalid period. Errors: {engine.errors}"
     
     def test_periodo_excesivamente_largo(self, app, db_session):
         """Test that excessively long period is rejected."""
@@ -749,7 +752,7 @@ class TestValidacionPeriodo:
                 salario_base=Decimal("15000.00"),
                 fecha_alta=date(2024, 1, 1),
                 moneda_id=moneda.id,
-                
+                empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
@@ -772,9 +775,12 @@ class TestValidacionPeriodo:
                 usuario="admin"
             )
             
-            # Should raise error
-            with pytest.raises(ValidationError, match="excesivamente largo"):
-                nomina = engine.ejecutar()
+            # Should have error
+            nomina = engine.ejecutar()
+            assert nomina is not None
+            assert len(engine.errors) > 0
+            error_found = any("excesivamente largo" in e for e in engine.errors)
+            assert error_found, f"Expected error about excessive period. Errors: {engine.errors}"
 
 
 class TestValidacionEmpleadoCompleta:
@@ -835,7 +841,7 @@ class TestValidacionEmpleadoCompleta:
                 banco="BAC",
                 numero_cuenta_bancaria="1234567890",
                 moneda_id=moneda.id,
-                
+                empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
@@ -848,6 +854,9 @@ class TestValidacionEmpleadoCompleta:
             )
             db_session.add(planilla_emp)
             db_session.commit()
+            
+            # Refresh planilla to ensure it's attached to the session
+            db_session.refresh(planilla)
             
             # Execute payroll
             engine = NominaEngine(

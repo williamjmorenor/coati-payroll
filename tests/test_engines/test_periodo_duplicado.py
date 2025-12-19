@@ -47,22 +47,22 @@ class TestPeriodoDuplicadoValidation:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
-                nombre="Quincenal",
+                descripcion="Quincenal",
                 periodicidad="quincenal",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Quincenal",
@@ -72,17 +72,21 @@ class TestPeriodoDuplicadoValidation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -137,22 +141,22 @@ class TestPeriodoDuplicadoValidation:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
-                nombre="Quincenal",
+                descripcion="Quincenal",
                 periodicidad="quincenal",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Quincenal",
@@ -162,17 +166,21 @@ class TestPeriodoDuplicadoValidation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -225,22 +233,22 @@ class TestPeriodoDuplicadoValidation:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
-                nombre="Quincenal",
+                descripcion="Quincenal",
                 periodicidad="quincenal",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Quincenal",
@@ -250,17 +258,21 @@ class TestPeriodoDuplicadoValidation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -313,22 +325,22 @@ class TestPeriodoDuplicadoValidation:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Mensual",
@@ -338,17 +350,21 @@ class TestPeriodoDuplicadoValidation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("30000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -401,22 +417,22 @@ class TestPeriodoDuplicadoValidation:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Mensual",
@@ -426,17 +442,21 @@ class TestPeriodoDuplicadoValidation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("30000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -489,22 +509,22 @@ class TestPeriodoDuplicadoValidation:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
-                nombre="Quincenal",
+                descripcion="Quincenal",
                 periodicidad="quincenal",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Quincenal",
@@ -514,17 +534,21 @@ class TestPeriodoDuplicadoValidation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -576,22 +600,22 @@ class TestPeriodoDuplicadoValidation:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
-                nombre="Quincenal",
+                descripcion="Quincenal",
                 periodicidad="quincenal",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             planilla = Planilla(
                 nombre="Planilla Quincenal",
@@ -601,17 +625,21 @@ class TestPeriodoDuplicadoValidation:
                 activo=True
             )
             db_session.add(planilla)
+            db_session.flush()
             
             empleado = Empleado(
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp = PlanillaEmpleado(
                 planilla_id=planilla.id,
@@ -663,22 +691,22 @@ class TestPeriodoDuplicadoValidation:
             empresa = Empresa(
                 codigo="TEST001",
                 razon_social="Test Company SA",
-                ruc="J-12345678",
-                moneda_id=moneda.id
+                ruc="J-12345678"
             )
             db_session.add(empresa)
+            db_session.flush()
             
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
-                nombre="Quincenal",
+                descripcion="Quincenal",
                 periodicidad="quincenal",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
+            db_session.flush()
             
             # Create two different planillas
             planilla1 = Planilla(
@@ -703,12 +731,15 @@ class TestPeriodoDuplicadoValidation:
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
                 activo=True
             )
             db_session.add(empleado)
+            db_session.flush()
             
             planilla_emp1 = PlanillaEmpleado(
                 planilla_id=planilla1.id,

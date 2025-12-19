@@ -55,13 +55,12 @@ class TestConfiguracionNegativaPrevencion:
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
             db_session.flush()
@@ -80,6 +79,8 @@ class TestConfiguracionNegativaPrevencion:
                 codigo_empleado="EMP001",
                 primer_nombre="Juan",
                 primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -162,13 +163,12 @@ class TestConfiguracionNegativaPrevencion:
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
             db_session.flush()
@@ -187,6 +187,8 @@ class TestConfiguracionNegativaPrevencion:
                 codigo_empleado="EMP001",
                 primer_nombre="María",
                 primer_apellido="López",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("15000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -268,13 +270,12 @@ class TestConfiguracionNegativaPrevencion:
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
             db_session.flush()
@@ -293,6 +294,8 @@ class TestConfiguracionNegativaPrevencion:
                 codigo_empleado="EMP001",
                 primer_nombre="Carlos",
                 primer_apellido="Ruiz",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("20000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -372,13 +375,12 @@ class TestConfiguracionNegativaPrevencion:
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
             db_session.flush()
@@ -397,6 +399,8 @@ class TestConfiguracionNegativaPrevencion:
                 codigo_empleado="EMP001",
                 primer_nombre="Ana",
                 primer_apellido="Martínez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("12000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -477,13 +481,12 @@ class TestConfiguracionNegativaPrevencion:
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
             db_session.flush()
@@ -502,6 +505,8 @@ class TestConfiguracionNegativaPrevencion:
                 codigo_empleado="EMP001",
                 primer_nombre="Luis",
                 primer_apellido="García",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("18000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
@@ -610,13 +615,12 @@ class TestConfiguracionNegativaPrevencion:
             
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
-                nombre="Mensual",
+                descripcion="Mensual",
                 periodicidad="mensual",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
                 dia_inicio_fiscal=1,
-                empresa_id=empresa.id
             )
             db_session.add(tipo_planilla)
             db_session.flush()
@@ -635,6 +639,8 @@ class TestConfiguracionNegativaPrevencion:
                 codigo_empleado="EMP001",
                 primer_nombre="Test",
                 primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
                 salario_base=Decimal("10000.00"),
                 moneda_id=moneda.id,
                 empresa_id=empresa.id,
