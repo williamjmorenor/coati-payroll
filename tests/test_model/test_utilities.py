@@ -214,3 +214,63 @@ def test_utc_now_has_timezone():
     result = utc_now()
     assert result.tzinfo is not None
     assert result.tzinfo == timezone.utc
+
+
+def test_utc_now_is_recent():
+    """
+    Test that utc_now returns current time.
+
+    Setup:
+        - None
+
+    Action:
+        - Call utc_now() twice
+
+    Verification:
+        - Times are very close (within 1 second)
+    """
+    time1 = utc_now()
+    time2 = utc_now()
+    
+    # Should be within 1 second of each other
+    diff = abs((time2 - time1).total_seconds())
+    assert diff < 1.0
+
+
+def test_generador_codigo_empleado_no_collisions():
+    """
+    Test that employee codes don't collide in rapid generation.
+
+    Setup:
+        - None
+
+    Action:
+        - Generate many codes rapidly
+
+    Verification:
+        - All codes are unique
+    """
+    codes = [generador_codigo_empleado() for _ in range(1000)]
+    assert len(codes) == len(set(codes))
+
+
+def test_generador_de_codigos_unicos_sortable():
+    """
+    Test that ULID codes are sortable by time.
+
+    Setup:
+        - None
+
+    Action:
+        - Generate codes in sequence
+
+    Verification:
+        - Later codes are lexicographically greater
+    """
+    code1 = generador_de_codigos_unicos()
+    import time
+    time.sleep(0.001)  # Small delay
+    code2 = generador_de_codigos_unicos()
+    
+    # ULID includes timestamp, so later ones should sort higher
+    assert code2 > code1

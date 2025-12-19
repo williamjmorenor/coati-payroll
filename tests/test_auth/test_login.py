@@ -142,3 +142,24 @@ def test_authenticated_user_can_access_home(client, app, admin_user):
 
     # Should be accessible
     assert response.status_code == 200
+
+
+def test_login_with_email(client, app, admin_user):
+    """
+    Test successful login using email instead of username.
+
+    Setup:
+        - Create admin user via fixture
+
+    Action:
+        - POST to /auth/login with email as credential
+
+    Verification:
+        - Response is redirect (302)
+        - Redirects to home page
+    """
+    response = login_user(client, "admin@test.com", "admin-password")
+
+    # Should redirect after successful login
+    assert response.status_code in (302, 303)
+    assert_redirected_to(response, "/")
