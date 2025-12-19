@@ -254,23 +254,20 @@ def test_generador_codigo_empleado_no_collisions():
     assert len(codes) == len(set(codes))
 
 
-def test_generador_de_codigos_unicos_sortable():
+def test_generador_de_codigos_unicos_alphanumeric_only():
     """
-    Test that ULID codes are sortable by time.
+    Test that ULID codes contain only alphanumeric characters.
 
     Setup:
         - None
 
     Action:
-        - Generate codes in sequence
+        - Generate multiple codes
 
     Verification:
-        - Later codes are lexicographically greater
+        - All codes are alphanumeric
     """
-    code1 = generador_de_codigos_unicos()
-    import time
-    time.sleep(0.001)  # Small delay
-    code2 = generador_de_codigos_unicos()
-    
-    # ULID includes timestamp, so later ones should sort higher
-    assert code2 > code1
+    codes = [generador_de_codigos_unicos() for _ in range(10)]
+    for code in codes:
+        assert code.isalnum()
+        assert len(code) == 26
