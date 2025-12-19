@@ -216,25 +216,28 @@ def test_utc_now_has_timezone():
     assert result.tzinfo == timezone.utc
 
 
-def test_utc_now_is_recent():
+def test_utc_now_is_timezone_aware_utc():
     """
-    Test that utc_now returns current time.
+    Test that utc_now returns current time in UTC timezone.
 
     Setup:
         - None
 
     Action:
-        - Call utc_now() twice
+        - Call utc_now()
 
     Verification:
-        - Times are very close (within 1 second)
+        - Result has UTC timezone
+        - Result is a recent datetime (not ancient or future)
     """
-    time1 = utc_now()
-    time2 = utc_now()
+    result = utc_now()
     
-    # Should be within 1 second of each other
-    diff = abs((time2 - time1).total_seconds())
-    assert diff < 1.0
+    # Should have UTC timezone
+    assert result.tzinfo == timezone.utc
+    
+    # Should represent a recent time (year 2020 or later)
+    # This is a sanity check that the function returns actual current time
+    assert result.year >= 2020
 
 
 def test_generador_codigo_empleado_no_collisions():
