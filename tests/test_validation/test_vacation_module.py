@@ -125,6 +125,7 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
             identificacion_personal="001-111111-1111A",
             fecha_alta=date.today() - timedelta(days=365),  # Hired 1 year ago
             salario_base=Decimal("10000.00"),
+            moneda_id=moneda.id,
             activo=True,
         )
         db_session.add(employee)
@@ -149,8 +150,8 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         db_session.commit()
 
         # Test 1: Execute first payroll run
-        periodo_inicio_1 = date.today() - timedelta(days=60)
-        periodo_fin_1 = date.today() - timedelta(days=31)
+        periodo_inicio_1 = date.today() - timedelta(days=90)
+        periodo_fin_1 = date.today() - timedelta(days=61)
 
         nomina_1, errors_1, warnings_1 = ejecutar_nomina(
             planilla_id=planilla.id,
@@ -186,8 +187,8 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         assert ledger_entries_1[0].source == "payroll"
 
         # Test 2: Execute second payroll run
-        periodo_inicio_2 = date.today() - timedelta(days=30)
-        periodo_fin_2 = date.today() - timedelta(days=1)
+        periodo_inicio_2 = date.today() - timedelta(days=60)
+        periodo_fin_2 = date.today() - timedelta(days=31)
 
         nomina_2, errors_2, warnings_2 = ejecutar_nomina(
             planilla_id=planilla.id,
@@ -227,8 +228,8 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         # Test 3: Execute third payroll run - verify continued accrual
         # Note: For brevity, we'll verify accrual continues working
         # Vacation usage processing through novelties would be tested in integration tests
-        periodo_inicio_3 = date.today() - timedelta(days=10)
-        periodo_fin_3 = date.today()
+        periodo_inicio_3 = date.today() - timedelta(days=30)
+        periodo_fin_3 = date.today() - timedelta(days=1)
 
         nomina_3, errors_3, warnings_3 = ejecutar_nomina(
             planilla_id=planilla.id,
@@ -238,7 +239,7 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
             usuario="test_user",
         )
 
-        assert nomina_3 is not None, "Third payroll should be created"
+        assert nomina_3 is not None, f"Third payroll should be created. Errors: {errors_3}"
 
         # Re-query account from database to get fresh data
         vacation_account = db_session.query(VacationAccount).filter(VacationAccount.empleado_id == employee.id).one()
@@ -335,6 +336,7 @@ def test_vacation_insufficient_balance_validation(app, db_session):
             identificacion_personal="001-222222-2222B",
             fecha_alta=date.today(),
             salario_base=Decimal("1000.00"),
+            moneda_id=moneda.id,
             activo=True,
         )
         db_session.add(employee)
@@ -432,6 +434,7 @@ def test_vacation_calendar_vs_vacation_days_distinction(app, db_session):
             identificacion_personal="001-333333-3333C",
             fecha_alta=date.today(),
             salario_base=Decimal("1000.00"),
+            moneda_id=moneda.id,
             activo=True,
         )
         db_session.add(employee)
@@ -575,6 +578,7 @@ def test_vacation_ledger_immutability(app, db_session):
             identificacion_personal="001-444444-4444D",
             fecha_alta=date.today(),
             salario_base=Decimal("1000.00"),
+            moneda_id=moneda.id,
             activo=True,
         )
         db_session.add(employee)
