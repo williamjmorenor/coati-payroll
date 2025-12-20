@@ -14,7 +14,7 @@
 """Comprehensive tests for planilla (payroll) routes."""
 
 import pytest
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from tests.helpers.auth import login_user
@@ -760,3 +760,386 @@ def test_listar_nominas_displays_list(app, client, admin_user, db_session, plani
         login_user(client, admin_user.usuario, "admin-password")
         response = client.get(f"/planilla/{planilla.id}/nominas")
         assert response.status_code == 200
+
+
+# ============================================================================
+# NOVEDADES (NOVELTIES) CRUD TESTS
+# ============================================================================
+
+
+@pytest.fixture
+def nomina(app, db_session, planilla, admin_user):
+    """Create a Nomina for testing novedades."""
+    with app.app_context():
+        from coati_payroll.model import Nomina
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date.today(),
+            periodo_fin=date.today() + timedelta(days=14),
+            generado_por=admin_user.usuario,
+            estado="generado",
+        )
+        db_session.add(nomina)
+        db_session.commit()
+        db_session.refresh(nomina)
+        return nomina
+
+
+@pytest.fixture
+def nomina_empleado(app, db_session, nomina, empleado):
+    """Create a NominaEmpleado for testing novedades."""
+    with app.app_context():
+        from coati_payroll.model import NominaEmpleado
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            salario_bruto=Decimal("1000.00"),
+            total_ingresos=Decimal("1000.00"),
+            total_deducciones=Decimal("100.00"),
+            salario_neto=Decimal("900.00"),
+            sueldo_base_historico=Decimal("1000.00"),
+        )
+        db_session.add(nomina_empleado)
+        db_session.commit()
+        db_session.refresh(nomina_empleado)
+        return nomina_empleado
+
+
+def test_listar_novedades_displays(app, client, admin_user, db_session, planilla, nomina, empleado):
+    """Test that GET /planilla/<id>/nomina/<nomina_id>/novedades displays novedades list."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Add employee to planilla
+        from coati_payroll.model import PlanillaEmpleado
+
+        association = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+            fecha_inicio=date.today(),
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(association)
+        db_session.commit()
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades")
+        assert response.status_code == 200
+
+
+def test_nueva_novedad_get_displays_form(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """Test that GET /planilla/<id>/nomina/<nomina_id>/novedades/new displays form."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/new")
+        assert response.status_code == 200
+
+
+def test_nueva_novedad_post_creates_novedad(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+):
+    """Test that POST /planilla/<id>/nomina/<nomina_id>/novedades/new creates a novedad."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        data = {
+            "empleado_id": nomina_empleado.empleado_id,
+            "codigo_concepto": "BONO",
+            "tipo_concepto": "percepcion",
+            "percepcion_id": percepcion.id,
+            "tipo_valor": "monto",
+            "valor_cantidad": 500,
+            "fecha_novedad": date.today().isoformat(),
+        }
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/new",
+            data=data,
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        # Verify novedad was created
+        from coati_payroll.model import NominaNovedad, db
+
+        novedad = db_session.execute(
+            db.select(NominaNovedad).filter_by(nomina_id=nomina.id, codigo_concepto="BONO")
+        ).scalar_one_or_none()
+        assert novedad is not None
+        assert novedad.empleado_id == nomina_empleado.empleado_id
+
+
+def test_nueva_novedad_blocked_for_applied_nomina(
+    app, client, admin_user, db_session, planilla, empleado
+):
+    """Test that novedades cannot be added to an applied nomina."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create a nomina with "aplicado" state
+        from coati_payroll.model import Nomina, NominaEmpleado
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date.today(),
+            periodo_fin=date.today() + timedelta(days=14),
+            generado_por=admin_user.usuario,
+            estado="aplicado",  # Set to aplicado from the start
+        )
+        db_session.add(nomina)
+        db_session.commit()
+        db_session.refresh(nomina)
+
+        # Create nomina empleado
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            salario_bruto=Decimal("1000.00"),
+            total_ingresos=Decimal("1000.00"),
+            total_deducciones=Decimal("100.00"),
+            salario_neto=Decimal("900.00"),
+            sueldo_base_historico=Decimal("1000.00"),
+        )
+        db_session.add(nomina_empleado)
+        db_session.commit()
+
+        response = client.get(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/new",
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        assert "No se pueden agregar novedades".encode() in response.data or "aplicada".encode() in response.data
+
+
+def test_editar_novedad_get_displays_form(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+):
+    """Test that GET /planilla/<id>/nomina/<nomina_id>/novedades/<novedad_id>/edit displays form."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create a novedad first
+        from coati_payroll.model import NominaNovedad
+        from decimal import Decimal
+
+        novedad = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="BONO",
+            tipo_valor="monto",
+            valor_cantidad=Decimal("500.00"),
+            fecha_novedad=date.today(),
+            percepcion_id=percepcion.id,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(novedad)
+        db_session.commit()
+        db_session.refresh(novedad)
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/{novedad.id}/edit")
+        assert response.status_code == 200
+
+
+def test_editar_novedad_post_updates_novedad(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+):
+    """Test that POST /planilla/<id>/nomina/<nomina_id>/novedades/<novedad_id>/edit updates novedad."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create a novedad first
+        from coati_payroll.model import NominaNovedad
+        from decimal import Decimal
+
+        novedad = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="BONO",
+            tipo_valor="monto",
+            valor_cantidad=Decimal("500.00"),
+            fecha_novedad=date.today(),
+            percepcion_id=percepcion.id,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(novedad)
+        db_session.commit()
+        db_session.refresh(novedad)
+
+        novedad_id = novedad.id
+
+        # Update the novedad
+        data = {
+            "empleado_id": nomina_empleado.empleado_id,
+            "codigo_concepto": "BONO_ACT",
+            "tipo_concepto": "percepcion",
+            "percepcion_id": percepcion.id,
+            "tipo_valor": "monto",
+            "valor_cantidad": 750,
+            "fecha_novedad": date.today().isoformat(),
+        }
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/{novedad_id}/edit",
+            data=data,
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        # Verify novedad was updated
+        updated_novedad = db_session.get(NominaNovedad, novedad_id)
+        assert updated_novedad.codigo_concepto == "BONO_ACT"
+        assert updated_novedad.valor_cantidad == Decimal("750.00")
+
+
+def test_editar_novedad_blocked_for_applied_nomina(
+    app, client, admin_user, db_session, planilla, empleado, percepcion
+):
+    """Test that novedades cannot be edited in an applied nomina."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create a nomina with "aplicado" state
+        from coati_payroll.model import Nomina, NominaEmpleado, NominaNovedad
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date.today(),
+            periodo_fin=date.today() + timedelta(days=14),
+            generado_por=admin_user.usuario,
+            estado="aplicado",  # Set to aplicado from the start
+        )
+        db_session.add(nomina)
+        db_session.commit()
+
+        # Create nomina empleado
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            salario_bruto=Decimal("1000.00"),
+            total_ingresos=Decimal("1000.00"),
+            total_deducciones=Decimal("100.00"),
+            salario_neto=Decimal("900.00"),
+            sueldo_base_historico=Decimal("1000.00"),
+        )
+        db_session.add(nomina_empleado)
+        db_session.commit()
+
+        # Create a novedad
+        novedad = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="BONO",
+            tipo_valor="monto",
+            valor_cantidad=Decimal("500.00"),
+            fecha_novedad=date.today(),
+            percepcion_id=percepcion.id,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(novedad)
+        db_session.commit()
+        db_session.refresh(novedad)
+
+        response = client.get(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/{novedad.id}/edit",
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        assert "No se pueden editar novedades".encode() in response.data or "aplicada".encode() in response.data
+
+
+def test_eliminar_novedad_removes_novedad(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+):
+    """Test that POST /planilla/<id>/nomina/<nomina_id>/novedades/<novedad_id>/delete removes novedad."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create a novedad
+        from coati_payroll.model import NominaNovedad
+        from decimal import Decimal
+
+        novedad = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="BONO",
+            tipo_valor="monto",
+            valor_cantidad=Decimal("500.00"),
+            fecha_novedad=date.today(),
+            percepcion_id=percepcion.id,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(novedad)
+        db_session.commit()
+        db_session.refresh(novedad)
+
+        novedad_id = novedad.id
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/{novedad_id}/delete",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        # Verify novedad was deleted
+        deleted = db_session.get(NominaNovedad, novedad_id)
+        assert deleted is None
+
+
+def test_eliminar_novedad_blocked_for_applied_nomina(
+    app, client, admin_user, db_session, planilla, empleado, percepcion
+):
+    """Test that novedades cannot be deleted from an applied nomina."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create a nomina with "aplicado" state
+        from coati_payroll.model import Nomina, NominaEmpleado, NominaNovedad
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date.today(),
+            periodo_fin=date.today() + timedelta(days=14),
+            generado_por=admin_user.usuario,
+            estado="aplicado",  # Set to aplicado from the start
+        )
+        db_session.add(nomina)
+        db_session.commit()
+
+        # Create nomina empleado
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            salario_bruto=Decimal("1000.00"),
+            total_ingresos=Decimal("1000.00"),
+            total_deducciones=Decimal("100.00"),
+            salario_neto=Decimal("900.00"),
+            sueldo_base_historico=Decimal("1000.00"),
+        )
+        db_session.add(nomina_empleado)
+        db_session.commit()
+
+        # Create a novedad
+        novedad = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="BONO",
+            tipo_valor="monto",
+            valor_cantidad=Decimal("500.00"),
+            fecha_novedad=date.today(),
+            percepcion_id=percepcion.id,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(novedad)
+        db_session.commit()
+        db_session.refresh(novedad)
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/{novedad.id}/delete",
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        assert "No se pueden eliminar novedades".encode() in response.data or "aplicada".encode() in response.data
