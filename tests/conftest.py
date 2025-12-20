@@ -24,21 +24,12 @@ Key principles:
 - All fixtures use 'function' scope for maximum isolation
 """
 
-import warnings
-
 import pytest
 from cachelib.file import FileSystemCache
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from coati_payroll import create_app
 from coati_payroll.model import db as _db
-
-# Suppress expected pytest-benchmark warning when using xdist
-warnings.filterwarnings(
-    "ignore",
-    message="Benchmarks are automatically disabled because xdist plugin is active",
-    category=Warning,
-)
 
 
 @pytest.fixture(scope="function")
