@@ -206,23 +206,35 @@ def test_database_drop_command(cli_app, runner):
 
 
 def test_database_backup_sqlite_memory(cli_app, runner):
-    """Test database backup for SQLite in-memory database."""
+    """Test database backup for SQLite in-memory database.
+    
+    NOTE: This test documents a known issue where in-memory databases with query
+    parameters (e.g., ":memory:?check_same_thread=False") are not properly detected
+    as in-memory databases, causing the backup to fail.
+    
+    TODO: File issue to fix CLI code to handle query parameters in database URLs.
+    """
     with cli_app.app_context():
         with runner.isolated_filesystem():
             result = runner.invoke(database, ["backup"])
-            # In-memory database with query params should fail with file not found
-            # because db_path will be ":memory:?check_same_thread=False" which doesn't match ":memory:"
-            # This is actually a bug in the CLI code but we test current behavior
-            assert result.exit_code == 1 or "backup" in result.output.lower()
+            # Expected to fail because the CLI doesn't properly detect
+            # ":memory:?check_same_thread=False" as an in-memory database
+            assert result.exit_code == 1
+            assert "failed" in result.output.lower() or "error" in result.output.lower()
 
 
 def test_database_backup_sqlite_with_output(cli_app, runner):
-    """Test database backup with specific output file."""
+    """Test database backup with specific output file.
+    
+    NOTE: This test documents the same issue as test_database_backup_sqlite_memory
+    where in-memory databases with query parameters are not properly detected.
+    """
     with cli_app.app_context():
         with runner.isolated_filesystem():
             result = runner.invoke(database, ["backup", "-o", "test_backup.db"])
-            # In-memory database with query params should fail
-            assert result.exit_code == 1 or "backup" in result.output.lower()
+            # Expected to fail because the CLI doesn't properly detect in-memory database
+            assert result.exit_code == 1
+            assert "failed" in result.output.lower() or "error" in result.output.lower()
 
 
 def test_database_restore_nonexistent_file(cli_app, runner):
@@ -591,17 +603,24 @@ def test_database_restore_sqlite(mock_copy, cli_app, runner):
 
 
 def test_database_restore_memory_db(cli_app, runner):
-    """Test database restore with in-memory database."""
+    """Test database restore with in-memory database.
+    
+    NOTE: This test documents the same issue where in-memory databases with query
+    parameters are not properly detected by the CLI code.
+    
+    TODO: File issue to fix CLI code to handle query parameters in database URLs.
+    """
     with cli_app.app_context():
         with runner.isolated_filesystem():
             # Create a backup file
             Path("backup.db").touch()
             
             result = runner.invoke(database, ["restore", "backup.db", "--yes"])
-            # Due to query parameters in the DB URL, the code doesn't detect it as :memory:
-            # and will try to restore (which may succeed or fail depending on path)
-            # We just check it doesn't crash
-            assert result.exit_code in (0, 1)
+            # The restore attempts to copy to ":memory:?check_same_thread=False" as a file path
+            # This succeeds because it creates a file with that name
+            # This is not the intended behavior but documents current state
+            assert result.exit_code == 0
+            assert "restored" in result.output.lower()
 
 
 def test_database_restore_cancel(cli_app, runner):
