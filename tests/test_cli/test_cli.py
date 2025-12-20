@@ -194,8 +194,8 @@ def test_database_backup_sqlite_memory(cli_app, runner):
     with cli_app.app_context():
         with runner.isolated_filesystem():
             result = runner.invoke(database, ["backup"])
-            # Expected to fail because the CLI doesn't properly detect
-            # ":memory:?check_same_thread=False" as an in-memory database
+            # Expected to fail because CLI code does not strip query parameters
+            # when checking if database URL is ":memory:"
             assert result.exit_code == 1
             assert "failed" in result.output.lower() or "error" in result.output.lower()
 
@@ -204,12 +204,13 @@ def test_database_backup_sqlite_with_output(cli_app, runner):
     """Test database backup with specific output file.
     
     NOTE: This test documents the same issue as test_database_backup_sqlite_memory
-    where in-memory databases with query parameters are not properly detected.
+    where CLI code does not strip query parameters when checking database URL.
     """
     with cli_app.app_context():
         with runner.isolated_filesystem():
             result = runner.invoke(database, ["backup", "-o", "test_backup.db"])
-            # Expected to fail because the CLI doesn't properly detect in-memory database
+            # Expected to fail because CLI code does not strip query parameters
+            # when checking if database URL is ":memory:"
             assert result.exit_code == 1
             assert "failed" in result.output.lower() or "error" in result.output.lower()
 
