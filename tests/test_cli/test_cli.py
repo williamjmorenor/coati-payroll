@@ -39,29 +39,6 @@ from coati_payroll.cli import (
 from coati_payroll.model import db, Usuario
 
 
-@pytest.fixture
-def runner():
-    """Create a CLI test runner."""
-    return CliRunner()
-
-
-@pytest.fixture
-def cli_app():
-    """Create a test Flask app with CLI commands registered."""
-    config = {
-        "TESTING": True,
-        "WTF_CSRF_ENABLED": False,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:?check_same_thread=False",
-        "SQLALCHEMY_TRACK_MODIFICATIONS": False,
-        "SQLALCHEMY_ENGINE_OPTIONS": {"connect_args": {"check_same_thread": False}},
-        "SECRET_KEY": "test-secret-key",
-        "PRESERVE_CONTEXT_ON_EXCEPTION": False,
-    }
-    app = create_app(config)
-    register_cli_commands(app)
-    return app
-
-
 # ============================================================================
 # CLICONTEXT AND OUTPUT_RESULT TESTS
 # ============================================================================
