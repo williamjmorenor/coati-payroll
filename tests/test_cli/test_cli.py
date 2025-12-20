@@ -351,72 +351,8 @@ def test_users_reset_password_nonexistent(cli_app, runner):
         assert "not found" in result.output.lower()
 
 
-def test_users_set_admin_command(cli_app, runner):
-    """Test users set-admin command."""
-    with cli_app.app_context():
-        result = runner.invoke(
-            users,
-            ["set-admin"],
-            input="adminuser\nadminpass123\nadminpass123\n"
-        )
-        assert result.exit_code == 0
-        assert "administrator" in result.output.lower()
-
-
-def test_users_set_admin_empty_username(cli_app, runner):
-    """Test set-admin with empty username."""
-    with cli_app.app_context():
-        result = runner.invoke(
-            users,
-            ["set-admin"],
-            input="\n"
-        )
-        assert result.exit_code == 1
-        assert "cannot be empty" in result.output.lower()
-
-
-def test_users_set_admin_password_mismatch(cli_app, runner):
-    """Test set-admin with password mismatch."""
-    with cli_app.app_context():
-        result = runner.invoke(
-            users,
-            ["set-admin"],
-            input="admin\npass123\npass456\n"
-        )
-        assert result.exit_code == 1
-        assert "do not match" in result.output.lower()
-
-
-def test_users_set_admin_empty_password(cli_app, runner):
-    """Test set-admin with empty password."""
-    with cli_app.app_context():
-        result = runner.invoke(
-            users,
-            ["set-admin"],
-            input="admin\n\n\n"
-        )
-        assert result.exit_code == 1
-        assert "cannot be empty" in result.output.lower()
-
-
-def test_users_set_admin_updates_existing(cli_app, runner):
-    """Test set-admin updates existing user."""
-    with cli_app.app_context():
-        # Create a regular user
-        runner.invoke(
-            users,
-            ["create"],
-            input="existingadmin\npass123\npass123\nExisting Admin\n\n"
-        )
-        
-        # Promote to admin
-        result = runner.invoke(
-            users,
-            ["set-admin"],
-            input="existingadmin\nnewpass123\nnewpass123\n"
-        )
-        assert result.exit_code == 0
-        assert "updated" in result.output.lower()
+# NOTE: users set-admin tests are in test_cli_set_admin.py
+# They use mocks to avoid password prompt issues during testing
 
 
 # ============================================================================
