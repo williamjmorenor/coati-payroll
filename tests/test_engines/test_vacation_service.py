@@ -1,0 +1,760 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Unit tests for vacation_service module."""
+
+from datetime import date, timedelta
+from decimal import Decimal
+
+import pytest
+
+from coati_payroll.enums import (
+    AccrualFrequency,
+    AccrualMethod,
+    VacationLedgerType,
+    VacationUnitType,
+)
+from coati_payroll.model import (
+    Empleado,
+    Empresa,
+    Moneda,
+    NominaEmpleado,
+    Planilla,
+    PlanillaEmpleado,
+    TipoPlanilla,
+    VacationAccount,
+    VacationLedger,
+    VacationPolicy,
+    Nomina,
+)
+from coati_payroll.vacation_service import VacationService
+
+
+@pytest.fixture
+def empresa(db_session):
+    """Create a test empresa."""
+    empresa = Empresa(
+        codigo="TEST_VAC",
+        razon_social="Test Vacation Company",
+        nombre_comercial="Test Vac",
+        ruc="J0310000999999",
+        activo=True,
+    )
+    db_session.add(empresa)
+    db_session.flush()
+    return empresa
+
+
+@pytest.fixture
+def moneda(db_session):
+    """Create a test currency."""
+    moneda = Moneda(codigo="USD", nombre="Dollar", simbolo="$", activo=True)
+    db_session.add(moneda)
+    db_session.flush()
+    return moneda
+
+
+@pytest.fixture
+def tipo_planilla(db_session):
+    """Create a test planilla type."""
+    tipo = TipoPlanilla(
+        codigo="MONTHLY_VAC",
+        descripcion="Monthly payroll for vacation tests",
+        dias=30,
+        periodicidad="mensual",
+        activo=True,
+    )
+    db_session.add(tipo)
+    db_session.flush()
+    return tipo
+
+
+@pytest.fixture
+def planilla(db_session, empresa, moneda, tipo_planilla):
+    """Create a test planilla."""
+    planilla = Planilla(
+        empresa_id=empresa.id,
+        nombre="Test Planilla Vacation",
+        tipo_planilla_id=tipo_planilla.id,
+        moneda_id=moneda.id,
+        activo=True,
+    )
+    db_session.add(planilla)
+    db_session.flush()
+    return planilla
+
+
+@pytest.fixture
+def periodic_policy(db_session, planilla):
+    """Create a periodic vacation policy."""
+    policy = VacationPolicy(
+        planilla_id=planilla.id,
+        codigo="PERIODIC-TEST",
+        nombre="Periodic Accrual Policy",
+        descripcion="Test periodic accrual",
+        accrual_method=AccrualMethod.PERIODIC,
+        accrual_rate=Decimal("1.25"),
+        accrual_frequency=AccrualFrequency.MONTHLY,
+        unit_type=VacationUnitType.DAYS,
+        min_service_days=0,
+        max_balance=Decimal("30.00"),
+        allow_negative=False,
+        activo=True,
+        creado_por="test_system",
+    )
+    db_session.add(policy)
+    db_session.flush()
+    return policy
+
+
+@pytest.fixture
+def proportional_policy(db_session, planilla):
+    """Create a proportional vacation policy."""
+    policy = VacationPolicy(
+        planilla_id=planilla.id,
+        codigo="PROP-TEST",
+        nombre="Proportional Accrual Policy",
+        descripcion="Test proportional accrual",
+        accrual_method=AccrualMethod.PROPORTIONAL,
+        accrual_rate=Decimal("0.05"),  # 5% per day
+        accrual_frequency=AccrualFrequency.MONTHLY,
+        accrual_basis="days_worked",
+        unit_type=VacationUnitType.DAYS,
+        min_service_days=0,
+        allow_negative=False,
+        activo=True,
+        creado_por="test_system",
+    )
+    db_session.add(policy)
+    db_session.flush()
+    return policy
+
+
+@pytest.fixture
+def seniority_policy(db_session, planilla):
+    """Create a seniority-based vacation policy."""
+    policy = VacationPolicy(
+        planilla_id=planilla.id,
+        codigo="SENIOR-TEST",
+        nombre="Seniority Accrual Policy",
+        descripcion="Test seniority-based accrual",
+        accrual_method=AccrualMethod.SENIORITY,
+        accrual_rate=Decimal("15.00"),  # Base rate
+        accrual_frequency=AccrualFrequency.ANNUAL,
+        unit_type=VacationUnitType.DAYS,
+        min_service_days=0,
+        seniority_tiers=[
+            {"years": 0, "rate": 15.0},
+            {"years": 5, "rate": 20.0},
+            {"years": 10, "rate": 25.0},
+        ],
+        allow_negative=False,
+        activo=True,
+        creado_por="test_system",
+    )
+    db_session.add(policy)
+    db_session.flush()
+    return policy
+
+
+@pytest.fixture
+def empleado(db_session, empresa, moneda):
+    """Create a test employee."""
+    emp = Empleado(
+        empresa_id=empresa.id,
+        codigo_empleado="VAC-001",
+        primer_nombre="John",
+        primer_apellido="Doe",
+        identificacion_personal="VAC-111111-1111A",
+        fecha_alta=date.today() - timedelta(days=365),
+        salario_base=Decimal("1000.00"),
+        moneda_id=moneda.id,
+        activo=True,
+    )
+    db_session.add(emp)
+    db_session.flush()
+    return emp
+
+
+def test_vacation_service_initialization(app, db_session, planilla):
+    """Test VacationService initialization."""
+    with app.app_context():
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+
+        assert service.planilla == planilla
+        assert service.periodo_inicio == periodo_inicio
+        assert service.periodo_fin == periodo_fin
+
+
+def test_acumular_vacaciones_no_account(app, db_session, planilla, empleado, moneda):
+    """Test vacation accrual when employee has no vacation account."""
+    with app.app_context():
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        # Create nomina and nomina_empleado
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+
+        # Should return 0 when no account exists
+        accrued = service.acumular_vacaciones_empleado(empleado, nomina_empleado, "test_user")
+
+        assert accrued == Decimal("0.00")
+
+
+def test_acumular_vacaciones_periodic_method(app, db_session, planilla, empleado, periodic_policy, moneda):
+    """Test periodic vacation accrual calculation."""
+    with app.app_context():
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        # Create vacation account
+        account = VacationAccount(
+            empleado_id=empleado.id,
+            policy_id=periodic_policy.id,
+            current_balance=Decimal("0.00"),
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(account)
+        db_session.flush()
+
+        # Link employee to planilla
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+            fecha_inicio=empleado.fecha_alta,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
+
+        # Create nomina and nomina_empleado
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+
+        # Accrue vacation
+        accrued = service.acumular_vacaciones_empleado(empleado, nomina_empleado, "test_user")
+
+        # Should accrue based on period (31 days ≈ 1 month, so close to 1.25)
+        assert accrued > Decimal("0.00")
+        assert accrued <= Decimal("1.30")  # Prorated for 31 days
+
+        # Verify ledger entry created
+        ledger_entries = (
+            db_session.query(VacationLedger)
+            .filter(
+                VacationLedger.account_id == account.id,
+                VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+            )
+            .all()
+        )
+        assert len(ledger_entries) == 1
+        assert ledger_entries[0].quantity == accrued
+
+
+def test_acumular_vacaciones_min_service_days(app, db_session, planilla, moneda, periodic_policy):
+    """Test vacation accrual respects minimum service days requirement."""
+    with app.app_context():
+        # Update policy to require 90 days minimum service
+        periodic_policy.min_service_days = 90
+        db_session.flush()
+
+        # Create employee hired only 30 days ago
+        recent_employee = Empleado(
+            empresa_id=planilla.empresa_id,
+            codigo_empleado="VAC-002",
+            primer_nombre="Jane",
+            primer_apellido="Smith",
+            identificacion_personal="VAC-222222-2222B",
+            fecha_alta=date.today() - timedelta(days=30),
+            salario_base=Decimal("1000.00"),
+            moneda_id=moneda.id,
+            activo=True,
+        )
+        db_session.add(recent_employee)
+        db_session.flush()
+
+        # Create vacation account
+        account = VacationAccount(
+            empleado_id=recent_employee.id,
+            policy_id=periodic_policy.id,
+            current_balance=Decimal("0.00"),
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(account)
+        db_session.flush()
+
+        # Create nomina and nomina_empleado
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=recent_employee.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+
+        # Should not accrue because employee hasn't met minimum service days
+        accrued = service.acumular_vacaciones_empleado(recent_employee, nomina_empleado, "test_user")
+
+        assert accrued == Decimal("0.00")
+
+
+def test_acumular_vacaciones_max_balance_limit(app, db_session, planilla, empleado, periodic_policy, moneda):
+    """Test vacation accrual respects maximum balance limit."""
+    with app.app_context():
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        # Create vacation account with balance near max (30.00)
+        account = VacationAccount(
+            empleado_id=empleado.id,
+            policy_id=periodic_policy.id,
+            current_balance=Decimal("29.50"),  # Very close to max of 30.00
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(account)
+        db_session.flush()
+
+        # Link employee to planilla
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+            fecha_inicio=empleado.fecha_alta,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
+
+        # Create nomina and nomina_empleado
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+
+        # Accrue vacation
+        accrued = service.acumular_vacaciones_empleado(empleado, nomina_empleado, "test_user")
+
+        # Should be capped to not exceed max balance
+        db_session.refresh(account)
+        assert account.current_balance <= periodic_policy.max_balance
+        assert accrued == Decimal("0.50")  # Capped to reach 30.00
+
+
+def test_acumular_vacaciones_proportional_method(app, db_session, planilla, empleado, proportional_policy, moneda):
+    """Test proportional vacation accrual based on days worked."""
+    with app.app_context():
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        # Create vacation account
+        account = VacationAccount(
+            empleado_id=empleado.id,
+            policy_id=proportional_policy.id,
+            current_balance=Decimal("0.00"),
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(account)
+        db_session.flush()
+
+        # Link employee to planilla
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+            fecha_inicio=empleado.fecha_alta,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
+
+        # Create nomina and nomina_empleado
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+
+        # Accrue vacation
+        accrued = service.acumular_vacaciones_empleado(empleado, nomina_empleado, "test_user")
+
+        # Should calculate based on days worked (31 days * 0.05 = 1.55)
+        assert accrued > Decimal("0.00")
+        expected = Decimal("31") * proportional_policy.accrual_rate
+        assert accrued == expected.quantize(Decimal("0.0001"))
+
+
+def test_acumular_vacaciones_seniority_method(app, db_session, planilla, moneda, seniority_policy):
+    """Test seniority-based vacation accrual with tiered rates."""
+    with app.app_context():
+        # Create employee with 6 years of service (should get tier 2: 20 days)
+        employee_6yrs = Empleado(
+            empresa_id=planilla.empresa_id,
+            codigo_empleado="VAC-003",
+            primer_nombre="Senior",
+            primer_apellido="Employee",
+            identificacion_personal="VAC-333333-3333C",
+            fecha_alta=date.today() - timedelta(days=365 * 6),
+            salario_base=Decimal("1000.00"),
+            moneda_id=moneda.id,
+            activo=True,
+        )
+        db_session.add(employee_6yrs)
+        db_session.flush()
+
+        # Create vacation account
+        account = VacationAccount(
+            empleado_id=employee_6yrs.id,
+            policy_id=seniority_policy.id,
+            current_balance=Decimal("0.00"),
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(account)
+        db_session.flush()
+
+        # Link employee to planilla
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=employee_6yrs.id,
+            fecha_inicio=employee_6yrs.fecha_alta,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
+
+        # Create nomina and nomina_empleado
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=employee_6yrs.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+
+        # Accrue vacation
+        accrued = service.acumular_vacaciones_empleado(employee_6yrs, nomina_empleado, "test_user")
+
+        # Should accrue based on 20 days/year (tier 2) prorated for the period
+        assert accrued > Decimal("0.00")
+        # Annual rate is 20, prorated for 31 days
+        expected_monthly = Decimal("20.00") * Decimal("31") / Decimal("365")
+        assert abs(accrued - expected_monthly) < Decimal("0.01")
+
+
+def test_procesar_novedades_vacaciones_no_novelties(app, db_session, planilla, empleado):
+    """Test vacation novelty processing when there are no novelties."""
+    with app.app_context():
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+
+        # Process with no novelties
+        total_usado = service.procesar_novedades_vacaciones(empleado, {}, "test_user")
+
+        assert total_usado == Decimal("0.00")
+
+
+def test_calcular_acumulacion_periodic_biweekly(app, db_session, planilla):
+    """Test periodic accrual calculation for biweekly frequency."""
+    with app.app_context():
+        # Create biweekly policy
+        policy = VacationPolicy(
+            planilla_id=planilla.id,
+            codigo="BIWEEKLY",
+            nombre="Biweekly Policy",
+            descripcion="Test biweekly",
+            accrual_method=AccrualMethod.PERIODIC,
+            accrual_rate=Decimal("0.625"),  # Half of monthly
+            accrual_frequency=AccrualFrequency.BIWEEKLY,
+            unit_type=VacationUnitType.DAYS,
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(policy)
+        db_session.flush()
+
+        # Test with 15-day period (should match biweekly frequency exactly)
+        periodo_inicio = date.today() - timedelta(days=14)
+        periodo_fin = date.today()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+        accrual = service._calcular_acumulacion_periodica(policy)
+
+        # Should return the rate directly for matching period
+        assert accrual == Decimal("0.625")
+
+
+def test_calcular_acumulacion_proportional_hours(app, db_session, planilla, empleado, moneda):
+    """Test proportional accrual based on hours worked."""
+    with app.app_context():
+        # Create hours-based policy
+        policy = VacationPolicy(
+            planilla_id=planilla.id,
+            codigo="HOURLY",
+            nombre="Hourly Policy",
+            descripcion="Test hours",
+            accrual_method=AccrualMethod.PROPORTIONAL,
+            accrual_rate=Decimal("0.01"),  # 1% per hour
+            accrual_frequency=AccrualFrequency.MONTHLY,
+            accrual_basis="hours_worked",
+            unit_type=VacationUnitType.HOURS,
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(policy)
+        db_session.flush()
+
+        # Create nomina_empleado
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+        accrual = service._calcular_acumulacion_proporcional(empleado, policy, nomina_empleado)
+
+        # Should calculate based on standard hours (8 * 31 days = 248 hours)
+        expected = Decimal("8.0") * Decimal("31") * policy.accrual_rate
+        assert accrual == expected.quantize(Decimal("0.0001"))
+
+
+def test_calcular_acumulacion_seniority_no_tiers(app, db_session, planilla, empleado):
+    """Test seniority accrual when no tiers are defined."""
+    with app.app_context():
+        # Create policy without seniority tiers
+        policy = VacationPolicy(
+            planilla_id=planilla.id,
+            codigo="NO-TIERS",
+            nombre="No Tiers Policy",
+            descripcion="Test no tiers",
+            accrual_method=AccrualMethod.SENIORITY,
+            accrual_rate=Decimal("15.00"),
+            accrual_frequency=AccrualFrequency.ANNUAL,
+            unit_type=VacationUnitType.DAYS,
+            seniority_tiers=None,  # No tiers
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(policy)
+        db_session.flush()
+
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+        accrual = service._calcular_acumulacion_antiguedad(empleado, policy)
+
+        # Should return 0 when no tiers defined
+        assert accrual == Decimal("0.00")
+
+
+def test_calcular_acumulacion_unknown_method(app, db_session, planilla, empleado, moneda):
+    """Test vacation accrual with unknown method returns zero."""
+    with app.app_context():
+        # Create policy with invalid method (simulated)
+        policy = VacationPolicy(
+            planilla_id=planilla.id,
+            codigo="INVALID",
+            nombre="Invalid Method",
+            descripcion="Test invalid",
+            accrual_method="INVALID_METHOD",  # Invalid
+            accrual_rate=Decimal("1.00"),
+            accrual_frequency=AccrualFrequency.MONTHLY,
+            unit_type=VacationUnitType.DAYS,
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(policy)
+        db_session.flush()
+
+        account = VacationAccount(
+            empleado_id=empleado.id,
+            policy_id=policy.id,
+            current_balance=Decimal("0.00"),
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(account)
+        db_session.flush()
+
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+        accrual = service._calcular_acumulacion(empleado, account, nomina_empleado)
+
+        # Should return 0 for unknown method
+        assert accrual == Decimal("0.00")
+
+
+def test_calcular_acumulacion_annual_frequency(app, db_session, planilla):
+    """Test periodic accrual with annual frequency."""
+    with app.app_context():
+        policy = VacationPolicy(
+            planilla_id=planilla.id,
+            codigo="ANNUAL",
+            nombre="Annual Policy",
+            descripcion="Test annual",
+            accrual_method=AccrualMethod.PERIODIC,
+            accrual_rate=Decimal("15.00"),
+            accrual_frequency=AccrualFrequency.ANNUAL,
+            unit_type=VacationUnitType.DAYS,
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(policy)
+        db_session.flush()
+
+        # Test with 365-day period
+        periodo_inicio = date.today() - timedelta(days=364)
+        periodo_fin = date.today()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+        accrual = service._calcular_acumulacion_periodica(policy)
+
+        # Should return full annual rate
+        assert accrual == Decimal("15.00")

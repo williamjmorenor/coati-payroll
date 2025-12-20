@@ -1,0 +1,103 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Tests for vacation routes."""
+
+from tests.helpers.auth import login_user
+
+
+def test_vacation_policy_index_requires_authentication(app, client, db_session):
+    """Test that vacation policy index requires authentication."""
+    with app.app_context():
+        response = client.get("/vacation/policies", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location
+
+
+def test_vacation_policy_index_for_admin(app, client, admin_user, db_session):
+    """Test that admin can access vacation policy index."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+        response = client.get("/vacation/policies")
+        assert response.status_code == 200
+
+
+def test_vacation_account_index_requires_authentication(app, client, db_session):
+    """Test that vacation account index requires authentication."""
+    with app.app_context():
+        response = client.get("/vacation/accounts", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location
+
+
+def test_vacation_account_index_for_admin(app, client, admin_user, db_session):
+    """Test that admin can access vacation account index."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+        response = client.get("/vacation/accounts")
+        assert response.status_code == 200
+
+
+def test_vacation_policy_new_requires_authentication(app, client, db_session):
+    """Test that creating a new vacation policy requires authentication."""
+    with app.app_context():
+        response = client.get("/vacation/policies/new", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location
+
+
+def test_vacation_policy_new_requires_write_access(app, client, db_session):
+    """Test that creating a new vacation policy requires write access."""
+    with app.app_context():
+        from coati_payroll.enums import TipoUsuario
+        from tests.factories.user_factory import create_user
+
+        # Create AUDIT user (read-only)
+        audit_user = create_user(db_session, "auditor", "password", tipo=TipoUsuario.AUDIT)
+        login_user(client, audit_user.usuario, "password")
+
+        response = client.get("/vacation/policies/new", follow_redirects=False)
+        # Should not allow access (403 or redirect)
+        assert response.status_code in [302, 403]
+
+
+def test_vacation_policy_view_requires_authentication(app, client, db_session):
+    """Test that viewing a vacation policy requires authentication."""
+    with app.app_context():
+        response = client.get("/vacation/policies/999", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location
+
+
+def test_vacation_policy_edit_requires_authentication(app, client, db_session):
+    """Test that editing a vacation policy requires authentication."""
+    with app.app_context():
+        response = client.get("/vacation/policies/999/edit", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location
+
+
+def test_vacation_leave_requests_requires_authentication(app, client, db_session):
+    """Test that viewing leave requests requires authentication."""
+    with app.app_context():
+        response = client.get("/vacation/leave-requests", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location
+
+
+def test_vacation_account_view_requires_authentication(app, client, db_session):
+    """Test that viewing vacation account requires authentication."""
+    with app.app_context():
+        response = client.get("/vacation/accounts/999", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location
