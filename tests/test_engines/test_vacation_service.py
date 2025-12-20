@@ -34,7 +34,9 @@ from coati_payroll.model import (
     TipoPlanilla,
     VacationAccount,
     VacationLedger,
+    VacationNovelty,
     VacationPolicy,
+    NominaNovedad,
     Nomina,
 )
 from coati_payroll.vacation_service import VacationService

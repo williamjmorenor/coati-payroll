@@ -27,8 +27,10 @@ from decimal import Decimal
 
 import pytest
 
+from coati_payroll.enums import FormulaType
 from coati_payroll.nomina_engine import NominaEngine, DeduccionItem, HORAS_TRABAJO_DIA
 from coati_payroll.model import (
+    db,
     Empresa,
     Moneda,
     Empleado,

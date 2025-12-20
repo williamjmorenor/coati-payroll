@@ -23,6 +23,7 @@ This is one of the most critical validations in the payroll system to prevent:
 from datetime import date
 from decimal import Decimal
 
+import pytest
 
 from coati_payroll.enums import NominaEstado
 from coati_payroll.nomina_engine import NominaEngine
