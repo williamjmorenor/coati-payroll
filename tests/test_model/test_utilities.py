@@ -214,3 +214,63 @@ def test_utc_now_has_timezone():
     result = utc_now()
     assert result.tzinfo is not None
     assert result.tzinfo == timezone.utc
+
+
+def test_utc_now_is_timezone_aware_utc():
+    """
+    Test that utc_now returns current time in UTC timezone.
+
+    Setup:
+        - None
+
+    Action:
+        - Call utc_now()
+
+    Verification:
+        - Result has UTC timezone
+        - Result is a recent datetime (not ancient or future)
+    """
+    result = utc_now()
+
+    # Should have UTC timezone
+    assert result.tzinfo == timezone.utc
+
+    # Should represent a recent time (year 2020 or later)
+    # This is a sanity check that the function returns actual current time
+    assert result.year >= 2020
+
+
+def test_generador_codigo_empleado_no_collisions():
+    """
+    Test that employee codes don't collide in rapid generation.
+
+    Setup:
+        - None
+
+    Action:
+        - Generate many codes rapidly
+
+    Verification:
+        - All codes are unique
+    """
+    codes = [generador_codigo_empleado() for _ in range(1000)]
+    assert len(codes) == len(set(codes))
+
+
+def test_generador_de_codigos_unicos_alphanumeric_only():
+    """
+    Test that ULID codes contain only alphanumeric characters.
+
+    Setup:
+        - None
+
+    Action:
+        - Generate multiple codes
+
+    Verification:
+        - All codes are alphanumeric
+    """
+    codes = [generador_de_codigos_unicos() for _ in range(10)]
+    for code in codes:
+        assert code.isalnum()
+        assert len(code) == 26

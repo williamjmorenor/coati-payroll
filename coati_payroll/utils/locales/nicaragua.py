@@ -57,7 +57,6 @@ from coati_payroll.model import (
     TipoPlanilla,
     Usuario,
 )
-from coati_payroll.nomina_engine import NominaEngine
 
 
 def ejecutar_test_nomina_nicaragua(
@@ -138,8 +137,8 @@ def ejecutar_test_nomina_nicaragua(
 
             if verbose:
                 print(f"\n{'='*80}")
-                nombre = employee_config.get('nombre', 'Test')
-                apellido = employee_config.get('apellido', 'Employee')
+                nombre = employee_config.get("nombre", "Test")
+                apellido = employee_config.get("apellido", "Employee")
                 print(f"NICARAGUA PAYROLL TEST: {nombre} {apellido}")
                 print(f"{'='*80}")
 
@@ -204,73 +203,112 @@ def ejecutar_test_nomina_nicaragua(
                     "meta": {
                         "name": "IR Nicaragua - Método Acumulado",
                         "legal_reference": "Ley 891 - Art. 23 LCT",
-                        "calculation_method": "accumulated_average"
+                        "calculation_method": "accumulated_average",
                     },
                     "inputs": [
-                        {"name": "salario_bruto", "type": "decimal",
-                         "source": "empleado.salario_base"},
-                        {"name": "salario_bruto_acumulado", "type": "decimal",
-                         "source": "acumulado.salario_bruto_acumulado"},
-                        {"name": "salario_acumulado_mes", "type": "decimal",
-                         "source": "acumulado.salario_acumulado_mes"},
-                        {"name": "deducciones_antes_impuesto_acumulado",
-                         "type": "decimal",
-                         "source": "acumulado.deducciones_antes_impuesto_acumulado"},
-                        {"name": "ir_retenido_acumulado", "type": "decimal",
-                         "source": "acumulado.impuesto_retenido_acumulado"},
-                        {"name": "meses_trabajados", "type": "integer",
-                         "source": "acumulado.periodos_procesados"},
-                        {"name": "salario_inicial_acumulado", "type": "decimal",
-                         "source": "empleado.salario_acumulado",
-                         "description": "Pre-system accumulated salary for mid-year implementations"},
-                        {"name": "impuesto_inicial_acumulado", "type": "decimal",
-                         "source": "empleado.impuesto_acumulado",
-                         "description": "Pre-system accumulated tax for mid-year implementations"}
+                        {"name": "salario_bruto", "type": "decimal", "source": "empleado.salario_base"},
+                        {
+                            "name": "salario_bruto_acumulado",
+                            "type": "decimal",
+                            "source": "acumulado.salario_bruto_acumulado",
+                        },
+                        {
+                            "name": "salario_acumulado_mes",
+                            "type": "decimal",
+                            "source": "acumulado.salario_acumulado_mes",
+                        },
+                        {
+                            "name": "deducciones_antes_impuesto_acumulado",
+                            "type": "decimal",
+                            "source": "acumulado.deducciones_antes_impuesto_acumulado",
+                        },
+                        {
+                            "name": "ir_retenido_acumulado",
+                            "type": "decimal",
+                            "source": "acumulado.impuesto_retenido_acumulado",
+                        },
+                        {"name": "meses_trabajados", "type": "integer", "source": "acumulado.periodos_procesados"},
+                        {
+                            "name": "salario_inicial_acumulado",
+                            "type": "decimal",
+                            "source": "empleado.salario_acumulado",
+                            "description": "Pre-system accumulated salary for mid-year implementations",
+                        },
+                        {
+                            "name": "impuesto_inicial_acumulado",
+                            "type": "decimal",
+                            "source": "empleado.impuesto_acumulado",
+                            "description": "Pre-system accumulated tax for mid-year implementations",
+                        },
                     ],
                     "steps": [
-                        {"name": "inss_mes", "type": "calculation",
-                         "formula": "salario_bruto * 0.07", "output": "inss_mes"},
-                        {"name": "salario_neto_mes", "type": "calculation",
-                         "formula": "salario_bruto - inss_mes",
-                         "output": "salario_neto_mes"},
-                        {"name": "salario_neto_total", "type": "calculation",
-                         "formula": "(salario_bruto_acumulado + salario_bruto) - "
-                                    "(deducciones_antes_impuesto_acumulado + inss_mes)",
-                         "output": "salario_neto_total"},
-                        {"name": "meses_totales", "type": "calculation",
-                         "formula": "meses_trabajados + 1",
-                         "output": "meses_totales"},
-                        {"name": "promedio_mensual", "type": "calculation",
-                         "formula": "salario_neto_total / meses_totales",
-                         "output": "promedio_mensual"},
-                        {"name": "expectativa_anual", "type": "calculation",
-                         "formula": "promedio_mensual * 12",
-                         "output": "expectativa_anual"},
-                        {"name": "ir_anual", "type": "tax_lookup",
-                         "table": "tabla_ir", "input": "expectativa_anual",
-                         "output": "ir_anual"},
-                        {"name": "ir_proporcional", "type": "calculation",
-                         "formula": "(ir_anual / 12) * meses_totales",
-                         "output": "ir_proporcional"},
-                        {"name": "ir_final", "type": "calculation",
-                         "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)",
-                         "output": "ir_final"}
+                        {
+                            "name": "inss_mes",
+                            "type": "calculation",
+                            "formula": "salario_bruto * 0.07",
+                            "output": "inss_mes",
+                        },
+                        {
+                            "name": "salario_neto_mes",
+                            "type": "calculation",
+                            "formula": "salario_bruto - inss_mes",
+                            "output": "salario_neto_mes",
+                        },
+                        {
+                            "name": "salario_neto_total",
+                            "type": "calculation",
+                            "formula": "(salario_bruto_acumulado + salario_bruto) - "
+                            "(deducciones_antes_impuesto_acumulado + inss_mes)",
+                            "output": "salario_neto_total",
+                        },
+                        {
+                            "name": "meses_totales",
+                            "type": "calculation",
+                            "formula": "meses_trabajados + 1",
+                            "output": "meses_totales",
+                        },
+                        {
+                            "name": "promedio_mensual",
+                            "type": "calculation",
+                            "formula": "salario_neto_total / meses_totales",
+                            "output": "promedio_mensual",
+                        },
+                        {
+                            "name": "expectativa_anual",
+                            "type": "calculation",
+                            "formula": "promedio_mensual * 12",
+                            "output": "expectativa_anual",
+                        },
+                        {
+                            "name": "ir_anual",
+                            "type": "tax_lookup",
+                            "table": "tabla_ir",
+                            "input": "expectativa_anual",
+                            "output": "ir_anual",
+                        },
+                        {
+                            "name": "ir_proporcional",
+                            "type": "calculation",
+                            "formula": "(ir_anual / 12) * meses_totales",
+                            "output": "ir_proporcional",
+                        },
+                        {
+                            "name": "ir_final",
+                            "type": "calculation",
+                            "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)",
+                            "output": "ir_final",
+                        },
                     ],
                     "tax_tables": {
                         "tabla_ir": [
-                            {"min": 0, "max": 100000, "rate": 0.00,
-                             "fixed": 0, "over": 0},
-                            {"min": 100000, "max": 200000, "rate": 0.15,
-                             "fixed": 0, "over": 100000},
-                            {"min": 200000, "max": 350000, "rate": 0.20,
-                             "fixed": 15000, "over": 200000},
-                            {"min": 350000, "max": 500000, "rate": 0.25,
-                             "fixed": 45000, "over": 350000},
-                            {"min": 500000, "max": None, "rate": 0.30,
-                             "fixed": 82500, "over": 500000}
+                            {"min": 0, "max": 100000, "rate": 0.00, "fixed": 0, "over": 0},
+                            {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                            {"min": 200000, "max": 350000, "rate": 0.20, "fixed": 15000, "over": 200000},
+                            {"min": 350000, "max": 500000, "rate": 0.25, "fixed": 45000, "over": 350000},
+                            {"min": 500000, "max": None, "rate": 0.30, "fixed": 82500, "over": 500000},
                         ]
                     },
-                    "output": "ir_final"
+                    "output": "ir_final",
                 }
             else:
                 if verbose:
@@ -382,7 +420,7 @@ def ejecutar_test_nomina_nicaragua(
                     if salario_ocasional > 0:
                         print(f"Salario Ocasional: C$ {salario_ocasional:,.2f}")
 
-                # Update employee salary for this month  
+                # Update employee salary for this month
                 empleado = db_session.query(Empleado).get(empleado_id)
                 empleado.salario_base = salario_ordinario
                 db_session.commit()
@@ -418,32 +456,26 @@ def ejecutar_test_nomina_nicaragua(
                 db_session.add(PlanillaEmpleado(planilla_id=planilla.id, empleado_id=empleado_id))
 
                 # Link deductions to planilla
-                db_session.add(PlanillaDeduccion(
-                    planilla_id=planilla.id,
-                    deduccion_id=inss_deduccion_id
-                ))
-                db_session.add(PlanillaDeduccion(
-                    planilla_id=planilla.id,
-                    deduccion_id=ir_deduccion_id
-                ))
+                db_session.add(PlanillaDeduccion(planilla_id=planilla.id, deduccion_id=inss_deduccion_id))
+                db_session.add(PlanillaDeduccion(planilla_id=planilla.id, deduccion_id=ir_deduccion_id))
 
                 # Link ReglaCalculo to planilla
-                db_session.add(PlanillaReglaCalculo(
-                    planilla_id=planilla.id,
-                    regla_calculo_id=regla_ir_id
-                ))
+                db_session.add(PlanillaReglaCalculo(planilla_id=planilla.id, regla_calculo_id=regla_ir_id))
 
                 # Link occasional income if present
                 if salario_ocasional > 0 and percepcion_ocasional:
-                    db_session.add(PlanillaIngreso(
-                        planilla_id=planilla.id,
-                        percepcion_id=percepcion_ocasional.id,
-                    ))
+                    db_session.add(
+                        PlanillaIngreso(
+                            planilla_id=planilla.id,
+                            percepcion_id=percepcion_ocasional.id,
+                        )
+                    )
 
                 db_session.commit()
 
                 # Execute payroll using the convenience function that handles eager loading
                 from coati_payroll.nomina_engine import ejecutar_nomina
+
                 planilla_id = planilla.id
                 nomina, errors, warnings = ejecutar_nomina(
                     planilla_id=planilla_id,
@@ -464,17 +496,27 @@ def ejecutar_test_nomina_nicaragua(
                 db_session.commit()
 
                 # Get accumulated values after this month
-                acumulado = db_session.query(AcumuladoAnual).filter_by(
-                    empleado_id=empleado.id,
-                    tipo_planilla_id=tipo_planilla.id,
-                ).first()
+                acumulado = (
+                    db_session.query(AcumuladoAnual)
+                    .filter_by(
+                        empleado_id=empleado.id,
+                        tipo_planilla_id=tipo_planilla.id,
+                    )
+                    .first()
+                )
 
                 # Calculate actual INSS and IR from nomina
                 nomina = db_session.query(Nomina).filter_by(planilla_id=planilla.id).first()
-                nomina_empleado = db_session.query(NominaEmpleado).filter_by(
-                    nomina_id=nomina.id,
-                    empleado_id=empleado.id,
-                ).first() if nomina else None
+                nomina_empleado = (
+                    db_session.query(NominaEmpleado)
+                    .filter_by(
+                        nomina_id=nomina.id,
+                        empleado_id=empleado.id,
+                    )
+                    .first()
+                    if nomina
+                    else None
+                )
 
                 actual_inss = Decimal("0")
                 actual_ir = Decimal("0")
@@ -506,16 +548,10 @@ def ejecutar_test_nomina_nicaragua(
                 results["results"].append(month_result)
 
                 if verbose:
-                    inss_symbol = '✓' if month_result['inss_match'] else '✗'
-                    ir_symbol = '✓' if month_result['ir_match'] else '✗'
-                    print(
-                        f"INSS Esperado: C$ {expected_inss:,.2f} | "
-                        f"Actual: C$ {actual_inss:,.2f} | {inss_symbol}"
-                    )
-                    print(
-                        f"IR Esperado:   C$ {expected_ir:,.2f} | "
-                        f"Actual: C$ {actual_ir:,.2f} | {ir_symbol}"
-                    )
+                    inss_symbol = "✓" if month_result["inss_match"] else "✗"
+                    ir_symbol = "✓" if month_result["ir_match"] else "✗"
+                    print(f"INSS Esperado: C$ {expected_inss:,.2f} | " f"Actual: C$ {actual_inss:,.2f} | {inss_symbol}")
+                    print(f"IR Esperado:   C$ {expected_ir:,.2f} | " f"Actual: C$ {actual_ir:,.2f} | {ir_symbol}")
                     if acumulado:
                         print(f"Acumulado Bruto: C$ {acumulado.salario_bruto_acumulado:,.2f}")
                         print(f"Períodos: {acumulado.periodos_procesados}")
@@ -563,8 +599,17 @@ def ejecutar_test_nomina_nicaragua(
 def _get_month_name(month: int) -> str:
     """Get Spanish month name."""
     months = {
-        1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
-        5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
-        9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+        1: "Enero",
+        2: "Febrero",
+        3: "Marzo",
+        4: "Abril",
+        5: "Mayo",
+        6: "Junio",
+        7: "Julio",
+        8: "Agosto",
+        9: "Septiembre",
+        10: "Octubre",
+        11: "Noviembre",
+        12: "Diciembre",
     }
     return months.get(month, f"Mes {month}")

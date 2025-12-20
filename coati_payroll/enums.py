@@ -63,6 +63,8 @@ class NominaEstado(StrEnum):
     GENERADO = "generado"  # Generated but not approved
     APROBADO = "aprobado"  # Approved and ready to apply
     APLICADO = "aplicado"  # Applied/executed
+    PAGADO = "pagado"  # Paid out (synonym for APLICADO, for compatibility)
+    ANULADO = "anulado"  # Cancelled/voided
     ERROR = "error"  # Error during calculation
 
 

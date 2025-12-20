@@ -106,7 +106,7 @@ def to_decimal(value: Any) -> Decimal:
     """Safely convert a value to Decimal.
 
     Args:
-        value: Value to convert (int, float, str, Decimal)
+        value: Value to convert (int, float, str, Decimal, bool)
 
     Returns:
         Decimal representation of the value
@@ -118,6 +118,10 @@ def to_decimal(value: Any) -> Decimal:
         return Decimal("0")
     if isinstance(value, Decimal):
         return value
+    # Handle boolean values explicitly (True -> 1, False -> 0)
+    # Must check before int/str conversion since bool is a subclass of int
+    if isinstance(value, bool):
+        return Decimal("1") if value else Decimal("0")
     try:
         return Decimal(str(value))
     except (InvalidOperation, ValueError) as e:
