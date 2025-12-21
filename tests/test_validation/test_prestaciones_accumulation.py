@@ -185,29 +185,48 @@ def test_prestaciones_accumulation_workflow(app, db_session):
 
         # ===== ACTION PHASE: Execute multiple payrolls =====
 
-        # Calculate expected amounts based on actual calendar days
-        # The payroll engine prorates salary based on days in period vs. standard month (30 days)
-        def calculate_prorated_prestacion(base_salary, percentage, days_in_period, standard_days=30):
-            """Calculate prestacion with prorated salary."""
-            prorated_salary = base_salary / Decimal(str(standard_days)) * Decimal(str(days_in_period))
-            return prorated_salary * (percentage / Decimal("100"))
+        # Calculate expected amounts for prestaciones
+        # IMPORTANT: Full calendar months (1st to last day) use the full base salary
+        # WITHOUT proration, regardless of whether the month has 28, 29, 30, or 31 days.
+        # Only partial periods are prorated using dias=30 as divisor.
+        import calendar
+        
+        def is_full_calendar_month(inicio, fin):
+            """Check if the period spans a full calendar month (1st to last day)."""
+            _, last_day = calendar.monthrange(inicio.year, inicio.month)
+            return (inicio.day == 1 and 
+                    fin.day == last_day and 
+                    inicio.month == fin.month and 
+                    inicio.year == fin.year)
+        
+        def calculate_prestacion_amount(base_salary, percentage, inicio, fin, standard_days=30):
+            """Calculate prestacion amount considering full month vs partial period logic."""
+            if is_full_calendar_month(inicio, fin):
+                # Full calendar month: use full salary without proration
+                return base_salary * (percentage / Decimal("100"))
+            else:
+                # Partial period: prorate based on days
+                days_in_period = (fin - inicio).days + 1
+                prorated_salary = base_salary / Decimal(str(standard_days)) * Decimal(str(days_in_period))
+                return prorated_salary * (percentage / Decimal("100"))
 
-        # Execute 3 consecutive monthly payrolls
+        # Execute 3 consecutive monthly payrolls (all full calendar months)
         payroll_dates = [
-            (date(2024, 1, 1), date(2024, 1, 31), 31),  # January 2024 - 31 days
-            (date(2024, 2, 1), date(2024, 2, 29), 29),  # February 2024 - 29 days (leap year)
-            (date(2024, 3, 1), date(2024, 3, 31), 31),  # March 2024 - 31 days
+            (date(2024, 1, 1), date(2024, 1, 31), 31),  # January 2024 - full month
+            (date(2024, 2, 1), date(2024, 2, 29), 29),  # February 2024 - full month (leap year)
+            (date(2024, 3, 1), date(2024, 3, 31), 31),  # March 2024 - full month
         ]
 
         # Pre-calculate expected amounts for each period
+        # All are full calendar months, so no proration - each uses base salary * percentage
         expected_amounts_anual = []
         expected_amounts_vida = []
         for inicio, fin, days in payroll_dates:
-            amount_anual = calculate_prorated_prestacion(
-                empleado.salario_base, prestacion_anual.porcentaje, days, tipo_planilla.dias
+            amount_anual = calculate_prestacion_amount(
+                empleado.salario_base, prestacion_anual.porcentaje, inicio, fin, tipo_planilla.dias
             )
-            amount_vida = calculate_prorated_prestacion(
-                empleado.salario_base, prestacion_vida.porcentaje, days, tipo_planilla.dias
+            amount_vida = calculate_prestacion_amount(
+                empleado.salario_base, prestacion_vida.porcentaje, inicio, fin, tipo_planilla.dias
             )
             expected_amounts_anual.append(amount_anual)
             expected_amounts_vida.append(amount_vida)
