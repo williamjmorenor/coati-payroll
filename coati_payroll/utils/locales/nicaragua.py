@@ -144,54 +144,70 @@ def ejecutar_test_nomina_nicaragua(
 
             # ===== SETUP PHASE =====
 
-            # Create currency (Córdoba)
-            nio = Moneda(
-                codigo="NIO",
-                nombre="Córdoba Nicaragüense",
-                simbolo="C$",
-                activo=True,
-            )
-            db_session.add(nio)
-            db_session.flush()
+            # Create currency (Córdoba) - verificar si ya existe
+            nio = db_session.query(Moneda).filter_by(codigo="NIO").first()
+            if not nio:
+                nio = Moneda(
+                    codigo="NIO",
+                    nombre="Córdoba Nicaragüense",
+                    simbolo="C$",
+                    activo=True,
+                )
+                db_session.add(nio)
+                db_session.flush()
+            else:
+                db_session.flush()
 
-            # Create company
-            empresa = Empresa(
-                codigo="NIC-TEST",
-                razon_social="Empresa Test Nicaragua S.A.",
-                nombre_comercial="Test Nicaragua",
-                ruc="J-99999999-9",
-                activo=True,
-            )
-            db_session.add(empresa)
-            db_session.flush()
+            # Create company - verificar si ya existe
+            empresa = db_session.query(Empresa).filter_by(codigo="NIC-TEST").first()
+            if not empresa:
+                empresa = Empresa(
+                    codigo="NIC-TEST",
+                    razon_social="Empresa Test Nicaragua S.A.",
+                    nombre_comercial="Test Nicaragua",
+                    ruc="J-99999999-9",
+                    activo=True,
+                )
+                db_session.add(empresa)
+                db_session.flush()
+            else:
+                db_session.flush()
 
-            # Create payroll type (Monthly - Nicaragua fiscal year)
-            tipo_planilla = TipoPlanilla(
-                codigo="MENSUAL_NIC",
-                descripcion="Nómina Mensual Nicaragua",
-                periodicidad="mensual",
-                dias=30,
-                periodos_por_anio=12,
-                mes_inicio_fiscal=fiscal_year_start.month,
-                dia_inicio_fiscal=fiscal_year_start.day,
-                acumula_anual=True,
-                activo=True,
-            )
-            db_session.add(tipo_planilla)
-            db_session.flush()
+            # Create payroll type (Monthly - Nicaragua fiscal year) - verificar si ya existe
+            tipo_planilla = db_session.query(TipoPlanilla).filter_by(codigo="MENSUAL_NIC").first()
+            if not tipo_planilla:
+                tipo_planilla = TipoPlanilla(
+                    codigo="MENSUAL_NIC",
+                    descripcion="Nómina Mensual Nicaragua",
+                    periodicidad="mensual",
+                    dias=30,
+                    periodos_por_anio=12,
+                    mes_inicio_fiscal=fiscal_year_start.month,
+                    dia_inicio_fiscal=fiscal_year_start.day,
+                    acumula_anual=True,
+                    activo=True,
+                )
+                db_session.add(tipo_planilla)
+                db_session.flush()
+            else:
+                db_session.flush()
 
-            # Create INSS deduction (7% of gross salary including perceptions)
-            inss_deduccion = Deduccion(
-                codigo="INSS_NIC",
-                nombre="INSS Laboral 7%",
-                descripcion="Aporte al seguro social del empleado",
-                formula_tipo="porcentaje_bruto",  # Use gross salary (base + perceptions)
-                porcentaje=Decimal("7.00"),
-                antes_impuesto=True,
-                activo=True,
-            )
-            db_session.add(inss_deduccion)
-            db_session.flush()
+            # Create INSS deduction (7% of gross salary including perceptions) - verificar si ya existe
+            inss_deduccion = db_session.query(Deduccion).filter_by(codigo="INSS_NIC").first()
+            if not inss_deduccion:
+                inss_deduccion = Deduccion(
+                    codigo="INSS_NIC",
+                    nombre="INSS Laboral 7%",
+                    descripcion="Aporte al seguro social del empleado",
+                    formula_tipo="porcentaje_bruto",  # Use gross salary (base + perceptions)
+                    porcentaje=Decimal("7.00"),
+                    antes_impuesto=True,
+                    activo=True,
+                )
+                db_session.add(inss_deduccion)
+                db_session.flush()
+            else:
+                db_session.flush()
 
             # Create ReglaCalculo for IR Nicaragua (Progressive Tax Table)
             # This JSON schema represents what a user would configure through the UI
@@ -316,52 +332,66 @@ def ejecutar_test_nomina_nicaragua(
                     print(f"\nUsing custom ReglaCalculo schema: {schema_name}")
                 ir_json_schema = regla_calculo_schema
 
-            regla_ir = ReglaCalculo(
-                codigo="IR_NICARAGUA",
-                nombre="IR Nicaragua - Tabla Progresiva 2025",
-                descripcion=(
-                    "Impuesto sobre la Renta con método acumulado "
-                    "según Art. 19 numeral 6 de la Ley de Concertación Tributaria"
-                ),
-                jurisdiccion="Nicaragua",
-                moneda_referencia="NIO",
-                version="1.0.0",
-                tipo_regla="impuesto",
-                esquema_json=ir_json_schema,
-                vigente_desde=fiscal_year_start,
-                vigente_hasta=None,
-                activo=True,
-            )
-            db_session.add(regla_ir)
-            db_session.flush()
+            # Create ReglaCalculo - verificar si ya existe
+            regla_ir = db_session.query(ReglaCalculo).filter_by(codigo="IR_NICARAGUA").first()
+            if not regla_ir:
+                regla_ir = ReglaCalculo(
+                    codigo="IR_NICARAGUA",
+                    nombre="IR Nicaragua - Tabla Progresiva 2025",
+                    descripcion=(
+                        "Impuesto sobre la Renta con método acumulado "
+                        "según Art. 19 numeral 6 de la Ley de Concertación Tributaria"
+                    ),
+                    jurisdiccion="Nicaragua",
+                    moneda_referencia="NIO",
+                    version="1.0.0",
+                    tipo_regla="impuesto",
+                    esquema_json=ir_json_schema,
+                    vigente_desde=fiscal_year_start,
+                    vigente_hasta=None,
+                    activo=True,
+                )
+                db_session.add(regla_ir)
+                db_session.flush()
+            else:
+                db_session.flush()
 
-            # Create IR deduction linked to ReglaCalculo
-            ir_deduccion = Deduccion(
-                codigo="IR_NIC",
-                nombre="Impuesto sobre la Renta Nicaragua",
-                descripcion="IR con método acumulado Art. 19 num. 6",
-                formula_tipo="regla_calculo",
-                es_impuesto=True,
-                activo=True,
-            )
-            db_session.add(ir_deduccion)
-            db_session.flush()
+            # Create IR deduction linked to ReglaCalculo - verificar si ya existe
+            ir_deduccion = db_session.query(Deduccion).filter_by(codigo="IR_NIC").first()
+            if not ir_deduccion:
+                ir_deduccion = Deduccion(
+                    codigo="IR_NIC",
+                    nombre="Impuesto sobre la Renta Nicaragua",
+                    descripcion="IR con método acumulado Art. 19 num. 6",
+                    formula_tipo="regla_calculo",
+                    es_impuesto=True,
+                    activo=True,
+                )
+                db_session.add(ir_deduccion)
+                db_session.flush()
+            else:
+                db_session.flush()
 
             # Link ReglaCalculo to Deduccion
-            regla_ir.deduccion_id = ir_deduccion.id
-            db_session.flush()
+            if not regla_ir.deduccion_id:
+                regla_ir.deduccion_id = ir_deduccion.id
+                db_session.flush()
 
-            # Create test user
-            usuario = Usuario()
-            usuario.usuario = "test_nic"
-            usuario.nombre = "Test"
-            usuario.apellido = "Nicaragua"
-            usuario.correo_electronico = "test@nicaragua.test"
-            usuario.acceso = proteger_passwd("test-password")
-            usuario.tipo = TipoUsuario.ADMIN
-            usuario.activo = True
-            db_session.add(usuario)
-            db_session.flush()
+            # Create test user - verificar si ya existe
+            usuario = db_session.query(Usuario).filter_by(usuario="test_nic").first()
+            if not usuario:
+                usuario = Usuario()
+                usuario.usuario = "test_nic"
+                usuario.nombre = "Test"
+                usuario.apellido = "Nicaragua"
+                usuario.correo_electronico = "test@nicaragua.test"
+                usuario.acceso = proteger_passwd("test-password")
+                usuario.tipo = TipoUsuario.ADMIN
+                usuario.activo = True
+                db_session.add(usuario)
+                db_session.flush()
+            else:
+                db_session.flush()
 
             # Create employee
             empleado = Empleado(
@@ -381,18 +411,22 @@ def ejecutar_test_nomina_nicaragua(
             db_session.add(empleado)
             db_session.flush()
 
-            # Create perceptions for occasional income if needed
+            # Create perceptions for occasional income if needed - verificar si ya existe
             percepcion_ocasional = None
             if any(m.get("salario_ocasional", 0) > 0 for m in months_data):
-                percepcion_ocasional = Percepcion(
-                    codigo="BONO_NIC",
-                    nombre="Bono/Ingreso Ocasional",
-                    descripcion="Ingresos ocasionales gravables",
-                    gravable=True,
-                    activo=True,
-                )
-                db_session.add(percepcion_ocasional)
-                db_session.flush()
+                percepcion_ocasional = db_session.query(Percepcion).filter_by(codigo="BONO_NIC").first()
+                if not percepcion_ocasional:
+                    percepcion_ocasional = Percepcion(
+                        codigo="BONO_NIC",
+                        nombre="Bono/Ingreso Ocasional",
+                        descripcion="Ingresos ocasionales gravables",
+                        gravable=True,
+                        activo=True,
+                    )
+                    db_session.add(percepcion_ocasional)
+                    db_session.flush()
+                else:
+                    db_session.flush()
 
             db_session.flush()
 
@@ -438,19 +472,28 @@ def ejecutar_test_nomina_nicaragua(
                     next_month = date(fiscal_year_start.year, month_num + 1, 1)
                     periodo_fin = next_month - timedelta(days=1)
 
-                # Create planilla for this month
-                planilla = Planilla(
-                    nombre=f"NIC-{fiscal_year_start.year}-{month_num:02d}",
-                    descripcion=f"Nómina {_get_month_name(month_num)} {fiscal_year_start.year}",
-                    tipo_planilla_id=tipo_planilla_id_stored,
-                    empresa_id=empresa_id,
-                    moneda_id=nio_id,
-                    periodo_fiscal_inicio=fiscal_year_start,
-                    periodo_fiscal_fin=date(fiscal_year_start.year, 12, 31),
-                    activo=True,
-                )
-                db_session.add(planilla)
-                db_session.flush()
+                # Create planilla for this month - usar nombre único basado en código de empleado
+                # para evitar conflictos cuando se ejecutan múltiples ejemplos
+                codigo_empleado = employee_config.get("codigo", "TEST")
+                planilla_nombre = f"NIC-{codigo_empleado}-{fiscal_year_start.year}-{month_num:02d}"
+
+                # Verificar si ya existe una planilla con este nombre
+                planilla_existente = db_session.query(Planilla).filter_by(nombre=planilla_nombre).first()
+                if planilla_existente:
+                    planilla = planilla_existente
+                else:
+                    planilla = Planilla(
+                        nombre=planilla_nombre,
+                        descripcion=f"Nómina {_get_month_name(month_num)} {fiscal_year_start.year} - {codigo_empleado}",
+                        tipo_planilla_id=tipo_planilla_id_stored,
+                        empresa_id=empresa_id,
+                        moneda_id=nio_id,
+                        periodo_fiscal_inicio=fiscal_year_start,
+                        periodo_fiscal_fin=date(fiscal_year_start.year, 12, 31),
+                        activo=True,
+                    )
+                    db_session.add(planilla)
+                    db_session.flush()
 
                 # Link employee to planilla
                 db_session.add(PlanillaEmpleado(planilla_id=planilla.id, empleado_id=empleado_id))

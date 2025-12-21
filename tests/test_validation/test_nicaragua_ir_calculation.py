@@ -38,12 +38,12 @@ from coati_payroll.utils.locales.nicaragua import ejecutar_test_nomina_nicaragua
 def test_nicaragua_full_year_variable_income(app, db_session):
     """
     Test Nicaragua payroll for full 12-month year with variable income.
-    
+
     Validates that the system correctly calculates:
     - INSS (7%) for all months
     - IR using accumulated average method (Art. 19 numeral 6 LCT)
     - Final IR annual total of C$ 34,799.00
-    
+
     Data is based on real payroll data with:
     - Base salary: C$ 25,000 per month
     - Variable incomes: commissions, bonuses, incentives
@@ -151,16 +151,16 @@ def test_nicaragua_full_year_variable_income(app, db_session):
 
     # Verify all 12 months were processed
     assert len(results["results"]) == 12, f"Expected 12 months, got {len(results['results'])}"
-    
+
     # Verify accumulated values
     assert results["accumulated"]["periodos_procesados"] == 12, "Should have processed 12 periods"
     assert results["accumulated"]["salario_bruto_acumulado"] > 0, "Should have accumulated gross salary"
-    
+
     # Verify total IR is approximately 34,799
     total_ir = results["accumulated"]["impuesto_retenido_acumulado"]
     expected_ir = 34799.00
     difference = abs(total_ir - expected_ir)
-    
+
     print(f"\n{'='*80}")
     print("VALIDACIÓN FINAL - CÁLCULO DE IR EN NICARAGUA")
     print(f"{'='*80}")
@@ -168,10 +168,10 @@ def test_nicaragua_full_year_variable_income(app, db_session):
     print(f"IR Total Esperado:  C$ {expected_ir:,.2f}")
     print(f"Diferencia:         C$ {difference:,.2f}")
     print(f"{'='*80}")
-    
+
     # Assert with strict tolerance - calculations must be exact
     assert difference < 100, f"IR calculation differs by C$ {difference:.2f} from expected C$ {expected_ir}"
-    
+
     print("\n✅ VALIDACIÓN EXITOSA:")
     print(f"   - El sistema calcula correctamente el IR anual de C$ {total_ir:,.2f}")
     print(f"   - Método acumulado (Art. 19 numeral 6 LCT) implementado correctamente")

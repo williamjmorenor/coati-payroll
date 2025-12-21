@@ -18,7 +18,7 @@ This test validates the Nicaragua IR (Income Tax) calculation using the
 accumulated average method (Art. 19 numeral 6 LCT) with a 5-tier progressive
 tax table (0%, 15%, 20%, 25%, 30%).
 
-Test validates system execution and accumulated totals without strict 
+Test validates system execution and accumulated totals without strict
 per-month IR validation while calculation precision is being refined.
 
 Target: Annual IR = C$ 34,799.00 for variable income over 12 months.
@@ -44,18 +44,78 @@ TEST_DATA_12_MONTHS = {
     },
     "fiscal_year_start": "2025-01-01",
     "months": [
-        {"month": 1, "salario_ordinario": Decimal("27000.00"), "expected_inss": Decimal("1890.00"), "expected_ir": Decimal("0.00")},
-        {"month": 2, "salario_ordinario": Decimal("25500.00"), "expected_inss": Decimal("1785.00"), "expected_ir": Decimal("0.00")},
-        {"month": 3, "salario_ordinario": Decimal("25000.00"), "expected_inss": Decimal("1750.00"), "expected_ir": Decimal("0.00")},
-        {"month": 4, "salario_ordinario": Decimal("25000.00"), "expected_inss": Decimal("1750.00"), "expected_ir": Decimal("0.00")},
-        {"month": 5, "salario_ordinario": Decimal("25000.00"), "expected_inss": Decimal("1750.00"), "expected_ir": Decimal("0.00")},
-        {"month": 6, "salario_ordinario": Decimal("26000.00"), "expected_inss": Decimal("1820.00"), "expected_ir": Decimal("0.00")},
-        {"month": 7, "salario_ordinario": Decimal("25000.00"), "expected_inss": Decimal("1750.00"), "expected_ir": Decimal("0.00")},
-        {"month": 8, "salario_ordinario": Decimal("27000.00"), "expected_inss": Decimal("1890.00"), "expected_ir": Decimal("0.00")},
-        {"month": 9, "salario_ordinario": Decimal("25000.00"), "expected_inss": Decimal("1750.00"), "expected_ir": Decimal("0.00")},
-        {"month": 10, "salario_ordinario": Decimal("40000.00"), "expected_inss": Decimal("2800.00"), "expected_ir": Decimal("0.00")},
-        {"month": 11, "salario_ordinario": Decimal("25000.00"), "expected_inss": Decimal("1750.00"), "expected_ir": Decimal("0.00")},
-        {"month": 12, "salario_ordinario": Decimal("25000.00"), "expected_inss": Decimal("1750.00"), "expected_ir": Decimal("0.00")},
+        {
+            "month": 1,
+            "salario_ordinario": Decimal("27000.00"),
+            "expected_inss": Decimal("1890.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 2,
+            "salario_ordinario": Decimal("25500.00"),
+            "expected_inss": Decimal("1785.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 3,
+            "salario_ordinario": Decimal("25000.00"),
+            "expected_inss": Decimal("1750.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 4,
+            "salario_ordinario": Decimal("25000.00"),
+            "expected_inss": Decimal("1750.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 5,
+            "salario_ordinario": Decimal("25000.00"),
+            "expected_inss": Decimal("1750.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 6,
+            "salario_ordinario": Decimal("26000.00"),
+            "expected_inss": Decimal("1820.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 7,
+            "salario_ordinario": Decimal("25000.00"),
+            "expected_inss": Decimal("1750.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 8,
+            "salario_ordinario": Decimal("27000.00"),
+            "expected_inss": Decimal("1890.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 9,
+            "salario_ordinario": Decimal("25000.00"),
+            "expected_inss": Decimal("1750.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 10,
+            "salario_ordinario": Decimal("40000.00"),
+            "expected_inss": Decimal("2800.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 11,
+            "salario_ordinario": Decimal("25000.00"),
+            "expected_inss": Decimal("1750.00"),
+            "expected_ir": Decimal("0.00"),
+        },
+        {
+            "month": 12,
+            "salario_ordinario": Decimal("25000.00"),
+            "expected_inss": Decimal("1750.00"),
+            "expected_ir": Decimal("0.00"),
+        },
     ],
 }
 

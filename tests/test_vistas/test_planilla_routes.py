@@ -293,9 +293,7 @@ def test_planilla_new_get_displays_form(app, client, admin_user, db_session, tip
         assert b"nombre" in response.data or b"Nombre" in response.data
 
 
-def test_planilla_new_post_creates_planilla(
-    app, client, admin_user, db_session, tipo_planilla, moneda, empresa
-):
+def test_planilla_new_post_creates_planilla(app, client, admin_user, db_session, tipo_planilla, moneda, empresa):
     """Test that POST /planilla/new creates a new planilla."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
@@ -321,9 +319,7 @@ def test_planilla_new_post_creates_planilla(
         # Verify planilla was created
         from coati_payroll.model import Planilla, db
 
-        planilla = db_session.execute(
-            db.select(Planilla).filter_by(nombre="Nueva Planilla")
-        ).scalar_one_or_none()
+        planilla = db_session.execute(db.select(Planilla).filter_by(nombre="Nueva Planilla")).scalar_one_or_none()
         assert planilla is not None
         assert planilla.descripcion == "Descripción de prueba"
 
@@ -481,9 +477,7 @@ def test_remove_empleado_from_planilla(app, client, admin_user, db_session, plan
         db_session.refresh(association)
 
         # Now remove it
-        response = client.post(
-            f"/planilla/{planilla.id}/empleado/{association.id}/remove", follow_redirects=False
-        )
+        response = client.post(f"/planilla/{planilla.id}/empleado/{association.id}/remove", follow_redirects=False)
         assert response.status_code == 302
 
         # Verify it was removed
@@ -530,9 +524,7 @@ def test_remove_percepcion_from_planilla(app, client, admin_user, db_session, pl
         db_session.refresh(association)
 
         # Now remove it
-        response = client.post(
-            f"/planilla/{planilla.id}/percepcion/{association.id}/remove", follow_redirects=False
-        )
+        response = client.post(f"/planilla/{planilla.id}/percepcion/{association.id}/remove", follow_redirects=False)
         assert response.status_code == 302
 
         # Verify it was removed
@@ -581,9 +573,7 @@ def test_remove_deduccion_from_planilla(app, client, admin_user, db_session, pla
         db_session.refresh(association)
 
         # Now remove it
-        response = client.post(
-            f"/planilla/{planilla.id}/deduccion/{association.id}/remove", follow_redirects=False
-        )
+        response = client.post(f"/planilla/{planilla.id}/deduccion/{association.id}/remove", follow_redirects=False)
         assert response.status_code == 302
 
         # Verify it was removed
@@ -639,9 +629,7 @@ def test_add_prestacion_to_planilla(app, client, admin_user, db_session, planill
         from coati_payroll.model import PlanillaPrestacion, db
 
         association = db_session.execute(
-            db.select(PlanillaPrestacion).filter_by(
-                planilla_id=planilla.id, prestacion_id=prestacion.id
-            )
+            db.select(PlanillaPrestacion).filter_by(planilla_id=planilla.id, prestacion_id=prestacion.id)
         ).scalar_one_or_none()
         assert association is not None
 
@@ -667,9 +655,7 @@ def test_remove_prestacion_from_planilla(app, client, admin_user, db_session, pl
         db_session.refresh(association)
 
         # Now remove it
-        response = client.post(
-            f"/planilla/{planilla.id}/prestacion/{association.id}/remove", follow_redirects=False
-        )
+        response = client.post(f"/planilla/{planilla.id}/prestacion/{association.id}/remove", follow_redirects=False)
         assert response.status_code == 302
 
         # Verify it was removed
@@ -690,9 +676,7 @@ def test_add_regla_to_planilla(app, client, admin_user, db_session, planilla, re
         from coati_payroll.model import PlanillaReglaCalculo, db
 
         association = db_session.execute(
-            db.select(PlanillaReglaCalculo).filter_by(
-                planilla_id=planilla.id, regla_calculo_id=regla_calculo.id
-            )
+            db.select(PlanillaReglaCalculo).filter_by(planilla_id=planilla.id, regla_calculo_id=regla_calculo.id)
         ).scalar_one_or_none()
         assert association is not None
 
@@ -717,9 +701,7 @@ def test_remove_regla_from_planilla(app, client, admin_user, db_session, planill
         db_session.refresh(association)
 
         # Now remove it
-        response = client.post(
-            f"/planilla/{planilla.id}/regla/{association.id}/remove", follow_redirects=False
-        )
+        response = client.post(f"/planilla/{planilla.id}/regla/{association.id}/remove", follow_redirects=False)
         assert response.status_code == 302
 
         # Verify it was removed
@@ -829,9 +811,7 @@ def test_listar_novedades_displays(app, client, admin_user, db_session, planilla
         assert response.status_code == 200
 
 
-def test_nueva_novedad_get_displays_form(
-    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
-):
+def test_nueva_novedad_get_displays_form(app, client, admin_user, db_session, planilla, nomina, nomina_empleado):
     """Test that GET /planilla/<id>/nomina/<nomina_id>/novedades/new displays form."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
@@ -873,9 +853,7 @@ def test_nueva_novedad_post_creates_novedad(
         assert novedad.empleado_id == nomina_empleado.empleado_id
 
 
-def test_nueva_novedad_blocked_for_applied_nomina(
-    app, client, admin_user, db_session, planilla, empleado
-):
+def test_nueva_novedad_blocked_for_applied_nomina(app, client, admin_user, db_session, planilla, empleado):
     """Test that novedades cannot be added to an applied nomina."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
@@ -995,9 +973,7 @@ def test_editar_novedad_post_updates_novedad(
         assert updated_novedad.valor_cantidad == Decimal("750.00")
 
 
-def test_editar_novedad_blocked_for_applied_nomina(
-    app, client, admin_user, db_session, planilla, empleado, percepcion
-):
+def test_editar_novedad_blocked_for_applied_nomina(app, client, admin_user, db_session, planilla, empleado, percepcion):
     """Test that novedades cannot be edited in an applied nomina."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")

@@ -202,6 +202,68 @@ def aplicar_tabla_progresiva(renta_anual):
 | Base legal | No cumple Art. 19 numeral 6 | Cumple con LCT |
 | Salarios variables | Retiene incorrectamente | Retiene correctamente |
 
+### Manejo de Ingresos Ocasionales
+
+!!! note "Importante sobre Ingresos Ocasionales"
+    El schema JSON validado que se muestra en esta guía calcula el IR sobre el **salario bruto total**, que incluye automáticamente todas las percepciones configuradas en la planilla (salario base, horas extra, comisiones, bonos, incentivos, etc.).
+    
+    El sistema maneja los ingresos ocasionales como percepciones gravables que se suman al salario bruto antes de calcular el INSS y el IR. El método acumulado se aplica sobre el total de ingresos gravables del mes.
+    
+    **Configuración**: Los ingresos ocasionales (bonos, incentivos) deben configurarse como **Percepciones** en la planilla con la propiedad `gravable=True` para que se incluyan en el cálculo del IR.
+
+**Cómo Funciona:**
+
+1. **Salario Bruto del Mes** = Salario Base + Todas las Percepciones Gravable
+   - Incluye: salario base, horas extra, comisiones, bonos, incentivos, etc.
+   
+2. **INSS** = Salario Bruto Total × 7%
+
+3. **Salario Neto** = Salario Bruto Total - INSS
+
+4. **Método Acumulado**: Se acumula el salario neto de todos los meses y se calcula el promedio mensual
+
+5. **IR**: Se calcula sobre la expectativa anual proyectada usando el promedio acumulado
+
+**Ejemplo Práctico - Mes 1 (Enero):**
+
+**Ejemplo Práctico - Mes 1 (Enero):**
+
+```
+Datos:
+- Salario Base: C$ 25,000.00
+- Comisión (percepción gravable): C$ 1,000.00
+- Incentivo (percepción gravable): C$ 1,000.00
+- Salario Bruto Total: C$ 27,000.00
+
+Cálculo INSS:
+- INSS: C$ 1,890.00 (27,000 × 7%)
+
+Cálculo IR (método acumulado):
+- Salario Neto: C$ 25,110.00 (27,000 - 1,890)
+- Promedio Mensual: C$ 25,110.00 (mes 1)
+- Expectativa Anual: C$ 301,320.00
+- IR Anual: C$ 33,218.00
+- IR Proporcional: C$ 2,768.17 (33,218 / 12 × 1)
+- IR del Mes: C$ 2,768.17
+```
+
+**Ejemplo Práctico - Mes 10 (Octubre con Bono Grande):**
+
+```
+Datos:
+- Salario Base: C$ 25,000.00
+- Bono (percepción gravable): C$ 15,000.00
+- Salario Bruto Total: C$ 40,000.00
+
+Cálculo INSS:
+- INSS: C$ 2,800.00 (40,000 × 7%)
+
+Cálculo IR (método acumulado):
+- Salario Neto: C$ 37,200.00
+- (Considera todos los meses anteriores acumulados)
+- IR del Mes: C$ 5,356.67
+```
+
 ---
 
 ## Implementación Paso a Paso
@@ -308,7 +370,11 @@ from datetime import date
 import json
 
 # Esquema JSON completo - VALIDADO Y FUNCIONANDO
-# Este esquema produce cálculos exactos de IR según el método acumulado
+# Este esquema es idéntico al usado en coati_payroll/utils/locales/nicaragua.py
+# Produce cálculos exactos de IR según el método acumulado (Art. 19 numeral 6 LCT)
+# NOTA: Este schema calcula IR sobre el salario bruto total, que incluye percepciones ocasionales
+# si están configuradas como percepciones en la planilla. El sistema maneja automáticamente
+# el cálculo acumulado considerando todos los ingresos gravables del mes.
 ir_schema = {
     "meta": {
         "name": "IR Nicaragua - Método Acumulado",
@@ -317,24 +383,97 @@ ir_schema = {
     },
     "inputs": [
         {"name": "salario_bruto", "type": "decimal", "source": "empleado.salario_base"},
-        {"name": "salario_bruto_acumulado", "type": "decimal", "source": "acumulado.salario_bruto_acumulado"},
-        {"name": "salario_acumulado_mes", "type": "decimal", "source": "acumulado.salario_acumulado_mes"},
-        {"name": "deducciones_antes_impuesto_acumulado", "type": "decimal", "source": "acumulado.deducciones_antes_impuesto_acumulado"},
-        {"name": "ir_retenido_acumulado", "type": "decimal", "source": "acumulado.impuesto_retenido_acumulado"},
+        {
+            "name": "salario_bruto_acumulado",
+            "type": "decimal",
+            "source": "acumulado.salario_bruto_acumulado",
+        },
+        {
+            "name": "salario_acumulado_mes",
+            "type": "decimal",
+            "source": "acumulado.salario_acumulado_mes",
+        },
+        {
+            "name": "deducciones_antes_impuesto_acumulado",
+            "type": "decimal",
+            "source": "acumulado.deducciones_antes_impuesto_acumulado",
+        },
+        {
+            "name": "ir_retenido_acumulado",
+            "type": "decimal",
+            "source": "acumulado.impuesto_retenido_acumulado",
+        },
         {"name": "meses_trabajados", "type": "integer", "source": "acumulado.periodos_procesados"},
-        {"name": "salario_inicial_acumulado", "type": "decimal", "source": "empleado.salario_acumulado"},
-        {"name": "impuesto_inicial_acumulado", "type": "decimal", "source": "empleado.impuesto_acumulado"}
+        {
+            "name": "salario_inicial_acumulado",
+            "type": "decimal",
+            "source": "empleado.salario_acumulado",
+            "description": "Pre-system accumulated salary for mid-year implementations",
+        },
+        {
+            "name": "impuesto_inicial_acumulado",
+            "type": "decimal",
+            "source": "empleado.impuesto_acumulado",
+            "description": "Pre-system accumulated tax for mid-year implementations",
+        },
     ],
     "steps": [
-        {"name": "inss_mes", "type": "calculation", "formula": "salario_bruto * 0.07", "output": "inss_mes"},
-        {"name": "salario_neto_mes", "type": "calculation", "formula": "salario_bruto - inss_mes", "output": "salario_neto_mes"},
-        {"name": "salario_neto_total", "type": "calculation", "formula": "(salario_bruto_acumulado + salario_bruto) - (deducciones_antes_impuesto_acumulado + inss_mes)", "output": "salario_neto_total"},
-        {"name": "meses_totales", "type": "calculation", "formula": "meses_trabajados + 1", "output": "meses_totales"},
-        {"name": "promedio_mensual", "type": "calculation", "formula": "salario_neto_total / meses_totales", "output": "promedio_mensual"},
-        {"name": "expectativa_anual", "type": "calculation", "formula": "promedio_mensual * 12", "output": "expectativa_anual"},
-        {"name": "ir_anual", "type": "tax_lookup", "table": "tabla_ir", "input": "expectativa_anual", "output": "ir_anual"},
-        {"name": "ir_proporcional", "type": "calculation", "formula": "(ir_anual / 12) * meses_totales", "output": "ir_proporcional"},
-        {"name": "ir_final", "type": "calculation", "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)", "output": "ir_final"}
+        {
+            "name": "inss_mes",
+            "type": "calculation",
+            "formula": "salario_bruto * 0.07",
+            "output": "inss_mes",
+        },
+        {
+            "name": "salario_neto_mes",
+            "type": "calculation",
+            "formula": "salario_bruto - inss_mes",
+            "output": "salario_neto_mes",
+        },
+        {
+            "name": "salario_neto_total",
+            "type": "calculation",
+            "formula": "(salario_bruto_acumulado + salario_bruto) - "
+            "(deducciones_antes_impuesto_acumulado + inss_mes)",
+            "output": "salario_neto_total",
+        },
+        {
+            "name": "meses_totales",
+            "type": "calculation",
+            "formula": "meses_trabajados + 1",
+            "output": "meses_totales",
+        },
+        {
+            "name": "promedio_mensual",
+            "type": "calculation",
+            "formula": "salario_neto_total / meses_totales",
+            "output": "promedio_mensual",
+        },
+        {
+            "name": "expectativa_anual",
+            "type": "calculation",
+            "formula": "promedio_mensual * 12",
+            "output": "expectativa_anual",
+        },
+        {
+            "name": "ir_anual",
+            "type": "tax_lookup",
+            "table": "tabla_ir",
+            "input": "expectativa_anual",
+            "output": "ir_anual",
+        },
+        {
+            "name": "ir_proporcional",
+            "type": "calculation",
+            "formula": "(ir_anual / 12) * meses_totales",
+            "output": "ir_proporcional",
+        },
+        {
+            "name": "ir_final",
+            "type": "calculation",
+            "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)",
+            "output": "ir_final",
+        },
     ],
     "tax_tables": {
         "tabla_ir": [
@@ -342,10 +481,10 @@ ir_schema = {
             {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
             {"min": 200000, "max": 350000, "rate": 0.20, "fixed": 15000, "over": 200000},
             {"min": 350000, "max": 500000, "rate": 0.25, "fixed": 45000, "over": 350000},
-            {"min": 500000, "max": None, "rate": 0.30, "fixed": 82500, "over": 500000}
+            {"min": 500000, "max": None, "rate": 0.30, "fixed": 82500, "over": 500000},
         ]
     },
-    "output": "ir_final"
+    "output": "ir_final",
 }
 
 # Crear la regla
@@ -752,7 +891,48 @@ impuesto = fixed + (monto - over) * rate
 
 ---
 
+---
+
 ## Validación y Pruebas
+
+### Ejemplo de Validación Completa con Ingresos Ocasionales
+
+El siguiente ejemplo valida el cálculo completo para un trabajador con ingresos variables durante 12 meses, incluyendo ingresos ocasionales:
+
+**Datos del Trabajador:**
+- Salario Ordinario: C$ 25,000.00 mensuales (promedio)
+- Ingresos Ocasionales: Bonos, comisiones, incentivos variables
+- IR Esperado Anual: C$ 34,799.00
+
+**Mes 1 (Enero) - Con Percepciones Adicionales:**
+```
+Salario Base: C$ 25,000.00
+Comisión (percepción): C$ 1,000.00
+Incentivo (percepción): C$ 1,000.00
+Salario Bruto Total: C$ 27,000.00
+
+INSS: C$ 1,890.00 (27,000 × 7%)
+Salario Neto: C$ 25,110.00
+
+IR Esperado: C$ 2,768.17
+(Calculado usando método acumulado sobre el total)
+```
+
+**Mes 10 (Octubre) - Con Bono Grande:**
+```
+Salario Base: C$ 25,000.00
+Bono (percepción): C$ 15,000.00
+Salario Bruto Total: C$ 40,000.00
+
+INSS: C$ 2,800.00 (40,000 × 7%)
+Salario Neto: C$ 37,200.00
+
+IR Esperado: C$ 5,356.67
+(Calculado usando método acumulado considerando todos los meses anteriores)
+```
+
+**Validación Final:**
+- IR Total Anual Acumulado: C$ 34,799.00 ✅
 
 ### Prueba Unitaria con Utilidad Reusable
 
@@ -808,6 +988,72 @@ else:
     print("❌ Pruebas fallidas")
     for error in results["errors"]:
         print(f"  - {error}")
+```
+
+### Ejemplos Validados por Contador
+
+El sistema incluye 4 ejemplos completos validados por un contador que demuestran el cálculo correcto del IR en diferentes escenarios. Estos ejemplos están disponibles en `coati_payroll/utils/locales/validate_nicaragua_examples.py` y pueden ejecutarse como tests unitarios.
+
+**Ejemplo 1: Salario Alto Constante**
+- Salario: C$ 87,898.32 mensual (constante)
+- IR mensual: C$ 18,898.63
+- IR anual total: C$ 226,783.58
+
+**Ejemplo 2: Salario Bajo con Ingreso Ocasional**
+- Salario base: C$ 10,000.00 mensual
+- Mes 3: Bono de C$ 3,000.00
+- IR mensual (meses 1-2, 4-12): C$ 145.00
+- IR mensual (mes 3): C$ 563.50 ⚠️ **Nota importante**: Cuando hay un ingreso ocasional o aumento salarial, el IR del mes se recalcula usando el método acumulado, lo que puede resultar en un IR significativamente mayor que el mes anterior.
+- IR anual total: C$ 2,158.50
+
+**Ejemplo 3: Salario Variable (Aumento)**
+- Meses 1-2: C$ 10,000.00
+- Mes 3: Aumento a C$ 13,000.00
+- IR mensual (meses 1-2): C$ 145.00
+- IR mensual (mes 3): C$ 563.50 (igual que Ejemplo 2, mes 3)
+- IR anual total: C$ 2,158.50
+
+**Ejemplo 4: Salario Bajo Exento**
+- Meses 1-2: C$ 8,000.00 (exento de IR)
+- Mes 3: Aumento a C$ 11,000.00 (inicia IR: C$ 16.50)
+- Mes 11: Bono C$ 3,000.00 (sigue exento)
+- IR anual total: C$ 16.50
+
+!!! important "Comportamiento Correcto del Método Acumulado"
+    Cuando un empleado recibe un ingreso ocasional (bono, incentivo) o un aumento salarial, el IR del mes se recalcula usando el método acumulado. Esto significa:
+    
+    - El IR puede ser **significativamente mayor** que el mes anterior
+    - Esto es **correcto** según el Art. 19 numeral 6 de la LCT
+    - El sistema ajusta automáticamente para compensar la proyección anual actualizada
+    
+    **Ejemplo**: Si un empleado con salario de C$ 10,000 recibe un bono de C$ 3,000 en el mes 3:
+    - Mes 1-2: IR = C$ 145.00 cada mes
+    - Mes 3: IR = C$ 563.50 (no C$ 145.00)
+    - Esto es porque el promedio mensual acumulado aumenta y la expectativa anual se recalcula
+
+Para ejecutar estos ejemplos:
+
+```python
+from coati_payroll.utils.locales.validate_nicaragua_examples import ejecutar_validaciones
+from coati_payroll import create_app
+from coati_payroll.model import db
+
+app = create_app()
+with app.app_context():
+    resultados = ejecutar_validaciones(db.session, app, verbose=True)
+    
+    if resultados["todos_exitosos"]:
+        print("✅ Todos los ejemplos validados pasaron")
+    else:
+        print("❌ Algunos ejemplos fallaron")
+        for error in resultados["errores_totales"]:
+            print(f"  - {error}")
+```
+
+O ejecutar los tests unitarios:
+
+```bash
+pytest tests/test_nicaragua_examples.py -v
 ```
 
 ### Casos de Prueba Recomendados

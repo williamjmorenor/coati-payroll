@@ -190,15 +190,12 @@ def test_prestaciones_accumulation_workflow(app, db_session):
         # WITHOUT proration, regardless of whether the month has 28, 29, 30, or 31 days.
         # Only partial periods are prorated using dias=30 as divisor.
         import calendar
-        
+
         def is_full_calendar_month(inicio, fin):
             """Check if the period spans a full calendar month (1st to last day)."""
             _, last_day = calendar.monthrange(inicio.year, inicio.month)
-            return (inicio.day == 1 and 
-                    fin.day == last_day and 
-                    inicio.month == fin.month and 
-                    inicio.year == fin.year)
-        
+            return inicio.day == 1 and fin.day == last_day and inicio.month == fin.month and inicio.year == fin.year
+
         def calculate_prestacion_amount(base_salary, percentage, inicio, fin, standard_days=30):
             """Calculate prestacion amount considering full month vs partial period logic."""
             if is_full_calendar_month(inicio, fin):
