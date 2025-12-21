@@ -528,31 +528,28 @@ class NominaEngine:
                 f"Período excesivamente largo: {dias_periodo} días. " f"Los períodos no deben exceder 366 días."
             )
 
-        # For monthly payrolls covering a full calendar month, return full salary
-        # without proration. A full calendar month is defined as:
-        # - Start on 1st day of a month AND
-        # - End on last day of that same month
-        # This applies regardless of whether the month has 28, 29, 30, or 31 days
+        # Handle salary based on periodicidad (pay frequency)
         tipo_planilla = self.planilla.tipo_planilla
         periodicidad = tipo_planilla.periodicidad.lower() if tipo_planilla.periodicidad else ""
         
         if periodicidad == "mensual":
-            # Check if this is a full calendar month
+            # For monthly payrolls covering a full calendar month, return full salary
+            # A full calendar month: starts on 1st day AND ends on last day of same month
             is_first_of_month = self.periodo_inicio.day == 1
-            # Check if end date is last day of its month
             next_day = self.periodo_fin + timedelta(days=1)
-            is_last_of_month = next_day.day == 1  # Next day is 1st means this is last day
-            # Both dates must be in the same month
+            is_last_of_month = next_day.day == 1
             same_month = (self.periodo_inicio.year == self.periodo_fin.year and 
                          self.periodo_inicio.month == self.periodo_fin.month)
             
             if is_first_of_month and is_last_of_month and same_month:
                 return salario_mensual
         
-        # For non-monthly or partial periods, check against configured days
-        dias_configurados = tipo_planilla.dias or 30
-        if dias_periodo == dias_configurados:
-            return salario_mensual
+        elif periodicidad == "quincenal":
+            # For biweekly payrolls (24 periods/year), salary is monthly / 2
+            # when period matches configured days (typically 15)
+            dias_configurados = tipo_planilla.dias or 15
+            if dias_periodo == dias_configurados:
+                return (salario_mensual / Decimal("2")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         # Always use 30 days as the base for salary proration
         # This ensures consistent daily rates regardless of payroll type
