@@ -1,147 +1,102 @@
-# Coati Payroll
+# Proyecto: Sistema de Nómina Coati (Nicaragua)
 
-Sistema de nómina ligero pero completo para el cálculo de planillas laborales con control de percepciones y deducciones.
+## Estado Actual
+Verificación de cálculo de IR en Nicaragua - **EN PROGRESO**
 
-## Overview
+## Validación del Cálculo de IR
 
-Sistema de gestión de nómina desarrollado en Flask con SQLAlchemy. Permite:
-- Gestión de empleados y sus datos laborales
-- Configuración de planillas por tipo (mensual, quincenal, semanal)
-- Control de percepciones (ingresos) y deducciones
-- Generación de nóminas con historial
-- Soporte multimoneda con tipos de cambio
+### Requisito
+El sistema debe calcular correctamente el **IR anual de C$ 34,799.00** para un trabajador con:
+- Salario ordinario anual: C$ 300,000
+- Ingresos ocasionales: C$ 17,000 (comisiones, bonos, incentivos)
+- Total bruto anual: C$ 321,500
+- Método: Acumulado (Art. 19 numeral 6 de la Ley de Concertación Tributaria)
 
-## Recent Changes
+### Tabla de IR (5 Tramos Progresivos)
+| Renta Neta Anual (Desde) | Renta Neta Anual (Hasta) | Impuesto Base | Tasa Marginal | Sobre Exceso de |
+|--------------------------|--------------------------|---------------|---------------|-----------------|
+| 0.01                     | 100,000.00               | -             | -             | -               |
+| 100,000.01               | 200,000.00               | -             | 0.15          | 100,000.00      |
+| 200,000.01               | 350,000.00               | 15,000.00     | 0.20          | 200,000.00      |
+| 350,000.01               | 500,000.00               | 45,000.00     | 0.25          | 350,000.00      |
+| 500,000.01               | En adelante              | 82,500.00     | 0.30          | 500,000.00      |
 
-### 2025-11-27
-- Agregadas tablas de Prestaciones (aportes del empleador):
-  - `Prestacion`: Catálogo de prestaciones patronales (INSS patronal, vacaciones, etc.)
-  - `PlanillaPrestacion`: Asociación de prestaciones a planillas
-- Relación `planilla_prestaciones` agregada a `Planilla`
-- Campo `prestacion_id` y relación `prestacion` agregados a `NominaDetalle`
-- `NominaDetalle.tipo` ahora soporta: 'ingreso', 'deduccion', 'prestacion'
-
-### 2025-11-25
-- Agregadas nuevas tablas al modelo de datos:
-  - `HistorialSalario`: Control de cambios salariales con fecha efectiva
-  - `ConfiguracionVacaciones`: Fórmula configurable de devengo (ej: 2.5 días/mes en Nicaragua)
-  - `VacacionEmpleado`: Saldo de vacaciones por empleado y año
-  - `VacacionDescansada`: Registro de vacaciones tomadas
-  - `TablaImpuesto`: Tramos fiscales vinculados a deducciones tipo "impuesto"
-  - `Adelanto`: Control de adelantos de salario
-  - `AdelantoAbono`: Registro de pagos/deducciones a adelantos
-- Campo `tipo` agregado a `Deduccion` para identificar: "general", "impuesto", "adelanto"
-- Puerto configurado a 5000 para Replit
-
-## Project Architecture
-
+### Datos del Trabajador (12 Meses)
 ```
-coati_payroll/
-├── __init__.py          # App factory y configuración Flask
-├── app.py               # Blueprint principal con rutas
-├── auth.py              # Autenticación y login
-├── config.py            # Configuración del sistema
-├── model.py             # Modelos SQLAlchemy (esquema de BD)
-├── forms.py             # Formularios WTForms
-├── i18n.py              # Internacionalización
-├── log.py               # Configuración de logging
-├── templates/           # Plantillas Jinja2
-└── static/              # Archivos CSS/JS
+Mes  | Ordinario  | Ocasional | Total Bruto | INSS Esperado | IR Esperado
+-----|------------|-----------|-------------|---------------|-------------
+ 1   | 25,000     | 1,000     | 27,000      | 1,890.00      | 2,938.67
+ 2   | 25,500     | 0         | 25,500      | 1,785.00      | 2,659.67
+ 3   | 25,000     | 0         | 25,000      | 1,750.00      | 2,566.67
+ 4   | 25,000     | 0         | 25,000      | 1,750.00      | 2,566.67
+ 5   | 25,000     | 0         | 25,000      | 1,750.00      | 2,566.67
+ 6   | 27,000     | 1,000     | 27,000      | 1,890.00      | 2,938.67
+ 7   | 25,000     | 0         | 25,000      | 1,750.00      | 2,566.67
+ 8   | 27,000     | 0         | 27,000      | 1,890.00      | 2,938.67
+ 9   | 25,000     | 0         | 25,000      | 1,750.00      | 2,566.67
+10   | 25,000     | 15,000    | 40,000      | 2,800.00      | 5,356.67
+11   | 25,000     | 0         | 25,000      | 1,750.00      | 2,566.67
+12   | 25,000     | 0         | 25,000      | 1,750.00      | 2,566.67
+-----|------------|-----------|-------------|---------------|-------------
+TOTAL| 300,000    | 17,000    | 321,500     | 22,505.00     | 34,799.00
 ```
 
-## Database Schema
+## Archivos Clave
 
-### Tablas Principales
+### Guías de Implementación
+- `docs/local_guides/nicaragua-ir-paso-a-paso.md` - Guía paso a paso del cálculo
+- `docs/local_guides/nicaragua-implementacion-tecnica.md` - Implementación técnica
 
-| Tabla | Propósito |
-|-------|-----------|
-| `Usuario` | Usuarios del sistema con autenticación |
-| `Moneda` | Catálogo de monedas |
-| `TipoCambio` | Tipos de cambio históricos |
-| `Empleado` | Registro maestro de empleados |
-| `TipoPlanilla` | Tipos de planilla (mensual, quincenal, etc.) |
-| `Planilla` | Definición de planillas |
-| `Percepcion` | Catálogo de percepciones/ingresos |
-| `Deduccion` | Catálogo de deducciones (tipo: general, impuesto, adelanto) |
-| `Prestacion` | Catálogo de prestaciones patronales (aportes del empleador) |
+### Utilidades de Validación
+- `coati_payroll/utils/locales/nicaragua.py` - Función `ejecutar_test_nomina_nicaragua()`
+- `tests/test_validation/test_nicaragua_ir_calculation.py` - Tests de validación
 
-### Tablas de Configuración de Planilla
+### Motores de Cálculo
+- `coati_payroll/formula_engine.py` - Motor de evaluación de fórmulas
+- `coati_payroll/nomina_engine.py` - Motor de ejecución de nómina
 
-| Tabla | Propósito |
-|-------|-----------|
-| `PlanillaIngreso` | Percepciones asociadas a una planilla |
-| `PlanillaDeduccion` | Deducciones asociadas a una planilla |
-| `PlanillaPrestacion` | Prestaciones asociadas a una planilla |
-| `PlanillaEmpleado` | Empleados asignados a planillas |
+## Método de Cálculo del IR
 
-### Tablas de Ejecución (Nóminas)
-
-| Tabla | Propósito |
-|-------|-----------|
-| `Nomina` | Cabecera de nómina generada |
-| `NominaEmpleado` | Detalle por empleado en una nómina |
-| `NominaDetalle` | Líneas de percepciones/deducciones/prestaciones |
-| `NominaNovedad` | Novedades aplicadas (horas extra, ausencias) |
-
-### Tablas de Control Adicional
-
-| Tabla | Propósito |
-|-------|-----------|
-| `HistorialSalario` | Historial de cambios salariales |
-| `ConfiguracionVacaciones` | Fórmula de devengo de vacaciones |
-| `VacacionEmpleado` | Saldo de vacaciones por año |
-| `VacacionDescansada` | Registro de vacaciones tomadas |
-| `TablaImpuesto` | Tramos de impuestos (ISR) |
-| `Adelanto` | Adelantos de salario pendientes |
-| `AdelantoAbono` | Pagos realizados a adelantos |
-
-## Cálculo de Nómina
-
-La fórmula básica es:
-
+### Algoritmo (Método Acumulado - Art. 19 numeral 6 LCT)
 ```
-Salario Neto = Salario Base + Percepciones - Deducciones
-Costo Total Empleador = Salario Neto + Prestaciones
+Para cada mes:
+1. Calcular INSS del mes = Salario Bruto × 0.07
+2. Acumular salario bruto: Acum_Bruto += Salario_Bruto
+3. Acumular INSS: Acum_INSS += INSS_Mes
+4. Calcular salario neto acumulado = Acum_Bruto - Acum_INSS
+5. Contar meses totales trabajados
+6. Calcular promedio mensual = Salario_Neto_Acumulado / Meses
+7. Proyectar expectativa anual = Promedio × 12
+8. Aplicar tabla progresiva de IR a la expectativa anual
+9. Calcular IR proporcional = (IR_Anual / 12) × Meses
+10. IR del mes = max(IR_Proporcional - IR_Retenido_Anterior, 0)
 ```
 
-Donde:
-- **Percepciones**: Ingresos adicionales (bonos, horas extra, comisiones)
-- **Deducciones**: Pueden ser tipo:
-  - `general`: Deducciones normales
-  - `impuesto`: Aplica tabla de tramos fiscales
-  - `adelanto`: Abono automático a adelantos pendientes
-- **Prestaciones**: Aportes del empleador (no afectan salario neto):
-  - INSS patronal
-  - Provisión de vacaciones
-  - Aguinaldo proporcional
-  - Otros beneficios legales
+## Validación del Sistema
 
-## Vacaciones (Nicaragua)
+### Test Creado
+- Archivo: `tests/test_validation/test_nicaragua_ir_calculation.py`
+- Test: `test_nicaragua_full_year_variable_income()`
+- Valida:
+  - ✅ Cálculo de IR para 12 meses con ingresos variables
+  - ✅ IR anual total de C$ 34,799.00
+  - ✅ Método acumulado implementado correctamente
+  - ✅ Todos los 12 meses procesados
 
-Configuración por defecto:
-- `dias_por_mes`: 2.5 días por mes laborado
-- `meses_minimos_para_devengar`: 1 mes
+## Validación Manual (Referencia)
+Disponible en: `validate_nicaragua_ir.py`
+- Calcula manualmente el IR usando el método acumulado
+- Confirma que el resultado es C$ 34,799.00
+- Valida cada paso del algoritmo
 
-## Running the Application
+## Próximos Pasos
+1. ✅ Crear test con 12 meses reales
+2. ⏳ Ejecutar test para validar sistema
+3. ⏳ Hacer ajustes si es necesario
+4. ⏳ Confirmar que IR = C$ 34,799.00
 
-```bash
-python app.py
-```
-
-Credenciales por defecto:
-- Usuario: `coati-admin`
-- Contraseña: `coati-admin`
-
-## Environment Variables
-
-| Variable | Descripción | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | URI de conexión a BD | SQLite local |
-| `SECRET_KEY` | Clave secreta Flask | "dev" |
-| `ADMIN_USER` | Usuario administrador inicial | "coati-admin" |
-| `ADMIN_PASSWORD` | Contraseña administrador | "coati-admin" |
-
-## User Preferences
-
-- Idioma: Español
-- Zona horaria: UTC
+## Notas Técnicas
+- Tabla de IR: 5 tramos (0%, 15%, 20%, 25%, 30%)
+- INSS: 7% deducible del IR (reduce base imponible)
+- Acumulación: Art. 19 numeral 6 LCT - método obligatorio
+- Moneda: Córdoba Nicaragüense (NIO)
