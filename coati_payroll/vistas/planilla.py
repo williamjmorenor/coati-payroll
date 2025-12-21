@@ -1373,9 +1373,14 @@ def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
 def _populate_novedad_form_choices(form, nomina_id: str):
     """Populate form select choices for novedad form."""
     from coati_payroll.model import NominaEmpleado, Percepcion, Deduccion
+    from sqlalchemy.orm import joinedload
 
-    # Get employees associated with this nomina
-    nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
+    # Get employees associated with this nomina with eager loading
+    nomina_empleados = db.session.execute(
+        db.select(NominaEmpleado)
+        .filter_by(nomina_id=nomina_id)
+        .options(joinedload(NominaEmpleado.empleado))
+    ).scalars().all()
     form.empleado_id.choices = [("", _("-- Seleccionar Empleado --"))] + [
         (
             ne.empleado.id,

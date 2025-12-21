@@ -25,6 +25,7 @@ Key principles:
 """
 
 import pytest
+from cachelib.file import FileSystemCache
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from coati_payroll import create_app
@@ -59,9 +60,8 @@ def app():
         "SQLALCHEMY_ENGINE_OPTIONS": {"connect_args": {"check_same_thread": False}},
         "SECRET_KEY": "test-secret-key",
         "PRESERVE_CONTEXT_ON_EXCEPTION": False,
-        "SESSION_TYPE": "filesystem",
-        "SESSION_FILE_DIR": session_dir,
-        "SESSION_FILE_THRESHOLD": 100,
+        "SESSION_TYPE": "cachelib",
+        "SESSION_CACHELIB": FileSystemCache(cache_dir=session_dir, threshold=100),
     }
 
     app = create_app(config)
@@ -113,7 +113,9 @@ def db_session(app):
 
         # Rollback the transaction after the test
         session.close()
-        transaction.rollback()
+        # Only rollback if transaction is still active
+        if transaction.is_active:
+            transaction.rollback()
         connection.close()
 
 
