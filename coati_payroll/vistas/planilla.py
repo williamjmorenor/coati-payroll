@@ -1376,11 +1376,13 @@ def _populate_novedad_form_choices(form, nomina_id: str):
     from sqlalchemy.orm import joinedload
 
     # Get employees associated with this nomina with eager loading
-    nomina_empleados = db.session.execute(
-        db.select(NominaEmpleado)
-        .filter_by(nomina_id=nomina_id)
-        .options(joinedload(NominaEmpleado.empleado))
-    ).scalars().all()
+    nomina_empleados = (
+        db.session.execute(
+            db.select(NominaEmpleado).filter_by(nomina_id=nomina_id).options(joinedload(NominaEmpleado.empleado))
+        )
+        .scalars()
+        .all()
+    )
     form.empleado_id.choices = [("", _("-- Seleccionar Empleado --"))] + [
         (
             ne.empleado.id,

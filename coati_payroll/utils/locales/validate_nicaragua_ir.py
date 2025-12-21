@@ -201,7 +201,7 @@ EXPECTED_TOTALS = {
 def calculate_ir_manually():
     """
     Calcula el IR manualmente usando el método acumulado para validar.
-    
+
     Este cálculo debe producir exactamente 34,799.00 en diciembre.
     """
     months = test_data_nicaragua["months"]
@@ -209,46 +209,46 @@ def calculate_ir_manually():
     cumulative_inss = Decimal("0")
     cumulative_ir = Decimal("0")
     monthly_irs = []
-    
-    print("\n" + "="*100)
+
+    print("\n" + "=" * 100)
     print("CÁLCULO MANUAL DEL IR SEGÚN MÉTODO ACUMULADO (Art. 19 numeral 6 LCT)")
-    print("="*100)
-    
+    print("=" * 100)
+
     for i, month_data in enumerate(months):
         month_num = month_data["month"]
         bruto = Decimal(str(month_data["total_bruto"]))
-        
+
         # PASO 1: Calcular INSS del mes
         inss_mes = bruto * Decimal("0.07")
-        
+
         # PASO 2: Acumular
         cumulative_gross += bruto
         cumulative_inss += inss_mes
-        
+
         # PASO 3: Calcular salario neto acumulado
         salario_neto_acumulado = cumulative_gross - cumulative_inss
-        
+
         # PASO 4: Calcular meses totales
         meses_totales = i + 1
-        
+
         # PASO 5: Promedio mensual
         promedio_mensual = salario_neto_acumulado / Decimal(str(meses_totales))
-        
+
         # PASO 6: Proyectar expectativa anual
         expectativa_anual = promedio_mensual * Decimal("12")
-        
+
         # PASO 7: Aplicar tabla progresiva
         ir_anual = _aplicar_tabla_progresiva(expectativa_anual)
-        
+
         # PASO 8: IR proporcional a meses trabajados
         ir_proporcional = (ir_anual / Decimal("12")) * Decimal(str(meses_totales))
-        
+
         # PASO 9: IR del mes = diferencia
         ir_mes = max(ir_proporcional - cumulative_ir, Decimal("0"))
         cumulative_ir = ir_proporcional
-        
+
         monthly_irs.append(ir_mes)
-        
+
         print(f"\nMES {month_num:2d}:")
         print(f"  Salario Bruto Mes:              C$ {bruto:>12,.2f}")
         print(f"  Salario Bruto Acumulado:        C$ {cumulative_gross:>12,.2f}")
@@ -263,24 +263,26 @@ def calculate_ir_manually():
         print(f"  IR Acumulado Anterior:          C$ {(cumulative_ir - ir_mes):>12,.2f}")
         print(f"  IR del Mes:                     C$ {ir_mes:>12,.2f}")
         print(f"  IR Acumulado:                   C$ {cumulative_ir:>12,.2f}")
-    
-    print("\n" + "="*100)
+
+    print("\n" + "=" * 100)
     print("RESUMEN ANUAL:")
-    print("="*100)
+    print("=" * 100)
     print(f"Salario Bruto Total:                C$ {cumulative_gross:>12,.2f}")
     print(f"INSS Total:                         C$ {cumulative_inss:>12,.2f}")
     print(f"IR Total Acumulado (DICIEMBRE):     C$ {cumulative_ir:>12,.2f}")
     print(f"Esperado:                           C$ {EXPECTED_TOTALS['total_ir_annual']:>12,.2f}")
-    print(f"Diferencia:                         C$ {abs(cumulative_ir - Decimal(str(EXPECTED_TOTALS['total_ir_annual']))):>12,.2f}")
-    
+    print(
+        f"Diferencia:                         C$ {abs(cumulative_ir - Decimal(str(EXPECTED_TOTALS['total_ir_annual']))):>12,.2f}"
+    )
+
     match = abs(cumulative_ir - Decimal(str(EXPECTED_TOTALS["total_ir_annual"]))) < Decimal("1.00")
     if match:
         print("\n✅ VALIDACIÓN EXITOSA: El IR calculado coincide con el esperado")
     else:
         print("\n❌ VALIDACIÓN FALLIDA: Existe discrepancia en el cálculo del IR")
-    
-    print("="*100 + "\n")
-    
+
+    print("=" * 100 + "\n")
+
     return {
         "total_gross": cumulative_gross,
         "total_inss": cumulative_inss,
@@ -293,7 +295,7 @@ def calculate_ir_manually():
 def _aplicar_tabla_progresiva(renta_anual: Decimal) -> Decimal:
     """
     Aplica la tabla progresiva del IR de Nicaragua.
-    
+
     Tabla vigente (Ley 891):
     - C$ 0 - 100,000: 0%
     - C$ 100,000 - 200,000: 15% sobre exceso de 100,000
@@ -314,20 +316,20 @@ def _aplicar_tabla_progresiva(renta_anual: Decimal) -> Decimal:
 
 
 if __name__ == "__main__":
-    print("\n" + "*"*100)
+    print("\n" + "*" * 100)
     print("VALIDACIÓN RIGUROSA: Cálculo de IR en Nicaragua")
-    print("*"*100)
-    
+    print("*" * 100)
+
     result = calculate_ir_manually()
-    
+
     # Mostrar datos para el test del sistema
     print("\nJSON para prueba de sistema:")
     print(json.dumps(test_data_nicaragua, indent=2))
-    
-    print("\n" + "*"*100)
+
+    print("\n" + "*" * 100)
     if result["matches_expected"]:
         print("✅ RESULTADO: El cálculo manual produce el IR esperado de C$ 34,799.00")
         print("El sistema debe replicar exactamente este resultado.")
     else:
         print("❌ RESULTADO: Hay discrepancia en el cálculo.")
-    print("*"*100 + "\n")
+    print("*" * 100 + "\n")

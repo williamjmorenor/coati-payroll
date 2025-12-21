@@ -531,19 +531,21 @@ class NominaEngine:
         # Handle salary based on periodicidad (pay frequency)
         tipo_planilla = self.planilla.tipo_planilla
         periodicidad = tipo_planilla.periodicidad.lower() if tipo_planilla.periodicidad else ""
-        
+
         if periodicidad == "mensual":
             # For monthly payrolls covering a full calendar month, return full salary
             # A full calendar month: starts on 1st day AND ends on last day of same month
             is_first_of_month = self.periodo_inicio.day == 1
             next_day = self.periodo_fin + timedelta(days=1)
             is_last_of_month = next_day.day == 1
-            same_month = (self.periodo_inicio.year == self.periodo_fin.year and 
-                         self.periodo_inicio.month == self.periodo_fin.month)
-            
+            same_month = (
+                self.periodo_inicio.year == self.periodo_fin.year
+                and self.periodo_inicio.month == self.periodo_fin.month
+            )
+
             if is_first_of_month and is_last_of_month and same_month:
                 return salario_mensual
-        
+
         elif periodicidad == "quincenal":
             # For biweekly payrolls (24 periods/year), salary is monthly / 2
             # when period matches configured days (typically 15)
@@ -1328,21 +1330,17 @@ class NominaEngine:
                     regla = (
                         db.session.query(ReglaCalculo)
                         .filter_by(deduccion_id=codigo_concepto)
-                        .filter(ReglaCalculo.activo == True)
+                        .filter(ReglaCalculo.activo.is_(True))
                         .first()
                     )
                     if not regla:
                         # Try finding by deduccion_id matching deduccion's id
-                        deduccion_obj = (
-                            db.session.query(Deduccion)
-                            .filter_by(codigo=codigo_concepto)
-                            .first()
-                        )
+                        deduccion_obj = db.session.query(Deduccion).filter_by(codigo=codigo_concepto).first()
                         if deduccion_obj:
                             regla = (
                                 db.session.query(ReglaCalculo)
                                 .filter_by(deduccion_id=deduccion_obj.id)
-                                .filter(ReglaCalculo.activo == True)
+                                .filter(ReglaCalculo.activo.is_(True))
                                 .first()
                             )
 
@@ -1373,9 +1371,7 @@ class NominaEngine:
                             self.warnings.append(f"Error en ReglaCalculo {regla.codigo}: {str(e)}")
                             monto_calculado = Decimal("0.00")
                     else:
-                        self.warnings.append(
-                            f"ReglaCalculo no encontrada para deducción {codigo_concepto}"
-                        )
+                        self.warnings.append(f"ReglaCalculo no encontrada para deducción {codigo_concepto}")
                         monto_calculado = Decimal("0.00")
 
                 case _:
