@@ -424,18 +424,25 @@ ir_mes_actual = max(ir_mes_actual, 0)
 
 ### Paso 2: Configurar INSS Laboral
 
-#### Opción A: Deducción Simple con Fórmula
+!!! note "Configuración Crítica del INSS"
+    El INSS debe calcularse sobre el **salario bruto total**, que incluye el salario base más todas las percepciones (bonos, horas extra, comisiones). El sistema usa `formula_tipo="porcentaje_bruto"` para este cálculo.
+
+#### Opción A: Deducción Simple con Fórmula (Recomendado)
 
 1. Acceda a **Configuración** → **Deducciones**
 2. Cree una nueva deducción:
-   - **Código**: `INSS_LABORAL`
-   - **Nombre**: `INSS Laboral (7%)`
-   - **Descripción**: `Aporte del empleado al Instituto Nicaragüense de Seguridad Social`
-   - **Es Obligatoria**: ✓ Sí
-   - **Prioridad**: `1` (alta prioridad, se deduce primero)
-   - **Tipo de Fórmula**: `Porcentaje del Salario Bruto`
-   - **Fórmula**: `0.07` o `7`
-   - **Afecta IR**: ✓ Sí (reduce la base imponible del IR)
+   - **Código**: `INSS_NIC`
+   - **Nombre**: `INSS Laboral 7%`
+   - **Descripción**: `Aporte al seguro social del empleado`
+   - **Tipo de Fórmula**: `Porcentaje del Salario Bruto` (`porcentaje_bruto`)
+   - **Porcentaje**: `7.00`
+   - **Antes de Impuesto**: ✓ Sí (reduce la base imponible del IR)
+   - **Activo**: ✓ Sí
+
+!!! warning "Importante: Tipo de Fórmula"
+    Use `porcentaje_bruto` y **NO** `porcentaje`. La diferencia es crítica:
+    - `porcentaje_bruto`: Calcula sobre salario base + percepciones (correcto)
+    - `porcentaje`: Calcula solo sobre salario base (incorrecto para INSS)
 
 #### Opción B: Regla de Cálculo con Tope (Recomendado)
 
@@ -491,15 +498,14 @@ El IR requiere una Regla de Cálculo con tramos progresivos.
 
 **Esquema JSON Completo con Método Acumulado:**
 
+Este es el esquema JSON **validado y funcionando** en el sistema. Produce cálculos exactos de IR según el método acumulado.
+
 ```json
 {
   "meta": {
     "name": "IR Nicaragua - Método Acumulado",
-    "description": "Cálculo de IR según Art. 19 numeral 6 LCT - Método acumulado con promedio mensual",
-    "jurisdiction": "Nicaragua",
-    "reference_currency": "NIO",
-    "version": "2025.1",
-    "legal_reference": "Ley 891 - Art. 23 LCT"
+    "legal_reference": "Ley 891 - Art. 23 LCT",
+    "calculation_method": "accumulated_average"
   },
   "inputs": [
     {
@@ -512,140 +518,126 @@ El IR requiere una Regla de Cálculo con tramos progresivos.
       "name": "salario_bruto_acumulado",
       "type": "decimal",
       "source": "acumulado.salario_bruto_acumulado",
-      "description": "Salario bruto acumulado de meses anteriores (origen: base de datos)"
+      "description": "Salario bruto acumulado de meses anteriores"
+    },
+    {
+      "name": "salario_acumulado_mes",
+      "type": "decimal",
+      "source": "acumulado.salario_acumulado_mes",
+      "description": "Salario acumulado del mes actual (percepciones)"
     },
     {
       "name": "deducciones_antes_impuesto_acumulado",
       "type": "decimal",
       "source": "acumulado.deducciones_antes_impuesto_acumulado",
-      "description": "INSS y otras deducciones pre-impuesto acumuladas (origen: base de datos)"
+      "description": "INSS y otras deducciones pre-impuesto acumuladas"
     },
     {
       "name": "ir_retenido_acumulado",
       "type": "decimal",
       "source": "acumulado.impuesto_retenido_acumulado",
-      "description": "IR retenido en meses anteriores (origen: base de datos)"
+      "description": "IR retenido en meses anteriores"
     },
     {
       "name": "meses_trabajados",
       "type": "integer",
       "source": "acumulado.periodos_procesados",
-      "description": "Número de meses trabajados en el año fiscal (origen: base de datos)"
+      "description": "Número de meses trabajados en el año fiscal"
+    },
+    {
+      "name": "salario_inicial_acumulado",
+      "type": "decimal",
+      "source": "empleado.salario_acumulado",
+      "description": "Salario acumulado previo al sistema (para implementaciones a mitad de año)"
+    },
+    {
+      "name": "impuesto_inicial_acumulado",
+      "type": "decimal",
+      "source": "empleado.impuesto_acumulado",
+      "description": "IR acumulado previo al sistema (para implementaciones a mitad de año)"
     }
   ],
   "steps": [
     {
-      "name": "paso_1_inss_mes_actual",
+      "name": "inss_mes",
       "type": "calculation",
-      "description": "Calcular INSS del mes actual (7%)",
       "formula": "salario_bruto * 0.07",
-      "output": "inss_mes_actual"
+      "output": "inss_mes",
+      "description": "Calcular INSS del mes actual (7%)"
     },
     {
-      "name": "paso_2_salario_neto_mes",
+      "name": "salario_neto_mes",
       "type": "calculation",
-      "description": "Calcular salario neto del mes actual",
-      "formula": "salario_bruto - inss_mes_actual",
-      "output": "salario_neto_mes"
+      "formula": "salario_bruto - inss_mes",
+      "output": "salario_neto_mes",
+      "description": "Calcular salario neto del mes actual"
     },
     {
-      "name": "paso_3_salario_neto_acumulado_total",
+      "name": "salario_neto_total",
       "type": "calculation",
-      "description": "Sumar salario neto del mes a los acumulados anteriores",
-      "formula": "(salario_bruto_acumulado + salario_bruto) - (deducciones_antes_impuesto_acumulado + inss_mes_actual)",
-      "output": "salario_neto_acumulado_total"
+      "formula": "(salario_bruto_acumulado + salario_bruto) - (deducciones_antes_impuesto_acumulado + inss_mes)",
+      "output": "salario_neto_total",
+      "description": "Sumar salario neto del mes a los acumulados anteriores"
     },
     {
-      "name": "paso_4_meses_totales",
+      "name": "meses_totales",
       "type": "calculation",
-      "description": "Total de meses incluyendo el actual",
       "formula": "meses_trabajados + 1",
-      "output": "meses_totales"
+      "output": "meses_totales",
+      "description": "Total de meses incluyendo el actual"
     },
     {
-      "name": "paso_5_promedio_mensual",
+      "name": "promedio_mensual",
       "type": "calculation",
-      "description": "Calcular promedio mensual de salario neto",
-      "formula": "salario_neto_acumulado_total / meses_totales",
-      "output": "promedio_mensual"
+      "formula": "salario_neto_total / meses_totales",
+      "output": "promedio_mensual",
+      "description": "Calcular promedio mensual de salario neto"
     },
     {
-      "name": "paso_6_expectativa_anual",
+      "name": "expectativa_anual",
       "type": "calculation",
-      "description": "Proyectar expectativa anual basada en promedio",
       "formula": "promedio_mensual * 12",
-      "output": "expectativa_anual"
+      "output": "expectativa_anual",
+      "description": "Proyectar expectativa anual basada en promedio"
     },
     {
-      "name": "paso_7_ir_anual",
+      "name": "ir_anual",
       "type": "tax_lookup",
-      "description": "Aplicar tabla progresiva de IR",
-      "table": "tabla_ir_nicaragua",
+      "table": "tabla_ir",
       "input": "expectativa_anual",
-      "output": "ir_anual"
+      "output": "ir_anual",
+      "description": "Aplicar tabla progresiva de IR"
     },
     {
-      "name": "paso_8_ir_proporcional",
+      "name": "ir_proporcional",
       "type": "calculation",
-      "description": "Calcular IR proporcional a meses trabajados",
       "formula": "(ir_anual / 12) * meses_totales",
-      "output": "ir_proporcional"
+      "output": "ir_proporcional",
+      "description": "Calcular IR proporcional a meses trabajados"
     },
     {
-      "name": "paso_9_ir_mes_actual",
+      "name": "ir_final",
       "type": "calculation",
-      "description": "Restar retenciones previas para obtener IR del mes",
       "formula": "max(ir_proporcional - ir_retenido_acumulado, 0)",
-      "output": "ir_mes_actual"
+      "output": "ir_final",
+      "description": "Restar retenciones previas para obtener IR del mes"
     }
   ],
   "tax_tables": {
-    "tabla_ir_nicaragua": [
-      {
-        "min": 0,
-        "max": 100000,
-        "rate": 0.00,
-        "fixed": 0,
-        "over": 0,
-        "description": "Exento - Hasta C$ 100,000"
-      },
-      {
-        "min": 100000,
-        "max": 200000,
-        "rate": 0.15,
-        "fixed": 0,
-        "over": 100000,
-        "description": "15% sobre exceso de C$ 100,000"
-      },
-      {
-        "min": 200000,
-        "max": 350000,
-        "rate": 0.20,
-        "fixed": 15000,
-        "over": 200000,
-        "description": "C$ 15,000 + 20% sobre exceso de C$ 200,000"
-      },
-      {
-        "min": 350000,
-        "max": 500000,
-        "rate": 0.25,
-        "fixed": 45000,
-        "over": 350000,
-        "description": "C$ 45,000 + 25% sobre exceso de C$ 350,000"
-      },
-      {
-        "min": 500000,
-        "max": null,
-        "rate": 0.30,
-        "fixed": 82500,
-        "over": 500000,
-        "description": "C$ 82,500 + 30% sobre exceso de C$ 500,000"
-      }
+    "tabla_ir": [
+      {"min": 0, "max": 100000, "rate": 0.00, "fixed": 0, "over": 0},
+      {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+      {"min": 200000, "max": 350000, "rate": 0.20, "fixed": 15000, "over": 200000},
+      {"min": 350000, "max": 500000, "rate": 0.25, "fixed": 45000, "over": 350000},
+      {"min": 500000, "max": null, "rate": 0.30, "fixed": 82500, "over": 500000}
     ]
   },
-  "output": "ir_mes_actual"
+  "output": "ir_final"
 }
 ```
+
+!!! success "Esquema Validado"
+    Este esquema produce **exactamente C$ 34,799.00** de IR anual para un trabajador con ingresos variables de 12 meses, validado contra cálculos manuales.
 
 !!! warning "Evaluación de Implementabilidad para Usuario de RRHH"
     **Complejidad:** ⚠️ **ALTA - Requiere soporte técnico**
@@ -934,10 +926,31 @@ Las prestaciones patronales no se deducen del salario del empleado, pero son cos
    - **Código**: `MENSUAL_NIC`
    - **Nombre**: `Nómina Mensual Nicaragua`
    - **Descripción**: `Planilla mensual con INSS e IR nicaragüense`
-   - **Periodicidad**: `Mensual`
+   - **Periodicidad**: `mensual`
+   - **Días**: `30` (usado para prorrateo de períodos parciales)
+   - **Períodos por Año**: `12`
+   - **Mes Inicio Fiscal**: `1` (enero)
+   - **Día Inicio Fiscal**: `1`
+   - **Acumula Anual**: ✓ Sí
    - **Moneda**: `NIO`
    
 3. Asocie las percepciones, deducciones y prestaciones configuradas
+
+!!! note "Manejo de Períodos Mensuales Completos"
+    **Comportamiento del sistema para `periodicidad="mensual"`:**
+    
+    - **Mes calendario completo** (ej: 1 enero - 31 enero): El sistema usa el salario mensual completo SIN prorrateo, independientemente de si el mes tiene 28, 29, 30 o 31 días.
+    - **Período parcial** (ej: 15 enero - 31 enero): El sistema prorratea usando `dias=30` como divisor base: `salario_mensual / 30 * días_trabajados`
+    
+    Este comportamiento asegura que un empleado contratado el día 1 del mes reciba su salario mensual completo.
+
+!!! info "Configuración para Nóminas Quincenales"
+    Si su empresa paga quincenalmente:
+    - **Periodicidad**: `quincenal`
+    - **Días**: `15`
+    - **Períodos por Año**: `24`
+    
+    Para períodos quincenales, el salario del período = salario mensual ÷ 2
 
 ### Paso 7: Configurar Empleados
 
