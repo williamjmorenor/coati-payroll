@@ -28,7 +28,7 @@ Key features:
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
 
@@ -49,6 +49,7 @@ from coati_payroll.model import (
     TipoCambio,
     Prestacion,
     PrestacionAcumulada,
+    ReglaCalculo,
 )
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
@@ -527,10 +528,30 @@ class NominaEngine:
                 f"Período excesivamente largo: {dias_periodo} días. " f"Los períodos no deben exceder 366 días."
             )
 
-        # For monthly payrolls (30 days), return full salary to avoid rounding
-        # Check the periodicidad to determine if this is a monthly payroll
-        periodicidad = self.planilla.tipo_planilla.periodicidad.lower()
-        if periodicidad == "mensual" and dias_periodo == 30:
+        # For monthly payrolls covering a full calendar month, return full salary
+        # without proration. A full calendar month is defined as:
+        # - Start on 1st day of a month AND
+        # - End on last day of that same month
+        # This applies regardless of whether the month has 28, 29, 30, or 31 days
+        tipo_planilla = self.planilla.tipo_planilla
+        periodicidad = tipo_planilla.periodicidad.lower() if tipo_planilla.periodicidad else ""
+        
+        if periodicidad == "mensual":
+            # Check if this is a full calendar month
+            is_first_of_month = self.periodo_inicio.day == 1
+            # Check if end date is last day of its month
+            next_day = self.periodo_fin + timedelta(days=1)
+            is_last_of_month = next_day.day == 1  # Next day is 1st means this is last day
+            # Both dates must be in the same month
+            same_month = (self.periodo_inicio.year == self.periodo_fin.year and 
+                         self.periodo_inicio.month == self.periodo_fin.month)
+            
+            if is_first_of_month and is_last_of_month and same_month:
+                return salario_mensual
+        
+        # For non-monthly or partial periods, check against configured days
+        dias_configurados = tipo_planilla.dias or 30
+        if dias_periodo == dias_configurados:
             return salario_mensual
 
         # Always use 30 days as the base for salary proration
@@ -1282,6 +1303,17 @@ class NominaEngine:
                             inputs = {**emp_calculo.variables_calculo}
                             inputs["salario_bruto"] = emp_calculo.salario_bruto
                             inputs["total_percepciones"] = emp_calculo.total_percepciones
+                            inputs["total_deducciones"] = emp_calculo.total_deducciones
+
+                            # Calculate before-tax deductions already processed in this period
+                            deducciones_antes_impuesto_periodo = Decimal("0.00")
+                            for ded in emp_calculo.deducciones:
+                                if ded.deduccion_id:
+                                    ded_obj = db.session.get(Deduccion, ded.deduccion_id)
+                                    if ded_obj and ded_obj.antes_impuesto:
+                                        deducciones_antes_impuesto_periodo += ded.monto
+                            inputs["deducciones_antes_impuesto_periodo"] = deducciones_antes_impuesto_periodo
+                            inputs["inss_periodo"] = deducciones_antes_impuesto_periodo
 
                             engine = FormulaEngine(formula)
                             result = engine.execute(inputs)
@@ -1292,6 +1324,61 @@ class NominaEngine:
                             self.warnings.append(f"Error en fórmula: {str(e)}")
                             monto_calculado = Decimal("0.00")
                     else:
+                        monto_calculado = Decimal("0.00")
+
+                case FormulaType.REGLA_CALCULO:
+                    # Find the ReglaCalculo linked to this deduction
+                    regla = (
+                        db.session.query(ReglaCalculo)
+                        .filter_by(deduccion_id=codigo_concepto)
+                        .filter(ReglaCalculo.activo == True)
+                        .first()
+                    )
+                    if not regla:
+                        # Try finding by deduccion_id matching deduccion's id
+                        deduccion_obj = (
+                            db.session.query(Deduccion)
+                            .filter_by(codigo=codigo_concepto)
+                            .first()
+                        )
+                        if deduccion_obj:
+                            regla = (
+                                db.session.query(ReglaCalculo)
+                                .filter_by(deduccion_id=deduccion_obj.id)
+                                .filter(ReglaCalculo.activo == True)
+                                .first()
+                            )
+
+                    if regla and regla.esquema_json:
+                        try:
+                            # Prepare inputs for formula engine
+                            inputs = {**emp_calculo.variables_calculo}
+                            inputs["salario_bruto"] = emp_calculo.salario_bruto
+                            inputs["total_percepciones"] = emp_calculo.total_percepciones
+                            inputs["total_deducciones"] = emp_calculo.total_deducciones
+
+                            # Calculate before-tax deductions already processed
+                            deducciones_antes_impuesto_periodo = Decimal("0.00")
+                            for ded in emp_calculo.deducciones:
+                                if ded.deduccion_id:
+                                    ded_obj = db.session.get(Deduccion, ded.deduccion_id)
+                                    if ded_obj and ded_obj.antes_impuesto:
+                                        deducciones_antes_impuesto_periodo += ded.monto
+                            inputs["deducciones_antes_impuesto_periodo"] = deducciones_antes_impuesto_periodo
+                            inputs["inss_periodo"] = deducciones_antes_impuesto_periodo
+
+                            engine = FormulaEngine(regla.esquema_json)
+                            result = engine.execute(inputs)
+                            monto_calculado = Decimal(str(result.get("output", 0))).quantize(
+                                Decimal("0.01"), rounding=ROUND_HALF_UP
+                            )
+                        except FormulaEngineError as e:
+                            self.warnings.append(f"Error en ReglaCalculo {regla.codigo}: {str(e)}")
+                            monto_calculado = Decimal("0.00")
+                    else:
+                        self.warnings.append(
+                            f"ReglaCalculo no encontrada para deducción {codigo_concepto}"
+                        )
                         monto_calculado = Decimal("0.00")
 
                 case _:

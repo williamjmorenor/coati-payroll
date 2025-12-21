@@ -180,12 +180,12 @@ def ejecutar_test_nomina_nicaragua(
             db_session.add(tipo_planilla)
             db_session.flush()
 
-            # Create INSS deduction (7%)
+            # Create INSS deduction (7% of gross salary including perceptions)
             inss_deduccion = Deduccion(
                 codigo="INSS_NIC",
                 nombre="INSS Laboral 7%",
                 descripcion="Aporte al seguro social del empleado",
-                formula_tipo="porcentaje",
+                formula_tipo="porcentaje_bruto",  # Use gross salary (base + perceptions)
                 porcentaje=Decimal("7.00"),
                 antes_impuesto=True,
                 activo=True,
@@ -394,7 +394,7 @@ def ejecutar_test_nomina_nicaragua(
                 db_session.add(percepcion_ocasional)
                 db_session.flush()
 
-            db_session.commit()
+            db_session.flush()
 
             # Store IDs before objects become detached
             empresa_id = empresa.id
@@ -423,7 +423,7 @@ def ejecutar_test_nomina_nicaragua(
                 # Update employee salary for this month
                 empleado = db_session.query(Empleado).get(empleado_id)
                 empleado.salario_base = salario_ordinario
-                db_session.commit()
+                db_session.flush()
 
                 # Calculate period dates
                 if month_num == 1:
@@ -462,16 +462,17 @@ def ejecutar_test_nomina_nicaragua(
                 # Link ReglaCalculo to planilla
                 db_session.add(PlanillaReglaCalculo(planilla_id=planilla.id, regla_calculo_id=regla_ir_id))
 
-                # Link occasional income if present
+                # Link occasional income if present with the actual amount
                 if salario_ocasional > 0 and percepcion_ocasional:
                     db_session.add(
                         PlanillaIngreso(
                             planilla_id=planilla.id,
                             percepcion_id=percepcion_ocasional.id,
+                            monto_predeterminado=salario_ocasional,  # Set the actual bonus amount
                         )
                     )
 
-                db_session.commit()
+                db_session.flush()
 
                 # Execute payroll using the convenience function that handles eager loading
                 from coati_payroll.nomina_engine import ejecutar_nomina
@@ -493,7 +494,7 @@ def ejecutar_test_nomina_nicaragua(
                     results["success"] = False
                     continue
 
-                db_session.commit()
+                db_session.flush()
 
                 # Get accumulated values after this month
                 acumulado = (

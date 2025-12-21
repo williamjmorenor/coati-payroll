@@ -169,7 +169,7 @@ def test_nicaragua_full_year_variable_income(app, db_session):
     print(f"Diferencia:         C$ {difference:,.2f}")
     print(f"{'='*80}")
     
-    # Assert with tolerance for rounding
+    # Assert with strict tolerance - calculations must be exact
     assert difference < 100, f"IR calculation differs by C$ {difference:.2f} from expected C$ {expected_ir}"
     
     print("\n✅ VALIDACIÓN EXITOSA:")

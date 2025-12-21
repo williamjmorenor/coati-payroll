@@ -36,6 +36,7 @@ class FormulaType(StrEnum):
     PORCENTAJE_SALARIO = "porcentaje_salario"  # Percentage of salary
     PORCENTAJE_BRUTO = "porcentaje_bruto"  # Percentage of gross
     FORMULA = "formula"  # Complex formula using FormulaEngine
+    REGLA_CALCULO = "regla_calculo"  # Uses linked ReglaCalculo for calculation
     HORAS = "horas"  # Based on hours
     DIAS = "dias"  # Based on days
 
