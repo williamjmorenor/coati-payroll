@@ -1340,7 +1340,7 @@ class NominaEngine:
                             regla = (
                                 db.session.query(ReglaCalculo)
                                 .filter_by(deduccion_id=deduccion_obj.id)
-                                .filter(ReglaCalculo.activois_(True))
+                                .filter(ReglaCalculo.activo.is_(True))
                                 .first()
                             )
 
