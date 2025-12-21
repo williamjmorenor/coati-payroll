@@ -13,14 +13,12 @@
 # limitations under the License.
 """Unit tests for formula_engine.py - payroll formula calculation engine."""
 
-from datetime import date
 from decimal import Decimal
 
 import pytest
 
 from coati_payroll.formula_engine import (
     FormulaEngine,
-    FormulaEngineError,
     ValidationError,
     CalculationError,
     to_decimal,

@@ -75,13 +75,21 @@ def policy_new():
     form = VacationPolicyForm()
 
     # Populate planilla choices
-    planillas = db.session.query(Planilla).filter(Planilla.activo.is_(True)).order_by(Planilla.nombre).all()
+    planillas = (
+        db.session.execute(db.select(Planilla).filter(Planilla.activo.is_(True)).order_by(Planilla.nombre))
+        .scalars()
+        .all()
+    )
     form.planilla_id.choices = [("", _("-- Seleccionar Planilla --"))] + [
         (p.id, f"{p.nombre} ({p.empresa.razon_social if p.empresa else 'N/A'})") for p in planillas
     ]
 
     # Populate empresa choices
-    empresas = db.session.query(Empresa).filter(Empresa.activo.is_(True)).order_by(Empresa.razon_social).all()
+    empresas = (
+        db.session.execute(db.select(Empresa).filter(Empresa.activo.is_(True)).order_by(Empresa.razon_social))
+        .scalars()
+        .all()
+    )
     form.empresa_id.choices = [("", _("-- Seleccionar Empresa --"))] + [(e.id, e.razon_social) for e in empresas]
 
     if form.validate_on_submit():
@@ -120,13 +128,21 @@ def policy_edit(policy_id):
     form = VacationPolicyForm(obj=policy)
 
     # Populate planilla choices
-    planillas = db.session.query(Planilla).filter(Planilla.activo.is_(True)).order_by(Planilla.nombre).all()
+    planillas = (
+        db.session.execute(db.select(Planilla).filter(Planilla.activo.is_(True)).order_by(Planilla.nombre))
+        .scalars()
+        .all()
+    )
     form.planilla_id.choices = [("", _("-- Seleccionar Planilla --"))] + [
         (p.id, f"{p.nombre} ({p.empresa.razon_social if p.empresa else 'N/A'})") for p in planillas
     ]
 
     # Populate empresa choices
-    empresas = db.session.query(Empresa).filter(Empresa.activo.is_(True)).order_by(Empresa.razon_social).all()
+    empresas = (
+        db.session.execute(db.select(Empresa).filter(Empresa.activo.is_(True)).order_by(Empresa.razon_social))
+        .scalars()
+        .all()
+    )
     form.empresa_id.choices = [("", _("-- Seleccionar Empresa --"))] + [(e.id, e.razon_social) for e in empresas]
 
     if form.validate_on_submit():
@@ -160,7 +176,10 @@ def policy_detail(policy_id):
 
     # Get statistics
     total_accounts = (
-        db.session.query(func.count(VacationAccount.id)).filter(VacationAccount.policy_id == policy_id).scalar() or 0
+        db.session.execute(
+            db.select(func.count(VacationAccount.id)).filter(VacationAccount.policy_id == policy_id)
+        ).scalar()
+        or 0
     )
 
     return render_template(
@@ -209,18 +228,24 @@ def account_detail(account_id):
 
     # Get ledger history
     ledger_entries = (
-        db.session.query(VacationLedger)
-        .filter(VacationLedger.account_id == account_id)
-        .order_by(VacationLedger.fecha.desc())
-        .limit(50)
+        db.session.execute(
+            db.select(VacationLedger)
+            .filter(VacationLedger.account_id == account_id)
+            .order_by(VacationLedger.fecha.desc())
+            .limit(50)
+        )
+        .scalars()
         .all()
     )
 
     # Get pending leave requests
     pending_requests = (
-        db.session.query(VacationNovelty)
-        .filter(VacationNovelty.account_id == account_id, VacationNovelty.estado == "pendiente")
-        .order_by(VacationNovelty.start_date)
+        db.session.execute(
+            db.select(VacationNovelty)
+            .filter(VacationNovelty.account_id == account_id, VacationNovelty.estado == "pendiente")
+            .order_by(VacationNovelty.start_date)
+        )
+        .scalars()
         .all()
     )
 
@@ -301,11 +326,11 @@ def leave_request_new():
 
     if form.validate_on_submit():
         # Validate that employee has a vacation account
-        account = (
-            db.session.query(VacationAccount)
-            .filter(VacationAccount.empleado_id == form.empleado_id.data, VacationAccount.activo.is_(True))
-            .first()
-        )
+        account = db.session.execute(
+            db.select(VacationAccount).filter(
+                VacationAccount.empleado_id == form.empleado_id.data, VacationAccount.activo.is_(True)
+            )
+        ).scalar_one_or_none()
 
         if not account:
             flash(_("El empleado no tiene una cuenta de vacaciones activa."), "danger")
@@ -475,9 +500,12 @@ def register_vacation_taken():
 
     # Populate employee choices
     empleados = (
-        db.session.query(Empleado)
-        .filter(Empleado.activo.is_(True))
-        .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
+        db.session.execute(
+            db.select(Empleado)
+            .filter(Empleado.activo.is_(True))
+            .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
+        )
+        .scalars()
         .all()
     )
     form.empleado_id.choices = [("", _("-- Seleccionar Empleado --"))] + [
@@ -485,13 +513,21 @@ def register_vacation_taken():
     ]
 
     # Populate percepcion choices
-    percepciones = db.session.query(Percepcion).filter(Percepcion.activo.is_(True)).order_by(Percepcion.codigo).all()
+    percepciones = (
+        db.session.execute(db.select(Percepcion).filter(Percepcion.activo.is_(True)).order_by(Percepcion.codigo))
+        .scalars()
+        .all()
+    )
     form.percepcion_id.choices = [("", _("-- Seleccionar Percepción --"))] + [
         (p.id, f"{p.codigo} - {p.nombre}") for p in percepciones
     ]
 
     # Populate deduccion choices
-    deducciones = db.session.query(Deduccion).filter(Deduccion.activo.is_(True)).order_by(Deduccion.codigo).all()
+    deducciones = (
+        db.session.execute(db.select(Deduccion).filter(Deduccion.activo.is_(True)).order_by(Deduccion.codigo))
+        .scalars()
+        .all()
+    )
     form.deduccion_id.choices = [("", _("-- Seleccionar Deducción --"))] + [
         (d.id, f"{d.codigo} - {d.nombre}") for d in deducciones
     ]
@@ -538,11 +574,11 @@ def register_vacation_taken():
             codigo_concepto = concepto.codigo if concepto else "AUSENCIA"
 
         # Validate that employee has a vacation account
-        account = (
-            db.session.query(VacationAccount)
-            .filter(VacationAccount.empleado_id == empleado_id, VacationAccount.activo.is_(True))
-            .first()
-        )
+        account = db.session.execute(
+            db.select(VacationAccount).filter(
+                VacationAccount.empleado_id == empleado_id, VacationAccount.activo.is_(True)
+            )
+        ).scalar_one_or_none()
 
         if not account:
             flash(_("El empleado no tiene una cuenta de vacaciones activa. Cree una cuenta primero."), "danger")
@@ -657,23 +693,31 @@ def dashboard():
     """Vacation management dashboard."""
     # Statistics
     total_policies = (
-        db.session.query(func.count(VacationPolicy.id)).filter(VacationPolicy.activo.is_(True)).scalar() or 0
+        db.session.execute(db.select(func.count(VacationPolicy.id)).filter(VacationPolicy.activo.is_(True))).scalar()
+        or 0
     )
 
     total_accounts = (
-        db.session.query(func.count(VacationAccount.id)).filter(VacationAccount.activo.is_(True)).scalar() or 0
+        db.session.execute(db.select(func.count(VacationAccount.id)).filter(VacationAccount.activo.is_(True))).scalar()
+        or 0
     )
 
     pending_requests = (
-        db.session.query(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == "pendiente").scalar() or 0
+        db.session.execute(
+            db.select(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == "pendiente")
+        ).scalar()
+        or 0
     )
 
     # Recent activity
     recent_requests = (
-        db.session.query(VacationNovelty)
-        .join(VacationNovelty.empleado)
-        .order_by(VacationNovelty.timestamp.desc())
-        .limit(10)
+        db.session.execute(
+            db.select(VacationNovelty)
+            .join(VacationNovelty.empleado)
+            .order_by(VacationNovelty.timestamp.desc())
+            .limit(10)
+        )
+        .scalars()
         .all()
     )
 
@@ -695,11 +739,9 @@ def dashboard():
 @login_required
 def api_employee_balance(employee_id):
     """Get employee vacation balance (AJAX endpoint)."""
-    account = (
-        db.session.query(VacationAccount)
-        .filter(VacationAccount.empleado_id == employee_id, VacationAccount.activo.is_(True))
-        .first()
-    )
+    account = db.session.execute(
+        db.select(VacationAccount).filter(VacationAccount.empleado_id == employee_id, VacationAccount.activo.is_(True))
+    ).scalar_one_or_none()
 
     if not account:
         return jsonify({"error": "No vacation account found"}), 404
@@ -736,9 +778,12 @@ def initial_balance_form():
 
     # Populate employee choices
     empleados = (
-        db.session.query(Empleado)
-        .filter(Empleado.activo.is_(True))
-        .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
+        db.session.execute(
+            db.select(Empleado)
+            .filter(Empleado.activo.is_(True))
+            .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
+        )
+        .scalars()
         .all()
     )
     form.empleado_id.choices = [("", _("-- Seleccionar Empleado --"))] + [
@@ -758,11 +803,11 @@ def initial_balance_form():
             return redirect(url_for("vacation.initial_balance_form"))
 
         # Check if employee has an active vacation account
-        account = (
-            db.session.query(VacationAccount)
-            .filter(VacationAccount.empleado_id == empleado_id, VacationAccount.activo.is_(True))
-            .first()
-        )
+        account = db.session.execute(
+            db.select(VacationAccount).filter(
+                VacationAccount.empleado_id == empleado_id, VacationAccount.activo.is_(True)
+            )
+        ).scalar_one_or_none()
 
         if not account:
             flash(
@@ -774,7 +819,12 @@ def initial_balance_form():
             return redirect(url_for("vacation.account_index"))
 
         # Check if there are already ledger entries for this account
-        existing_entries = db.session.query(VacationLedger).filter(VacationLedger.account_id == account.id).count()
+        existing_entries = (
+            db.session.execute(
+                db.select(func.count(VacationLedger.id)).filter(VacationLedger.account_id == account.id)
+            ).scalar()
+            or 0
+        )
 
         if existing_entries > 0:
             flash(
@@ -892,11 +942,9 @@ def initial_balance_bulk():
                         continue
 
                 # Find employee
-                empleado = (
-                    db.session.query(Empleado)
-                    .filter(Empleado.codigo_empleado == codigo_empleado, Empleado.activo.is_(True))
-                    .first()
-                )
+                empleado = db.session.execute(
+                    db.select(Empleado).filter(Empleado.codigo_empleado == codigo_empleado, Empleado.activo.is_(True))
+                ).scalar_one_or_none()
 
                 if not empleado:
                     errors.append(f"Fila {row_num}: Empleado {codigo_empleado} no encontrado")
@@ -904,11 +952,11 @@ def initial_balance_bulk():
                     continue
 
                 # Check if employee has an active vacation account
-                account = (
-                    db.session.query(VacationAccount)
-                    .filter(VacationAccount.empleado_id == empleado.id, VacationAccount.activo.is_(True))
-                    .first()
-                )
+                account = db.session.execute(
+                    db.select(VacationAccount).filter(
+                        VacationAccount.empleado_id == empleado.id, VacationAccount.activo.is_(True)
+                    )
+                ).scalar_one_or_none()
 
                 if not account:
                     errors.append(f"Fila {row_num}: Empleado {codigo_empleado} no tiene cuenta de vacaciones activa")
@@ -917,7 +965,10 @@ def initial_balance_bulk():
 
                 # Check if account already has ledger entries
                 existing_entries = (
-                    db.session.query(VacationLedger).filter(VacationLedger.account_id == account.id).count()
+                    db.session.execute(
+                        db.select(func.count(VacationLedger.id)).filter(VacationLedger.account_id == account.id)
+                    ).scalar()
+                    or 0
                 )
 
                 if existing_entries > 0:

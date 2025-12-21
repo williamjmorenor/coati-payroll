@@ -13,6 +13,7 @@
 # limitations under the License.
 """End-to-end validation test for vacation module."""
 
+from sqlalchemy import select
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -165,7 +166,11 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         assert len(errors_1) == 0, f"First payroll should have no errors: {errors_1}"
 
         # Re-query account from database to get fresh data
-        vacation_account = db_session.query(VacationAccount).filter(VacationAccount.empleado_id == employee.id).one()
+        vacation_account = (
+            db_session.execute(select(VacationAccount).filter(VacationAccount.empleado_id == employee.id))
+            .unique()
+            .scalar_one()
+        )
 
         # Verify: Account balance should have accrued 1.25 days
         expected_balance_1 = Decimal("1.25")
@@ -175,11 +180,14 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
 
         # Verify: Ledger entry exists
         ledger_entries_1 = (
-            db_session.query(VacationLedger)
-            .filter(
-                VacationLedger.account_id == vacation_account.id,
-                VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+            db_session.execute(
+                select(VacationLedger)
+                .filter(
+                    VacationLedger.account_id == vacation_account.id,
+                    VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+                )
             )
+            .scalars()
             .all()
         )
         assert len(ledger_entries_1) == 1, "Should have 1 accrual ledger entry"
@@ -202,7 +210,11 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         assert len(errors_2) == 0, f"Second payroll should have no errors: {errors_2}"
 
         # Re-query account from database to get fresh data
-        vacation_account = db_session.query(VacationAccount).filter(VacationAccount.empleado_id == employee.id).one()
+        vacation_account = (
+            db_session.execute(select(VacationAccount).filter(VacationAccount.empleado_id == employee.id))
+            .unique()
+            .scalar_one()
+        )
 
         # Verify: Account balance should now be 2.50 days
         expected_balance_2 = Decimal("2.50")
@@ -212,11 +224,14 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
 
         # Verify: Two accrual ledger entries exist
         ledger_entries_2 = (
-            db_session.query(VacationLedger)
-            .filter(
-                VacationLedger.account_id == vacation_account.id,
-                VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+            db_session.execute(
+                select(VacationLedger)
+                .filter(
+                    VacationLedger.account_id == vacation_account.id,
+                    VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+                )
             )
+            .scalars()
             .all()
         )
         assert len(ledger_entries_2) == 2, "Should have 2 accrual ledger entries"
@@ -242,7 +257,11 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         assert nomina_3 is not None, f"Third payroll should be created. Errors: {errors_3}"
 
         # Re-query account from database to get fresh data
-        vacation_account = db_session.query(VacationAccount).filter(VacationAccount.empleado_id == employee.id).one()
+        vacation_account = (
+            db_session.execute(select(VacationAccount).filter(VacationAccount.empleado_id == employee.id))
+            .unique()
+            .scalar_one()
+        )
 
         # Verify: Account balance has continued to accrue
         # Note: Exact amount depends on days in period but should be > 2.50
@@ -252,17 +271,25 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
 
         # Verify: All accrual ledger entries exist
         accrual_entries = (
-            db_session.query(VacationLedger)
-            .filter(
-                VacationLedger.account_id == vacation_account.id,
-                VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+            db_session.execute(
+                select(VacationLedger)
+                .filter(
+                    VacationLedger.account_id == vacation_account.id,
+                    VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+                )
             )
+            .scalars()
             .all()
         )
         assert len(accrual_entries) == 3, "Should have 3 accrual ledger entries from 3 payroll runs"
 
         # Verify: Ledger immutability - balance equals sum of all entries
-        all_entries = db_session.query(VacationLedger).filter(VacationLedger.account_id == vacation_account.id).all()
+        all_entries = (
+            db_session.execute(select(VacationLedger).filter(VacationLedger.account_id == vacation_account.id))
+            .unique()
+            .scalars()
+            .all()
+        )
         total_balance = sum(entry.quantity for entry in all_entries)
         assert (
             total_balance == vacation_account.current_balance
@@ -628,7 +655,12 @@ def test_vacation_ledger_immutability(app, db_session):
         db_session.commit()
 
         # Verify: Balance equals sum of all ledger entries
-        all_entries = db_session.query(VacationLedger).filter(VacationLedger.account_id == vacation_account.id).all()
+        all_entries = (
+            db_session.execute(select(VacationLedger).filter(VacationLedger.account_id == vacation_account.id))
+            .unique()
+            .scalars()
+            .all()
+        )
 
         assert len(all_entries) == 5, "Should have 5 ledger entries"
 

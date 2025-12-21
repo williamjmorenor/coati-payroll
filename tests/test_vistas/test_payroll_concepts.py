@@ -14,6 +14,7 @@
 """Comprehensive tests for payroll concepts CRUD (coati_payroll/vistas/payroll_concepts.py)."""
 
 
+from sqlalchemy import select
 from coati_payroll.enums import FormulaType
 from coati_payroll.model import Deduccion, Percepcion, Prestacion
 from tests.helpers.auth import login_user
@@ -82,7 +83,7 @@ def test_percepcion_new_creates_item(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            perc = db_session.query(Percepcion).filter_by(codigo="COMISION").first()
+            perc = db_session.execute(select(Percepcion).filter_by(codigo="COMISION")).scalar_one_or_none()
             assert perc is not None
             assert perc.nombre == "Comisión de Ventas"
             assert perc.formula_tipo == FormulaType.PORCENTAJE
@@ -147,7 +148,7 @@ def test_percepcion_delete_removes_item(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            perc = db_session.query(Percepcion).filter_by(id=perc_id).first()
+            perc = db_session.execute(select(Percepcion).filter_by(id=perc_id)).scalar_one_or_none()
             assert perc is None
 
 
@@ -185,7 +186,7 @@ def test_deduccion_new_creates_item(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            ded = db_session.query(Deduccion).filter_by(codigo="INSS").first()
+            ded = db_session.execute(select(Deduccion).filter_by(codigo="INSS")).scalar_one_or_none()
             assert ded is not None
             assert ded.nombre == "Seguro Social"
 
@@ -251,7 +252,7 @@ def test_prestacion_new_creates_item(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            prest = db_session.query(Prestacion).filter_by(codigo="AGUINALDO").first()
+            prest = db_session.execute(select(Prestacion).filter_by(codigo="AGUINALDO")).scalar_one_or_none()
             assert prest is not None
             assert prest.nombre == "Aguinaldo"
 
@@ -277,7 +278,7 @@ def test_prestacion_can_be_inactive(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            prest = db_session.query(Prestacion).filter_by(codigo="INACTIVE_PREST").first()
+            prest = db_session.execute(select(Prestacion).filter_by(codigo="INACTIVE_PREST")).scalar_one_or_none()
             assert prest is not None
             assert prest.activo is False
 
@@ -303,7 +304,7 @@ def test_payroll_concepts_workflow(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            perc = db_session.query(Percepcion).filter_by(codigo="WORKFLOW").first()
+            perc = db_session.execute(select(Percepcion).filter_by(codigo="WORKFLOW")).scalar_one_or_none()
             assert perc is not None
             perc_id = perc.id
 
@@ -332,5 +333,5 @@ def test_payroll_concepts_workflow(app, client, admin_user, db_session):
                 assert response.status_code in [200, 302]
 
                 if response.status_code == 302:
-                    perc = db_session.query(Percepcion).filter_by(id=perc_id).first()
+                    perc = db_session.execute(select(Percepcion).filter_by(id=perc_id)).scalar_one_or_none()
                     assert perc is None

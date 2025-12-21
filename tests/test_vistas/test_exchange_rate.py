@@ -13,6 +13,7 @@
 # limitations under the License.
 """Comprehensive tests for exchange rate CRUD operations (coati_payroll/vistas/exchange_rate.py)."""
 
+from sqlalchemy import func, select
 from datetime import date
 from decimal import Decimal
 
@@ -114,7 +115,7 @@ def test_exchange_rate_new_creates_rate(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            rate = db_session.query(TipoCambio).filter_by(moneda_origen_id=usd.id, moneda_destino_id=nio.id).first()
+            rate = db_session.execute(select(TipoCambio).filter_by(moneda_origen_id=usd.id, moneda_destino_id=nio.id)).scalar_one_or_none()
             assert rate is not None
             assert rate.tasa == Decimal("36.75")
             assert rate.fecha == date(2025, 1, 15)
@@ -191,7 +192,7 @@ def test_exchange_rate_delete_removes_rate(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            rate = db_session.query(TipoCambio).filter_by(id=rate_id).first()
+            rate = db_session.execute(select(TipoCambio).filter_by(id=rate_id)).scalar_one_or_none()
             assert rate is None
 
 
@@ -234,7 +235,7 @@ def test_exchange_rate_supports_multiple_rates_same_currencies(app, client, admi
         assert response2.status_code in [200, 302]
 
         # Verify both exist
-        count = db_session.query(TipoCambio).filter_by(moneda_origen_id=usd.id, moneda_destino_id=eur.id).count()
+        count = db_session.execute(select(func.count(TipoCambio.id)).filter_by(moneda_origen_id=usd.id, moneda_destino_id=eur.id)).scalar() or 0
         assert count >= 2
 
 
@@ -263,7 +264,7 @@ def test_exchange_rate_validates_decimal_precision(app, client, admin_user, db_s
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            rate = db_session.query(TipoCambio).filter_by(moneda_origen_id=usd.id, moneda_destino_id=jpy.id).first()
+            rate = db_session.execute(select(TipoCambio).filter_by(moneda_origen_id=usd.id, moneda_destino_id=jpy.id)).scalar_one_or_none()
             assert rate is not None
             assert rate.tasa == Decimal("149.25")
 
@@ -293,7 +294,7 @@ def test_exchange_rate_workflow_create_edit_delete(app, client, admin_user, db_s
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            rate = db_session.query(TipoCambio).filter_by(moneda_origen_id=usd.id, moneda_destino_id=cad.id).first()
+            rate = db_session.execute(select(TipoCambio).filter_by(moneda_origen_id=usd.id, moneda_destino_id=cad.id)).scalar_one_or_none()
             assert rate is not None
             rate_id = rate.id
 
@@ -319,7 +320,7 @@ def test_exchange_rate_workflow_create_edit_delete(app, client, admin_user, db_s
                 assert response.status_code in [200, 302]
 
                 if response.status_code == 302:
-                    rate = db_session.query(TipoCambio).filter_by(id=rate_id).first()
+                    rate = db_session.execute(select(TipoCambio).filter_by(id=rate_id)).scalar_one_or_none()
                     assert rate is None
 
 

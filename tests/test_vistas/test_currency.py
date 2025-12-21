@@ -13,6 +13,7 @@
 # limitations under the License.
 """Comprehensive tests for currency CRUD operations (coati_payroll/vistas/currency.py)."""
 
+from sqlalchemy import func, select
 from coati_payroll.model import Moneda
 from tests.helpers.auth import login_user
 
@@ -186,7 +187,7 @@ def test_currency_new_post_creates_currency(app, client, admin_user, db_session)
         assert "/currency/" in response.location
 
         # Verify currency was created
-        currency = db_session.query(Moneda).filter_by(codigo="JPY").first()
+        currency = db_session.execute(select(Moneda).filter_by(codigo="JPY")).scalar_one_or_none()
         assert currency is not None
         assert currency.nombre == "Japanese Yen"
         assert currency.simbolo == "¥"
@@ -226,7 +227,7 @@ def test_currency_new_post_validation_fails_without_required_fields(app, client,
         assert response.status_code == 200
 
         # Verify no currency was created
-        count = db_session.query(Moneda).count()
+        count = db_session.execute(select(func.count(Moneda.id))).scalar() or 0
         assert count == 0
 
 
@@ -301,7 +302,7 @@ def test_currency_edit_post_updates_currency(app, client, admin_user, db_session
         assert response.status_code == 302
 
         # Verify currency was updated - use fresh query
-        updated_currency = db_session.query(Moneda).filter_by(id=currency_id).first()
+        updated_currency = db_session.execute(select(Moneda).filter_by(id=currency_id)).scalar_one_or_none()
         assert updated_currency.nombre == "Canadian Dollar (Updated)"
         assert updated_currency.simbolo == "C$"
         assert updated_currency.modificado_por == "admin-test"
@@ -360,7 +361,7 @@ def test_currency_delete_removes_currency(app, client, admin_user, db_session):
         assert response.status_code == 302
 
         # Verify currency was deleted
-        currency = db_session.query(Moneda).filter_by(id=currency_id).first()
+        currency = db_session.execute(select(Moneda).filter_by(id=currency_id)).scalar_one_or_none()
         assert currency is None
 
 
@@ -446,7 +447,7 @@ def test_currency_workflow_create_edit_delete(app, client, admin_user, db_sessio
         )
         assert response.status_code == 302
 
-        currency = db_session.query(Moneda).filter_by(codigo="BRL").first()
+        currency = db_session.execute(select(Moneda).filter_by(codigo="BRL")).scalar_one_or_none()
         assert currency is not None
         currency_id = currency.id
         assert currency.activo is True  # Verify it was created as active
@@ -472,7 +473,7 @@ def test_currency_workflow_create_edit_delete(app, client, admin_user, db_sessio
         response = client.post(f"/currency/delete/{currency_id}", follow_redirects=False)
         assert response.status_code == 302
 
-        currency = db_session.query(Moneda).filter_by(id=currency_id).first()
+        currency = db_session.execute(select(Moneda).filter_by(id=currency_id)).scalar_one_or_none()
         assert currency is None
 
 
@@ -509,7 +510,7 @@ def test_currency_inactive_flag_works(app, client, admin_user, db_session):
         assert response.status_code == 302
 
         # Verify currency is inactive
-        currency = db_session.query(Moneda).filter_by(codigo="INR").first()
+        currency = db_session.execute(select(Moneda).filter_by(codigo="INR")).scalar_one_or_none()
         assert currency is not None
         assert currency.activo is False
 
@@ -553,6 +554,6 @@ def test_currency_multiple_currencies_can_coexist(app, client, admin_user, db_se
 
         # Verify all currencies exist
         for codigo, nombre, simbolo in currencies_to_create:
-            currency = db_session.query(Moneda).filter_by(codigo=codigo).first()
+            currency = db_session.execute(select(Moneda).filter_by(codigo=codigo)).scalar_one_or_none()
             assert currency is not None
             assert currency.nombre == nombre

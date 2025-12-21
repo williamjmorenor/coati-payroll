@@ -13,6 +13,8 @@
 # limitations under the License.
 """Assertion helpers for tests."""
 
+from sqlalchemy import select
+
 from coati_payroll.model import Usuario
 
 
@@ -27,7 +29,7 @@ def assert_user_exists(db_session, usuario):
     Raises:
         AssertionError: If user does not exist
     """
-    user = db_session.query(Usuario).filter_by(usuario=usuario).first()
+    user = db_session.execute(select(Usuario).filter_by(usuario=usuario)).scalar_one_or_none()
     assert user is not None, f"User '{usuario}' should exist in database"
     return user
 

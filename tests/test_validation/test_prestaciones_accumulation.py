@@ -255,14 +255,20 @@ def test_prestaciones_accumulation_workflow(app, db_session):
         # Verify that 3 payrolls were executed
         assert len(nominas_executed) == 3, "Should have executed 3 payrolls"
 
+        from sqlalchemy import select
+
         # Verify transactions were created for annual prestacion (Aguinaldo)
         transacciones_anual = (
-            db_session.query(PrestacionAcumulada)
-            .filter(
-                PrestacionAcumulada.empleado_id == empleado.id,
-                PrestacionAcumulada.prestacion_id == prestacion_anual.id,
+            db_session.execute(
+                select(PrestacionAcumulada)
+                .filter(
+                    PrestacionAcumulada.empleado_id == empleado.id,
+                    PrestacionAcumulada.prestacion_id == prestacion_anual.id,
+                )
+                .order_by(PrestacionAcumulada.fecha_transaccion)
             )
-            .order_by(PrestacionAcumulada.fecha_transaccion)
+            .unique()
+            .scalars()
             .all()
         )
 
@@ -290,14 +296,20 @@ def test_prestaciones_accumulation_workflow(app, db_session):
                 trans.saldo_nuevo == running_balance_anual
             ), f"Transaction {i+1} new balance should be {running_balance_anual}, got {trans.saldo_nuevo}"
 
+        from sqlalchemy import select
+
         # Verify transactions were created for lifetime prestacion (Indemnización)
         transacciones_vida = (
-            db_session.query(PrestacionAcumulada)
-            .filter(
-                PrestacionAcumulada.empleado_id == empleado.id,
-                PrestacionAcumulada.prestacion_id == prestacion_vida.id,
+            db_session.execute(
+                select(PrestacionAcumulada)
+                .filter(
+                    PrestacionAcumulada.empleado_id == empleado.id,
+                    PrestacionAcumulada.prestacion_id == prestacion_vida.id,
+                )
+                .order_by(PrestacionAcumulada.fecha_transaccion)
             )
-            .order_by(PrestacionAcumulada.fecha_transaccion)
+            .unique()
+            .scalars()
             .all()
         )
 
@@ -508,14 +520,20 @@ def test_prestaciones_monthly_settlement(app, db_session):
 
         # ===== VERIFICATION PHASE =====
 
+        from sqlalchemy import select
+
         # Verify transactions for monthly settlement prestacion
         transacciones = (
-            db_session.query(PrestacionAcumulada)
-            .filter(
-                PrestacionAcumulada.empleado_id == empleado.id,
-                PrestacionAcumulada.prestacion_id == prestacion_mensual.id,
+            db_session.execute(
+                select(PrestacionAcumulada)
+                .filter(
+                    PrestacionAcumulada.empleado_id == empleado.id,
+                    PrestacionAcumulada.prestacion_id == prestacion_mensual.id,
+                )
+                .order_by(PrestacionAcumulada.fecha_transaccion)
             )
-            .order_by(PrestacionAcumulada.fecha_transaccion)
+            .unique()
+            .scalars()
             .all()
         )
 

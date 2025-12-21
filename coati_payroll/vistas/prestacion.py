@@ -53,25 +53,32 @@ prestacion_management_bp = Blueprint("prestacion_management", __name__, url_pref
 def dashboard():
     """Prestacion management dashboard."""
     # Statistics
-    total_prestaciones = db.session.query(func.count(Prestacion.id)).filter(Prestacion.activo.is_(True)).scalar() or 0
+    total_prestaciones = (
+        db.session.execute(db.select(func.count(Prestacion.id)).filter(Prestacion.activo.is_(True))).scalar() or 0
+    )
 
     # Count employees with benefit balances
-    total_accounts = db.session.query(func.count(func.distinct(PrestacionAcumulada.empleado_id))).scalar() or 0
+    total_accounts = (
+        db.session.execute(db.select(func.count(func.distinct(PrestacionAcumulada.empleado_id)))).scalar() or 0
+    )
 
     # Count pending initial loads
     pending_loads = (
-        db.session.query(func.count(CargaInicialPrestacion.id))
-        .filter(CargaInicialPrestacion.estado == "borrador")
-        .scalar()
+        db.session.execute(
+            db.select(func.count(CargaInicialPrestacion.id)).filter(CargaInicialPrestacion.estado == "borrador")
+        ).scalar()
         or 0
     )
 
     # Recent activity - latest transactions
     recent_transactions = (
-        db.session.query(PrestacionAcumulada)
-        .join(PrestacionAcumulada.empleado)
-        .order_by(PrestacionAcumulada.fecha_transaccion.desc())
-        .limit(10)
+        db.session.execute(
+            db.select(PrestacionAcumulada)
+            .join(PrestacionAcumulada.empleado)
+            .order_by(PrestacionAcumulada.fecha_transaccion.desc())
+            .limit(10)
+        )
+        .scalars()
         .all()
     )
 
@@ -162,11 +169,9 @@ def initial_balance_bulk():
                     continue
 
                 # Find employee
-                empleado = (
-                    db.session.query(Empleado)
-                    .filter(Empleado.codigo_empleado == codigo_empleado, Empleado.activo.is_(True))
-                    .first()
-                )
+                empleado = db.session.execute(
+                    db.select(Empleado).filter(Empleado.codigo_empleado == codigo_empleado, Empleado.activo.is_(True))
+                ).scalar_one_or_none()
 
                 if not empleado:
                     errors.append(f"Fila {row_num}: Empleado {codigo_empleado} no encontrado")
@@ -174,11 +179,9 @@ def initial_balance_bulk():
                     continue
 
                 # Find prestacion
-                prestacion = (
-                    db.session.query(Prestacion)
-                    .filter(Prestacion.codigo == codigo_prestacion, Prestacion.activo.is_(True))
-                    .first()
-                )
+                prestacion = db.session.execute(
+                    db.select(Prestacion).filter(Prestacion.codigo == codigo_prestacion, Prestacion.activo.is_(True))
+                ).scalar_one_or_none()
 
                 if not prestacion:
                     errors.append(f"Fila {row_num}: Prestación {codigo_prestacion} no encontrada")
@@ -186,9 +189,9 @@ def initial_balance_bulk():
                     continue
 
                 # Find moneda
-                moneda = (
-                    db.session.query(Moneda).filter(Moneda.codigo == codigo_moneda, Moneda.activo.is_(True)).first()
-                )
+                moneda = db.session.execute(
+                    db.select(Moneda).filter(Moneda.codigo == codigo_moneda, Moneda.activo.is_(True))
+                ).scalar_one_or_none()
 
                 if not moneda:
                     errors.append(f"Fila {row_num}: Moneda {codigo_moneda} no encontrada")
@@ -196,16 +199,14 @@ def initial_balance_bulk():
                     continue
 
                 # Check for duplicate
-                existing = (
-                    db.session.query(CargaInicialPrestacion)
-                    .filter(
+                existing = db.session.execute(
+                    db.select(CargaInicialPrestacion).filter(
                         CargaInicialPrestacion.empleado_id == empleado.id,
                         CargaInicialPrestacion.prestacion_id == prestacion.id,
                         CargaInicialPrestacion.anio_corte == anio_corte,
                         CargaInicialPrestacion.mes_corte == mes_corte,
                     )
-                    .first()
-                )
+                ).scalar_one_or_none()
 
                 if existing:
                     errors.append(

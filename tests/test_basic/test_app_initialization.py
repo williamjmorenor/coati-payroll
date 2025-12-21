@@ -122,6 +122,8 @@ def test_session_isolation(app, db_session):
         db_session.flush()
 
         # Verify user exists in current session
-        found = db_session.query(Usuario).filter_by(usuario="test-isolation").first()
+        from sqlalchemy import select
+
+        found = db_session.execute(select(Usuario).filter_by(usuario="test-isolation")).scalar_one_or_none()
         assert found is not None
         assert found.usuario == "test-isolation"

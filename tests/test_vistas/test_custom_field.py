@@ -13,6 +13,7 @@
 # limitations under the License.
 """Comprehensive tests for custom field CRUD operations (coati_payroll/vistas/custom_field.py)."""
 
+from sqlalchemy import func, select
 from coati_payroll.model import CampoPersonalizado
 from tests.helpers.auth import login_user
 
@@ -76,7 +77,7 @@ def test_custom_field_new_creates_field(app, client, admin_user, db_session):
 
         # Verify custom field was created if redirect
         if response.status_code == 302:
-            field = db_session.query(CampoPersonalizado).filter_by(nombre_campo="department_code").first()
+            field = db_session.execute(select(CampoPersonalizado).filter_by(nombre_campo="department_code")).scalar_one_or_none()
             assert field is not None
             assert field.etiqueta == "Department Code"
             assert field.tipo_dato == "texto"
@@ -148,7 +149,7 @@ def test_custom_field_delete_removes_field(app, client, admin_user, db_session):
 
         # Verify deletion if redirect
         if response.status_code == 302:
-            field = db_session.query(CampoPersonalizado).filter_by(id=field_id).first()
+            field = db_session.execute(select(CampoPersonalizado).filter_by(id=field_id)).scalar_one_or_none()
             assert field is None
 
 
@@ -180,7 +181,7 @@ def test_custom_field_supports_different_data_types(app, client, admin_user, db_
             assert response.status_code in [200, 302]
 
         # Verify all created if redirects
-        count = db_session.query(CampoPersonalizado).count()
+        count = db_session.execute(select(func.count(CampoPersonalizado.id))).scalar() or 0
         assert count >= len(data_types)
 
 
@@ -216,7 +217,7 @@ def test_custom_field_ordering_works(app, client, admin_user, db_session):
         db_session.commit()
 
         # Query fields ordered by orden
-        fields = db_session.query(CampoPersonalizado).order_by(CampoPersonalizado.orden).all()
+        fields = db_session.execute(select(CampoPersonalizado).order_by(CampoPersonalizado.orden)).scalars().all()
 
         assert fields[0].nombre_campo == "field_a"
         assert fields[1].nombre_campo == "field_b"
@@ -244,7 +245,7 @@ def test_custom_field_can_be_inactive(app, client, admin_user, db_session):
 
         # Verify inactive if redirect
         if response.status_code == 302:
-            field = db_session.query(CampoPersonalizado).filter_by(nombre_campo="inactive_field").first()
+            field = db_session.execute(select(CampoPersonalizado).filter_by(nombre_campo="inactive_field")).scalar_one_or_none()
             assert field is not None
             assert field.activo is False
 
@@ -270,7 +271,7 @@ def test_custom_field_workflow_create_edit_delete(app, client, admin_user, db_se
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            field = db_session.query(CampoPersonalizado).filter_by(nombre_campo="test_workflow").first()
+            field = db_session.execute(select(CampoPersonalizado).filter_by(nombre_campo="test_workflow")).scalar_one_or_none()
             assert field is not None
             field_id = field.id
 
@@ -298,5 +299,5 @@ def test_custom_field_workflow_create_edit_delete(app, client, admin_user, db_se
                 assert response.status_code in [200, 302]
 
                 if response.status_code == 302:
-                    field = db_session.query(CampoPersonalizado).filter_by(id=field_id).first()
+                    field = db_session.execute(select(CampoPersonalizado).filter_by(id=field_id)).scalar_one_or_none()
                     assert field is None

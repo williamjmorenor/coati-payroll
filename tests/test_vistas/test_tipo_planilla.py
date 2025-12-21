@@ -13,6 +13,7 @@
 # limitations under the License.
 """Comprehensive tests for payroll type CRUD operations (coati_payroll/vistas/tipo_planilla.py)."""
 
+from sqlalchemy import select
 from coati_payroll.enums import Periodicidad
 from coati_payroll.model import TipoPlanilla
 from tests.helpers.auth import login_user
@@ -85,7 +86,7 @@ def test_tipo_planilla_new_creates_type(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            tipo = db_session.query(TipoPlanilla).filter_by(codigo="SEMANAL").first()
+            tipo = db_session.execute(select(TipoPlanilla).filter_by(codigo="SEMANAL")).scalar_one_or_none()
             assert tipo is not None
             assert tipo.descripcion == "Planilla Semanal"
             assert tipo.periodicidad == Periodicidad.SEMANAL
@@ -164,7 +165,7 @@ def test_tipo_planilla_delete_removes_type(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            tipo = db_session.query(TipoPlanilla).filter_by(id=tipo_id).first()
+            tipo = db_session.execute(select(TipoPlanilla).filter_by(id=tipo_id)).scalar_one_or_none()
             assert tipo is None
 
 
@@ -272,7 +273,7 @@ def test_tipo_planilla_fiscal_year_settings(app, client, admin_user, db_session)
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            tipo = db_session.query(TipoPlanilla).filter_by(codigo="FISCAL").first()
+            tipo = db_session.execute(select(TipoPlanilla).filter_by(codigo="FISCAL")).scalar_one_or_none()
             assert tipo is not None
             assert tipo.mes_inicio_fiscal == 7
             assert tipo.dia_inicio_fiscal == 1
@@ -302,7 +303,7 @@ def test_tipo_planilla_workflow_create_edit_delete(app, client, admin_user, db_s
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            tipo = db_session.query(TipoPlanilla).filter_by(codigo="WORKFLOW").first()
+            tipo = db_session.execute(select(TipoPlanilla).filter_by(codigo="WORKFLOW")).scalar_one_or_none()
             assert tipo is not None
             tipo_id = tipo.id
 
@@ -334,5 +335,5 @@ def test_tipo_planilla_workflow_create_edit_delete(app, client, admin_user, db_s
                 assert response.status_code in [200, 302]
 
                 if response.status_code == 302:
-                    tipo = db_session.query(TipoPlanilla).filter_by(id=tipo_id).first()
+                    tipo = db_session.execute(select(TipoPlanilla).filter_by(id=tipo_id)).scalar_one_or_none()
                     assert tipo is None

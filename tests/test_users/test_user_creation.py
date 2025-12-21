@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for user creation and management."""
 
+from sqlalchemy import func, select
 from coati_payroll.model import Usuario
 from tests.factories.user_factory import create_user
 from tests.helpers.assertions import assert_user_exists
@@ -202,7 +203,7 @@ def test_users_in_parallel_tests_are_isolated(app, db_session):
         assert_user_exists(db_session, "isolated2")
 
         # Count total users
-        total = db_session.query(Usuario).count()
+        total = db_session.execute(select(func.count(Usuario.id))).scalar() or 0
         assert total == 2
 
         # These users will be rolled back after this test completes

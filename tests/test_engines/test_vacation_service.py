@@ -34,9 +34,7 @@ from coati_payroll.model import (
     TipoPlanilla,
     VacationAccount,
     VacationLedger,
-    VacationNovelty,
     VacationPolicy,
-    NominaNovedad,
     Nomina,
 )
 from coati_payroll.vacation_service import VacationService
@@ -289,13 +287,18 @@ def test_acumular_vacaciones_periodic_method(app, db_session, planilla, empleado
         assert accrued > Decimal("0.00")
         assert accrued <= Decimal("1.30")  # Prorated for 31 days
 
+        from sqlalchemy import select
+
         # Verify ledger entry created
         ledger_entries = (
-            db_session.query(VacationLedger)
-            .filter(
-                VacationLedger.account_id == account.id,
-                VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+            db_session.execute(
+                select(VacationLedger)
+                .filter(
+                    VacationLedger.account_id == account.id,
+                    VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+                )
             )
+            .scalars()
             .all()
         )
         assert len(ledger_entries) == 1

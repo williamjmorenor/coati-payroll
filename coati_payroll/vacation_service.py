@@ -70,8 +70,8 @@ class VacationService:
         from coati_payroll.model import db, VacationAccount, VacationLedger
 
         # Get active vacation account for this employee and payroll
-        account = (
-            db.session.query(VacationAccount)
+        account = db.session.execute(
+            db.select(VacationAccount)
             .filter(
                 VacationAccount.empleado_id == empleado.id,
                 VacationAccount.activo.is_(True),
@@ -82,8 +82,7 @@ class VacationService:
                 | (VacationAccount.policy.has(empresa_id=self.planilla.empresa_id))
                 | ((VacationAccount.policy.has(planilla_id=None)) & (VacationAccount.policy.has(empresa_id=None)))
             )
-            .first()
-        )
+        ).scalar_one_or_none()
 
         if not account:
             log.debug(
@@ -298,13 +297,15 @@ class VacationService:
 
         # Query vacation-related novedades for this employee in this period
         nomina_novedades = (
-            db.session.query(NominaNovedad)
-            .filter(
-                NominaNovedad.empleado_id == empleado.id,
-                NominaNovedad.es_descanso_vacaciones.is_(True),
-                NominaNovedad.fecha_novedad >= self.periodo_inicio,
-                NominaNovedad.fecha_novedad <= self.periodo_fin,
+            db.session.execute(
+                db.select(NominaNovedad).filter(
+                    NominaNovedad.empleado_id == empleado.id,
+                    NominaNovedad.es_descanso_vacaciones.is_(True),
+                    NominaNovedad.fecha_novedad >= self.periodo_inicio,
+                    NominaNovedad.fecha_novedad <= self.periodo_fin,
+                )
             )
+            .scalars()
             .all()
         )
 

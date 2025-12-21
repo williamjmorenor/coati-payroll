@@ -25,22 +25,14 @@ This module tests the core payroll processing engine that handles:
 These tests are CRITICAL as they validate money calculations affecting employees.
 """
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
-import pytest
 
-from coati_payroll.enums import FormulaType, NominaEstado
+from coati_payroll.enums import FormulaType
 from coati_payroll.nomina_engine import (
     NominaEngine,
-    NominaEngineError,
-    ValidationError,
-    CalculationError,
     EmpleadoCalculo,
-    DeduccionItem,
-    PercepcionItem,
-    PrestacionItem,
-    HORAS_TRABAJO_DIA,
 )
 
 

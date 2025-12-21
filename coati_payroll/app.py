@@ -39,13 +39,21 @@ app = Blueprint("app", __name__)
 @login_required
 def index():
     # Get statistics for dashboard
-    total_empleados = db.session.query(func.count(Empleado.id)).filter(Empleado.activo.is_(True)).scalar() or 0
-    total_empresas = db.session.query(func.count(Empresa.id)).filter(Empresa.activo.is_(True)).scalar() or 0
-    total_planillas = db.session.query(func.count(Planilla.id)).filter(Planilla.activo.is_(True)).scalar() or 0
-    total_nominas = db.session.query(func.count(Nomina.id)).scalar() or 0
+    total_empleados = (
+        db.session.execute(db.select(func.count(Empleado.id)).filter(Empleado.activo.is_(True))).scalar() or 0
+    )
+    total_empresas = (
+        db.session.execute(db.select(func.count(Empresa.id)).filter(Empresa.activo.is_(True))).scalar() or 0
+    )
+    total_planillas = (
+        db.session.execute(db.select(func.count(Planilla.id)).filter(Planilla.activo.is_(True))).scalar() or 0
+    )
+    total_nominas = db.session.execute(db.select(func.count(Nomina.id))).scalar() or 0
 
     # Get recent payrolls (last 5)
-    recent_nominas = db.session.query(Nomina).order_by(Nomina.fecha_generacion.desc()).limit(5).all()
+    recent_nominas = (
+        db.session.execute(db.select(Nomina).order_by(Nomina.fecha_generacion.desc()).limit(5)).scalars().all()
+    )
 
     return render_template(
         "index.html",

@@ -68,13 +68,14 @@ class ReportExporter:
         if not output_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_name = "".join(c for c in self.report_name if c.isalnum() or c in (" ", "_", "-")).strip()
+            safe_name = safe_name.replace(" ", "_")  # Replace spaces with underscores for Windows compatibility
             filename = f"{safe_name}_{timestamp}.xlsx"
 
             # Create exports directory if it doesn't exist
             exports_dir = Path(DIRECTORIO_APP) / "exports" / "reports"
             exports_dir.mkdir(parents=True, exist_ok=True)
 
-            output_path = str(exports_dir / filename)
+            output_path = str((exports_dir / filename).absolute())
 
         # Create workbook
         wb = Workbook()
@@ -146,12 +147,13 @@ class ReportExporter:
         if not output_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_name = "".join(c for c in self.report_name if c.isalnum() or c in (" ", "_", "-")).strip()
+            safe_name = safe_name.replace(" ", "_")  # Replace spaces with underscores for Windows compatibility
             filename = f"{safe_name}_{timestamp}.csv"
 
             exports_dir = Path(DIRECTORIO_APP) / "exports" / "reports"
             exports_dir.mkdir(parents=True, exist_ok=True)
 
-            output_path = str(exports_dir / filename)
+            output_path = str((exports_dir / filename).absolute())
 
         # Write CSV
         if self.results:

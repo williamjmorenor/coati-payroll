@@ -86,16 +86,16 @@ def employee_list_report(parameters: Dict[str, Any]) -> List[Dict[str, Any]]:
         - activo (optional): Filter by active status
         - empresa_id (optional): Filter by company
     """
-    query = db.session.query(Empleado)
+    stmt = db.select(Empleado)
 
     # Apply filters
     if "activo" in parameters:
-        query = query.filter(Empleado.activo == parameters["activo"])
+        stmt = stmt.filter(Empleado.activo == parameters["activo"])
 
     if "empresa_id" in parameters:
-        query = query.filter(Empleado.empresa_id == parameters["empresa_id"])
+        stmt = stmt.filter(Empleado.empresa_id == parameters["empresa_id"])
 
-    results = query.order_by(Empleado.primer_apellido, Empleado.primer_nombre).all()
+    results = db.session.execute(stmt.order_by(Empleado.primer_apellido, Empleado.primer_nombre)).scalars().all()
 
     return [
         {
@@ -119,9 +119,11 @@ def employee_active_inactive_report(parameters: Dict[str, Any]) -> List[Dict[str
 
     Shows current status of all employees with relevant dates.
     """
-    query = db.session.query(Empleado).order_by(Empleado.activo.desc(), Empleado.primer_apellido)
-
-    results = query.all()
+    results = (
+        db.session.execute(db.select(Empleado).order_by(Empleado.activo.desc(), Empleado.primer_apellido))
+        .scalars()
+        .all()
+    )
 
     return [
         {
@@ -143,13 +145,15 @@ def employee_by_department_report(parameters: Dict[str, Any]) -> List[Dict[str, 
 
     Groups employees by area and provides summary statistics.
     """
-    query = (
-        db.session.query(Empleado)
-        .filter(Empleado.activo == True)  # noqa: E712
-        .order_by(Empleado.area, Empleado.primer_apellido)
+    results = (
+        db.session.execute(
+            db.select(Empleado)
+            .filter(Empleado.activo == True)  # noqa: E712
+            .order_by(Empleado.area, Empleado.primer_apellido)
+        )
+        .scalars()
+        .all()
     )
-
-    results = query.all()
 
     return [
         {
@@ -181,22 +185,22 @@ def employee_hires_terminations_report(parameters: Dict[str, Any]) -> List[Dict[
         fecha_fin = datetime.fromisoformat(fecha_fin).date()
 
     # Get hires
-    hires_query = db.session.query(Empleado)
+    hires_stmt = db.select(Empleado)
     if fecha_inicio:
-        hires_query = hires_query.filter(Empleado.fecha_alta >= fecha_inicio)
+        hires_stmt = hires_stmt.filter(Empleado.fecha_alta >= fecha_inicio)
     if fecha_fin:
-        hires_query = hires_query.filter(Empleado.fecha_alta <= fecha_fin)
+        hires_stmt = hires_stmt.filter(Empleado.fecha_alta <= fecha_fin)
 
-    hires = hires_query.all()
+    hires = db.session.execute(hires_stmt).scalars().all()
 
     # Get terminations
-    terminations_query = db.session.query(Empleado).filter(Empleado.fecha_baja.isnot(None))
+    terminations_stmt = db.select(Empleado).filter(Empleado.fecha_baja.isnot(None))
     if fecha_inicio:
-        terminations_query = terminations_query.filter(Empleado.fecha_baja >= fecha_inicio)
+        terminations_stmt = terminations_stmt.filter(Empleado.fecha_baja >= fecha_inicio)
     if fecha_fin:
-        terminations_query = terminations_query.filter(Empleado.fecha_baja <= fecha_fin)
+        terminations_stmt = terminations_stmt.filter(Empleado.fecha_baja <= fecha_fin)
 
-    terminations = terminations_query.all()
+    terminations = db.session.execute(terminations_stmt).scalars().all()
 
     results = []
 
@@ -246,24 +250,24 @@ def payroll_by_period_report(parameters: Dict[str, Any]) -> List[Dict[str, Any]]
         - periodo_fin: End date of period
         - planilla_id (optional): Filter by payroll template
     """
-    query = db.session.query(Nomina)
+    stmt = db.select(Nomina)
 
     if "periodo_inicio" in parameters:
         fecha = parameters["periodo_inicio"]
         if isinstance(fecha, str):
             fecha = datetime.fromisoformat(fecha).date()
-        query = query.filter(Nomina.periodo_inicio >= fecha)
+        stmt = stmt.filter(Nomina.periodo_inicio >= fecha)
 
     if "periodo_fin" in parameters:
         fecha = parameters["periodo_fin"]
         if isinstance(fecha, str):
             fecha = datetime.fromisoformat(fecha).date()
-        query = query.filter(Nomina.periodo_fin <= fecha)
+        stmt = stmt.filter(Nomina.periodo_fin <= fecha)
 
     if "planilla_id" in parameters:
-        query = query.filter(Nomina.planilla_id == parameters["planilla_id"])
+        stmt = stmt.filter(Nomina.planilla_id == parameters["planilla_id"])
 
-    results = query.order_by(Nomina.periodo_inicio.desc()).all()
+    results = db.session.execute(stmt.order_by(Nomina.periodo_inicio.desc())).scalars().all()
 
     return [
         {
@@ -293,14 +297,12 @@ def payroll_employee_detail_report(parameters: Dict[str, Any]) -> List[Dict[str,
     if not nomina_id:
         return []
 
-    query = (
-        db.session.query(NominaEmpleado, Empleado)
+    results = db.session.execute(
+        db.select(NominaEmpleado, Empleado)
         .join(Empleado, NominaEmpleado.empleado_id == Empleado.id)
         .filter(NominaEmpleado.nomina_id == nomina_id)
         .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
-    )
-
-    results = query.all()
+    ).all()
 
     return [
         {
@@ -329,8 +331,8 @@ def payroll_perceptions_summary_report(parameters: Dict[str, Any]) -> List[Dict[
     if not nomina_id:
         return []
 
-    query = (
-        db.session.query(
+    results = db.session.execute(
+        db.select(
             NominaDetalle.concepto_codigo,
             NominaDetalle.concepto_nombre,
             func.count(NominaDetalle.id).label("cantidad_empleados"),
@@ -339,9 +341,7 @@ def payroll_perceptions_summary_report(parameters: Dict[str, Any]) -> List[Dict[
         .filter(NominaDetalle.nomina_id == nomina_id, NominaDetalle.tipo == TipoDetalle.INGRESO)
         .group_by(NominaDetalle.concepto_codigo, NominaDetalle.concepto_nombre)
         .order_by(NominaDetalle.concepto_codigo)
-    )
-
-    results = query.all()
+    ).all()
 
     return [
         {
@@ -366,8 +366,8 @@ def payroll_deductions_summary_report(parameters: Dict[str, Any]) -> List[Dict[s
     if not nomina_id:
         return []
 
-    query = (
-        db.session.query(
+    results = db.session.execute(
+        db.select(
             NominaDetalle.concepto_codigo,
             NominaDetalle.concepto_nombre,
             func.count(NominaDetalle.id).label("cantidad_empleados"),
@@ -376,9 +376,7 @@ def payroll_deductions_summary_report(parameters: Dict[str, Any]) -> List[Dict[s
         .filter(NominaDetalle.nomina_id == nomina_id, NominaDetalle.tipo == TipoDetalle.DEDUCCION)
         .group_by(NominaDetalle.concepto_codigo, NominaDetalle.concepto_nombre)
         .order_by(NominaDetalle.concepto_codigo)
-    )
-
-    results = query.all()
+    ).all()
 
     return [
         {
@@ -402,14 +400,12 @@ def vacation_balance_report(parameters: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     Shows current vacation balances for all employees.
     """
-    query = (
-        db.session.query(VacationAccount, Empleado)
+    results = db.session.execute(
+        db.select(VacationAccount, Empleado)
         .join(Empleado, VacationAccount.empleado_id == Empleado.id)
         .filter(Empleado.activo == True)  # noqa: E712
         .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
-    )
-
-    results = query.all()
+    ).all()
 
     return [
         {
@@ -439,18 +435,18 @@ def vacation_taken_by_period_report(parameters: Dict[str, Any]) -> List[Dict[str
     if isinstance(fecha_fin, str):
         fecha_fin = datetime.fromisoformat(fecha_fin).date()
 
-    query = (
-        db.session.query(VacationLedger, Empleado)
+    stmt = (
+        db.select(VacationLedger, Empleado)
         .join(Empleado, VacationLedger.empleado_id == Empleado.id)
         .filter(VacationLedger.entry_type == "usage")
     )
 
     if fecha_inicio:
-        query = query.filter(VacationLedger.entry_date >= fecha_inicio)
+        stmt = stmt.filter(VacationLedger.entry_date >= fecha_inicio)
     if fecha_fin:
-        query = query.filter(VacationLedger.entry_date <= fecha_fin)
+        stmt = stmt.filter(VacationLedger.entry_date <= fecha_fin)
 
-    results = query.order_by(VacationLedger.entry_date.desc()).all()
+    results = db.session.execute(stmt.order_by(VacationLedger.entry_date.desc())).all()
 
     return [
         {

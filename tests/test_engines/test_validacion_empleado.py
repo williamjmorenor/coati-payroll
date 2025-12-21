@@ -24,9 +24,8 @@ Critical for:
 from datetime import date, timedelta
 from decimal import Decimal
 
-import pytest
 
-from coati_payroll.nomina_engine import NominaEngine, ValidationError
+from coati_payroll.nomina_engine import NominaEngine
 
 
 class TestValidacionEmpleadoActivo:

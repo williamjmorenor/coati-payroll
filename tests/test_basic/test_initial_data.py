@@ -232,12 +232,14 @@ def test_load_currencies_is_idempotent(app, db_session):
 
     with app.app_context():
         # Load currencies first time
+        from sqlalchemy import func, select
+
         load_currencies()
-        first_count = db.session.query(Moneda).count()
+        first_count = db.session.execute(select(func.count(Moneda.id))).scalar() or 0
 
         # Load currencies second time
         load_currencies()
-        second_count = db.session.query(Moneda).count()
+        second_count = db.session.execute(select(func.count(Moneda.id))).scalar() or 0
 
         # Count should be the same
         assert first_count == second_count
@@ -294,13 +296,15 @@ def test_load_income_concepts_is_idempotent(app, db_session):
     from coati_payroll.model import Percepcion, db
 
     with app.app_context():
+        from sqlalchemy import func, select
+
         # Load income concepts first time
         load_income_concepts()
-        first_count = db.session.query(Percepcion).count()
+        first_count = db.session.execute(select(func.count(Percepcion.id))).scalar() or 0
 
         # Load income concepts second time
         load_income_concepts()
-        second_count = db.session.query(Percepcion).count()
+        second_count = db.session.execute(select(func.count(Percepcion.id))).scalar() or 0
 
         # Count should be the same
         assert first_count == second_count
@@ -359,13 +363,15 @@ def test_load_deduction_concepts_is_idempotent(app, db_session):
     from coati_payroll.model import Deduccion, db
 
     with app.app_context():
+        from sqlalchemy import func, select
+
         # Load deduction concepts first time
         load_deduction_concepts()
-        first_count = db.session.query(Deduccion).count()
+        first_count = db.session.execute(select(func.count(Deduccion.id))).scalar() or 0
 
         # Load deduction concepts second time
         load_deduction_concepts()
-        second_count = db.session.query(Deduccion).count()
+        second_count = db.session.execute(select(func.count(Deduccion.id))).scalar() or 0
 
         # Count should be the same
         assert first_count == second_count
@@ -423,13 +429,15 @@ def test_load_benefit_concepts_is_idempotent(app, db_session):
     from coati_payroll.model import Prestacion, db
 
     with app.app_context():
+        from sqlalchemy import func, select
+
         # Load benefit concepts first time
         load_benefit_concepts()
-        first_count = db.session.query(Prestacion).count()
+        first_count = db.session.execute(select(func.count(Prestacion.id))).scalar() or 0
 
         # Load benefit concepts second time
         load_benefit_concepts()
-        second_count = db.session.query(Prestacion).count()
+        second_count = db.session.execute(select(func.count(Prestacion.id))).scalar() or 0
 
         # Count should be the same
         assert first_count == second_count
@@ -487,13 +495,15 @@ def test_load_payroll_types_is_idempotent(app, db_session):
     from coati_payroll.model import TipoPlanilla, db
 
     with app.app_context():
+        from sqlalchemy import func, select
+
         # Load payroll types first time
         load_payroll_types()
-        first_count = db.session.query(TipoPlanilla).count()
+        first_count = db.session.execute(select(func.count(TipoPlanilla.id))).scalar() or 0
 
         # Load payroll types second time
         load_payroll_types()
-        second_count = db.session.query(TipoPlanilla).count()
+        second_count = db.session.execute(select(func.count(TipoPlanilla.id))).scalar() or 0
 
         # Count should be the same
         assert first_count == second_count
@@ -528,15 +538,17 @@ def test_load_initial_data_loads_all_data(app, db_session):
     from coati_payroll.model import Deduccion, Moneda, Percepcion, Prestacion, TipoPlanilla, db
 
     with app.app_context():
+        from sqlalchemy import func, select
+
         # Load all initial data
         load_initial_data()
 
         # Verify all data types were loaded
-        currency_count = db.session.query(Moneda).count()
-        income_count = db.session.query(Percepcion).count()
-        deduction_count = db.session.query(Deduccion).count()
-        benefit_count = db.session.query(Prestacion).count()
-        payroll_type_count = db.session.query(TipoPlanilla).count()
+        currency_count = db.session.execute(select(func.count(Moneda.id))).scalar() or 0
+        income_count = db.session.execute(select(func.count(Percepcion.id))).scalar() or 0
+        deduction_count = db.session.execute(select(func.count(Deduccion.id))).scalar() or 0
+        benefit_count = db.session.execute(select(func.count(Prestacion.id))).scalar() or 0
+        payroll_type_count = db.session.execute(select(func.count(TipoPlanilla.id))).scalar() or 0
 
         assert currency_count == len(CURRENCIES)
         assert income_count == len(INCOME_CONCEPTS)
@@ -563,21 +575,23 @@ def test_load_initial_data_is_idempotent(app, db_session):
     from coati_payroll.model import Deduccion, Moneda, Percepcion, Prestacion, TipoPlanilla, db
 
     with app.app_context():
+        from sqlalchemy import func, select
+
         # Load initial data first time
         load_initial_data()
-        first_currency_count = db.session.query(Moneda).count()
-        first_income_count = db.session.query(Percepcion).count()
-        first_deduction_count = db.session.query(Deduccion).count()
-        first_benefit_count = db.session.query(Prestacion).count()
-        first_payroll_type_count = db.session.query(TipoPlanilla).count()
+        first_currency_count = db.session.execute(select(func.count(Moneda.id))).scalar() or 0
+        first_income_count = db.session.execute(select(func.count(Percepcion.id))).scalar() or 0
+        first_deduction_count = db.session.execute(select(func.count(Deduccion.id))).scalar() or 0
+        first_benefit_count = db.session.execute(select(func.count(Prestacion.id))).scalar() or 0
+        first_payroll_type_count = db.session.execute(select(func.count(TipoPlanilla.id))).scalar() or 0
 
         # Load initial data second time
         load_initial_data()
-        second_currency_count = db.session.query(Moneda).count()
-        second_income_count = db.session.query(Percepcion).count()
-        second_deduction_count = db.session.query(Deduccion).count()
-        second_benefit_count = db.session.query(Prestacion).count()
-        second_payroll_type_count = db.session.query(TipoPlanilla).count()
+        second_currency_count = db.session.execute(select(func.count(Moneda.id))).scalar() or 0
+        second_income_count = db.session.execute(select(func.count(Percepcion.id))).scalar() or 0
+        second_deduction_count = db.session.execute(select(func.count(Deduccion.id))).scalar() or 0
+        second_benefit_count = db.session.execute(select(func.count(Prestacion.id))).scalar() or 0
+        second_payroll_type_count = db.session.execute(select(func.count(TipoPlanilla.id))).scalar() or 0
 
         # All counts should remain the same
         assert first_currency_count == second_currency_count
