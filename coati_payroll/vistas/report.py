@@ -56,37 +56,40 @@ def index():
     status = request.args.get("status", "", type=str)
 
     # Base query
-    query = db.session.query(Report)
+    stmt = db.select(Report)
 
     # Apply filters
     if category:
-        query = query.filter(Report.category == category)
+        stmt = stmt.filter(Report.category == category)
     if report_type:
-        query = query.filter(Report.type == report_type)
+        stmt = stmt.filter(Report.type == report_type)
     if status:
-        query = query.filter(Report.status == status)
+        stmt = stmt.filter(Report.status == status)
 
     # Only show enabled reports to non-admin users
     if current_user.tipo != TipoUsuario.ADMIN:
-        query = query.filter(Report.status == ReportStatus.ENABLED)
+        stmt = stmt.filter(Report.status == ReportStatus.ENABLED)
 
     # Filter by user permissions
     if current_user.tipo != TipoUsuario.ADMIN:
         # Filter reports where user has view permission
-        query = query.join(ReportRole).filter(
+        stmt = stmt.join(ReportRole).filter(
             ReportRole.role == current_user.tipo, ReportRole.can_view == True  # noqa: E712
         )
 
-    query = query.order_by(Report.category, Report.name)
+    stmt = stmt.order_by(Report.category, Report.name)
 
-    # Paginate
-    pagination = query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    # Paginate using Flask-SQLAlchemy's paginate method
+    pagination = db.paginate(stmt, page=page, per_page=PER_PAGE, error_out=False)
 
     # Get unique categories for filter
     categories = (
-        db.session.query(Report.category).distinct().filter(Report.category.isnot(None)).order_by(Report.category).all()
+        db.session.execute(
+            db.select(Report.category).distinct().filter(Report.category.isnot(None)).order_by(Report.category)
+        )
+        .scalars()
+        .all()
     )
-    categories = [c[0] for c in categories]
 
     return render_template(
         "modules/report/index.html",
@@ -113,26 +116,29 @@ def admin_index():
     status = request.args.get("status", "", type=str)
 
     # Base query - show all reports for admin
-    query = db.session.query(Report)
+    stmt = db.select(Report)
 
     # Apply filters
     if category:
-        query = query.filter(Report.category == category)
+        stmt = stmt.filter(Report.category == category)
     if report_type:
-        query = query.filter(Report.type == report_type)
+        stmt = stmt.filter(Report.type == report_type)
     if status:
-        query = query.filter(Report.status == status)
+        stmt = stmt.filter(Report.status == status)
 
-    query = query.order_by(Report.category, Report.name)
+    stmt = stmt.order_by(Report.category, Report.name)
 
-    # Paginate
-    pagination = query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    # Paginate using Flask-SQLAlchemy's paginate method
+    pagination = db.paginate(stmt, page=page, per_page=PER_PAGE, error_out=False)
 
     # Get unique categories
     categories = (
-        db.session.query(Report.category).distinct().filter(Report.category.isnot(None)).order_by(Report.category).all()
+        db.session.execute(
+            db.select(Report.category).distinct().filter(Report.category.isnot(None)).order_by(Report.category)
+        )
+        .scalars()
+        .all()
     )
-    categories = [c[0] for c in categories]
 
     return render_template(
         "modules/report/admin_index.html",
@@ -356,7 +362,7 @@ def update_permissions(report_id: str):
         can_export = request.form.get(f"{role}_can_export") == "on"
 
         # Get or create permission record
-        perm = db.session.query(ReportRole).filter_by(report_id=report.id, role=role).first()
+        perm = db.session.execute(db.select(ReportRole).filter_by(report_id=report.id, role=role)).scalar_one_or_none()
 
         if perm:
             # Update existing
@@ -408,10 +414,10 @@ def detail(report_id: str):
 
     # Get recent executions
     executions = (
-        db.session.query(ReportExecution)
-        .filter_by(report_id=report.id)
-        .order_by(ReportExecution.created.desc())
-        .limit(10)
+        db.session.execute(
+            db.select(ReportExecution).filter_by(report_id=report.id).order_by(ReportExecution.created.desc()).limit(10)
+        )
+        .scalars()
         .all()
     )
 

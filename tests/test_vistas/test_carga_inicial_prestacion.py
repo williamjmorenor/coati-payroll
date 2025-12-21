@@ -13,6 +13,7 @@
 # limitations under the License.
 """Comprehensive tests for carga inicial prestacion (coati_payroll/vistas/carga_inicial_prestacion.py)."""
 
+from sqlalchemy import func, select
 from decimal import Decimal
 
 from coati_payroll.model import CargaInicialPrestacion, Empleado, Empresa, Moneda, Prestacion, PrestacionAcumulada
@@ -172,12 +173,12 @@ def test_carga_inicial_prestacion_post_creates_new_record(app, client, admin_use
         assert "/carga-inicial-prestaciones/" in response.location
 
         # Verify record was created in database
-        carga = db_session.query(CargaInicialPrestacion).filter_by(
+        carga = db_session.execute(select(CargaInicialPrestacion).filter_by(
             empleado_id=empleado.id,
             prestacion_id=prestacion.id,
             anio_corte=2024,
             mes_corte=6,
-        ).first()
+        )).scalar_one_or_none()
 
         assert carga is not None
         assert carga.estado == "borrador"
@@ -232,12 +233,12 @@ def test_carga_inicial_prestacion_post_duplicate_detection(app, client, admin_us
         assert response.status_code == 200
 
         # Verify only one record exists
-        count = db_session.query(CargaInicialPrestacion).filter_by(
+        count = db_session.execute(select(func.count(CargaInicialPrestacion.id)).filter_by(
             empleado_id=empleado.id,
             prestacion_id=prestacion.id,
             anio_corte=2024,
             mes_corte=6,
-        ).count()
+        )).scalar() or 0
         assert count == 1
 
 
@@ -403,9 +404,9 @@ def test_carga_inicial_prestacion_aplicar_creates_transaction(app, client, admin
         assert carga.fecha_aplicacion is not None
 
         # Verify transaction created in prestacion_acumulada
-        transaction = db_session.query(PrestacionAcumulada).filter_by(
+        transaction = db_session.execute(select(PrestacionAcumulada).filter_by(
             carga_inicial_id=carga.id
-        ).first()
+        )).scalar_one_or_none()
 
         assert transaction is not None
         assert transaction.empleado_id == empleado.id
@@ -452,7 +453,7 @@ def test_carga_inicial_prestacion_eliminar_deletes_draft(app, client, admin_user
         assert "/carga-inicial-prestaciones/" in response.location
 
         # Verify record was deleted
-        deleted_carga = db_session.query(CargaInicialPrestacion).filter_by(id=carga_id).first()
+        deleted_carga = db_session.execute(select(CargaInicialPrestacion).filter_by(id=carga_id)).scalar_one_or_none()
         assert deleted_carga is None
 
 
@@ -493,6 +494,6 @@ def test_carga_inicial_prestacion_eliminar_applied_redirects(app, client, admin_
         assert "/carga-inicial-prestaciones/" in response.location
 
         # Verify record still exists
-        still_exists = db_session.query(CargaInicialPrestacion).filter_by(id=carga_id).first()
+        still_exists = db_session.execute(select(CargaInicialPrestacion).filter_by(id=carga_id)).scalar_one_or_none()
         assert still_exists is not None
         assert still_exists.estado == "aplicado"

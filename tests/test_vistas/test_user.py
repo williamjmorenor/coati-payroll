@@ -13,6 +13,7 @@
 # limitations under the License.
 """Comprehensive tests for user management routes (coati_payroll/vistas/user.py)."""
 
+from sqlalchemy import select
 from coati_payroll.auth import validar_acceso
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.model import Usuario
@@ -170,7 +171,7 @@ def test_user_new_post_creates_user(app, client, admin_user, db_session):
         assert "/user/" in response.location
 
         # Verify user was created
-        user = db_session.query(Usuario).filter_by(usuario="newuser").first()
+        user = db_session.execute(select(Usuario).filter_by(usuario="newuser")).scalar_one_or_none()
         assert user is not None
         assert user.nombre == "New"
         assert user.apellido == "User"
@@ -219,7 +220,7 @@ def test_user_new_post_requires_password(app, client, admin_user, db_session):
         assert response.status_code == 200
 
         # Verify user was not created
-        user = db_session.query(Usuario).filter_by(usuario="nopassuser").first()
+        user = db_session.execute(select(Usuario).filter_by(usuario="nopassuser")).scalar_one_or_none()
         assert user is None
 
 
@@ -384,7 +385,7 @@ def test_user_delete_removes_user(app, client, admin_user, db_session):
         assert response.status_code == 302
 
         # Verify user was deleted
-        user = db_session.query(Usuario).filter_by(id=user_id).first()
+        user = db_session.execute(select(Usuario).filter_by(id=user_id)).scalar_one_or_none()
         assert user is None
 
 
@@ -412,7 +413,7 @@ def test_user_delete_cannot_delete_self(app, client, admin_user, db_session):
         assert response.status_code == 200
 
         # Verify admin still exists
-        user = db_session.query(Usuario).filter_by(id=admin_user.id).first()
+        user = db_session.execute(select(Usuario).filter_by(id=admin_user.id)).scalar_one_or_none()
         assert user is not None
 
 
@@ -709,7 +710,7 @@ def test_user_workflow_admin_creates_user_user_updates_profile(app, client, admi
         assert response.status_code == 302
 
         # Verify update
-        user = db_session.query(Usuario).filter_by(usuario="workflowuser").first()
+        user = db_session.execute(select(Usuario).filter_by(usuario="workflowuser")).scalar_one_or_none()
         assert user.nombre == "Updated"
         assert user.apellido == "Workflow"
         assert user.correo_electronico == "updated@example.com"

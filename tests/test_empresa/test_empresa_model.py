@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for Empresa (Company) model."""
 
+from sqlalchemy import func, select
 import pytest
 from sqlalchemy.exc import IntegrityError
 
@@ -137,7 +138,7 @@ def test_multiple_empresas_can_be_created(app, db_session):
         assert empresa1.id != empresa3.id
 
         # Verify all exist in database
-        count = db_session.query(Empresa).count()
+        count = db_session.execute(select(func.count(Empresa.id))).scalar() or 0
         assert count == 3
 
 

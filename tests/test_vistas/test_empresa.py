@@ -13,6 +13,7 @@
 # limitations under the License.
 """Comprehensive tests for empresa (company) CRUD operations (coati_payroll/vistas/empresa.py)."""
 
+from sqlalchemy import select
 from coati_payroll.model import Empresa
 from tests.helpers.auth import login_user
 
@@ -90,7 +91,7 @@ def test_empresa_new_creates_company(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            empresa = db_session.query(Empresa).filter_by(codigo="NEWCO").first()
+            empresa = db_session.execute(select(Empresa).filter_by(codigo="NEWCO")).scalar_one_or_none()
             assert empresa is not None
             assert empresa.razon_social == "New Company S.A."
             assert empresa.ruc == "J-11111111-1"
@@ -212,7 +213,7 @@ def test_empresa_delete_removes_company(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            empresa = db_session.query(Empresa).filter_by(id=empresa_id).first()
+            empresa = db_session.execute(select(Empresa).filter_by(id=empresa_id)).scalar_one_or_none()
             assert empresa is None
 
 
@@ -300,7 +301,7 @@ def test_empresa_workflow_create_edit_toggle_delete(app, client, admin_user, db_
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            empresa = db_session.query(Empresa).filter_by(codigo="WORKFLOW").first()
+            empresa = db_session.execute(select(Empresa).filter_by(codigo="WORKFLOW")).scalar_one_or_none()
             assert empresa is not None
             empresa_id = empresa.id
 
@@ -335,7 +336,7 @@ def test_empresa_workflow_create_edit_toggle_delete(app, client, admin_user, db_
                     assert response.status_code in [200, 302]
 
                     if response.status_code == 302:
-                        empresa = db_session.query(Empresa).filter_by(id=empresa_id).first()
+                        empresa = db_session.execute(select(Empresa).filter_by(id=empresa_id)).scalar_one_or_none()
                         assert empresa is None
 
 
@@ -371,6 +372,13 @@ def test_empresa_can_have_multiple_with_same_name(app, client, admin_user, db_se
         assert response1.status_code in [200, 302]
         assert response2.status_code in [200, 302]
 
+        from sqlalchemy import func, select
+
         # Verify both exist
-        count = db_session.query(Empresa).filter(Empresa.razon_social == "ACME Corp").count()
+        count = (
+            db_session.execute(
+                select(func.count(Empresa.id)).filter(Empresa.razon_social == "ACME Corp")
+            ).scalar()
+            or 0
+        )
         assert count >= 2

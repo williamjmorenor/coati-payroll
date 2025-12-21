@@ -13,6 +13,7 @@
 # limitations under the License.
 """End-to-end validation test for complete user management workflow."""
 
+from sqlalchemy import func, select
 import pytest
 
 from coati_payroll.enums import TipoUsuario
@@ -132,13 +133,13 @@ def test_admin_creates_hhrr_and_audit_users(client, app, db_session, admin_user)
         # Note: ensure_database_initialized creates a default admin (coati-admin)
         # Plus admin_user fixture creates admin-test
         # So we have: coati-admin, admin-test, rrhh_user, auditor_user = 4 users
-        total_users = db_session.query(Usuario).count()
+        total_users = db_session.execute(select(func.count(Usuario.id))).scalar() or 0
         assert total_users >= 3, "Should have at least 3 users (admins + hhrr + audit)"
 
         # Step 9: Verify each user type count
-        admin_count = db_session.query(Usuario).filter_by(tipo=TipoUsuario.ADMIN).count()
-        hhrr_count = db_session.query(Usuario).filter_by(tipo=TipoUsuario.HHRR).count()
-        audit_count = db_session.query(Usuario).filter_by(tipo=TipoUsuario.AUDIT).count()
+        admin_count = db_session.execute(select(func.count(Usuario.id)).filter_by(tipo=TipoUsuario.ADMIN)).scalar() or 0
+        hhrr_count = db_session.execute(select(func.count(Usuario.id)).filter_by(tipo=TipoUsuario.HHRR)).scalar() or 0
+        audit_count = db_session.execute(select(func.count(Usuario.id)).filter_by(tipo=TipoUsuario.AUDIT)).scalar() or 0
 
         assert admin_count >= 1, "Should have at least 1 admin user"
         assert hhrr_count == 1, "Should have 1 HHRR user"
@@ -195,18 +196,26 @@ def test_complete_user_management_crud_workflow(client, app, db_session, admin_u
 
         # Step 3: Verify all users exist and have correct types
         # Note: We have default admin(s) + 4 created users
-        total_users = db_session.query(Usuario).count()
+        total_users = db_session.execute(select(func.count(Usuario.id))).scalar() or 0
         assert total_users >= 5, "Should have at least 5 users (admins + 4 created)"
 
         # Step 4: Verify HHRR users
-        hhrr_users = db_session.query(Usuario).filter_by(tipo=TipoUsuario.HHRR).all()
+        hhrr_users = (
+            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.HHRR))
+            .scalars()
+            .all()
+        )
         assert len(hhrr_users) == 2, "Should have 2 HHRR users"
         hhrr_usernames = {u.usuario for u in hhrr_users}
         assert "hhrh_manager" in hhrr_usernames
         assert "hhrh_assistant" in hhrr_usernames
 
         # Step 5: Verify AUDIT users
-        audit_users = db_session.query(Usuario).filter_by(tipo=TipoUsuario.AUDIT).all()
+        audit_users = (
+            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.AUDIT))
+            .scalars()
+            .all()
+        )
         assert len(audit_users) == 2, "Should have 2 audit users"
         audit_usernames = {u.usuario for u in audit_users}
         assert "internal_auditor" in audit_usernames
@@ -229,7 +238,7 @@ def test_complete_user_management_crud_workflow(client, app, db_session, admin_u
         login_user(client, "admin-test", "admin-password")
 
         # Step 8: Edit a user - change HHRR manager to inactive
-        manager_user = db_session.query(Usuario).filter_by(usuario="hhrh_manager").first()
+        manager_user = db_session.execute(select(Usuario).filter_by(usuario="hhrh_manager")).scalar_one_or_none()
         assert manager_user is not None
 
         manager_user.activo = False
@@ -249,11 +258,11 @@ def test_complete_user_management_crud_workflow(client, app, db_session, admin_u
 
         # Step 11: Verify active/inactive users count
         # We made hhrh_manager inactive, others remain active
-        inactive_users = db_session.query(Usuario).filter_by(activo=False).count()
+        inactive_users = db_session.execute(select(func.count(Usuario.id)).filter_by(activo=False)).scalar() or 0
         assert inactive_users == 1, "Should have 1 inactive user"
 
         # Verify the specific inactive user
-        inactive_by_name = db_session.query(Usuario).filter_by(usuario="hhrh_manager", activo=False).count()
+        inactive_by_name = db_session.execute(select(func.count(Usuario.id)).filter_by(usuario="hhrh_manager", activo=False)).scalar() or 0
         assert inactive_by_name == 1, "hhrh_manager should be the inactive user"
 
 
@@ -327,14 +336,26 @@ def test_user_type_segregation_and_permissions(client, app, db_session, admin_us
         )
 
         # Verify total count (including default admins + created users)
-        total_users = db_session.query(Usuario).count()
+        total_users = db_session.execute(select(func.count(Usuario.id))).scalar() or 0
         assert total_users >= 6, "Should have at least 6 users total"
 
         # Verify count by type
         # Note: We have default admin + admin-test fixture + admin2 = 3 admins total
-        admin_users = db_session.query(Usuario).filter_by(tipo=TipoUsuario.ADMIN).all()
-        hhrr_users = db_session.query(Usuario).filter_by(tipo=TipoUsuario.HHRR).all()
-        audit_users = db_session.query(Usuario).filter_by(tipo=TipoUsuario.AUDIT).all()
+        admin_users = (
+            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.ADMIN))
+            .scalars()
+            .all()
+        )
+        hhrr_users = (
+            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.HHRR))
+            .scalars()
+            .all()
+        )
+        audit_users = (
+            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.AUDIT))
+            .scalars()
+            .all()
+        )
 
         assert len(admin_users) >= 2, "Should have at least 2 admin users"
         assert len(hhrr_users) == 2, "Should have 2 HHRR users"
@@ -374,9 +395,11 @@ def test_user_type_segregation_and_permissions(client, app, db_session, admin_us
 
         # Verify all created users are still active
         created_active = (
-            db_session.query(Usuario)
-            .filter(Usuario.usuario.in_(["admin2", "hhrr1", "hhrr2", "audit1", "audit2", "admin-test"]))
-            .filter_by(activo=True)
-            .count()
+            db_session.execute(
+                select(func.count(Usuario.id))
+                .filter(Usuario.usuario.in_(["admin2", "hhrr1", "hhrr2", "audit1", "audit2", "admin-test"]))
+                .filter_by(activo=True)
+            ).scalar()
+            or 0
         )
         assert created_active == 6, "All explicitly created/fixture users should be active"

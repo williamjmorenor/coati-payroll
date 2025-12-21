@@ -1327,22 +1327,22 @@ class NominaEngine:
 
                 case FormulaType.REGLA_CALCULO:
                     # Find the ReglaCalculo linked to this deduction
-                    regla = (
-                        db.session.query(ReglaCalculo)
+                    regla = db.session.execute(
+                        db.select(ReglaCalculo)
                         .filter_by(deduccion_id=codigo_concepto)
                         .filter(ReglaCalculo.activo.is_(True))
-                        .first()
-                    )
+                    ).scalar_one_or_none()
                     if not regla:
                         # Try finding by deduccion_id matching deduccion's id
-                        deduccion_obj = db.session.query(Deduccion).filter_by(codigo=codigo_concepto).first()
+                        deduccion_obj = db.session.execute(
+                            db.select(Deduccion).filter_by(codigo=codigo_concepto)
+                        ).scalar_one_or_none()
                         if deduccion_obj:
-                            regla = (
-                                db.session.query(ReglaCalculo)
+                            regla = db.session.execute(
+                                db.select(ReglaCalculo)
                                 .filter_by(deduccion_id=deduccion_obj.id)
                                 .filter(ReglaCalculo.activo.is_(True))
-                                .first()
-                            )
+                            ).scalar_one_or_none()
 
                     if regla and regla.esquema_json:
                         try:
@@ -1598,15 +1598,20 @@ class NominaEngine:
             # Get the previous balance for this employee and prestacion
             # Order by fecha_transaccion and creado (timestamp) to get the most recent transaction
             ultima_transaccion = (
-                db.session.query(PrestacionAcumulada)
-                .filter(
-                    PrestacionAcumulada.empleado_id == empleado.id,
-                    PrestacionAcumulada.prestacion_id == prestacion.id,
+                db.session.execute(
+                    db.select(PrestacionAcumulada)
+                    .filter(
+                        PrestacionAcumulada.empleado_id == empleado.id,
+                        PrestacionAcumulada.prestacion_id == prestacion.id,
+                    )
+                    .order_by(
+                        PrestacionAcumulada.fecha_transaccion.desc(),
+                        PrestacionAcumulada.creado.desc(),
+                    )
+                    .limit(1)
                 )
-                .order_by(
-                    PrestacionAcumulada.fecha_transaccion.desc(),
-                    PrestacionAcumulada.creado.desc(),
-                )
+                .unique()
+                .scalars()
                 .first()
             )
 
@@ -1747,18 +1752,21 @@ def ejecutar_nomina(
     from coati_payroll.model import PlanillaIngreso, PlanillaDeduccion, PlanillaPrestacion, PlanillaEmpleado
 
     planilla = (
-        db.session.query(Planilla)
-        .options(
-            joinedload(Planilla.planilla_percepciones).joinedload(PlanillaIngreso.percepcion),
-            joinedload(Planilla.planilla_deducciones).joinedload(PlanillaDeduccion.deduccion),
-            joinedload(Planilla.planilla_prestaciones).joinedload(PlanillaPrestacion.prestacion),
-            joinedload(Planilla.planilla_empleados).joinedload(PlanillaEmpleado.empleado),
-            joinedload(Planilla.planilla_reglas_calculo),
-            joinedload(Planilla.tipo_planilla),
-            joinedload(Planilla.moneda),
+        db.session.execute(
+            db.select(Planilla)
+            .options(
+                joinedload(Planilla.planilla_percepciones).joinedload(PlanillaIngreso.percepcion),
+                joinedload(Planilla.planilla_deducciones).joinedload(PlanillaDeduccion.deduccion),
+                joinedload(Planilla.planilla_prestaciones).joinedload(PlanillaPrestacion.prestacion),
+                joinedload(Planilla.planilla_empleados).joinedload(PlanillaEmpleado.empleado),
+                joinedload(Planilla.planilla_reglas_calculo),
+                joinedload(Planilla.tipo_planilla),
+                joinedload(Planilla.moneda),
+            )
+            .filter(Planilla.id == planilla_id)
         )
-        .filter(Planilla.id == planilla_id)
-        .first()
+        .unique()
+        .scalar_one_or_none()
     )
 
     if not planilla:

@@ -26,7 +26,6 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy.orm import Query
 
 from coati_payroll.enums import ReportType, ReportExecutionStatus
 from coati_payroll.model import (
@@ -212,8 +211,8 @@ class CustomReportBuilder:
 
         return errors
 
-    def build_query(self, filters: Optional[Dict[str, Any]] = None, page: int = 1, per_page: int = 100) -> Query:
-        """Build SQLAlchemy query for the report.
+    def build_query(self, filters: Optional[Dict[str, Any]] = None, page: int = 1, per_page: int = 100):
+        """Build SQLAlchemy select statement for the report.
 
         Args:
             filters: Additional runtime filters from user
@@ -221,10 +220,10 @@ class CustomReportBuilder:
             per_page: Results per page
 
         Returns:
-            SQLAlchemy Query object
+            SQLAlchemy Select statement
         """
         # Start with base entity
-        query = db.session.query(self.base_entity)
+        stmt = db.select(self.base_entity)
 
         # Apply filters from definition
         definition_filters = self.definition.get("filters", [])
@@ -237,7 +236,7 @@ class CustomReportBuilder:
                 field = getattr(self.base_entity, field_name, None)
                 if field is not None:
                     filter_func = ALLOWED_OPERATORS[operator]
-                    query = query.filter(filter_func(field, value))
+                    stmt = stmt.filter(filter_func(field, value))
 
         # Apply runtime filters
         if filters:
@@ -245,7 +244,7 @@ class CustomReportBuilder:
                 if field_name in ALLOWED_FIELDS.get(self.base_entity_name, []):
                     field = getattr(self.base_entity, field_name, None)
                     if field is not None:
-                        query = query.filter(field == value)
+                        stmt = stmt.filter(field == value)
 
         # Apply sorting
         sorting = self.definition.get("sorting", [])
@@ -257,16 +256,16 @@ class CustomReportBuilder:
                 field = getattr(self.base_entity, field_name, None)
                 if field is not None:
                     if direction.lower() == "desc":
-                        query = query.order_by(field.desc())
+                        stmt = stmt.order_by(field.desc())
                     else:
-                        query = query.order_by(field.asc())
+                        stmt = stmt.order_by(field.asc())
 
         # Apply pagination
-        query = query.limit(min(per_page, MAX_ROWS_PER_EXECUTION))
+        stmt = stmt.limit(min(per_page, MAX_ROWS_PER_EXECUTION))
         if page > 1:
-            query = query.offset((page - 1) * per_page)
+            stmt = stmt.offset((page - 1) * per_page)
 
-        return query
+        return stmt
 
     def execute(
         self, filters: Optional[Dict[str, Any]] = None, page: int = 1, per_page: int = 100
@@ -281,14 +280,41 @@ class CustomReportBuilder:
         Returns:
             Tuple of (results as list of dicts, total count)
         """
-        query = self.build_query(filters, page, per_page)
+        # Build base query without pagination for count
+        from sqlalchemy import func
 
-        # Get total count (without pagination)
-        total_query = query.limit(None).offset(None)
-        total_count = total_query.count()
+        # Start with base entity
+        count_stmt = db.select(self.base_entity)
 
-        # Execute query
-        results = query.all()
+        # Apply filters from definition
+        definition_filters = self.definition.get("filters", [])
+        for filt in definition_filters:
+            field_name = filt.get("field")
+            operator = filt.get("operator")
+            value = filt.get("value")
+
+            if field_name and operator in ALLOWED_OPERATORS:
+                field = getattr(self.base_entity, field_name, None)
+                if field is not None:
+                    filter_func = ALLOWED_OPERATORS[operator]
+                    count_stmt = count_stmt.filter(filter_func(field, value))
+
+        # Apply runtime filters
+        if filters:
+            for field_name, value in filters.items():
+                if field_name in ALLOWED_FIELDS.get(self.base_entity_name, []):
+                    field = getattr(self.base_entity, field_name, None)
+                    if field is not None:
+                        count_stmt = count_stmt.filter(field == value)
+
+        # Get total count (without pagination or sorting)
+        total_count = db.session.execute(db.select(func.count()).select_from(count_stmt.subquery())).scalar() or 0
+
+        # Build query with pagination for results
+        stmt = self.build_query(filters, page, per_page)
+
+        # Execute statement
+        results = db.session.execute(stmt).scalars().all()
 
         # Convert to list of dicts
         columns = self.definition.get("columns", [])

@@ -13,6 +13,7 @@
 # limitations under the License.
 """Comprehensive tests for calculation rule CRUD operations (coati_payroll/vistas/calculation_rule.py)."""
 
+from sqlalchemy import func, select
 from datetime import date
 
 from coati_payroll.model import ReglaCalculo
@@ -108,7 +109,7 @@ def test_calculation_rule_edit_updates_rule(app, client, admin_user, db_session)
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            updated_rule = db_session.query(ReglaCalculo).filter_by(id=rule_id).first()
+            updated_rule = db_session.execute(select(ReglaCalculo).filter_by(id=rule_id)).scalar_one_or_none()
             assert updated_rule.nombre == "Vacation Calculation (Updated)"
             assert updated_rule.version == "2"  # Version is stored as string in form
 
@@ -141,7 +142,7 @@ def test_calculation_rule_delete_removes_rule(app, client, admin_user, db_sessio
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            rule = db_session.query(ReglaCalculo).filter_by(id=rule_id).first()
+            rule = db_session.execute(select(ReglaCalculo).filter_by(id=rule_id)).scalar_one_or_none()
             assert rule is None
 
 
@@ -189,7 +190,7 @@ def test_calculation_rule_supports_versioning(app, client, admin_user, db_sessio
         assert response2.status_code in [200, 302]
 
         # Verify both versions exist
-        count = db_session.query(ReglaCalculo).filter_by(codigo="TAX_CALC").count()
+        count = db_session.execute(select(func.count(ReglaCalculo.id)).filter_by(codigo="TAX_CALC")).scalar() or 0
         assert count >= 2
 
 
@@ -250,7 +251,7 @@ def test_calculation_rule_validity_period(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            rule = db_session.query(ReglaCalculo).filter_by(codigo="TIME_LIMITED").first()
+            rule = db_session.execute(select(ReglaCalculo).filter_by(codigo="TIME_LIMITED")).scalar_one_or_none()
             assert rule is not None
             assert rule.vigente_desde == date(2025, 1, 1)
             assert rule.vigente_hasta == date(2025, 12, 31)
@@ -280,6 +281,6 @@ def test_calculation_rule_can_be_inactive(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            rule = db_session.query(ReglaCalculo).filter_by(codigo="INACTIVE_RULE").first()
+            rule = db_session.execute(select(ReglaCalculo).filter_by(codigo="INACTIVE_RULE")).scalar_one_or_none()
             assert rule is not None
             assert rule.activo is False
