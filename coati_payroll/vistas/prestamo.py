@@ -174,7 +174,7 @@ def detail(prestamo_id):
     """View loan details including payment schedule."""
     prestamo = db.session.get(Adelanto, prestamo_id)
     if not prestamo:
-        flash(_("Préstamo no encontrado."), "danger")
+        flash("Préstamo no encontrado.", "danger")
         return redirect(url_for("prestamo.index"))
 
     # Ensure empleado relationship is loaded to avoid DetachedInstanceError
@@ -403,7 +403,7 @@ def pago_extraordinario(prestamo_id):
     """Register an extraordinary/manual payment on a loan."""
     prestamo = db.session.get(Adelanto, prestamo_id)
     if not prestamo:
-        flash(_("Préstamo no encontrado."), "danger")
+        flash("Préstamo no encontrado.", "danger")
         return redirect(url_for("prestamo.index"))
 
     # Ensure empleado relationship is loaded to avoid DetachedInstanceError
