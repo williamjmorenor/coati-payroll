@@ -177,6 +177,9 @@ def detail(prestamo_id):
         flash(_("Préstamo no encontrado."), "danger")
         return redirect(url_for("prestamo.index"))
 
+    # Ensure empleado relationship is loaded to avoid DetachedInstanceError
+    _ = prestamo.empleado
+
     # Generate payment schedule
     tabla_pago = generar_tabla_pago(prestamo)
 
@@ -402,6 +405,9 @@ def pago_extraordinario(prestamo_id):
     if not prestamo:
         flash(_("Préstamo no encontrado."), "danger")
         return redirect(url_for("prestamo.index"))
+
+    # Ensure empleado relationship is loaded to avoid DetachedInstanceError
+    _ = prestamo.empleado
 
     # Only allow payments on approved/active loans
     if prestamo.estado not in [AdelantoEstado.APROBADO, AdelantoEstado.APLICADO]:
