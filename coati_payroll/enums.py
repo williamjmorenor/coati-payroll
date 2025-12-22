@@ -22,14 +22,23 @@ from member names when values aren't explicitly provided.
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from enum import StrEnum
+
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
+
+
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 
 
 class FormulaType(StrEnum):
-    """Types of formulas for calculating payroll concepts.
-
-    Python 3.11+ StrEnum provides automatic string conversion and better IDE support.
-    """
+    """Types of formulas for calculating payroll concepts."""
 
     FIJO = "fijo"  # Fixed amount
     PORCENTAJE = "porcentaje"  # Percentage
@@ -42,11 +51,7 @@ class FormulaType(StrEnum):
 
 
 class StepType(StrEnum):
-    """Types of calculation steps in FormulaEngine schemas.
-
-    Using StrEnum (Python 3.11+) provides better pattern matching in match/case
-    statements and autocompletion in IDEs.
-    """
+    """Types of calculation steps in FormulaEngine schemas."""
 
     CALCULATION = "calculation"  # Mathematical calculation
     CONDITIONAL = "conditional"  # If/else logic
@@ -55,10 +60,7 @@ class StepType(StrEnum):
 
 
 class NominaEstado(StrEnum):
-    """States of a payroll run (Nomina).
-
-    StrEnum ensures type safety when checking or setting nomina status.
-    """
+    """States of a payroll run (Nomina)."""
 
     CALCULANDO = "calculando"  # Calculating in background
     GENERADO = "generado"  # Generated but not approved
@@ -70,10 +72,7 @@ class NominaEstado(StrEnum):
 
 
 class AdelantoEstado(StrEnum):
-    """States of a loan or salary advance.
-
-    Using Python 3.11+ StrEnum for better type checking.
-    """
+    """States of a loan or salary advance."""
 
     BORRADOR = "borrador"  # Draft - not yet submitted
     PENDIENTE = "pendiente"  # Pending approval
@@ -85,20 +84,14 @@ class AdelantoEstado(StrEnum):
 
 
 class AdelantoTipo(StrEnum):
-    """Types of advances/loans.
-
-    Using Python 3.11+ StrEnum for type safety.
-    """
+    """Types of advances/loans."""
 
     ADELANTO = "adelanto"  # Salary advance
     PRESTAMO = "prestamo"  # Loan with optional interest
 
 
 class TipoInteres(StrEnum):
-    """Interest rate types for loans.
-
-    Using Python 3.11+ StrEnum for type safety.
-    """
+    """Interest rate types for loans."""
 
     NINGUNO = "ninguno"  # No interest
     SIMPLE = "simple"  # Simple interest
@@ -106,20 +99,14 @@ class TipoInteres(StrEnum):
 
 
 class MetodoAmortizacion(StrEnum):
-    """Amortization methods for loans with interest.
-
-    Using Python 3.11+ StrEnum for type safety.
-    """
+    """Amortization methods for loans with interest."""
 
     FRANCES = "frances"  # French method - constant payment (cuota constante)
     ALEMAN = "aleman"  # German method - constant amortization (amortización constante)
 
 
 class VacacionEstado(StrEnum):
-    """States of vacation requests.
-
-    Python 3.11+ StrEnum for type-safe vacation status handling.
-    """
+    """States of vacation requests."""
 
     PENDIENTE = "pendiente"  # Pending approval
     APROBADO = "aprobado"  # Approved
@@ -128,10 +115,7 @@ class VacacionEstado(StrEnum):
 
 
 class TipoUsuario(StrEnum):
-    """User types in the system.
-
-    StrEnum (Python 3.11+) provides better type safety for user roles.
-    """
+    """User types in the system."""
 
     ADMIN = "admin"  # Administrator
     HHRR = "hhrr"  # Human Resources
@@ -139,10 +123,7 @@ class TipoUsuario(StrEnum):
 
 
 class TipoDetalle(StrEnum):
-    """Types of payroll detail entries.
-
-    Using Python 3.11+ StrEnum for better type safety in detail records.
-    """
+    """Types of payroll detail entries."""
 
     INGRESO = "ingreso"  # Income/perception
     DEDUCCION = "deduccion"  # Deduction
@@ -150,10 +131,7 @@ class TipoDetalle(StrEnum):
 
 
 class Periodicidad(StrEnum):
-    """Payroll periodicities.
-
-    Python 3.11+ StrEnum for type-safe period definitions.
-    """
+    """Payroll periodicities."""
 
     MENSUAL = "mensual"  # Monthly
     QUINCENAL = "quincenal"  # Biweekly
@@ -162,21 +140,14 @@ class Periodicidad(StrEnum):
 
 
 class NovedadEstado(StrEnum):
-    """States of a payroll novelty (novedad).
-
-    Python 3.11+ StrEnum for type-safe novedad status handling.
-    """
+    """States of a payroll novelty (novedad)."""
 
     PENDIENTE = "pendiente"  # Pending - not yet executed
     EJECUTADA = "ejecutada"  # Executed - nomina has been applied
 
 
 class TipoAcumulacionPrestacion(StrEnum):
-    """Types of benefit accumulation periods.
-
-    Defines how employee benefits (prestaciones) accumulate over time.
-    Python 3.11+ StrEnum for type safety.
-    """
+    """Types of benefit accumulation periods."""
 
     MENSUAL = "mensual"  # Settled monthly (e.g., INSS, INATEC)
     ANUAL = "anual"  # Accumulated annually (e.g., 13th month)
@@ -184,21 +155,14 @@ class TipoAcumulacionPrestacion(StrEnum):
 
 
 class CargaInicialEstado(StrEnum):
-    """States for initial benefit balance loading.
-
-    Python 3.11+ StrEnum for type-safe initial balance status handling.
-    """
+    """States for initial benefit balance loading."""
 
     BORRADOR = "borrador"  # Draft - not yet applied
     APLICADO = "aplicado"  # Applied - transferred to accumulated table
 
 
 class TipoTransaccionPrestacion(StrEnum):
-    """Transaction types for accumulated benefits.
-
-    Defines the types of transactions that can modify benefit balances.
-    Python 3.11+ StrEnum for type safety.
-    """
+    """Transaction types for accumulated benefits."""
 
     SALDO_INICIAL = "saldo_inicial"  # Initial balance
     ADICION = "adicion"  # Addition (increase)
@@ -212,11 +176,7 @@ class TipoTransaccionPrestacion(StrEnum):
 
 
 class AccrualMethod(StrEnum):
-    """Methods for vacation accrual calculation.
-
-    Defines how vacation time is calculated and earned.
-    Python 3.11+ StrEnum for type safety.
-    """
+    """Methods for vacation accrual calculation."""
 
     PERIODIC = "periodic"  # Fixed amount per period (monthly, annually, etc.)
     PROPORTIONAL = "proportional"  # Based on worked days/hours
@@ -224,11 +184,7 @@ class AccrualMethod(StrEnum):
 
 
 class AccrualFrequency(StrEnum):
-    """Frequency of vacation accrual.
-
-    Determines how often vacation time is credited to employee accounts.
-    Python 3.11+ StrEnum for type safety.
-    """
+    """Frequency of vacation accrual."""
 
     MONTHLY = "monthly"  # Monthly accrual
     BIWEEKLY = "biweekly"  # Every two weeks
@@ -236,22 +192,14 @@ class AccrualFrequency(StrEnum):
 
 
 class AccrualBasis(StrEnum):
-    """Basis for proportional accrual calculation.
-
-    Used when accrual_method is PROPORTIONAL.
-    Python 3.11+ StrEnum for type safety.
-    """
+    """Basis for proportional accrual calculation."""
 
     DAYS_WORKED = "days_worked"  # Based on days actually worked
     HOURS_WORKED = "hours_worked"  # Based on hours worked
 
 
 class VacationLedgerType(StrEnum):
-    """Types of vacation ledger entries.
-
-    All vacation balance changes must be recorded with one of these types.
-    Python 3.11+ StrEnum for type safety.
-    """
+    """Types of vacation ledger entries."""
 
     ACCRUAL = "accrual"  # Earned vacation time
     USAGE = "usage"  # Vacation time taken
@@ -261,22 +209,14 @@ class VacationLedgerType(StrEnum):
 
 
 class VacationUnitType(StrEnum):
-    """Unit types for vacation balances.
-
-    Country-specific: some use days, some use hours.
-    Python 3.11+ StrEnum for type safety.
-    """
+    """Unit types for vacation balances."""
 
     DAYS = "days"  # Calendar or working days
     HOURS = "hours"  # Hours
 
 
 class ExpirationRule(StrEnum):
-    """Rules for vacation expiration.
-
-    Defines when unused vacation expires.
-    Python 3.11+ StrEnum for type safety.
-    """
+    """Rules for vacation expiration."""
 
     NEVER = "never"  # Vacation never expires
     FISCAL_YEAR_END = "fiscal_year_end"  # Expires at fiscal year end
@@ -294,7 +234,7 @@ class ReportType(StrEnum):
 
     System reports are pre-defined, optimized reports built into the core.
     Custom reports are user-defined reports created through the UI.
-    Python 3.11+ StrEnum for type safety.
+
     """
 
     SYSTEM = "system"  # System-defined report
@@ -305,7 +245,7 @@ class ReportStatus(StrEnum):
     """Administrative status of a report.
 
     Controls whether a report is available for execution.
-    Python 3.11+ StrEnum for type safety.
+
     """
 
     ENABLED = "enabled"  # Report is available for execution
@@ -316,7 +256,7 @@ class ReportExecutionStatus(StrEnum):
     """Status of a report execution.
 
     Tracks the lifecycle of a report execution from queued to completed.
-    Python 3.11+ StrEnum for type safety.
+
     """
 
     QUEUED = "queued"  # Report execution is queued

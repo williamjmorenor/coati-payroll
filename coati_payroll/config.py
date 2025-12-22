@@ -68,17 +68,13 @@ def load_config_from_file() -> dict:
                 log.info(f"Loading configuration from file: {config_path}")
                 config_obj = ConfigObj(config_path, encoding="utf-8")
 
-                # Convert ConfigObj to regular dict and handle aliases
                 config_dict = dict(config_obj)
 
-                # Handle aliases as specified in the requirements
                 if "DATABASE_URL" in config_dict:
                     config_dict["SQLALCHEMY_DATABASE_URI"] = config_dict["DATABASE_URL"]
-                    # Keep the alias for backward compatibility
 
                 if "REDIS_URL" in config_dict:
                     config_dict["CACHE_REDIS_URL"] = config_dict["REDIS_URL"]
-                    # Keep the alias for backward compatibility
 
                 return config_dict
 
@@ -107,40 +103,17 @@ DESARROLLO = any(
 # Directorios base de la aplicacion
 DIRECTORIO_ACTUAL: Path = Path(path.abspath(path.dirname(__file__)))
 DIRECTORIO_APP: Path = DIRECTORIO_ACTUAL.parent.absolute()
-# DIRECTORIO_DESARROLLO was previously set to the grandparent which made
-# the default DB land outside the project (e.g. C:\code). Use the project
-# directory (`DIRECTORIO_APP`) as the development root so database files
-# are created inside the repository.
 DIRECTORIO_DESARROLLO: Path = DIRECTORIO_APP
 DIRECTORIO_PLANTILLAS_BASE: str = path.join(DIRECTORIO_ACTUAL, "templates")
 DIRECTORIO_ARCHIVOS_BASE: str = path.join(DIRECTORIO_ACTUAL, "static")
 
 # < --------------------------------------------------------------------------------------------- >
 # Directorios personalizados para la aplicación.
-custom_data_dir = environ.get("NOW_LMS_DATA_DIR")
-if custom_data_dir:
-    log.trace("Data directory configuration found in environment variables.")
-    DIRECTORIO_ARCHIVOS = custom_data_dir
-else:
-    DIRECTORIO_ARCHIVOS = DIRECTORIO_ARCHIVOS_BASE
+DIRECTORIO_ARCHIVOS = DIRECTORIO_ARCHIVOS_BASE
+DIRECTORIO_PLANTILLAS = DIRECTORIO_PLANTILLAS_BASE
 
-custom_themes_dir = environ.get("NOW_LMS_THEMES_DIR")
-if custom_themes_dir:
-    log.trace("Themes directory configuration found in environment variables.")
-    DIRECTORIO_PLANTILLAS = custom_themes_dir
-else:
-    DIRECTORIO_PLANTILLAS = DIRECTORIO_PLANTILLAS_BASE
 
 # < --------------------------------------------------------------------------------------------- >
-# Directorio base temas.
-DIRECTORIO_BASE_UPLOADS = Path(str(path.join(str(DIRECTORIO_ARCHIVOS), "files")))
-
-# < --------------------------------------------------------------------------------------------- >
-# Ubicación predeterminada de base de datos SQLITE
-# En entornos de testing usamos una base de datos en memoria; en desarrollo
-# usamos un archivo `coati_payroll.db` ubicado en la raíz del repositorio
-# (DIRECTORIO_DESARROLLO). Normalizamos la ruta con Path.as_posix() para
-# evitar problemas con separadores en Windows.
 TESTING = (
     "PYTEST_CURRENT_TEST" in environ
     or "PYTEST_VERSION" in environ

@@ -31,11 +31,21 @@ The engine supports:
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 import ast
 import operator
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from coati_payroll.enums import StepType
 from coati_payroll.formula_engine.data_sources import AVAILABLE_DATA_SOURCES
 from coati_payroll.i18n import _

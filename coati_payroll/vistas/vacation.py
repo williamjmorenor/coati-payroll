@@ -629,7 +629,7 @@ def register_vacation_taken():
             source="direct_registration",
             reference_id=vacation_novelty.id,
             reference_type="vacation_novelty",
-            observaciones=f"Vacaciones {form.fecha_inicio.data} - {form.fecha_fin.data} - {dias_descontados} descontados",
+            observaciones=f"{form.fecha_inicio.data} - {form.fecha_fin.data} - {dias_descontados} descontados",
             creado_por=current_user.usuario,
         )
 

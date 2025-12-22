@@ -28,10 +28,21 @@ Key features:
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
 
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
+
+
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 from coati_payroll.enums import AdelantoEstado, FormulaType, NominaEstado
 from coati_payroll.i18n import _
 from coati_payroll.model import (
@@ -835,7 +846,7 @@ class NominaEngine:
                 emp_calculo.total_percepciones += monto
                 self._trace(
                     _(
-                        "Calculando percepción %(codigo)s (%(nombre)s) monto=%(monto)s nuevo total percepciones=%(total)s"
+                        "Calculando percepción %(codigo)s (%(nombre)s) monto=%(monto)s total =%(total)s"
                     )
                     % {
                         "codigo": item.codigo,
@@ -930,7 +941,7 @@ class NominaEngine:
             saldo_disponible -= monto_aplicar
             self._trace(
                 _(
-                    "Calculando deducción %(codigo)s (%(nombre)s) monto=%(monto)s total deducciones=%(total)s saldo =%(saldo)s"
+                    "Calculando deducción %(codigo)s (%(nombre)s) monto=%(monto)s total =%(total)s saldo =%(saldo)s"
                 )
                 % {
                     "codigo": item.codigo,

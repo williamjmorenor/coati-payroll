@@ -19,10 +19,16 @@ formatting and metadata.
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 try:
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill
@@ -32,6 +38,10 @@ try:
 except ImportError:
     OPENPYXL_AVAILABLE = False
 
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from coati_payroll.config import DIRECTORIO_APP
 from coati_payroll.log import log
 

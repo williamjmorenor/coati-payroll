@@ -19,12 +19,15 @@ Contiene los formularios WTForms usados por la aplicación.
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from decimal import Decimal
 
-# Terceros
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 from flask_wtf import FlaskForm
-
-from coati_payroll.enums import TipoUsuario
 from wtforms import (
     BooleanField,
     DateField,
@@ -43,6 +46,11 @@ from wtforms.validators import (
     Optional,
     Regexp,
 )
+
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
+from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
 
 

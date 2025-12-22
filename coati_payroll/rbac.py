@@ -24,10 +24,20 @@ User Types:
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from functools import wraps
+
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 from flask import abort, flash, redirect, url_for
 from flask_login import current_user
 
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
 
