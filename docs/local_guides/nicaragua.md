@@ -55,7 +55,7 @@ La tarifa progresiva actual del Impuesto sobre la Renta en Nicaragua es:
 | C$ 350,000.01            | C$ 500,000              | C$ 45,000     | 25%           | C$ 350,000      |
 | C$ 500,000.01            | En adelante             | C$ 82,500     | 30%           | C$ 500,000      |
 
-*Fuente: Artículo 23 LCT, reformado por Ley No 891 del 10 de Diciembre de 2014*
+*Fuente: Artículo 23 LCT
 
 ## Tipos de Ingresos
 
@@ -141,13 +141,17 @@ El IR es un impuesto progresivo que se calcula sobre la renta neta anual proyect
 #### Metodología de Cálculo según Artículo 19 LCT
 
 !!! warning "Método de Cálculo Acumulado"
-    Nicaragua utiliza un método de cálculo acumulado que considera los ingresos de todos los meses anteriores para calcular el IR. Esto es diferente a una simple proyección anual del salario del mes actual.
+    Esta guía utiliza un método de cálculo acumulado que considera los ingresos de todos los meses anteriores para calcular el IR. Esto es diferente a una simple proyección anual del salario del mes actual. Al final del el período siempre se puede verificar si monto retenido corresponde al ingreso anual del trabajador.
+    
 
-##### 1. Retención Mensual con Método Acumulado (Art. 19, numeral 6)
+##### 1. Retención Mensual con Método Acumulado
 
 Este es el método estándar para empleados con un solo empleador, especialmente cuando hay variaciones en los ingresos mensuales:
 
 **Paso a paso:**
+
+!!! important "Calculo Quincenal"
+    En este guía se muestra el calculo mensual, sin embargo el calculo aplica correctamente para pagos quincenales.
 
 **Mes 1:**
 1. Calcular salario neto del mes: `Salario Bruto - INSS (7%)`
@@ -209,7 +213,7 @@ Un empleado con salario variable:
 - Evita retenciones excesivas o insuficientes
 - Al final del año, las retenciones mensuales suman exactamente el IR anual correcto
 
-##### 2. Retención para Salario Fijo (Art. 19, numeral 1)
+##### 2. Retención para Salario Fijo
 
 Si el empleado tiene un salario completamente fijo (sin variaciones), se puede usar un método simplificado:
 
@@ -271,7 +275,7 @@ Salario Neto Acumulado = salario_bruto_acumulado - deducciones_antes_impuesto_ac
     
     La fórmula de IR debe acceder a estas variables:
 
-##### 2. Pagos Ocasionales (Art. 19, numeral 2)
+##### 2. Pagos Ocasionales
 
 Para bonos, vacaciones o incentivos semestrales/anuales:
 
