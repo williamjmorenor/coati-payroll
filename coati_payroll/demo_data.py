@@ -62,8 +62,8 @@ def load_demo_companies() -> tuple[Empresa, Empresa]:
     """
     log.trace("Loading demo companies...")
 
-    # Check if demo companies already exist
     empresa1 = db.session.execute(db.select(Empresa).filter_by(codigo="DEMO001")).scalar_one_or_none()
+    empresa2 = db.session.execute(db.select(Empresa).filter_by(codigo="DEMO002")).scalar_one_or_none()
 
     if empresa1 is None:
         empresa1 = Empresa()
@@ -79,8 +79,6 @@ def load_demo_companies() -> tuple[Empresa, Empresa]:
         empresa1.activo = True
         db.session.add(empresa1)
         log.trace("Created demo company: Tecnología y Soluciones S.A.")
-
-    empresa2 = db.session.execute(db.select(Empresa).filter_by(codigo="DEMO002")).scalar_one_or_none()
 
     if empresa2 is None:
         empresa2 = Empresa()

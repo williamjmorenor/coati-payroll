@@ -20,11 +20,20 @@ identifier and an implementation function.
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Callable
 
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 from sqlalchemy import func
 
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from coati_payroll.model import (
     db,
     Empleado,

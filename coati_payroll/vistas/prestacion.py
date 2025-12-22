@@ -210,7 +210,7 @@ def initial_balance_bulk():
 
                 if existing:
                     errors.append(
-                        f"Fila {row_num}: Ya existe registro {codigo_empleado}, {codigo_prestacion}, {mes_corte}/{anio_corte}"
+                        f"Fila {row_num}: Duplicado {codigo_empleado}, {codigo_prestacion}, {mes_corte}/{anio_corte}"
                     )
                     error_count += 1
                     continue

@@ -24,14 +24,10 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from os import environ
-
-# <-------------------------------------------------------------------------> #
-# Standard library
-# <-------------------------------------------------------------------------> #
 from datetime import datetime
 
 # <-------------------------------------------------------------------------> #
-# Third party libraries
+# Third party packages
 # <-------------------------------------------------------------------------> #
 from flask import Flask, flash, redirect, url_for
 from flask_babel import Babel

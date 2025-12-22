@@ -22,11 +22,21 @@ This module provides the core functionality for executing reports:
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 
+
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 from coati_payroll.enums import ReportType, ReportExecutionStatus
 from coati_payroll.model import (
     db,

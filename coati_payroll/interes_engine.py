@@ -24,10 +24,21 @@ Supported methods:
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from typing import NamedTuple
 
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
+
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from coati_payroll.enums import MetodoAmortizacion, TipoInteres
 
 
