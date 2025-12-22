@@ -41,7 +41,7 @@ Coati Payroll es una aplicación web diseñada para facilitar la gestión comple
 1. **Clonar el repositorio**
 
 ```bash
-git clone https://github.com/williamjmorenor/coati.git
+git clone https://github.com/bmosoluciones/coati-payroll.git
 cd coati
 ```
 
