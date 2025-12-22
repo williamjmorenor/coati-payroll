@@ -845,9 +845,7 @@ class NominaEngine:
                 emp_calculo.percepciones.append(item)
                 emp_calculo.total_percepciones += monto
                 self._trace(
-                    _(
-                        "Calculando percepción %(codigo)s (%(nombre)s) monto=%(monto)s total =%(total)s"
-                    )
+                    _("Calculando percepción %(codigo)s (%(nombre)s) monto=%(monto)s total =%(total)s")
                     % {
                         "codigo": item.codigo,
                         "nombre": item.nombre,
@@ -940,9 +938,7 @@ class NominaEngine:
             emp_calculo.total_deducciones += monto_aplicar
             saldo_disponible -= monto_aplicar
             self._trace(
-                _(
-                    "Calculando deducción %(codigo)s (%(nombre)s) monto=%(monto)s total =%(total)s saldo =%(saldo)s"
-                )
+                _("Calculando deducción %(codigo)s (%(nombre)s) monto=%(monto)s total =%(total)s saldo =%(saldo)s")
                 % {
                     "codigo": item.codigo,
                     "nombre": item.nombre,
