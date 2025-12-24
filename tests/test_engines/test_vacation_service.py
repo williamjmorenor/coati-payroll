@@ -292,8 +292,7 @@ def test_acumular_vacaciones_periodic_method(app, db_session, planilla, empleado
         # Verify ledger entry created
         ledger_entries = (
             db_session.execute(
-                select(VacationLedger)
-                .filter(
+                select(VacationLedger).filter(
                     VacationLedger.account_id == account.id,
                     VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
                 )

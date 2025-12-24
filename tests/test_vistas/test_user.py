@@ -83,6 +83,8 @@ def test_user_index_lists_users_for_admin(app, client, admin_user, db_session):
         # Create test users with valid tipos
         user1 = create_user(db_session, "testuser1", "pass1", nombre="John", apellido="Doe", tipo=TipoUsuario.HHRR)
         user2 = create_user(db_session, "testuser2", "pass2", nombre="Jane", apellido="Smith", tipo=TipoUsuario.AUDIT)
+        assert user1
+        assert user2
 
         login_user(client, admin_user.usuario, "admin-password")
 

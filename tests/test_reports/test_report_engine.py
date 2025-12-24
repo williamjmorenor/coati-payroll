@@ -152,6 +152,7 @@ def test_custom_report_builder_invalid_entity(app, db_session):
 
         try:
             builder = CustomReportBuilder(report)
+            assert builder
             assert False, "Should raise ValueError for invalid entity"
         except ValueError as e:
             assert "Invalid base entity" in str(e)
@@ -259,6 +260,8 @@ def test_custom_report_execute_with_data(app, db_session):
             primer_apellido="Garcia",
             salario_base=Decimal("12000.00"),
         )
+        assert emp1
+        assert emp2
         db_session.commit()
 
         # Create report
@@ -439,6 +442,7 @@ def test_report_execution_manager(app, db_session):
         # Create test data
         empresa = create_company(db_session, "TEST_COMP2", "Test Company 2", "J5678")
         emp1 = create_employee(db_session, empresa_id=empresa.id)
+        assert emp1
         db_session.commit()
 
         # Create report

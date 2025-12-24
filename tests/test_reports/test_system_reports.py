@@ -138,6 +138,8 @@ def test_employee_list_report(app, db_session):
             primer_nombre="Maria",
             primer_apellido="Garcia",
         )
+        assert emp1
+        assert emp2
         db_session.commit()
 
         report_func = get_system_report("employee_list")

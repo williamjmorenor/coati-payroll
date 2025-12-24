@@ -173,12 +173,14 @@ def test_carga_inicial_prestacion_post_creates_new_record(app, client, admin_use
         assert "/carga-inicial-prestaciones/" in response.location
 
         # Verify record was created in database
-        carga = db_session.execute(select(CargaInicialPrestacion).filter_by(
-            empleado_id=empleado.id,
-            prestacion_id=prestacion.id,
-            anio_corte=2024,
-            mes_corte=6,
-        )).scalar_one_or_none()
+        carga = db_session.execute(
+            select(CargaInicialPrestacion).filter_by(
+                empleado_id=empleado.id,
+                prestacion_id=prestacion.id,
+                anio_corte=2024,
+                mes_corte=6,
+            )
+        ).scalar_one_or_none()
 
         assert carga is not None
         assert carga.estado == "borrador"
@@ -233,12 +235,17 @@ def test_carga_inicial_prestacion_post_duplicate_detection(app, client, admin_us
         assert response.status_code == 200
 
         # Verify only one record exists
-        count = db_session.execute(select(func.count(CargaInicialPrestacion.id)).filter_by(
-            empleado_id=empleado.id,
-            prestacion_id=prestacion.id,
-            anio_corte=2024,
-            mes_corte=6,
-        )).scalar() or 0
+        count = (
+            db_session.execute(
+                select(func.count(CargaInicialPrestacion.id)).filter_by(
+                    empleado_id=empleado.id,
+                    prestacion_id=prestacion.id,
+                    anio_corte=2024,
+                    mes_corte=6,
+                )
+            ).scalar()
+            or 0
+        )
         assert count == 1
 
 
@@ -299,7 +306,7 @@ def test_carga_inicial_prestacion_editar_applied_status_redirects(app, client, a
 
         # Try to edit applied carga
         response = client.get(f"/carga-inicial-prestaciones/{carga.id}/editar", follow_redirects=False)
-        
+
         # Should redirect to index
         assert response.status_code == 302
         assert "/carga-inicial-prestaciones/" in response.location
@@ -404,9 +411,9 @@ def test_carga_inicial_prestacion_aplicar_creates_transaction(app, client, admin
         assert carga.fecha_aplicacion is not None
 
         # Verify transaction created in prestacion_acumulada
-        transaction = db_session.execute(select(PrestacionAcumulada).filter_by(
-            carga_inicial_id=carga.id
-        )).scalar_one_or_none()
+        transaction = db_session.execute(
+            select(PrestacionAcumulada).filter_by(carga_inicial_id=carga.id)
+        ).scalar_one_or_none()
 
         assert transaction is not None
         assert transaction.empleado_id == empleado.id

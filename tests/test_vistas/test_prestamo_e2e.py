@@ -218,7 +218,6 @@ def test_prestamo_new_post_create_loan(app, client, admin_user, db_session):
         assert prestamo.estado == AdelantoEstado.BORRADOR
 
 
-
 def test_prestamo_edit_get_form(app, client, admin_user, db_session):
     """
     Test: User accesses the form to edit a loan in draft state.
@@ -742,8 +741,6 @@ def test_prestamo_pago_extraordinario_get_form(app, client, admin_user, db_sessi
 
         response = client.get(f"/prestamo/{prestamo.id}/pago-extraordinario")
         assert response.status_code == 200
-
-
 
 
 def test_prestamo_condonacion_get_form(app, client, admin_user, db_session):

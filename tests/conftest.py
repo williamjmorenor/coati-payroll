@@ -104,7 +104,8 @@ def db_session(app):
         transaction = connection.begin()
 
         # Bind the session to the connection
-        session = scoped_session(sessionmaker(bind=connection))
+        # expire_on_commit=False prevents objects from being detached after commit
+        session = scoped_session(sessionmaker(bind=connection, expire_on_commit=False))
 
         # Replace the default session with our transactional session
         _db.session = session

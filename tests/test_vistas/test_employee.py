@@ -13,7 +13,6 @@
 # limitations under the License.
 """Comprehensive tests for employee CRUD operations (coati_payroll/vistas/employee.py)."""
 
-
 from tests.helpers.auth import login_user
 
 
@@ -46,6 +45,8 @@ def test_employee_index_lists_employees(app, client, admin_user, db_session):
             primer_nombre="Jane",
             primer_apellido="Smith",
         )
+        assert emp1
+        assert emp2
 
         login_user(client, admin_user.usuario, "admin-password")
 
