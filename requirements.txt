@@ -15,6 +15,7 @@ flask_weasyprint
 flask-wtf
 mysql-connector-python
 openpyxl
+orjson
 pg8000
 python-dateutil
 python-ulid

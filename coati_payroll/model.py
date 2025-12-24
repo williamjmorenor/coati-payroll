@@ -24,9 +24,10 @@ from datetime import date, datetime, timezone
 # <-------------------------------------------------------------------------> #
 # Third party libraries
 # <-------------------------------------------------------------------------> #
+import orjson
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import JSON
+from sqlalchemy import TypeDecorator, JSON
 from sqlalchemy.ext.mutable import MutableDict
 from ulid import ULID
 
@@ -65,6 +66,24 @@ def utc_now() -> datetime:
     Replacement for deprecated datetime.utcnow() with timezone-aware alternative.
     """
     return datetime.now(timezone.utc)
+
+
+# Utiliza orjon para serializar/deserializar JSON
+class OrjsonType(TypeDecorator):
+    impl = JSON
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return orjson.dumps(value).decode("utf-8")
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            if isinstance(value, (dict, list)):
+                return value  # PostgreSQL ya lo deserializó
+            return orjson.loads(value)
+        return value
 
 
 # Clase base para todas las tablas
@@ -263,7 +282,7 @@ class Empleado(database.Model, BaseTabla):
     mes_ultimo_cierre = database.Column(database.Integer, nullable=True)
     salario_acumulado = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     impuesto_acumulado = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
-    ultimos_tres_salarios = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    ultimos_tres_salarios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     # relaciones
     planilla_asociaciones = database.relationship(
@@ -287,7 +306,7 @@ class Empleado(database.Model, BaseTabla):
     adelantos = database.relationship("Adelanto", back_populates="empleado", cascade="all,delete-orphan")
 
     # Datos adicionales (JSON)
-    datos_adicionales = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    datos_adicionales = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
 
 # Gestión de planillas
@@ -322,7 +341,7 @@ class TipoPlanilla(database.Model, BaseTabla):
     periodos_por_anio = database.Column(database.Integer, nullable=False, default=12)
 
     # Tax calculation parameters (stored as JSON for flexibility)
-    parametros_calculo = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    parametros_calculo = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     activo = database.Column(database.Boolean(), default=True, nullable=False)
 
@@ -355,7 +374,7 @@ class Planilla(database.Model, BaseTabla):
     descripcion = database.Column(database.String(255), nullable=True)
     activo = database.Column(database.Boolean(), default=True, nullable=False)
 
-    parametros = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    parametros = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     tipo_planilla_id = database.Column(database.String(26), database.ForeignKey("tipo_planilla.id"), nullable=False)
     tipo_planilla = database.relationship("TipoPlanilla", back_populates="planillas")
@@ -450,8 +469,8 @@ class Percepcion(database.Model, BaseTabla):
     # tipo de cálculo: 'fijo', 'porcentaje_salario', 'porcentaje_bruto', 'formula', 'horas', etc.
     formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
     monto_default = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
-    formula = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
-    condicion = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    formula = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+    condicion = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
     porcentaje = database.Column(database.Numeric(5, 2), nullable=True)
     gravable = database.Column(database.Boolean(), default=True)
     recurrente = database.Column(database.Boolean(), default=False)
@@ -496,8 +515,8 @@ class Deduccion(database.Model, BaseTabla):
 
     formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
     monto_default = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
-    formula = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
-    condicion = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    formula = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+    condicion = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
     porcentaje = database.Column(database.Numeric(5, 2), nullable=True)
     antes_impuesto = database.Column(database.Boolean(), default=True)
     recurrente = database.Column(database.Boolean(), default=False)
@@ -557,8 +576,8 @@ class Prestacion(database.Model, BaseTabla):
 
     formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
     monto_default = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
-    formula = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
-    condicion = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    formula = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+    condicion = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
     porcentaje = database.Column(database.Numeric(5, 2), nullable=True)
     recurrente = database.Column(database.Boolean(), default=False)
     activo = database.Column(database.Boolean(), default=True)
@@ -697,7 +716,7 @@ class PlanillaReglaCalculo(database.Model, BaseTabla):
     activo = database.Column(database.Boolean(), default=True)
 
     # Optional: override parameters for this specific payroll
-    parametros_override = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    parametros_override = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     planilla = database.relationship("Planilla", back_populates="planilla_reglas_calculo")
     regla_calculo = database.relationship("ReglaCalculo", back_populates="planillas")
@@ -739,7 +758,7 @@ class Nomina(database.Model, BaseTabla):
     total_empleados = database.Column(database.Integer, nullable=True, default=0)
     empleados_procesados = database.Column(database.Integer, nullable=True, default=0)
     empleados_con_error = database.Column(database.Integer, nullable=True, default=0)
-    errores_calculo = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    errores_calculo = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
     procesamiento_en_background = database.Column(database.Boolean, nullable=False, default=False)
     log_procesamiento = database.Column(JSON, nullable=True)  # Stores list of log entries as JSON
     empleado_actual = database.Column(database.String(255), nullable=True)
@@ -1243,7 +1262,7 @@ class ReglaCalculo(database.Model, BaseTabla):
 
     # The complete JSON schema defining the calculation logic
     # Structure includes: meta, inputs, steps, tax_tables, output
-    esquema_json = database.Column(MutableDict.as_mutable(JSON), nullable=False, default=dict)
+    esquema_json = database.Column(MutableDict.as_mutable(OrjsonType), nullable=False, default=dict)
 
     # Validity period
     vigente_desde = database.Column(database.Date, nullable=False)
@@ -1349,7 +1368,7 @@ class AcumuladoAnual(database.Model, BaseTabla):
 
     # Additional accumulated data (JSON for flexibility)
     # Can store: inss_acumulado, otras_deducciones_acumuladas, percepciones_acumuladas, etc.
-    datos_adicionales = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    datos_adicionales = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     empleado = database.relationship("Empleado", backref="acumulados_anuales")
     tipo_planilla = database.relationship("TipoPlanilla", back_populates="acumulados")
@@ -1380,7 +1399,7 @@ class ConfiguracionGlobal(database.Model, BaseTabla):
     idioma = database.Column(database.String(10), nullable=False, default="en")
 
     # Additional global settings can be stored as JSON
-    configuracion_adicional = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    configuracion_adicional = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
 
 # Prestaciones Acumuladas - Accumulated Benefits Tracking (Transactional)
@@ -1850,7 +1869,7 @@ class Report(database.Model, BaseTabla):
 
     # Report definition (JSON, nullable for System reports as they're coded)
     # For Custom reports: contains columns, filters, sorting, expressions
-    definition = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    definition = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     # System report identifier (for system reports only)
     # Used to identify the report implementation in code
@@ -1907,7 +1926,7 @@ class ReportExecution(database.Model, BaseTabla):
     )  # queued | running | completed | failed | cancelled
 
     # Execution parameters (filters applied by user)
-    parameters = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    parameters = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     # User who requested the execution
     executed_by = database.Column(database.String(150), nullable=False, index=True)
@@ -1950,6 +1969,6 @@ class ReportAudit(database.Model, BaseTabla):
     performed_by = database.Column(database.String(150), nullable=False, index=True)
 
     # Changes (JSON storing before/after values)
-    changes = database.Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
+    changes = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     # Timestamp is inherited from BaseTabla
