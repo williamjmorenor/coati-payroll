@@ -292,7 +292,11 @@ class NominaEngine:
         # - Our period is completely contained within an existing nomina's period
         #
         # We check all active states (GENERADO, APROBADO, APLICADO, PAGADO) but exclude
-        # ANULADO (cancelled) and ERROR states since those don't represent actual payments
+        # ANULADO (cancelled) and ERROR states.
+        #
+        # NOTE: ERROR is a valid permanent state for a nomina, but it doesn't represent
+        # an actual payment, so it's excluded from overlap validation to allow retrying
+        # failed nominas for the same period.
         existing_nominas = (
             db.session.execute(
                 db.select(Nomina).filter(

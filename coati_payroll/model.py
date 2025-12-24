@@ -748,7 +748,7 @@ class Nomina(database.Model, BaseTabla):
     generado_por = database.Column(database.String(150), nullable=True)
     estado = database.Column(
         database.String(30), nullable=False, default="generado"
-    )  # calculando, generado, aprobado, aplicado, error
+    )  # calculando, generado, aprobado, aplicado, pagado, anulado, error (all are valid permanent states)
 
     total_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     total_deducciones = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))

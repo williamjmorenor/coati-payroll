@@ -963,6 +963,45 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
     return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
 
 
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/reintentar", methods=["POST"])
+@require_write_access()
+def reintentar_nomina(planilla_id: str, nomina_id: str):
+    """Retry processing a failed nomina.
+
+    This allows users to manually retry a nomina that failed during processing.
+    The nomina state is reset and processing is attempted again.
+    """
+    from coati_payroll.enums import NominaEstado
+    from coati_payroll.model import Nomina
+    from coati_payroll.queue.tasks import retry_failed_nomina
+
+    nomina = db.get_or_404(Nomina, nomina_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if nomina.estado != NominaEstado.ERROR:
+        flash(
+            _("Solo se pueden reintentar nóminas en estado 'error'."),
+            "error",
+        )
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    # Call the retry function
+    result = retry_failed_nomina(nomina_id, current_user.usuario)
+
+    if result.get("success"):
+        flash(
+            _("Reintento de nómina iniciado exitosamente. El procesamiento se realizará en segundo plano."), "success"
+        )
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+    else:
+        flash(_("Error al reintentar la nómina: {}").format(result.get("error", "Error desconocido")), "error")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/recalcular", methods=["POST"])
 @require_write_access()
 def recalcular_nomina(planilla_id: str, nomina_id: str):

@@ -103,15 +103,37 @@
     <p>Ocurrió un error durante el cálculo de la nómina. Detalles:</p>
     {% if nomina.errores_calculo %}
     <ul>
-        {% for empleado_id, error in nomina.errores_calculo.items() %}
-        <li><strong>{{ empleado_id }}:</strong> {{ error }}</li>
+        {% for key, error in nomina.errores_calculo.items() %}
+        <li>
+            <strong>{{ key }}:</strong> 
+            {% if error is mapping %}
+                {{ error.critical_error or error.error or error }}
+            {% else %}
+                {{ error }}
+            {% endif %}
+        </li>
         {% endfor %}
     </ul>
     {% endif %}
-    <p class="mb-0">
+    <p class="mb-3">
         <strong>Empleados procesados:</strong> {{ nomina.empleados_procesados or 0 }} / {{ nomina.total_empleados or 0 }}<br>
         <strong>Empleados con error:</strong> {{ nomina.empleados_con_error or 0 }}
     </p>
+    <div>
+        <form action="{{ url_for('planilla.reintentar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
+              method="post" style="display: inline;">
+            <button type="submit" class="btn btn-warning" 
+                    onclick="return confirm('¿Reintentar el procesamiento de esta nómina? Se limpiarán los datos parciales y se intentará procesar nuevamente.')">
+                <i class="fas fa-redo"></i> Reintentar Procesamiento
+            </button>
+        </form>
+        {% if nomina.errores_calculo and nomina.errores_calculo.get('is_recoverable') == False %}
+        <small class="text-muted d-block mt-2">
+            <i class="fas fa-info-circle"></i> 
+            Este error no es recuperable automáticamente. Revise la configuración o los datos antes de reintentar.
+        </small>
+        {% endif %}
+    </div>
 </div>
 {% endif %}
 
