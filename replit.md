@@ -57,6 +57,25 @@ Períodos parciales:
 - Ejemplo: 15 días = (salario_base / 30) × 15 × porcentaje
 ```
 
+## Control Interno: Validación Empresa-Empleado-Planilla
+
+### Requisito de Control ✅ IMPLEMENTADO
+Para que el sistema calcule correctamente una nómina, tanto el empleado como la planilla **DEBEN estar vinculados a la misma empresa**.
+
+### Validaciones Implementadas
+1. **Motor de Nómina (`nomina_engine.py`)**: Valida que `empleado.empresa_id == planilla.empresa_id` antes de procesar
+2. **Formulario de Planilla**: `empresa_id` es **obligatorio** al crear/editar planilla
+3. **Asignación de Empleados**: Solo se pueden asignar empleados de la misma empresa
+4. **Filtro en UI**: `/planilla/<id>/config/empleados` solo muestra empleados de la misma empresa
+
+### Tests de Validación - ✅ 7 TESTS PASANDO
+- `tests/test_validation/test_empresa_employee_planilla_validation.py`
+- Cubre: Validación en motor de nómina, asignación de empleados, filtrado en UI
+
+### Mensajes de Error
+- Si empleado no tiene empresa: "Empleado X no está asignado a ninguna empresa"
+- Si empresas no coinciden: "Empleado X pertenece a empresa diferente a la planilla"
+
 ## Configuración Clave del Sistema
 
 ### INSS (Deducción)
