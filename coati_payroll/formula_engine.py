@@ -48,6 +48,7 @@ from typing import Any
 # <-------------------------------------------------------------------------> #
 from coati_payroll.enums import StepType
 from coati_payroll.formula_engine.data_sources import AVAILABLE_DATA_SOURCES
+from coati_payroll.formula_engine_examples import EXAMPLE_IR_NICARAGUA_SCHEMA
 from coati_payroll.i18n import _
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
 from coati_payroll.schema_validator import validate_schema
@@ -348,25 +349,26 @@ class FormulaEngine:
         Raises:
             CalculationError: If evaluation fails
         """
-        if isinstance(node, ast.Constant):
-            # Python 3.8+ uses ast.Constant for literals
-            return to_decimal(node.value)
+        match node:
+            case ast.Constant(value=value):
+                return to_decimal(value)
 
-        if isinstance(node, ast.Name):
-            # Variable reference
-            var_name = node.id
-            if var_name not in self.variables:
-                raise CalculationError(f"Undefined variable: {var_name}")
-            return self.variables[var_name]
+            case ast.Name(id=var_name):
+                if var_name not in self.variables:
+                    raise CalculationError(f"Undefined variable: {var_name}")
+                return self.variables[var_name]
 
-        if isinstance(node, ast.BinOp):
-            return self._eval_binary_op(node)
+            case ast.BinOp():
+                return self._eval_binary_op(node)
 
-        if isinstance(node, ast.UnaryOp):
-            return self._eval_unary_op(node)
+            case ast.UnaryOp():
+                return self._eval_unary_op(node)
 
-        if isinstance(node, ast.Call):
-            return self._eval_function_call(node)
+            case ast.Call():
+                return self._eval_function_call(node)
+
+            case _:
+                raise CalculationError(f"Unsupported AST node: {type(node).__name__}")
 
         raise CalculationError(f"Unsupported AST node type: {type(node).__name__}")
 
@@ -383,26 +385,36 @@ class FormulaEngine:
         right = self._eval_ast_node(node.right)
 
         op_type = type(node.op)
-        if op_type == ast.Add:
-            return to_decimal(left + right)
-        if op_type == ast.Sub:
-            return to_decimal(left - right)
-        if op_type == ast.Mult:
-            return to_decimal(left * right)
-        if op_type == ast.Div:
-            if right == 0:
-                return Decimal("0")  # Safe division by zero handling
-            return to_decimal(left / right)
-        if op_type == ast.FloorDiv:
-            if right == 0:
-                return Decimal("0")
-            return to_decimal(left // right)
-        if op_type == ast.Mod:
-            if right == 0:
-                return Decimal("0")
-            return to_decimal(left % right)
-        if op_type == ast.Pow:
-            return to_decimal(left**right)
+        match op_type:
+            case ast.Add:
+                return to_decimal(left + right)
+
+            case ast.Sub:
+                return to_decimal(left - right)
+
+            case ast.Mult:
+                return to_decimal(left * right)
+
+            case ast.Div:
+                if right == 0:
+                    return Decimal("0")  # Safe division by zero handling
+                return to_decimal(left / right)
+
+            case ast.FloorDiv:
+                if right == 0:
+                    return Decimal("0")
+                return to_decimal(left // right)
+
+            case ast.Mod:
+                if right == 0:
+                    return Decimal("0")
+                return to_decimal(left % right)
+
+            case ast.Pow:
+                return to_decimal(left**right)
+
+            case _:
+                raise ValueError(f"Unsupported operator: {op_type}")
 
         raise CalculationError(f"Unsupported binary operator: {op_type.__name__}")
 
@@ -418,10 +430,15 @@ class FormulaEngine:
         operand = self._eval_ast_node(node.operand)
 
         op_type = type(node.op)
-        if op_type == ast.UAdd:
-            return to_decimal(+operand)
-        if op_type == ast.USub:
-            return to_decimal(-operand)
+        match op_type:
+            case ast.UAdd:
+                return to_decimal(+operand)
+
+            case ast.USub:
+                return to_decimal(-operand)
+
+            case _:
+                raise ValueError(f"Unsupported unary operator: {op_type}")
 
         raise CalculationError(f"Unsupported unary operator: {op_type.__name__}")
 
@@ -744,7 +761,6 @@ class FormulaEngine:
                 step_name = step.get("name", "unknown")
                 step_type = step.get("type", "unknown")
                 error = CalculationError(f"Error in step '{step_name}': {e}")
-                # Python 3.11+ feature: add_note() for additional context
                 error.add_note(f"Step type: {step_type}")
                 error.add_note(f"Available variables: {list(self.variables.keys())}")
                 raise error from e
@@ -798,129 +814,7 @@ def calculate_with_rule(
     return engine.execute(inputs)
 
 
-# Alias for backward compatibility
-TaxEngine = FormulaEngine
 
-# Alias for backward compatibility
-calculate_with_rule_schema = calculate_with_rule
-
-
-# Example Nicaragua IR schema for reference
-EXAMPLE_IR_NICARAGUA_SCHEMA = {
-    "meta": {
-        "name": "IR Laboral Nicaragua",
-        "jurisdiction": "Nicaragua",
-        "reference_currency": "NIO",
-        "version": "1.0.0",
-        "description": "Cálculo del Impuesto sobre la Renta para salarios en Nicaragua. "
-        "La moneda de referencia es NIO. El tipo de cambio se aplica si la planilla "
-        "está en una moneda diferente.",
-    },
-    "inputs": [
-        {
-            "name": "salario_mensual",
-            "type": "decimal",
-            "source": "empleado.salario_base",
-            "description": "Salario mensual bruto",
-        },
-        {
-            "name": "inss_laboral",
-            "type": "decimal",
-            "source": "calculated",
-            "description": "Deducción INSS laboral",
-        },
-        {
-            "name": "meses_restantes",
-            "type": "integer",
-            "default": 12,
-            "description": "Meses restantes en el año fiscal",
-        },
-        {
-            "name": "salario_acumulado",
-            "type": "decimal",
-            "default": 0,
-            "description": "Salario bruto acumulado del año",
-        },
-        {
-            "name": "ir_retenido_acumulado",
-            "type": "decimal",
-            "default": 0,
-            "description": "IR ya retenido en el año",
-        },
-    ],
-    "steps": [
-        {
-            "name": "salario_neto_mensual",
-            "type": "calculation",
-            "formula": "salario_mensual - inss_laboral",
-            "description": "Salario después de INSS",
-        },
-        {
-            "name": "expectativa_anual",
-            "type": "calculation",
-            "formula": "salario_neto_mensual * meses_restantes",
-            "description": "Proyección de salario restante del año",
-        },
-        {
-            "name": "base_imponible_anual",
-            "type": "calculation",
-            "formula": "salario_acumulado + expectativa_anual",
-            "description": "Base imponible anual total",
-        },
-        {
-            "name": "ir_anual",
-            "type": "tax_lookup",
-            "table": "tabla_ir_nicaragua",
-            "input": "base_imponible_anual",
-            "description": "Cálculo IR anual según tabla",
-        },
-        {
-            "name": "ir_pendiente",
-            "type": "calculation",
-            "formula": "ir_anual - ir_retenido_acumulado",
-            "description": "IR pendiente de retener",
-        },
-        {
-            "name": "ir_mensual",
-            "type": "calculation",
-            "formula": "ir_pendiente / meses_restantes",
-            "description": "IR a retener este mes",
-        },
-    ],
-    "tax_tables": {
-        "tabla_ir_nicaragua": [
-            {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
-            {"min": 100000.01, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
-            {
-                "min": 200000.01,
-                "max": 350000,
-                "rate": 0.20,
-                "fixed": 15000,
-                "over": 200000,
-            },
-            {
-                "min": 350000.01,
-                "max": 500000,
-                "rate": 0.25,
-                "fixed": 45000,
-                "over": 350000,
-            },
-            {
-                "min": 500000.01,
-                "max": None,
-                "rate": 0.30,
-                "fixed": 82500,
-                "over": 500000,
-            },
-        ]
-    },
-    "output": "ir_mensual",
-}
-
-
-# Available data sources for tax rule inputs
-# These define what fields can be accessed from the database when creating rules
-# Moved to coati_payroll.formula_engine.data_sources (imported at top of file)
 
 
 def get_available_sources_for_ui() -> list[dict]:
@@ -942,7 +836,3 @@ def get_available_sources_for_ui() -> list[dict]:
                 }
             )
     return sources
-
-
-# Mapping of novelty codes to their calculation behavior
-# Moved to coati_payroll.formula_engine.novelty_codes
