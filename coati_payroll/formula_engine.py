@@ -219,11 +219,12 @@ class FormulaEngine:
     }
     """
 
-    def __init__(self, schema: dict[str, Any]):
+    def __init__(self, schema: dict[str, Any], strict_mode: bool = False):
         """Initialize the formula engine with a calculation schema.
 
         Args:
             schema: JSON schema defining the calculation rules
+            strict_mode: If True, warnings are treated as errors. Default: False
 
         Raises:
             ValidationError: If schema is invalid
@@ -231,7 +232,19 @@ class FormulaEngine:
         self.schema = schema
         self.variables: dict[str, Decimal] = {}
         self.results: dict[str, Any] = {}
+        self.strict_mode = strict_mode
         validate_schema(self.schema, error_class=ValidationError)
+        # Validate tax tables for critical integrity issues
+        warnings = self._validate_all_tax_tables()
+        # Handle warnings
+        if warnings:
+            if strict_mode:
+                raise ValidationError(
+                    f"Advertencias en tablas de impuestos (modo estricto activado): {', '.join(warnings)}"
+                )
+            else:
+                for warning in warnings:
+                    log.warning(f"Validación de tabla de impuestos: {warning}")
 
     # ------------------------------------------------------------------
     # Trace helper uses cached check from log.is_trace_enabled() to avoid
@@ -517,12 +530,192 @@ class FormulaEngine:
         self._trace(_("Resolviendo valor literal '%(raw)s' => %(value)s") % {"raw": value, "value": resolved_literal})
         return resolved_literal
 
+    def _validate_tax_table(self, table_name: str, table: list[dict[str, Any]]) -> tuple[list[str], list[str]]:
+        """Validate a tax table for critical integrity issues.
+
+        This method validates that:
+        1. The table is ordered by min values (ascending)
+        2. Brackets do not overlap
+        3. There are no significant gaps between brackets (with tolerance for small gaps)
+        4. Fixed and over values are valid
+
+        Args:
+            table_name: Name of the tax table being validated
+            table: List of tax bracket dictionaries
+
+        Returns:
+            Tuple of (errors, warnings) lists. Errors are critical and should raise exceptions.
+            Warnings are non-critical issues that should be logged.
+
+        Raises:
+            ValidationError: If table has critical errors (ordering, overlap, structure issues)
+        """
+        errors: list[str] = []
+        warnings: list[str] = []
+
+        if not table:
+            raise ValidationError(
+                f"La tabla de impuestos '{table_name}' está vacía. " "Debe contener al menos un tramo."
+            )
+
+        # Validate each bracket structure
+        for i, bracket in enumerate(table):
+            if not isinstance(bracket, dict):
+                raise ValidationError(f"El tramo {i} de la tabla '{table_name}' debe ser un diccionario")
+
+            min_val = bracket.get("min")
+            max_val = bracket.get("max")
+
+            if min_val is None:
+                raise ValidationError(f"El tramo {i} de la tabla '{table_name}' debe tener un valor 'min'")
+
+            try:
+                min_decimal = to_decimal(min_val)
+            except ValidationError as e:
+                raise ValidationError(
+                    f"El valor 'min' del tramo {i} de la tabla '{table_name}' es inválido: {e}"
+                ) from e
+
+            if max_val is not None:
+                try:
+                    max_decimal = to_decimal(max_val)
+                    if max_decimal < min_decimal:
+                        raise ValidationError(
+                            f"El tramo {i} de la tabla '{table_name}' tiene 'max' ({max_val}) "
+                            f"menor que 'min' ({min_val}). El límite superior debe ser mayor o igual al inferior."
+                        )
+                except ValidationError as e:
+                    raise ValidationError(
+                        f"El valor 'max' del tramo {i} de la tabla '{table_name}' es inválido: {e}"
+                    ) from e
+
+            # Validate fixed and over values
+            fixed = bracket.get("fixed", 0)
+            over = bracket.get("over", 0)
+
+            try:
+                fixed_decimal = to_decimal(fixed)
+                over_decimal = to_decimal(over)
+
+                if fixed_decimal < 0:
+                    errors.append(
+                        f"El tramo {i} de la tabla '{table_name}' tiene 'fixed' negativo ({fixed}). "
+                        "El valor 'fixed' no puede ser negativo."
+                    )
+
+                if over_decimal < 0:
+                    errors.append(
+                        f"El tramo {i} de la tabla '{table_name}' tiene 'over' negativo ({over}). "
+                        "El valor 'over' no puede ser negativo."
+                    )
+
+                if over_decimal > min_decimal:
+                    errors.append(
+                        f"El tramo {i} de la tabla '{table_name}' tiene 'over' ({over}) mayor que 'min' ({min_val}). "
+                        "El valor 'over' debe ser menor o igual a 'min'."
+                    )
+            except ValidationError as e:
+                errors.append(f"Valores inválidos en tramo {i} de tabla '{table_name}': {e}")
+
+        # Validate ordering and overlaps
+        for i in range(len(table) - 1):
+            current = table[i]
+            next_bracket = table[i + 1]
+
+            current_min = to_decimal(current.get("min", 0))
+            current_max = current.get("max")
+            next_min = to_decimal(next_bracket.get("min", 0))
+
+            # Check ordering: next bracket's min should be >= current bracket's min
+            if next_min < current_min:
+                raise ValidationError(
+                    f"La tabla de impuestos '{table_name}' no está ordenada. "
+                    f"El tramo {i + 1} tiene 'min'={next_min} que es menor que el 'min'={current_min} "
+                    f"del tramo {i}. Los tramos deben estar ordenados de menor a mayor."
+                )
+
+            # Check for overlaps and gaps
+            if current_max is not None:
+                current_max_decimal = to_decimal(current_max)
+
+                # Check for overlap or gap
+                if current_max_decimal > next_min:
+                    # Overlap detected: current bracket extends beyond next bracket's start
+                    overlap_start = next_min
+                    overlap_end = current_max_decimal
+                    raise ValidationError(
+                        f"La tabla de impuestos '{table_name}' tiene tramos solapados. "
+                        f"Los tramos {i} y {i + 1} se solapan en el rango [{overlap_start}, {overlap_end}]. "
+                        f"El tramo {i} termina en {current_max_decimal} y el tramo {i + 1} comienza en {next_min}. "
+                        "Los tramos no deben solaparse."
+                    )
+                elif current_max_decimal < next_min:
+                    # Check for significant gap: allow small tolerance for rounding/formatting
+                    gap_size = next_min - current_max_decimal
+                    tolerance = Decimal("0.01")  # Allow 1 cent gap for rounding
+
+                    if gap_size > tolerance:
+                        warnings.append(
+                            f"La tabla de impuestos '{table_name}' tiene un gap significativo entre "
+                            f"los tramos {i} y {i + 1}. "
+                            f"El tramo {i} termina en {current_max_decimal} y el tramo {i + 1} comienza en {next_min}. "
+                            f"Hay un gap de {gap_size} que no está cubierto por ningún tramo."
+                        )
+                # else: current_max_decimal == next_min is acceptable (continuous brackets)
+            else:
+                # Current bracket is open-ended, but there's a next bracket - this is an error
+                raise ValidationError(
+                    f"La tabla de impuestos '{table_name}' tiene un tramo abierto (sin 'max') en la posición {i}, "
+                    f"pero hay tramos adicionales después. El tramo abierto debe ser el último de la tabla."
+                )
+
+        # Validate that only the last bracket can be open-ended
+        for i in range(len(table) - 1):
+            if table[i].get("max") is None:
+                raise ValidationError(
+                    f"La tabla de impuestos '{table_name}' tiene un tramo abierto (sin 'max') en la posición {i}, "
+                    "pero no es el último tramo. Solo el último tramo puede ser abierto."
+                )
+
+        # Raise errors if any critical errors found
+        if errors:
+            raise ValidationError(f"Errores críticos en la tabla de impuestos '{table_name}': {'; '.join(errors)}")
+
+        return errors, warnings
+
+    def _validate_all_tax_tables(self) -> list[str]:
+        """Validate all tax tables in the schema.
+
+        Returns:
+            List of warning messages (non-critical issues)
+
+        Raises:
+            ValidationError: If any tax table has critical validation errors
+        """
+        tax_tables = self.schema.get("tax_tables", {})
+        if not isinstance(tax_tables, dict):
+            raise ValidationError("'tax_tables' debe ser un diccionario")
+
+        all_warnings: list[str] = []
+
+        for table_name, table in tax_tables.items():
+            if not isinstance(table, list):
+                raise ValidationError(f"La tabla de impuestos '{table_name}' debe ser una lista de tramos")
+
+            errors, warnings = self._validate_tax_table(table_name, table)
+            all_warnings.extend(warnings)
+
+        return all_warnings
+
     def _lookup_tax_table(
         self,
         table_name: str,
         input_value: Decimal,
     ) -> dict[str, Decimal]:
         """Look up tax bracket in a tax table.
+
+        This method uses defensive coding to handle edge cases even if validation
+        passed. It ensures consistent behavior and prevents incorrect calculations.
 
         Args:
             table_name: Name of the tax table in schema
@@ -542,38 +735,111 @@ class FormulaEngine:
         if not isinstance(table, list):
             raise CalculationError(f"Tax table '{table_name}' must be a list")
 
+        if not table:
+            # Defensive: empty table
+            self._trace(
+                _("Advertencia: tabla de impuestos '%(table)s' está vacía, devolviendo ceros") % {"table": table_name}
+            )
+            return {
+                "tax": Decimal("0"),
+                "rate": Decimal("0"),
+                "fixed": Decimal("0"),
+                "over": Decimal("0"),
+            }
+
         self._trace(
             _("Buscando tabla de impuestos '%(table)s' con valor %(value)s; brackets=%(count)s")
             % {"table": table_name, "value": input_value, "count": len(table)}
         )
 
-        # Find the applicable bracket
-        for bracket in table:
-            min_val = to_decimal(bracket.get("min", 0))
-            max_val = bracket.get("max")
+        # Defensive: Sort brackets by min value if not already sorted
+        # This handles cases where validation might have been bypassed
+        try:
+            sorted_table = sorted(
+                table,
+                key=lambda b: to_decimal(b.get("min", 0)),
+            )
+            if sorted_table != table:
+                self._trace(
+                    _("Advertencia: tabla '%(table)s' no estaba ordenada, ordenando automáticamente")
+                    % {"table": table_name}
+                )
+                table = sorted_table
+        except Exception as e:
+            # If sorting fails, continue with original table but log warning
+            self._trace(
+                _("Advertencia: no se pudo ordenar la tabla '%(table)s': %(error)s")
+                % {"table": table_name, "error": str(e)}
+            )
 
+        # Find the applicable bracket
+        # Use reverse iteration for open-ended brackets (they should be last)
+        # but iterate forward for better performance with sorted tables
+        matched_brackets = []
+        for i, bracket in enumerate(table):
+            try:
+                min_val = to_decimal(bracket.get("min", 0))
+                max_val = bracket.get("max")
+
+                if max_val is None:
+                    # Open-ended bracket (highest tier)
+                    if input_value >= min_val:
+                        matched_brackets.append((i, bracket, min_val, None))
+                else:
+                    max_val = to_decimal(max_val)
+                    # Defensive: validate bracket range
+                    if max_val < min_val:
+                        self._trace(
+                            _("Advertencia: tramo %(index)s de tabla '%(table)s' tiene max < min, omitiendo")
+                            % {"index": i, "table": table_name}
+                        )
+                        continue
+
+                    if min_val <= input_value <= max_val:
+                        matched_brackets.append((i, bracket, min_val, max_val))
+            except Exception as e:
+                # Defensive: skip invalid brackets
+                self._trace(
+                    _("Advertencia: error procesando tramo %(index)s de tabla '%(table)s': %(error)s")
+                    % {"index": i, "table": table_name, "error": str(e)}
+                )
+                continue
+
+        # Handle multiple matches (overlaps) - use the first valid match
+        # In a properly validated table, there should be only one match
+        if matched_brackets:
+            if len(matched_brackets) > 1:
+                # Multiple brackets match - this indicates an overlap
+                # Use the first one but log a warning
+                self._trace(
+                    _(
+                        "ADVERTENCIA CRÍTICA: múltiples tramos coinciden para valor %(value)s en tabla '%(table)s'. "
+                        "Esto indica solapamiento. Usando el primer tramo encontrado."
+                    )
+                    % {"value": input_value, "table": table_name}
+                )
+
+            i, bracket, min_val, max_val = matched_brackets[0]
+            result = self._calculate_bracket_tax(bracket, input_value)
             if max_val is None:
-                # Open-ended bracket (highest tier)
-                if input_value >= min_val:
-                    result = self._calculate_bracket_tax(bracket, input_value)
-                    self._trace(
-                        _("Aplicando tramo abierto desde %(min)s para valor %(value)s -> %(result)s")
-                        % {"min": min_val, "value": input_value, "result": result}
-                    )
-                    return result
+                self._trace(
+                    _("Aplicando tramo abierto desde %(min)s para valor %(value)s -> %(result)s")
+                    % {"min": min_val, "value": input_value, "result": result}
+                )
             else:
-                max_val = to_decimal(max_val)
-                if min_val <= input_value <= max_val:
-                    result = self._calculate_bracket_tax(bracket, input_value)
-                    self._trace(
-                        _("Aplicando tramo %(min)s - %(max)s para valor %(value)s -> %(result)s")
-                        % {"min": min_val, "max": max_val, "value": input_value, "result": result}
-                    )
-                    return result
+                self._trace(
+                    _("Aplicando tramo %(min)s - %(max)s para valor %(value)s -> %(result)s")
+                    % {"min": min_val, "max": max_val, "value": input_value, "result": result}
+                )
+            return result
 
         # If no bracket found, return zeros
+        # This could indicate a gap in the table
         self._trace(
-            _("No se encontró tramo para valor %(value)s en tabla '%(table)s', devolviendo ceros")
+            _(
+                "No se encontró tramo para valor %(value)s en tabla '%(table)s', devolviendo ceros. "
+                "Esto puede indicar un gap en la configuración de la tabla."
+            )
             % {"value": input_value, "table": table_name}
         )
         return {

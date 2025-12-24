@@ -549,6 +549,268 @@ class TestTaxTableLookup:
             engine.execute({"income": 100000})
 
 
+class TestTaxTableValidation:
+    """Tests for tax table validation - critical integrity checks."""
+
+    def test_empty_tax_table_raises_error(self):
+        """Test that empty tax table raises ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {"tax_table": []},
+        }
+        with pytest.raises(ValidationError, match="vacía"):
+            FormulaEngine(schema)
+
+    def test_unordered_tax_table_raises_error(self):
+        """Test that unordered tax table raises ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 100001, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="no está ordenada"):
+            FormulaEngine(schema)
+
+    def test_overlapping_brackets_raises_error(self):
+        """Test that overlapping brackets raise ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 150000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="solapados"):
+            FormulaEngine(schema)
+
+    def test_gap_in_brackets_generates_warning(self):
+        """Test that significant gaps between brackets generate warnings (not errors)."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 150000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 150000},
+                ]
+            },
+        }
+        # Should not raise error, but will log warning
+        engine = FormulaEngine(schema)
+        assert engine is not None
+
+    def test_small_gap_in_brackets_no_warning(self):
+        """Test that small gaps (within tolerance) don't generate warnings."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 100000.005, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                ]
+            },
+        }
+        # Small gap (0.005) should not generate warning (tolerance is 0.01)
+        engine = FormulaEngine(schema)
+        assert engine is not None
+
+    def test_gap_in_strict_mode_raises_error(self):
+        """Test that gaps in strict mode raise ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 150000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 150000},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="Advertencias"):
+            FormulaEngine(schema, strict_mode=True)
+
+    def test_open_ended_bracket_not_last_raises_error(self):
+        """Test that open-ended bracket not being last raises ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": None, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="abierto.*último"):
+            FormulaEngine(schema)
+
+    def test_bracket_with_max_less_than_min_raises_error(self):
+        """Test that bracket with max < min raises ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 100000, "max": 50000, "rate": 0, "fixed": 0, "over": 0},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="max.*menor que.*min"):
+            FormulaEngine(schema)
+
+    def test_missing_min_value_raises_error(self):
+        """Test that missing min value raises ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="min"):
+            FormulaEngine(schema)
+
+    def test_valid_continuous_brackets_passes(self):
+        """Test that valid continuous brackets (max of one = min of next) pass validation."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                ]
+            },
+        }
+        # Should not raise
+        engine = FormulaEngine(schema)
+        assert engine is not None
+
+    def test_valid_table_with_open_ended_last_bracket_passes(self):
+        """Test that valid table with open-ended last bracket passes validation."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 100001, "max": None, "rate": 0.15, "fixed": 0, "over": 100000},
+                ]
+            },
+        }
+        # Should not raise
+        engine = FormulaEngine(schema)
+        assert engine is not None
+
+    def test_defensive_lookup_handles_overlaps(self):
+        """Test that defensive lookup handles overlapping brackets gracefully."""
+        # Test with overlapping brackets - should raise error
+        schema_overlap = {
+            "steps": [{"name": "tax", "type": "tax_lookup", "table": "tax_table", "input": "income"}],
+            "inputs": [{"name": "income", "default": 150000}],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 200000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 100000, "max": 300000, "rate": 0.15, "fixed": 0, "over": 100000},
+                ]
+            },
+            "output": "tax",
+        }
+        # Overlaps should still raise ValidationError (critical issue)
+        with pytest.raises(ValidationError, match="solapados"):
+            FormulaEngine(schema_overlap)
+
+    def test_defensive_lookup_handles_gaps(self):
+        """Test that defensive lookup handles gaps gracefully (warnings, not errors)."""
+        # Test with gap scenario - should generate warning but not error
+        schema_gap = {
+            "steps": [{"name": "tax", "type": "tax_lookup", "table": "tax_table", "input": "income"}],
+            "inputs": [{"name": "income", "default": 125000}],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 150000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 150000},
+                ]
+            },
+            "output": "tax",
+        }
+        # Gaps should generate warning but not error (unless strict_mode)
+        engine = FormulaEngine(schema_gap)
+        assert engine is not None
+        # Value in gap should return zeros
+        result = engine.execute({"income": 125000})
+        assert result["output"] == 0.0
+
+    def test_defensive_lookup_handles_empty_table(self):
+        """Test that defensive lookup handles empty table gracefully."""
+        schema = {
+            "steps": [{"name": "tax", "type": "tax_lookup", "table": "tax_table", "input": "income"}],
+            "inputs": [{"name": "income", "default": 100000}],
+            "tax_tables": {"tax_table": []},
+            "output": "tax",
+        }
+        # Should fail at initialization
+        with pytest.raises(ValidationError, match="vacía"):
+            FormulaEngine(schema)
+
+    def test_negative_fixed_raises_error(self):
+        """Test that negative fixed value raises ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": -100, "over": 0},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="fixed.*negativo"):
+            FormulaEngine(schema)
+
+    def test_negative_over_raises_error(self):
+        """Test that negative over value raises ValidationError."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": -50},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="over.*negativo"):
+            FormulaEngine(schema)
+
+    def test_over_greater_than_min_raises_error(self):
+        """Test that over > min raises ValidationError."""
+        # In a tax bracket, 'over' should be <= 'min' of that bracket
+        # Example: bracket with min=100000 should have over <= 100000
+        schema_wrong = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 150000},
+                ]
+            },
+        }
+        with pytest.raises(ValidationError, match="over.*mayor que.*min"):
+            FormulaEngine(schema_wrong)
+
+    def test_valid_over_equals_min_passes(self):
+        """Test that over == min is valid (common in tax tables)."""
+        schema = {
+            "steps": [],
+            "tax_tables": {
+                "tax_table": [
+                    {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
+                    {"min": 100000, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                ]
+            },
+        }
+        # Should pass - over can equal min
+        engine = FormulaEngine(schema)
+        assert engine is not None
+
+
 class TestCompleteExecution:
     """Tests for complete schema execution."""
 
@@ -889,9 +1151,9 @@ class TestBadInputHandling:
             "tax_tables": {"bad_table": "not a list"},
             "output": "tax",
         }
-        engine = FormulaEngine(schema)
-        with pytest.raises(CalculationError, match="must be a list"):
-            engine.execute({"income": 100000})
+        # Validation now happens during initialization, not during execution
+        with pytest.raises(ValidationError, match="debe ser una lista"):
+            FormulaEngine(schema)
 
     def test_missing_input_uses_default(self):
         """Test that missing input uses default value."""
