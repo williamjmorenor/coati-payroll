@@ -1402,6 +1402,50 @@ class ConfiguracionGlobal(database.Model, BaseTabla):
     configuracion_adicional = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
 
+# Configuration for calculation parameters
+class ConfiguracionCalculos(database.Model, BaseTabla):
+    """Configuration table for calculation parameters.
+
+    Stores configurable values for payroll calculations that were previously hardcoded.
+    Supports company-specific and country-specific configurations.
+    """
+
+    __tablename__ = "config_calculos"
+    __table_args__ = (database.UniqueConstraint("empresa_id", "pais_id", name="uq_config_empresa_pais"),)
+
+    # Optional relationships - can be None for global defaults
+    empresa_id = database.Column(database.String(26), database.ForeignKey("empresa.id"), nullable=True, index=True)
+    pais_id = database.Column(database.String(26), nullable=True, index=True)  # Future: ForeignKey("pais.id")
+
+    # Días base para nómina
+    dias_mes_nomina = database.Column(database.Integer, nullable=False, default=30)  # 28, 29, 30, 31
+    dias_anio_nomina = database.Column(database.Integer, nullable=False, default=365)  # 360, 365, 366
+    horas_jornada_diaria = database.Column(database.Numeric(4, 2), nullable=False, default=Decimal("8.00"))
+
+    # Vacaciones
+    dias_mes_vacaciones = database.Column(database.Integer, nullable=False, default=30)
+    dias_anio_vacaciones = database.Column(database.Integer, nullable=False, default=365)
+    considerar_bisiesto_vacaciones = database.Column(database.Boolean, nullable=False, default=True)
+
+    # Intereses
+    dias_anio_financiero = database.Column(
+        database.Integer, nullable=False, default=365
+    )  # 360 o 365 (default 365 for compatibility)
+    meses_anio_financiero = database.Column(database.Integer, nullable=False, default=12)
+
+    # Quincenas
+    dias_quincena = database.Column(database.Integer, nullable=False, default=15)  # 14 o 15
+
+    # Antigüedad
+    dias_mes_antiguedad = database.Column(database.Integer, nullable=False, default=30)
+    dias_anio_antiguedad = database.Column(database.Integer, nullable=False, default=365)
+
+    activo = database.Column(database.Boolean, nullable=False, default=True)
+
+    # Relationships
+    empresa = database.relationship("Empresa", backref="configuraciones_calculos")
+
+
 # Prestaciones Acumuladas - Accumulated Benefits Tracking (Transactional)
 class PrestacionAcumulada(database.Model, BaseTabla):
     """Transactional log of accumulated employee benefits over time.

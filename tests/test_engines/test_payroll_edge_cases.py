@@ -27,7 +27,7 @@ from decimal import Decimal
 
 import pytest
 
-from coati_payroll.nomina_engine import NominaEngine, DeduccionItem, HORAS_TRABAJO_DIA
+from coati_payroll.nomina_engine import NominaEngine, DeduccionItem
 from coati_payroll.model import (
     Empresa,
     Moneda,
@@ -165,13 +165,23 @@ class TestSalaryCalculations:
 
     def test_hourly_rate_calculation(self, app, db_session):
         """Test calculation of hourly rate from daily rate."""
+        from coati_payroll.model import ConfiguracionCalculos
+
         with app.app_context():
+            # Get default configuration
+            config = ConfiguracionCalculos(
+                empresa_id=None,
+                pais_id=None,
+                horas_jornada_diaria=Decimal("8.00"),
+            )
+            horas_jornada = Decimal(str(config.horas_jornada_diaria))
+
             # Daily rate of 800 / 8 hours = 100 per hour
             salario_diario = Decimal("800.00")
-            salario_hora = salario_diario / HORAS_TRABAJO_DIA
+            salario_hora = salario_diario / horas_jornada
 
             assert salario_hora == Decimal("100.00")
-            assert HORAS_TRABAJO_DIA == Decimal("8.00")
+            assert horas_jornada == Decimal("8.00")
 
     def test_zero_salary_handling(self, app, db_session):
         """Test handling of zero base salary (commission-only employee)."""

@@ -61,12 +61,10 @@ from coati_payroll.model import (
     Prestacion,
     PrestacionAcumulada,
     ReglaCalculo,
+    ConfiguracionCalculos,
 )
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
-
-# Constants for payroll calculations
-HORAS_TRABAJO_DIA = Decimal("8.00")  # Standard 8-hour workday for hourly rate calculations
 
 
 class NominaEngineError(Exception):
@@ -189,6 +187,66 @@ class NominaEngine:
     def _trace(self, message: str) -> None:
         if is_trace_enabled():
             log.log(TRACE_LEVEL_NUM, message)
+
+    def _obtener_config_calculos(self) -> ConfiguracionCalculos:
+        """Get calculation configuration for the current planilla.
+
+        Returns configuration specific to the planilla's company, or global defaults.
+        Always returns a valid configuration object with defaults if none exists.
+
+        Returns:
+            ConfiguracionCalculos instance with appropriate values
+        """
+        empresa_id = self.planilla.empresa_id if self.planilla else None
+
+        # Try to find company-specific configuration
+        if empresa_id:
+            config = (
+                db.session.execute(
+                    db.select(ConfiguracionCalculos).filter(
+                        ConfiguracionCalculos.empresa_id == empresa_id,
+                        ConfiguracionCalculos.activo.is_(True),
+                    )
+                )
+                .scalars()
+                .first()
+            )
+            if config:
+                return config
+
+        # Try to find global default (no empresa_id, no pais_id)
+        config = (
+            db.session.execute(
+                db.select(ConfiguracionCalculos).filter(
+                    ConfiguracionCalculos.empresa_id.is_(None),
+                    ConfiguracionCalculos.pais_id.is_(None),
+                    ConfiguracionCalculos.activo.is_(True),
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if config:
+            return config
+
+        # If no configuration exists, return a default instance (not saved to DB)
+        # This ensures backward compatibility with existing tests
+        return ConfiguracionCalculos(
+            empresa_id=None,
+            pais_id=None,
+            dias_mes_nomina=30,
+            dias_anio_nomina=365,
+            horas_jornada_diaria=Decimal("8.00"),
+            dias_mes_vacaciones=30,
+            dias_anio_vacaciones=365,
+            considerar_bisiesto_vacaciones=True,
+            dias_anio_financiero=365,
+            meses_anio_financiero=12,
+            dias_quincena=15,
+            dias_mes_antiguedad=30,
+            dias_anio_antiguedad=365,
+            activo=True,
+        )
 
     def validar_planilla(self) -> bool:
         """Validate that the planilla is ready for execution.
@@ -568,13 +626,19 @@ class NominaEngine:
         elif periodicidad == "quincenal":
             # For biweekly payrolls (24 periods/year), salary is monthly / 2
             # when period matches configured days (typically 15)
-            dias_configurados = tipo_planilla.dias or 15
+            config = self._obtener_config_calculos()
+            dias_configurados = tipo_planilla.dias or config.dias_quincena
             if dias_periodo == dias_configurados:
-                return (salario_mensual / Decimal("2")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                # Calculate divisor based on configured quincena days
+                # If quincena is 15 days, divide by 2 (30/15 = 2)
+                # If quincena is 14 days, divide by ~2.14 (30/14)
+                divisor = Decimal(str(config.dias_mes_nomina)) / Decimal(str(config.dias_quincena))
+                return (salario_mensual / divisor).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-        # Always use 30 days as the base for salary proration
+        # Use configured days per month as the base for salary proration
         # This ensures consistent daily rates regardless of payroll type
-        dias_base = Decimal("30")
+        config = self._obtener_config_calculos()
+        dias_base = Decimal(str(config.dias_mes_nomina))
 
         # Calculate daily salary
         salario_diario = (salario_mensual / dias_base).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -679,20 +743,23 @@ class NominaEngine:
         empleado = emp_calculo.empleado
         tipo_planilla = self.planilla.tipo_planilla
 
+        # Get configuration once for use in this method
+        config = self._obtener_config_calculos()
+
         # Calculate days in period
         dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
 
-        # Calculate seniority
+        # Calculate seniority using configuration
         fecha_alta = empleado.fecha_alta or date.today()
         antiguedad_dias = (self.fecha_calculo - fecha_alta).days
-        antiguedad_meses = antiguedad_dias // 30
-        antiguedad_anios = antiguedad_dias // 365
+        antiguedad_meses = antiguedad_dias // config.dias_mes_antiguedad
+        antiguedad_anios = antiguedad_dias // config.dias_anio_antiguedad
 
-        # Calculate remaining months in fiscal year
+        # Calculate remaining months in fiscal year using configuration
         mes_inicio_fiscal = tipo_planilla.mes_inicio_fiscal if tipo_planilla else 1
-        meses_restantes = 12 - self.fecha_calculo.month + mes_inicio_fiscal
-        if meses_restantes > 12:
-            meses_restantes -= 12
+        meses_restantes = config.meses_anio_financiero - self.fecha_calculo.month + mes_inicio_fiscal
+        if meses_restantes > config.meses_anio_financiero:
+            meses_restantes -= config.meses_anio_financiero
         if meses_restantes <= 0:
             meses_restantes = 1
 
@@ -714,7 +781,9 @@ class NominaEngine:
             "antiguedad_anios": Decimal(str(antiguedad_anios)),
             # Fiscal calculations
             "meses_restantes": Decimal(str(meses_restantes)),
-            "periodos_por_anio": Decimal(str(tipo_planilla.periodos_por_anio if tipo_planilla else 12)),
+            "periodos_por_anio": Decimal(
+                str(tipo_planilla.periodos_por_anio if tipo_planilla else config.meses_anio_financiero)
+            ),
             # Accumulated values (will be populated from AcumuladoAnual)
             "salario_acumulado": Decimal("0.00"),
             "impuesto_acumulado": Decimal("0.00"),
@@ -1263,12 +1332,11 @@ class NominaEngine:
                                 # salario_mensual is the full monthly salary before period proration
                                 base = emp_calculo.salario_mensual
 
-                            # Calculate hourly rate
-                            # Always use 30 days/month, 8 hours/day (HORAS_TRABAJO_DIA constant)
-                            dias_base = Decimal("30")
-                            tasa_hora = (base / dias_base / HORAS_TRABAJO_DIA).quantize(
-                                Decimal("0.01"), rounding=ROUND_HALF_UP
-                            )
+                            # Calculate hourly rate using configuration
+                            config = self._obtener_config_calculos()
+                            dias_base = Decimal(str(config.dias_mes_nomina))
+                            horas_dia = Decimal(str(config.horas_jornada_diaria))
+                            tasa_hora = (base / dias_base / horas_dia).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
                             # Apply percentage (e.g., 100% for normal overtime, 200% for special)
                             if porcentaje:
@@ -1297,8 +1365,9 @@ class NominaEngine:
                                 # salario_mensual is the full monthly salary before period proration
                                 base = emp_calculo.salario_mensual
 
-                            # Calculate daily rate - always use 30-day month
-                            dias_base = Decimal("30")
+                            # Calculate daily rate using configuration
+                            config = self._obtener_config_calculos()
+                            dias_base = Decimal(str(config.dias_mes_nomina))
                             tasa_dia = (base / dias_base).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
                             # Apply percentage

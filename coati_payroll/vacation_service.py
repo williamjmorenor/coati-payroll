@@ -43,6 +43,7 @@ if TYPE_CHECKING:
         VacationPolicy,
         VacationAccount,
         NominaEmpleado,
+        ConfiguracionCalculos,
     )
 
 
@@ -60,6 +61,70 @@ class VacationService:
         self.planilla = planilla
         self.periodo_inicio = periodo_inicio
         self.periodo_fin = periodo_fin
+
+    def _obtener_config_calculos(self) -> ConfiguracionCalculos:
+        """Get calculation configuration for the current planilla.
+
+        Returns configuration specific to the planilla's company, or global defaults.
+        Always returns a valid configuration object with defaults if none exists.
+
+        Returns:
+            ConfiguracionCalculos instance with appropriate values
+        """
+        from coati_payroll.model import db, ConfiguracionCalculos
+
+        empresa_id = self.planilla.empresa_id if self.planilla else None
+
+        # Try to find company-specific configuration
+        if empresa_id:
+            config = (
+                db.session.execute(
+                    db.select(ConfiguracionCalculos).filter(
+                        ConfiguracionCalculos.empresa_id == empresa_id,
+                        ConfiguracionCalculos.activo.is_(True),
+                    )
+                )
+                .scalars()
+                .first()
+            )
+            if config:
+                return config
+
+        # Try to find global default (no empresa_id, no pais_id)
+        config = (
+            db.session.execute(
+                db.select(ConfiguracionCalculos).filter(
+                    ConfiguracionCalculos.empresa_id.is_(None),
+                    ConfiguracionCalculos.pais_id.is_(None),
+                    ConfiguracionCalculos.activo.is_(True),
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if config:
+            return config
+
+        # If no configuration exists, return a default instance (not saved to DB)
+        # This ensures backward compatibility with existing tests
+        from decimal import Decimal
+
+        return ConfiguracionCalculos(
+            empresa_id=None,
+            pais_id=None,
+            dias_mes_nomina=30,
+            dias_anio_nomina=365,
+            horas_jornada_diaria=Decimal("8.00"),
+            dias_mes_vacaciones=30,
+            dias_anio_vacaciones=365,
+            considerar_bisiesto_vacaciones=True,
+            dias_anio_financiero=365,
+            meses_anio_financiero=12,
+            dias_quincena=15,
+            dias_mes_antiguedad=30,
+            dias_anio_antiguedad=365,
+            activo=True,
+        )
 
     def acumular_vacaciones_empleado(
         self, empleado: Empleado, nomina_empleado: NominaEmpleado, usuario: str | None = None
@@ -202,15 +267,18 @@ class VacationService:
 
         dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
 
-        # Determine expected days for frequency
+        # Get configuration for vacation calculations
+        config = self._obtener_config_calculos()
+
+        # Determine expected days for frequency using configuration
         if policy.accrual_frequency == AccrualFrequency.MONTHLY:
-            dias_esperados = 30
+            dias_esperados = config.dias_mes_vacaciones
         elif policy.accrual_frequency == AccrualFrequency.BIWEEKLY:
-            dias_esperados = 15
+            dias_esperados = config.dias_quincena
         elif policy.accrual_frequency == AccrualFrequency.ANNUAL:
-            dias_esperados = 365
+            dias_esperados = config.dias_anio_vacaciones
         else:
-            dias_esperados = 30
+            dias_esperados = config.dias_mes_vacaciones
 
         # Prorate if period doesn't match frequency
         if dias_periodo == dias_esperados:
@@ -245,8 +313,9 @@ class VacationService:
             return (policy.accrual_rate * dias_trabajados).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         elif policy.accrual_basis == "hours_worked":
             # Calculate based on hours (would need hours tracking in payroll)
-            # For now, estimate based on standard hours
-            horas_estandar = Decimal("8.0") * Decimal(dias_periodo)
+            # For now, estimate based on standard hours from configuration
+            config = self._obtener_config_calculos()
+            horas_estandar = Decimal(str(config.horas_jornada_diaria)) * Decimal(dias_periodo)
             return (policy.accrual_rate * horas_estandar).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         else:
             return Decimal("0.00")
@@ -264,8 +333,16 @@ class VacationService:
         if not empleado.fecha_alta or not policy.seniority_tiers:
             return Decimal("0.00")
 
+        # Get configuration for seniority calculations
+        config = self._obtener_config_calculos()
+
         # Calculate years of service
-        anos_servicio = (self.periodo_fin - empleado.fecha_alta).days / 365.25
+        # Use configured days per year, with leap year consideration if enabled
+        dias_anio = Decimal(str(config.dias_anio_antiguedad))
+        if config.considerar_bisiesto_vacaciones:
+            # Use 365.25 to account for leap years
+            dias_anio = Decimal("365.25")
+        anos_servicio = (self.periodo_fin - empleado.fecha_alta).days / float(dias_anio)
 
         # Find applicable tier
         rate = Decimal("0.00")
@@ -280,10 +357,12 @@ class VacationService:
         # For seniority, rate is typically annual, so prorate for period
         if policy.accrual_frequency == AccrualFrequency.ANNUAL:
             dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
-            return (rate * Decimal(dias_periodo) / Decimal("365")).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            dias_anio = Decimal(str(config.dias_anio_vacaciones))
+            return (rate * Decimal(dias_periodo) / dias_anio).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         else:
             # If frequency is monthly/biweekly, divide rate accordingly
-            return (rate / Decimal("12")).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            meses_anio = Decimal(str(config.meses_anio_financiero))
+            return (rate / meses_anio).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
 
     def procesar_novedades_vacaciones(
         self, empleado: Empleado, novedades: dict | list, usuario: str | None = None
