@@ -54,7 +54,6 @@ from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
 from coati_payroll.schema_validator import validate_schema
 from coati_payroll.schema_validator import ValidationError as _BaseValidationError
 
-
 # Safe operators for expression evaluation
 SAFE_OPERATORS = {
     "+": operator.add,
@@ -119,7 +118,6 @@ __all__ = [
     "ValidationError",
     "CalculationError",
     "EXAMPLE_IR_NICARAGUA_SCHEMA",
-    "calculate_with_rule_schema",
     "get_available_sources_for_ui",
 ]
 
@@ -812,9 +810,6 @@ def calculate_with_rule(
 
     engine = FormulaEngine(rule_schema)
     return engine.execute(inputs)
-
-
-
 
 
 def get_available_sources_for_ui() -> list[dict]:
