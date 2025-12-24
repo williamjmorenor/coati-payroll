@@ -34,10 +34,7 @@ from typing import Any, Type
 
 
 class ValidationError(Exception):
-    """Exception for validation errors in schema or data.
-
-    Python 3.11+ enhancement: Can use add_note() to append contextual information.
-    """
+    """Exception for validation errors in schema or data."""
 
     pass
 
