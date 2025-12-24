@@ -377,7 +377,15 @@ class NominaEngine:
         if not empleado.empresa_id:
             errors.append(f"Empleado {empleado.codigo_empleado} no está asignado a ninguna empresa")
 
-        # 7. Employee must have currency defined
+        # 7. Employee must belong to the same company as the planilla
+        if self.planilla.empresa_id and empleado.empresa_id:
+            if empleado.empresa_id != self.planilla.empresa_id:
+                errors.append(
+                    f"Empleado {empleado.codigo_empleado} pertenece a empresa diferente a la planilla. "
+                    f"Empleado empresa_id={empleado.empresa_id}, Planilla empresa_id={self.planilla.empresa_id}"
+                )
+
+        # 8. Employee must have currency defined
         if not empleado.moneda_id:
             errors.append(f"Empleado {empleado.codigo_empleado} no tiene moneda definida")
 

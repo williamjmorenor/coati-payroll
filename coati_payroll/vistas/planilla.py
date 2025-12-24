@@ -169,10 +169,14 @@ def config_empleados(planilla_id: str):
     )
 
     # Filter employees to only show those from the same company as the planilla
+    # CRITICAL: Only employees with matching empresa_id can be added to this planilla
     query = db.select(Empleado).filter_by(activo=True)
     if planilla.empresa_id:
-        # If planilla has a company, only show employees from that company or without company
-        query = query.filter((Empleado.empresa_id == planilla.empresa_id) | Empleado.empresa_id.is_(None))
+        # Only show employees from the same company (exact match required)
+        query = query.filter(Empleado.empresa_id == planilla.empresa_id)
+    else:
+        # If planilla has no company, show no employees (planilla must have empresa)
+        query = query.filter(db.false())
     empleados_disponibles = db.session.execute(query.order_by(Empleado.primer_apellido)).scalars().all()
 
     return render_template(
@@ -323,8 +327,15 @@ def add_empleado(planilla_id: str):
         return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
 
     # Validate that employee and planilla belong to the same company
+    # CRITICAL: Both must have empresa_id and they must match exactly
     empleado = db.get_or_404(Empleado, empleado_id)
-    if planilla.empresa_id and empleado.empresa_id and planilla.empresa_id != empleado.empresa_id:
+    if not planilla.empresa_id:
+        flash(_("La planilla debe tener una empresa asignada antes de agregar empleados."), "error")
+        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+    if not empleado.empresa_id:
+        flash(_("El empleado debe tener una empresa asignada antes de ser agregado a una planilla."), "error")
+        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+    if planilla.empresa_id != empleado.empresa_id:
         flash(_("El empleado y la planilla deben pertenecer a la misma empresa."), "error")
         return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
 

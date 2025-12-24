@@ -665,9 +665,9 @@ class PlanillaForm(FlaskForm):
     )
     empresa_id = SelectField(
         _("Empresa"),
-        validators=[Optional()],
+        validators=[DataRequired(message=_("La empresa es obligatoria para crear una planilla"))],
         coerce=str,
-        description=_("Empresa a la que pertenece esta planilla"),
+        description=_("Empresa a la que pertenece esta planilla. Solo empleados de esta empresa podrán ser asignados."),
     )
     periodo_fiscal_inicio = DateField(
         _("Inicio Período Fiscal"),
