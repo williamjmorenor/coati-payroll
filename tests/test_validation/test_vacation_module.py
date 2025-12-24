@@ -181,8 +181,7 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         # Verify: Ledger entry exists
         ledger_entries_1 = (
             db_session.execute(
-                select(VacationLedger)
-                .filter(
+                select(VacationLedger).filter(
                     VacationLedger.account_id == vacation_account.id,
                     VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
                 )
@@ -225,8 +224,7 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         # Verify: Two accrual ledger entries exist
         ledger_entries_2 = (
             db_session.execute(
-                select(VacationLedger)
-                .filter(
+                select(VacationLedger).filter(
                     VacationLedger.account_id == vacation_account.id,
                     VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
                 )
@@ -272,8 +270,7 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         # Verify: All accrual ledger entries exist
         accrual_entries = (
             db_session.execute(
-                select(VacationLedger)
-                .filter(
+                select(VacationLedger).filter(
                     VacationLedger.account_id == vacation_account.id,
                     VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
                 )

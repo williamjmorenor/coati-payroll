@@ -77,7 +77,9 @@ def test_custom_field_new_creates_field(app, client, admin_user, db_session):
 
         # Verify custom field was created if redirect
         if response.status_code == 302:
-            field = db_session.execute(select(CampoPersonalizado).filter_by(nombre_campo="department_code")).scalar_one_or_none()
+            field = db_session.execute(
+                select(CampoPersonalizado).filter_by(nombre_campo="department_code")
+            ).scalar_one_or_none()
             assert field is not None
             assert field.etiqueta == "Department Code"
             assert field.tipo_dato == "texto"
@@ -120,9 +122,9 @@ def test_custom_field_edit_updates_field(app, client, admin_user, db_session):
 
         # Verify update if redirect
         if response.status_code == 302:
-            db_session.refresh(field)
-            assert field.etiqueta == "Skill Level (Updated)"
-            assert field.orden == 15
+            updated_field = db_session.execute(select(CampoPersonalizado).filter_by(id=field.id)).scalar_one()
+            assert updated_field.etiqueta == "Skill Level (Updated)"
+            assert updated_field.orden == 15
 
 
 def test_custom_field_delete_removes_field(app, client, admin_user, db_session):
@@ -245,7 +247,9 @@ def test_custom_field_can_be_inactive(app, client, admin_user, db_session):
 
         # Verify inactive if redirect
         if response.status_code == 302:
-            field = db_session.execute(select(CampoPersonalizado).filter_by(nombre_campo="inactive_field")).scalar_one_or_none()
+            field = db_session.execute(
+                select(CampoPersonalizado).filter_by(nombre_campo="inactive_field")
+            ).scalar_one_or_none()
             assert field is not None
             assert field.activo is False
 
@@ -271,7 +275,9 @@ def test_custom_field_workflow_create_edit_delete(app, client, admin_user, db_se
         assert response.status_code in [200, 302]
 
         if response.status_code == 302:
-            field = db_session.execute(select(CampoPersonalizado).filter_by(nombre_campo="test_workflow")).scalar_one_or_none()
+            field = db_session.execute(
+                select(CampoPersonalizado).filter_by(nombre_campo="test_workflow")
+            ).scalar_one_or_none()
             assert field is not None
             field_id = field.id
 
@@ -290,9 +296,9 @@ def test_custom_field_workflow_create_edit_delete(app, client, admin_user, db_se
             assert response.status_code in [200, 302]
 
             if response.status_code == 302:
-                db_session.refresh(field)
-                assert field.etiqueta == "Test Workflow (Updated)"
-                assert field.activo is False
+                updated_field = db_session.execute(select(CampoPersonalizado).filter_by(id=field_id)).scalar_one()
+                assert updated_field.etiqueta == "Test Workflow (Updated)"
+                assert updated_field.activo is False
 
                 # Step 3: Delete
                 response = client.post(f"/custom_field/delete/{field_id}", follow_redirects=False)

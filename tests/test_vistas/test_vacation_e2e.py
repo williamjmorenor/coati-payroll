@@ -25,14 +25,11 @@ from coati_payroll.model import (
     Empresa,
     Planilla,
     TipoPlanilla,
-    db,
 )
-from coati_payroll.enums import VacationLedgerType
 from tests.helpers.auth import login_user
 
 
-def test_vacation_policy_index_list_all_policies(app, client, admin_user,
-                                                 db_session):
+def test_vacation_policy_index_list_all_policies(app, client, admin_user, db_session):
     """Test that user can view all vacation policies."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
@@ -48,8 +45,7 @@ def test_vacation_policy_new_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
-def test_vacation_account_index_list_all_accounts(app, client, admin_user,
-                                                  db_session):
+def test_vacation_account_index_list_all_accounts(app, client, admin_user, db_session):
     """Test that user can view all vacation accounts."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
@@ -65,8 +61,7 @@ def test_vacation_account_new_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
-def test_vacation_leave_request_index_list_requests(app, client, admin_user,
-                                                    db_session):
+def test_vacation_leave_request_index_list_requests(app, client, admin_user, db_session):
     """Test that user can view all vacation leave requests."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
@@ -74,8 +69,7 @@ def test_vacation_leave_request_index_list_requests(app, client, admin_user,
         assert response.status_code == 200
 
 
-def test_vacation_leave_request_new_get_form(app, client, admin_user,
-                                             db_session):
+def test_vacation_leave_request_new_get_form(app, client, admin_user, db_session):
     """Test that user can access vacation leave request creation form."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
@@ -91,21 +85,14 @@ def test_vacation_register_taken_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
-def test_vacation_leave_request_approve_with_balance(app, client, admin_user,
-                                                     db_session):
+def test_vacation_leave_request_approve_with_balance(app, client, admin_user, db_session):
     """Test: User approves a pending vacation leave request."""
     with app.app_context():
-        empresa = Empresa(codigo="TEST001",
-                          razon_social="Test Company",
-                          ruc="J-123",
-                          activo=True)
+        empresa = Empresa(codigo="TEST001", razon_social="Test Company", ruc="J-123", activo=True)
         db_session.add(empresa)
         db_session.commit()
 
-        moneda = Moneda(codigo="NIO",
-                        nombre="Córdoba",
-                        simbolo="C$",
-                        activo=True)
+        moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
         db_session.add(moneda)
         db_session.commit()
 
@@ -179,9 +166,7 @@ def test_vacation_leave_request_approve_with_balance(app, client, admin_user,
 
         login_user(client, admin_user.usuario, "admin-password")
 
-        response = client.post(
-            f"/vacation/leave-requests/{request_id}/approve",
-            follow_redirects=False)
+        response = client.post(f"/vacation/leave-requests/{request_id}/approve", follow_redirects=False)
 
         assert response.status_code == 302
         assert f"/vacation/leave-requests/{request_id}" in response.location
@@ -193,17 +178,11 @@ def test_vacation_leave_request_approve_with_balance(app, client, admin_user,
 def test_vacation_leave_request_reject(app, client, admin_user, db_session):
     """Test: User rejects a pending vacation leave request."""
     with app.app_context():
-        empresa = Empresa(codigo="TEST001",
-                          razon_social="Test Company",
-                          ruc="J-123",
-                          activo=True)
+        empresa = Empresa(codigo="TEST001", razon_social="Test Company", ruc="J-123", activo=True)
         db_session.add(empresa)
         db_session.commit()
 
-        moneda = Moneda(codigo="NIO",
-                        nombre="Córdoba",
-                        simbolo="C$",
-                        activo=True)
+        moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
         db_session.add(moneda)
         db_session.commit()
 

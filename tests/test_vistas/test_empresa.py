@@ -233,6 +233,7 @@ def test_empresa_delete_prevents_deletion_if_has_employees(app, client, admin_us
             primer_nombre="John",
             primer_apellido="Doe",
         )
+        assert empleado
 
         login_user(client, admin_user.usuario, "admin-password")
 
@@ -376,9 +377,6 @@ def test_empresa_can_have_multiple_with_same_name(app, client, admin_user, db_se
 
         # Verify both exist
         count = (
-            db_session.execute(
-                select(func.count(Empresa.id)).filter(Empresa.razon_social == "ACME Corp")
-            ).scalar()
-            or 0
+            db_session.execute(select(func.count(Empresa.id)).filter(Empresa.razon_social == "ACME Corp")).scalar() or 0
         )
         assert count >= 2

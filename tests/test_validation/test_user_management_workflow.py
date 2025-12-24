@@ -200,22 +200,14 @@ def test_complete_user_management_crud_workflow(client, app, db_session, admin_u
         assert total_users >= 5, "Should have at least 5 users (admins + 4 created)"
 
         # Step 4: Verify HHRR users
-        hhrr_users = (
-            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.HHRR))
-            .scalars()
-            .all()
-        )
+        hhrr_users = db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.HHRR)).scalars().all()
         assert len(hhrr_users) == 2, "Should have 2 HHRR users"
         hhrr_usernames = {u.usuario for u in hhrr_users}
         assert "hhrh_manager" in hhrr_usernames
         assert "hhrh_assistant" in hhrr_usernames
 
         # Step 5: Verify AUDIT users
-        audit_users = (
-            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.AUDIT))
-            .scalars()
-            .all()
-        )
+        audit_users = db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.AUDIT)).scalars().all()
         assert len(audit_users) == 2, "Should have 2 audit users"
         audit_usernames = {u.usuario for u in audit_users}
         assert "internal_auditor" in audit_usernames
@@ -262,7 +254,10 @@ def test_complete_user_management_crud_workflow(client, app, db_session, admin_u
         assert inactive_users == 1, "Should have 1 inactive user"
 
         # Verify the specific inactive user
-        inactive_by_name = db_session.execute(select(func.count(Usuario.id)).filter_by(usuario="hhrh_manager", activo=False)).scalar() or 0
+        inactive_by_name = (
+            db_session.execute(select(func.count(Usuario.id)).filter_by(usuario="hhrh_manager", activo=False)).scalar()
+            or 0
+        )
         assert inactive_by_name == 1, "hhrh_manager should be the inactive user"
 
 
@@ -334,6 +329,11 @@ def test_user_type_segregation_and_permissions(client, app, db_session, admin_us
             apellido="Dos",
             tipo=TipoUsuario.AUDIT,
         )
+        assert audit1
+        assert audit2
+        assert hhrr1
+        assert hhrr2
+        assert admin2
 
         # Verify total count (including default admins + created users)
         total_users = db_session.execute(select(func.count(Usuario.id))).scalar() or 0
@@ -341,21 +341,9 @@ def test_user_type_segregation_and_permissions(client, app, db_session, admin_us
 
         # Verify count by type
         # Note: We have default admin + admin-test fixture + admin2 = 3 admins total
-        admin_users = (
-            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.ADMIN))
-            .scalars()
-            .all()
-        )
-        hhrr_users = (
-            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.HHRR))
-            .scalars()
-            .all()
-        )
-        audit_users = (
-            db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.AUDIT))
-            .scalars()
-            .all()
-        )
+        admin_users = db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.ADMIN)).scalars().all()
+        hhrr_users = db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.HHRR)).scalars().all()
+        audit_users = db_session.execute(select(Usuario).filter_by(tipo=TipoUsuario.AUDIT)).scalars().all()
 
         assert len(admin_users) >= 2, "Should have at least 2 admin users"
         assert len(hhrr_users) == 2, "Should have 2 HHRR users"

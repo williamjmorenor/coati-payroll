@@ -38,6 +38,7 @@ def test_is_admin_with_admin_user(app, client, db_session):
 
     with client.application.test_request_context():
         with client.session_transaction() as sess:
+            sess.update
             # Simulate being in a request context with logged in user
             pass
 
