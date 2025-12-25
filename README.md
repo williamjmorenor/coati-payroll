@@ -114,15 +114,93 @@ coati/
 ├── coati_payroll/         # Módulo principal
 │   ├── __init__.py        # Factory de la aplicación Flask
 │   ├── model.py           # Modelos de base de datos (SQLAlchemy)
-│   ├── nomina_engine.py   # Motor de cálculo de nómina
-│   ├── formula_engine.py  # Motor de fórmulas
+│   ├── nomina_engine/     # Motor de cálculo de nómina (refactorizado)
+│   │   ├── __init__.py
+│   │   ├── engine.py      # Orquestador principal
+│   │   ├── domain/        # Modelos de dominio
+│   │   │   ├── payroll_context.py
+│   │   │   ├── employee_calculation.py
+│   │   │   └── calculation_items.py
+│   │   ├── validators/    # Validaciones
+│   │   │   ├── base_validator.py
+│   │   │   ├── planilla_validator.py
+│   │   │   ├── employee_validator.py
+│   │   │   ├── period_validator.py
+│   │   │   └── currency_validator.py
+│   │   ├── calculators/   # Cálculos
+│   │   │   ├── salary_calculator.py
+│   │   │   ├── concept_calculator.py
+│   │   │   ├── perception_calculator.py
+│   │   │   ├── deduction_calculator.py
+│   │   │   ├── benefit_calculator.py
+│   │   │   └── exchange_rate_calculator.py
+│   │   ├── processors/    # Procesadores específicos
+│   │   │   ├── loan_processor.py
+│   │   │   ├── accumulation_processor.py
+│   │   │   ├── vacation_processor.py
+│   │   │   ├── novelty_processor.py
+│   │   │   └── accounting_processor.py
+│   │   ├── repositories/  # Acceso a datos
+│   │   │   ├── base_repository.py
+│   │   │   ├── planilla_repository.py
+│   │   │   ├── employee_repository.py
+│   │   │   ├── acumulado_repository.py
+│   │   │   ├── novelty_repository.py
+│   │   │   ├── exchange_rate_repository.py
+│   │   │   └── config_repository.py
+│   │   ├── services/      # Servicios de negocio
+│   │   │   ├── payroll_execution_service.py
+│   │   │   └── employee_processing_service.py
+│   │   └── results/       # Resultados y DTOs
+│   │       ├── payroll_result.py
+│   │       ├── validation_result.py
+│   │       └── error_result.py
+│   ├── formula_engine/    # Motor de fórmulas (refactorizado)
+│   │   ├── __init__.py
+│   │   ├── engine.py      # Orquestador principal
+│   │   ├── exceptions.py  # Excepciones personalizadas
+│   │   ├── data_sources.py # Fuentes de datos disponibles
+│   │   ├── novelty_codes.py # Códigos de novedades
+│   │   ├── ast/           # Evaluación de expresiones (Visitor pattern)
+│   │   │   ├── ast_visitor.py
+│   │   │   ├── expression_evaluator.py
+│   │   │   ├── safe_operators.py
+│   │   │   └── type_converter.py
+│   │   ├── validation/    # Validaciones
+│   │   │   ├── schema_validator.py
+│   │   │   ├── tax_table_validator.py
+│   │   │   └── security_validator.py
+│   │   ├── steps/         # Tipos de paso (Strategy pattern)
+│   │   │   ├── base_step.py
+│   │   │   ├── calculation_step.py
+│   │   │   ├── conditional_step.py
+│   │   │   ├── tax_lookup_step.py
+│   │   │   ├── assignment_step.py
+│   │   │   └── step_factory.py
+│   │   ├── tables/        # Tablas de impuestos
+│   │   │   ├── tax_table.py
+│   │   │   ├── bracket_calculator.py
+│   │   │   └── table_lookup.py
+│   │   ├── execution/     # Contexto de ejecución
+│   │   │   ├── execution_context.py
+│   │   │   ├── step_executor.py
+│   │   │   └── variable_store.py
+│   │   └── results/       # Resultados
+│   │       └── execution_result.py
+│   ├── formula_engine_examples.py # Ejemplos de esquemas
 │   ├── vacation_service.py # Servicio de gestión de vacaciones
 │   ├── rbac.py            # Control de acceso basado en roles
 │   ├── report_engine.py   # Motor de reportes
 │   ├── forms.py           # Formularios WTForms
 │   ├── cli.py             # Interfaz de línea de comandos (payrollctl)
 │   ├── queue/             # Sistema de colas (Dramatiq/Huey)
+│   │   ├── driver.py
+│   │   ├── selector.py
+│   │   ├── tasks.py
+│   │   └── drivers/
 │   ├── vistas/            # Vistas/Controladores (Blueprints)
+│   │   ├── planilla/      # Módulo de planillas
+│   │   └── [otros módulos]
 │   ├── templates/         # Plantillas HTML (Jinja2)
 │   ├── translations/      # Archivos de traducción (i18n)
 │   └── static/            # Archivos estáticos
