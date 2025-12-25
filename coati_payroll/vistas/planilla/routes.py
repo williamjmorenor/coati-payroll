@@ -1,0 +1,145 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Main routes for planilla management."""
+
+from flask import flash, redirect, render_template, url_for
+from flask_login import current_user
+
+from coati_payroll.model import db, Planilla
+from coati_payroll.forms import PlanillaForm
+from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
+from coati_payroll.vistas.planilla.helpers import populate_form_choices, get_planilla_component_counts
+from coati_payroll.vistas.planilla.services import PlanillaService
+
+# Import blueprint from __init__.py
+from coati_payroll.vistas.planilla import planilla_bp
+
+
+@planilla_bp.route("/")
+@require_read_access()
+def index():
+    """List all planillas."""
+    planillas = db.session.execute(db.select(Planilla).order_by(Planilla.nombre)).scalars().all()
+    return render_template("modules/planilla/index.html", planillas=planillas)
+
+
+@planilla_bp.route("/new", methods=["GET", "POST"])
+@require_write_access()
+def new():
+    """Create a new planilla. Admin and HR can create planillas."""
+    form = PlanillaForm()
+    populate_form_choices(form)
+
+    if form.validate_on_submit():
+        planilla = Planilla(
+            nombre=form.nombre.data,
+            descripcion=form.descripcion.data,
+            tipo_planilla_id=form.tipo_planilla_id.data,
+            moneda_id=form.moneda_id.data,
+            empresa_id=form.empresa_id.data or None,
+            periodo_fiscal_inicio=form.periodo_fiscal_inicio.data,
+            periodo_fiscal_fin=form.periodo_fiscal_fin.data,
+            prioridad_prestamos=form.prioridad_prestamos.data or 250,
+            prioridad_adelantos=form.prioridad_adelantos.data or 251,
+            aplicar_prestamos_automatico=form.aplicar_prestamos_automatico.data,
+            aplicar_adelantos_automatico=form.aplicar_adelantos_automatico.data,
+            codigo_cuenta_debe_salario=form.codigo_cuenta_debe_salario.data,
+            descripcion_cuenta_debe_salario=form.descripcion_cuenta_debe_salario.data,
+            codigo_cuenta_haber_salario=form.codigo_cuenta_haber_salario.data,
+            descripcion_cuenta_haber_salario=form.descripcion_cuenta_haber_salario.data,
+            activo=form.activo.data,
+            creado_por=current_user.usuario,
+        )
+        db.session.add(planilla)
+        db.session.commit()
+        flash(_("Planilla creada exitosamente."), "success")
+        return redirect(url_for("planilla.edit", planilla_id=planilla.id))
+
+    return render_template("modules/planilla/form.html", form=form, is_edit=False)
+
+
+@planilla_bp.route("/<planilla_id>/edit", methods=["GET", "POST"])
+@require_write_access()
+def edit(planilla_id: str):
+    """Edit basic planilla configuration."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+    form = PlanillaForm(obj=planilla)
+    populate_form_choices(form)
+
+    if form.validate_on_submit():
+        planilla.nombre = form.nombre.data
+        planilla.descripcion = form.descripcion.data
+        planilla.tipo_planilla_id = form.tipo_planilla_id.data
+        planilla.moneda_id = form.moneda_id.data
+        planilla.empresa_id = form.empresa_id.data or None
+        planilla.periodo_fiscal_inicio = form.periodo_fiscal_inicio.data
+        planilla.periodo_fiscal_fin = form.periodo_fiscal_fin.data
+        planilla.prioridad_prestamos = form.prioridad_prestamos.data or 250
+        planilla.prioridad_adelantos = form.prioridad_adelantos.data or 251
+        planilla.aplicar_prestamos_automatico = form.aplicar_prestamos_automatico.data
+        planilla.aplicar_adelantos_automatico = form.aplicar_adelantos_automatico.data
+        planilla.codigo_cuenta_debe_salario = form.codigo_cuenta_debe_salario.data
+        planilla.descripcion_cuenta_debe_salario = form.descripcion_cuenta_debe_salario.data
+        planilla.codigo_cuenta_haber_salario = form.codigo_cuenta_haber_salario.data
+        planilla.descripcion_cuenta_haber_salario = form.descripcion_cuenta_haber_salario.data
+        planilla.activo = form.activo.data
+        planilla.modificado_por = current_user.usuario
+        db.session.commit()
+        flash(_("Planilla actualizada exitosamente."), "success")
+        return redirect(url_for("planilla.config", planilla_id=planilla.id))
+
+    # Get association counts for the summary
+    counts = get_planilla_component_counts(planilla_id)
+
+    return render_template(
+        "modules/planilla/form.html",
+        form=form,
+        planilla=planilla,
+        is_edit=True,
+        **counts,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config")
+@require_read_access()
+def config(planilla_id: str):
+    """Configuration overview page for a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    # Get association counts for the summary
+    counts = get_planilla_component_counts(planilla_id)
+
+    return render_template(
+        "modules/planilla/config.html",
+        planilla=planilla,
+        **counts,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/delete", methods=["POST"])
+@require_write_access()
+def delete(planilla_id: str):
+    """Delete a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    can_delete, error_message = PlanillaService.can_delete(planilla)
+    if not can_delete:
+        flash(_(error_message), "error")
+        return redirect(url_for("planilla.index"))
+
+    db.session.delete(planilla)
+    db.session.commit()
+    flash(_("Planilla eliminada exitosamente."), "success")
+    return redirect(url_for("planilla.index"))

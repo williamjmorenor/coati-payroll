@@ -1143,8 +1143,8 @@ def test_reintentar_nomina_success(app, client, admin_user, db_session, planilla
         db_session.commit()
         db_session.refresh(nomina)
 
-        # Mock the retry function in the tasks module
-        with patch("coati_payroll.queue.tasks.retry_failed_nomina") as mock_retry:
+        # Mock the retry function where it's used (in the routes module)
+        with patch("coati_payroll.vistas.planilla.nomina_routes.retry_failed_nomina") as mock_retry:
             mock_retry.return_value = {
                 "success": True,
                 "message": "Nomina re-enviada para procesamiento.",

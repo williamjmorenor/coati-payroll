@@ -1,0 +1,372 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Routes for nomina execution and management."""
+
+from datetime import date
+from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user
+
+from coati_payroll.model import db, Planilla, Nomina, NominaEmpleado, NominaDetalle, NominaNovedad
+from coati_payroll.enums import NominaEstado, NovedadEstado
+from coati_payroll.i18n import _
+from coati_payroll.rbac import require_read_access, require_write_access
+from coati_payroll.vistas.planilla import planilla_bp
+from coati_payroll.vistas.planilla.services import NominaService
+from coati_payroll.queue.tasks import retry_failed_nomina
+
+
+@planilla_bp.route("/<planilla_id>/ejecutar", methods=["GET", "POST"])
+@require_write_access()
+def ejecutar_nomina(planilla_id: str):
+    """Execute a payroll run for a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    if request.method == "POST":
+        periodo_inicio = request.form.get("periodo_inicio")
+        periodo_fin = request.form.get("periodo_fin")
+        fecha_calculo = request.form.get("fecha_calculo")
+
+        if not periodo_inicio or not periodo_fin:
+            flash(_("Debe especificar el período de la nómina."), "error")
+            return redirect(url_for("planilla.ejecutar_nomina", planilla_id=planilla_id))
+
+        # Parse dates
+        try:
+            periodo_inicio = date.fromisoformat(periodo_inicio)
+            periodo_fin = date.fromisoformat(periodo_fin)
+            fecha_calculo = date.fromisoformat(fecha_calculo) if fecha_calculo else date.today()
+        except ValueError:
+            flash(_("Formato de fecha inválido."), "error")
+            return redirect(url_for("planilla.ejecutar_nomina", planilla_id=planilla_id))
+
+        nomina, errors, warnings = NominaService.ejecutar_nomina(
+            planilla=planilla,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            fecha_calculo=fecha_calculo,
+            usuario=current_user.usuario,
+        )
+
+        if errors:
+            for error in errors:
+                flash(error, "error")
+
+        if warnings:
+            for warning in warnings:
+                flash(warning, "warning")
+
+        if nomina:
+            if nomina.procesamiento_en_background:
+                num_empleados = nomina.total_empleados or 0
+                flash(
+                    _(
+                        "La nómina está siendo calculada en segundo plano. "
+                        "Se procesarán %(num)d empleados. "
+                        "Por favor, revise el progreso en unos momentos.",
+                        num=num_empleados,
+                    ),
+                    "info",
+                )
+            else:
+                flash(_("Nómina generada exitosamente."), "success")
+            return redirect(
+                url_for(
+                    "planilla.ver_nomina",
+                    planilla_id=planilla_id,
+                    nomina_id=nomina.id,
+                )
+            )
+        else:
+            return redirect(url_for("planilla.ejecutar_nomina", planilla_id=planilla_id))
+
+    # GET - show execution form
+    periodo_inicio, periodo_fin = NominaService.calcular_periodo_sugerido(planilla)
+    hoy = date.today()
+
+    # Get last nomina for reference
+    ultima_nomina = db.session.execute(
+        db.select(Nomina).filter_by(planilla_id=planilla_id).order_by(Nomina.periodo_fin.desc())
+    ).scalar_one_or_none()
+
+    return render_template(
+        "modules/planilla/ejecutar_nomina.html",
+        planilla=planilla,
+        periodo_inicio=periodo_inicio,
+        periodo_fin=periodo_fin,
+        fecha_calculo=hoy,
+        ultima_nomina=ultima_nomina,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nominas")
+@require_read_access()
+def listar_nominas(planilla_id: str):
+    """List all nominas for a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nominas = (
+        db.session.execute(db.select(Nomina).filter_by(planilla_id=planilla_id).order_by(Nomina.periodo_fin.desc()))
+        .scalars()
+        .all()
+    )
+
+    return render_template(
+        "modules/planilla/listar_nominas.html",
+        planilla=planilla,
+        nominas=nominas,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>")
+@require_read_access()
+def ver_nomina(planilla_id: str, nomina_id: str):
+    """View details of a specific nomina."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
+
+    return render_template(
+        "modules/planilla/ver_nomina.html",
+        planilla=planilla,
+        nomina=nomina,
+        nomina_empleados=nomina_empleados,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/empleado/<nomina_empleado_id>")
+@require_read_access()
+def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: str):
+    """View details of an employee's payroll."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+    nomina_empleado = db.get_or_404(NominaEmpleado, nomina_empleado_id)
+
+    if nomina_empleado.nomina_id != nomina_id:
+        flash(_("El detalle no pertenece a esta nómina."), "error")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    detalles = (
+        db.session.execute(
+            db.select(NominaDetalle).filter_by(nomina_empleado_id=nomina_empleado_id).order_by(NominaDetalle.orden)
+        )
+        .scalars()
+        .all()
+    )
+
+    # Separate by type
+    percepciones = [d for d in detalles if d.tipo == "ingreso"]
+    deducciones = [d for d in detalles if d.tipo == "deduccion"]
+    prestaciones = [d for d in detalles if d.tipo == "prestacion"]
+
+    return render_template(
+        "modules/planilla/ver_nomina_empleado.html",
+        planilla=planilla,
+        nomina=nomina,
+        nomina_empleado=nomina_empleado,
+        percepciones=percepciones,
+        deducciones=deducciones,
+        prestaciones=prestaciones,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/progreso")
+@require_read_access()
+def progreso_nomina(planilla_id: str, nomina_id: str):
+    """API endpoint to check calculation progress of a nomina."""
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        return jsonify({"error": "Nomina does not belong to this planilla"}), 404
+
+    return jsonify(
+        {
+            "estado": nomina.estado,
+            "total_empleados": nomina.total_empleados or 0,
+            "empleados_procesados": nomina.empleados_procesados or 0,
+            "empleados_con_error": nomina.empleados_con_error or 0,
+            "progreso_porcentaje": (
+                int((nomina.empleados_procesados / nomina.total_empleados) * 100)
+                if nomina.total_empleados and nomina.total_empleados > 0
+                else 0
+            ),
+            "errores_calculo": nomina.errores_calculo or {},
+            "procesamiento_en_background": nomina.procesamiento_en_background,
+            "empleado_actual": nomina.empleado_actual or "",
+            "log_procesamiento": nomina.log_procesamiento or [],
+        }
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aprobar", methods=["POST"])
+@require_write_access()
+def aprobar_nomina(planilla_id: str, nomina_id: str):
+    """Approve a nomina for payment."""
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if nomina.estado != "generado":
+        flash(_("Solo se pueden aprobar nóminas en estado 'generado'."), "error")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    nomina.estado = "aprobado"
+    nomina.modificado_por = current_user.usuario
+    db.session.commit()
+
+    flash(_("Nómina aprobada exitosamente."), "success")
+    return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aplicar", methods=["POST"])
+@require_write_access()
+def aplicar_nomina(planilla_id: str, nomina_id: str):
+    """Mark a nomina as applied (paid)."""
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if nomina.estado != "aprobado":
+        flash(_("Solo se pueden aplicar nóminas en estado 'aprobado'."), "error")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    nomina.estado = "aplicado"
+    nomina.modificado_por = current_user.usuario
+
+    # Actualizar estado de todas las novedades asociadas a "ejecutada"
+    planilla = db.get_or_404(Planilla, planilla_id)
+    empleado_ids = [pe.empleado_id for pe in planilla.planilla_empleados if pe.activo]
+
+    # Actualizar novedades que corresponden a este período
+    novedades = (
+        db.session.execute(
+            db.select(NominaNovedad).filter(
+                NominaNovedad.empleado_id.in_(empleado_ids),
+                NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
+                NominaNovedad.fecha_novedad <= nomina.periodo_fin,
+                NominaNovedad.estado == NovedadEstado.PENDIENTE,
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    for novedad in novedades:
+        novedad.estado = NovedadEstado.EJECUTADA
+        novedad.modificado_por = current_user.usuario
+
+    db.session.commit()
+
+    flash(
+        _("Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas.").format(len(novedades)),
+        "success",
+    )
+    return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/reintentar", methods=["POST"])
+@require_write_access()
+def reintentar_nomina(planilla_id: str, nomina_id: str):
+    """Retry processing a failed nomina."""
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if nomina.estado != NominaEstado.ERROR:
+        flash(_("Solo se pueden reintentar nóminas en estado 'error'."), "error")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    # Call the retry function
+    result = retry_failed_nomina(nomina_id, current_user.usuario)
+
+    if result.get("success"):
+        flash(
+            _("Reintento de nómina iniciado exitosamente. El procesamiento se realizará en segundo plano."), "success"
+        )
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+    else:
+        flash(_("Error al reintentar la nómina: {}").format(result.get("error", "Error desconocido")), "error")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/recalcular", methods=["POST"])
+@require_write_access()
+def recalcular_nomina(planilla_id: str, nomina_id: str):
+    """Recalculate an existing nomina."""
+    nomina = db.get_or_404(Nomina, nomina_id)
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    if nomina.estado == "aplicado":
+        flash(_("No se puede recalcular una nómina en estado 'aplicado' (pagada)."), "error")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    new_nomina, errors, warnings = NominaService.recalcular_nomina(nomina, planilla, current_user.usuario)
+
+    if errors:
+        for error in errors:
+            flash(error, "error")
+
+    if warnings:
+        for warning in warnings:
+            flash(warning, "warning")
+
+    if new_nomina:
+        flash(_("Nómina recalculada exitosamente."), "success")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=new_nomina.id))
+    else:
+        flash(_("Error al recalcular la nómina."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/log")
+@require_read_access()
+def ver_log_nomina(planilla_id: str, nomina_id: str):
+    """View execution log for a nomina including warnings and errors."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    # Get log entries
+    log_entries = nomina.log_procesamiento or []
+
+    # Get comprobante warnings if exists
+    from coati_payroll.model import ComprobanteContable
+
+    comprobante = db.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)).scalar_one_or_none()
+
+    comprobante_warnings = comprobante.advertencias if comprobante else []
+
+    return render_template(
+        "modules/planilla/log_nomina.html",
+        planilla=planilla,
+        nomina=nomina,
+        log_entries=log_entries,
+        comprobante_warnings=comprobante_warnings,
+    )

@@ -39,7 +39,6 @@ from coati_payroll.model import (
     Nomina as NominaModel,
     NominaEmpleado as NominaEmpleadoModel,
     NominaDetalle as NominaDetalleModel,
-    AcumuladoAnual,
     PrestacionAcumulada,
     AdelantoAbono,
     InteresAdelanto,
@@ -89,7 +88,6 @@ def _is_recoverable_error(error: Exception) -> bool:
     Returns:
         True if error is recoverable, False otherwise
     """
-    error_type = type(error).__name__
     error_msg = str(error).lower()
 
     # Recoverable error patterns
@@ -710,7 +708,7 @@ def process_large_payroll(
             "total_empleados": nomina.total_empleados,
             "empleados_procesados": nomina.empleados_procesados,
             "empleados_con_error": nomina.empleados_con_error,
-            "errores": list(errores.values()),
+            "errores": nomina.errores_calculo or {},
         }
 
     except Exception as e:
