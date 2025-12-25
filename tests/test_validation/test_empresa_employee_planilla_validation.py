@@ -94,8 +94,12 @@ class TestNominaEngineEmpresaValidation:
             db_session.add(empleado)
             db_session.commit()
 
-            engine = NominaEngine(planilla, date(2024, 1, 1), date(2024, 1, 31))
-            is_valid, errors = engine._validar_empleado_para_pago(empleado)
+            from coati_payroll.nomina_engine.validators.employee_validator import EmployeeValidator
+
+            validator = EmployeeValidator()
+            validation_result = validator.validate_employee(empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31))
+            is_valid = validation_result.is_valid
+            errors = validation_result.errors  # errors is already a list of strings
 
             assert is_valid is False
             assert any("no está asignado a ninguna empresa" in error for error in errors)
@@ -156,8 +160,12 @@ class TestNominaEngineEmpresaValidation:
             db_session.add(empleado)
             db_session.commit()
 
-            engine = NominaEngine(planilla, date(2024, 1, 1), date(2024, 1, 31))
-            is_valid, errors = engine._validar_empleado_para_pago(empleado)
+            from coati_payroll.nomina_engine.validators.employee_validator import EmployeeValidator
+
+            validator = EmployeeValidator()
+            validation_result = validator.validate_employee(empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31))
+            is_valid = validation_result.is_valid
+            errors = validation_result.errors  # errors is already a list of strings
 
             assert is_valid is False
             assert any("pertenece a empresa diferente" in error for error in errors)
@@ -212,8 +220,12 @@ class TestNominaEngineEmpresaValidation:
             db_session.add(empleado)
             db_session.commit()
 
-            engine = NominaEngine(planilla, date(2024, 1, 1), date(2024, 1, 31))
-            is_valid, errors = engine._validar_empleado_para_pago(empleado)
+            from coati_payroll.nomina_engine.validators.employee_validator import EmployeeValidator
+
+            validator = EmployeeValidator()
+            validation_result = validator.validate_employee(empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31))
+            is_valid = validation_result.is_valid
+            errors = validation_result.errors  # errors is already a list of strings
 
             assert is_valid is True
             assert not any("empresa" in error.lower() for error in errors)

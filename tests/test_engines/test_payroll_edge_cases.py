@@ -150,9 +150,15 @@ class TestSalaryCalculations:
             db_session.commit()
 
             # Test: Monthly salary 30,000 over 30-day period
-            engine = NominaEngine(planilla, periodo_inicio=date(2024, 1, 1), periodo_fin=date(2024, 1, 31))
+            from coati_payroll.nomina_engine.calculators.salary_calculator import SalaryCalculator
+            from coati_payroll.nomina_engine.repositories.config_repository import ConfigRepository
+
             salario_mensual = Decimal("30000.00")
-            salario_periodo = engine._calcular_salario_periodo(salario_mensual)
+            config_repo = ConfigRepository(db_session)
+            calculator = SalaryCalculator(config_repo)
+            salario_periodo = calculator.calculate_period_salary(
+                salario_mensual, planilla, date(2024, 1, 1), date(2024, 1, 31), date(2024, 1, 31)
+            )
 
             # The engine uses actual period length which includes both dates
             # From Jan 1 to Jan 31 is 31 days, not 30
@@ -216,8 +222,14 @@ class TestSalaryCalculations:
             db_session.commit()
 
             # Zero salary should be handled gracefully
-            engine = NominaEngine(planilla, periodo_inicio=date(2024, 1, 1), periodo_fin=date(2024, 1, 31))
-            salario_periodo = engine._calcular_salario_periodo(Decimal("0.00"))
+            from coati_payroll.nomina_engine.calculators.salary_calculator import SalaryCalculator
+            from coati_payroll.nomina_engine.repositories.config_repository import ConfigRepository
+
+            config_repo = ConfigRepository(db_session)
+            calculator = SalaryCalculator(config_repo)
+            salario_periodo = calculator.calculate_period_salary(
+                Decimal("0.00"), planilla, date(2024, 1, 1), date(2024, 1, 31), date(2024, 1, 31)
+            )
 
             assert salario_periodo == Decimal("0.00")
 
@@ -431,13 +443,16 @@ class TestErrorHandlingAndEdgeCases:
             db_session.add(planilla)
             db_session.commit()
 
-            # Employee not active in period - engine will calculate zero
-            engine = NominaEngine(planilla, periodo_inicio=date(2024, 1, 1), periodo_fin=date(2024, 1, 31))
-
             # When there are no worked days, salary period would be for 0 days
-            # This is handled by the engine's logic for inactive employees
             # Testing that zero salary is handled gracefully
-            salario_periodo = engine._calcular_salario_periodo(Decimal("0.00"))
+            from coati_payroll.nomina_engine.calculators.salary_calculator import SalaryCalculator
+            from coati_payroll.nomina_engine.repositories.config_repository import ConfigRepository
+
+            config_repo = ConfigRepository(db_session)
+            calculator = SalaryCalculator(config_repo)
+            salario_periodo = calculator.calculate_period_salary(
+                Decimal("0.00"), planilla, date(2024, 1, 1), date(2024, 1, 31), date(2024, 1, 31)
+            )
             assert salario_periodo == Decimal("0.00")
 
     def test_very_large_salary_amount(self, app, db_session):

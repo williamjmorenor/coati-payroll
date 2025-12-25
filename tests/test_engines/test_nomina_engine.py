@@ -34,6 +34,10 @@ from coati_payroll.nomina_engine import (
     NominaEngine,
     EmpleadoCalculo,
 )
+from coati_payroll.nomina_engine.calculators.concept_calculator import ConceptCalculator
+from coati_payroll.nomina_engine.calculators.salary_calculator import SalaryCalculator
+from coati_payroll.nomina_engine.repositories.config_repository import ConfigRepository
+from coati_payroll.model import db
 
 
 class TestEmpleadoCalculo:
@@ -255,8 +259,9 @@ class TestPlanillaValidation:
 
             is_valid = engine.validar_planilla()
             assert is_valid is False
-            assert len(engine.errors) == 1
-            assert "no está activa" in engine.errors[0]
+            assert len(engine.errors) >= 1
+            # The validator may return multiple errors (inactive + no employees)
+            assert any("no está activa" in e for e in engine.errors)
 
     def test_validar_planilla_no_employees(self, app, db_session):
         """Test validation fails when planilla has no employees."""
@@ -341,12 +346,15 @@ class TestSalarioPeriodoCalculation:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(
-                planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 30)  # 30 days
-            )
-
             salario_mensual = Decimal("15000.00")
-            salario_periodo = engine._calcular_salario_periodo(salario_mensual)
+
+            # Use SalaryCalculator directly
+            config_repo = ConfigRepository(db.session)
+            calculator = SalaryCalculator(config_repo)
+
+            salario_periodo = calculator.calculate_period_salary(
+                salario_mensual, planilla, date(2025, 1, 1), date(2025, 1, 30), date(2025, 1, 30)
+            )
 
             # Full month should return full salary
             assert salario_periodo == Decimal("15000.00")
@@ -387,12 +395,15 @@ class TestSalarioPeriodoCalculation:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(
-                planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 15)  # 15 days
-            )
-
             salario_mensual = Decimal("30000.00")
-            salario_periodo = engine._calcular_salario_periodo(salario_mensual)
+
+            # Use SalaryCalculator directly
+            config_repo = ConfigRepository(db.session)
+            calculator = SalaryCalculator(config_repo)
+
+            salario_periodo = calculator.calculate_period_salary(
+                salario_mensual, planilla, date(2025, 1, 1), date(2025, 1, 15), date(2025, 1, 15)
+            )
 
             # 15 days = half month: 30000 / 30 * 15 = 15000
             assert salario_periodo == Decimal("15000.00")
@@ -433,12 +444,15 @@ class TestSalarioPeriodoCalculation:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(
-                planilla=planilla, periodo_inicio=date(2025, 1, 20), periodo_fin=date(2025, 1, 30)  # Only 11 days
-            )
-
             salario_mensual = Decimal("30000.00")
-            salario_periodo = engine._calcular_salario_periodo(salario_mensual)
+
+            # Use SalaryCalculator directly
+            config_repo = ConfigRepository(db.session)
+            calculator = SalaryCalculator(config_repo)
+
+            salario_periodo = calculator.calculate_period_salary(
+                salario_mensual, planilla, date(2025, 1, 20), date(2025, 1, 30), date(2025, 1, 30)
+            )
 
             # 11 days: 30000 / 30 * 11 = 11000
             assert salario_periodo == Decimal("11000.00")
@@ -497,12 +511,17 @@ class TestCalculoConcepto:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.variables_calculo = {}
 
-            monto = engine._calcular_concepto(
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.FIJO,
                 monto_default=Decimal("500.00"),
@@ -564,12 +583,17 @@ class TestCalculoConcepto:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.variables_calculo = {}
 
-            monto = engine._calcular_concepto(
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.PORCENTAJE_SALARIO,
                 monto_default=None,
@@ -632,13 +656,18 @@ class TestCalculoConcepto:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.variables_calculo = {}
+
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
 
             # Override should take precedence
-            monto = engine._calcular_concepto(
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.FIJO,
                 monto_default=Decimal("500.00"),
@@ -704,14 +733,18 @@ class TestHorasYDiasCalculation:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("24000.00")
             emp_calculo.salario_mensual = Decimal("24000.00")
             emp_calculo.novedades = {"HORAS_EXTRA": Decimal("10")}  # 10 overtime hours
+            emp_calculo.variables_calculo = {"novedad_HORAS_EXTRA": Decimal("10")}
 
-            monto = engine._calcular_concepto(
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.HORAS,
                 monto_default=None,
@@ -777,14 +810,18 @@ class TestHorasYDiasCalculation:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("24000.00")
             emp_calculo.salario_mensual = Decimal("24000.00")
             emp_calculo.novedades = {}  # No hours recorded
+            emp_calculo.variables_calculo = {}
 
-            monto = engine._calcular_concepto(
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.HORAS,
                 monto_default=None,
@@ -847,14 +884,18 @@ class TestHorasYDiasCalculation:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("30000.00")
             emp_calculo.salario_mensual = Decimal("30000.00")
             emp_calculo.novedades = {"VACACIONES": Decimal("5")}  # 5 vacation days
+            emp_calculo.variables_calculo = {"novedad_VACACIONES": Decimal("5")}
 
-            monto = engine._calcular_concepto(
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.DIAS,
                 monto_default=None,
@@ -923,13 +964,18 @@ class TestBadInputNominaEngine:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.variables_calculo = {}
+
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
 
             # None porcentaje should return 0
-            monto = engine._calcular_concepto(
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.PORCENTAJE_SALARIO,
                 monto_default=None,
@@ -991,12 +1037,17 @@ class TestBadInputNominaEngine:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("0.00")
+            emp_calculo.salario_mensual = Decimal("0.00")
+            emp_calculo.variables_calculo = {}
 
-            monto = engine._calcular_concepto(
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.PORCENTAJE_SALARIO,
                 monto_default=None,
@@ -1059,14 +1110,18 @@ class TestBadInputNominaEngine:
             db_session.flush()
             db_session.commit()
 
-            engine = NominaEngine(planilla=planilla, periodo_inicio=date(2025, 1, 1), periodo_fin=date(2025, 1, 31))
-
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("24000.00")
             emp_calculo.salario_mensual = Decimal("24000.00")
             emp_calculo.novedades = {"HORAS_EXTRA": Decimal("-5")}  # Negative hours!
+            emp_calculo.variables_calculo = {"novedad_HORAS_EXTRA": Decimal("-5")}
 
-            monto = engine._calcular_concepto(
+            # Use ConceptCalculator directly
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
                 emp_calculo=emp_calculo,
                 formula_tipo=FormulaType.HORAS,
                 monto_default=None,
@@ -1077,5 +1132,5 @@ class TestBadInputNominaEngine:
                 codigo_concepto="HORAS_EXTRA",
             )
 
-            # Negative hours should return 0
+            # Negative hours should return 0 (calculator should handle this)
             assert monto == Decimal("0.00")
