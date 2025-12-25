@@ -1,0 +1,247 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Main formula engine facade."""
+
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import Any
+
+from coati_payroll.i18n import _
+from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
+
+from ..formula_engine.data_sources import AVAILABLE_DATA_SOURCES
+from .ast.type_converter import to_decimal
+from .exceptions import ValidationError
+from .execution.execution_context import ExecutionContext
+from .execution.step_executor import StepExecutor
+from .execution.variable_store import VariableStore
+from .results.execution_result import ExecutionResult
+from .steps.step_factory import StepFactory
+from .validation.schema_validator import SchemaValidator
+from .validation.tax_table_validator import TaxTableValidator
+
+
+class FormulaEngine:
+    """Engine for executing JSON-based calculation rules for payroll.
+
+    This engine provides a secure way to execute complex calculations for
+    perceptions, deductions, taxes, and other payroll formulas defined in
+    JSON format. It supports variables, formulas, conditionals, and rate
+    table lookups.
+
+    NOTE: Only Percepciones and Deducciones affect employee net pay.
+    Prestaciones are employer costs calculated separately.
+    """
+
+    def __init__(self, schema: dict[str, Any], strict_mode: bool = False):
+        """Initialize the formula engine with a calculation schema.
+
+        Args:
+            schema: JSON schema defining the calculation rules
+            strict_mode: If True, warnings are treated as errors. Default: False
+
+        Raises:
+            ValidationError: If schema is invalid
+        """
+        self.schema = schema
+        self.strict_mode = strict_mode
+        # Initialize variables and results for backward compatibility with tests
+        self.variables: dict[str, Decimal] = {}
+        self.results: dict[str, Any] = {}
+
+        # Validate schema
+        schema_validator = SchemaValidator()
+        schema_validator.validate(schema)
+
+        # Validate tax tables
+        tax_table_validator = TaxTableValidator(strict_mode)
+        warnings = tax_table_validator.validate_all(schema.get("tax_tables", {}))
+
+        # Handle warnings
+        if warnings:
+            if strict_mode:
+                raise ValidationError(
+                    f"Advertencias en tablas de impuestos (modo estricto activado): {', '.join(warnings)}"
+                )
+            else:
+                for warning in warnings:
+                    log.warning(f"Validación de tabla de impuestos: {warning}")
+
+    def _trace(self, message: str) -> None:
+        """Trace helper for logging."""
+        if is_trace_enabled():
+            try:
+                log.log(TRACE_LEVEL_NUM, message)
+            except Exception:
+                pass
+
+    def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        """Execute the calculation schema with provided inputs.
+
+        Args:
+            inputs: Dictionary of input values
+
+        Returns:
+            Dictionary containing all results and the final output
+
+        Raises:
+            CalculationError: If execution fails
+        """
+        # Initialize components
+        variable_store = VariableStore()
+        step_factory = StepFactory()
+        step_executor = StepExecutor()
+
+        # Prepare initial variables
+        initial_vars = self._prepare_initial_variables(inputs)
+        variable_store.variables = initial_vars
+
+        # Update instance variables for backward compatibility
+        self.variables = initial_vars.copy()
+        self.results = {}
+
+        # Create execution context
+        context = ExecutionContext(
+            variables=initial_vars,
+            tax_tables=self.schema.get("tax_tables", {}),
+            trace_callback=self._trace,
+        )
+
+        meta = self.schema.get("meta", {})
+        self._trace(
+            _("Iniciando ejecución de esquema '%(name)s' pasos=%(count)s")
+            % {"name": meta.get("name", "sin nombre"), "count": len(self.schema.get("steps", []))}
+        )
+
+        # Create and execute steps
+        steps = [step_factory.create_step(step) for step in self.schema.get("steps", [])]
+
+        step_results = {}
+        for step in steps:
+            result = step_executor.execute(step, context)
+            step_results[step.name] = result
+
+            # Update context with step result
+            if isinstance(result, dict):
+                # Tax lookup result - extract tax value
+                tax_value = result.get("tax", Decimal("0"))
+                context = context.with_variable(step.name, tax_value)
+                variable_store.set(step.name, result)
+                self.variables[step.name] = tax_value
+                self.results[step.name] = result
+            else:
+                # Regular calculation result
+                context = context.with_variable(step.name, result)
+                variable_store.set(step.name, result)
+                self.variables[step.name] = result
+                self.results[step.name] = result
+
+            if context.trace_callback:
+                context.trace_callback(
+                    _("Resultado paso '%(name)s' => %(result)s") % {"name": step.name, "result": result}
+                )
+
+        # Get the final output
+        output_name = self.schema.get("output", "")
+        final_result = context.variables.get(output_name, Decimal("0"))
+
+        self._trace(_("Resultado final '%(name)s' => %(value)s") % {"name": output_name, "value": final_result})
+
+        # Create and return result
+        execution_result = ExecutionResult(
+            variables=context.variables,
+            step_results=step_results,
+            final_output=final_result,
+        )
+
+        return execution_result.to_dict()
+
+    def _prepare_initial_variables(self, inputs: dict[str, Any]) -> dict[str, Decimal]:
+        """Prepare initial variables from inputs and defaults.
+
+        Args:
+            inputs: Input values provided by caller
+
+        Returns:
+            Dictionary of variable names to Decimal values
+        """
+        variables = {}
+        for input_def in self.schema.get("inputs", []):
+            name = input_def.get("name")
+            default = input_def.get("default", 0)
+
+            # Use provided input or default
+            if name in inputs:
+                variables[name] = to_decimal(inputs[name])
+            else:
+                variables[name] = to_decimal(default)
+
+            source = "input" if name in inputs else "default"
+            self._trace(
+                _("Input '%(name)s' cargado desde %(source)s => %(value)s")
+                % {"name": name, "source": source, "value": variables[name]}
+            )
+
+        return variables
+
+
+def calculate_with_rule(
+    rule_schema: dict[str, Any],
+    employee_data: dict[str, Any],
+    accumulated_data: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Calculate using a rule schema with employee and accumulated data.
+
+    This is a convenience function that combines employee data with
+    accumulated annual data for payroll calculations.
+
+    Args:
+        rule_schema: The JSON calculation schema
+        employee_data: Employee-specific data (salary, etc.)
+        accumulated_data: Optional accumulated annual data
+
+    Returns:
+        Calculation results including the final output
+    """
+    inputs = {**employee_data}
+
+    if accumulated_data:
+        # Add accumulated values with prefix
+        for key, value in accumulated_data.items():
+            inputs[f"acumulado_{key}"] = value
+
+    engine = FormulaEngine(rule_schema)
+    return engine.execute(inputs)
+
+
+def get_available_sources_for_ui() -> list[dict]:
+    """Get available data sources formatted for the UI dropdown.
+
+    Returns:
+        List of dictionaries with source information for the schema editor
+    """
+    sources = []
+    for category, data in AVAILABLE_DATA_SOURCES.items():
+        for field_name, field_info in data["fields"].items():
+            sources.append(
+                {
+                    "value": f"{category}.{field_name}",
+                    "label": f"{data['label']} - {field_info['label']}",
+                    "type": field_info["type"],
+                    "description": field_info["description"],
+                    "category": category,
+                }
+            )
+    return sources

@@ -13,81 +13,63 @@
 # limitations under the License.
 """Formula engine package.
 
-This package contains the formula engine module and supporting submodules:
-- Main engine: Imported from parent module formula_engine.py
-- data_sources: Available data sources for formula calculations
-- novelty_codes: Mapping of novelty codes to their calculation behavior
+This package contains the refactored formula engine with modular architecture:
+- AST parsing and evaluation using Visitor pattern
+- Step execution using Strategy pattern
+- Validation, tables, execution, and results modules
 """
 
-# Import constants from submodules
-from coati_payroll.formula_engine.data_sources import AVAILABLE_DATA_SOURCES
-from coati_payroll.formula_engine.novelty_codes import NOVELTY_CODES
+from __future__ import annotations
 
-# Import everything from the parent formula_engine.py module
-# We need to use importlib to avoid circular imports
-import importlib.util
-import sys
-from pathlib import Path
+# Import from formula_engine_examples for backward compatibility
+from coati_payroll.formula_engine_examples import EXAMPLE_IR_NICARAGUA_SCHEMA
 
-# Get the path to the parent formula_engine.py file
-_parent_dir = Path(__file__).parent.parent
-_formula_engine_py = _parent_dir / "formula_engine.py"
+# Import main engine and functions
+from .engine import FormulaEngine, calculate_with_rule, get_available_sources_for_ui
 
-# Load the parent module dynamically
-# Use a unique module name to avoid conflicts
-_module_name = "coati_payroll._formula_engine_impl"
-if _formula_engine_py.exists() and _module_name not in sys.modules:
-    spec = importlib.util.spec_from_file_location(_module_name, _formula_engine_py)
-    if spec and spec.loader:
-        _formula_engine_module = importlib.util.module_from_spec(spec)
-        sys.modules[_module_name] = _formula_engine_module
-        spec.loader.exec_module(_formula_engine_module)
+# Import exceptions
+from .exceptions import CalculationError, FormulaEngineError, TaxEngineError, ValidationError
 
-        # Re-export everything from the parent module
-        FormulaEngine = _formula_engine_module.FormulaEngine
-        FormulaEngineError = _formula_engine_module.FormulaEngineError
-        TaxEngineError = _formula_engine_module.TaxEngineError
-        ValidationError = _formula_engine_module.ValidationError
-        CalculationError = _formula_engine_module.CalculationError
-        EXAMPLE_IR_NICARAGUA_SCHEMA = _formula_engine_module.EXAMPLE_IR_NICARAGUA_SCHEMA
-        calculate_with_rule_schema = getattr(_formula_engine_module, "calculate_with_rule_schema", None) or getattr(
-            _formula_engine_module, "calculate_with_rule", None
-        )
-        get_available_sources_for_ui = _formula_engine_module.get_available_sources_for_ui
-        to_decimal = getattr(_formula_engine_module, "to_decimal", None)
-        safe_divide = getattr(_formula_engine_module, "safe_divide", None)
-elif _module_name in sys.modules:
-    # Module already loaded, just re-export
-    _formula_engine_module = sys.modules[_module_name]
-    FormulaEngine = _formula_engine_module.FormulaEngine
-    FormulaEngineError = _formula_engine_module.FormulaEngineError
-    TaxEngineError = _formula_engine_module.TaxEngineError
-    ValidationError = _formula_engine_module.ValidationError
-    CalculationError = _formula_engine_module.CalculationError
-    EXAMPLE_IR_NICARAGUA_SCHEMA = _formula_engine_module.EXAMPLE_IR_NICARAGUA_SCHEMA
-    calculate_with_rule_schema = getattr(_formula_engine_module, "calculate_with_rule_schema", None) or getattr(
-        _formula_engine_module, "calculate_with_rule", None
-    )
-    get_available_sources_for_ui = _formula_engine_module.get_available_sources_for_ui
-    to_decimal = getattr(_formula_engine_module, "to_decimal", None)
-    safe_divide = getattr(_formula_engine_module, "safe_divide", None)
+# Import utilities for backward compatibility
+from .ast.type_converter import safe_divide, to_decimal
+
+# Import submodules
+from .ast import (
+    ALLOWED_AST_TYPES,
+    ASTVisitor,
+    COMPARISON_OPERATORS,
+    ExpressionEvaluator,
+    SAFE_FUNCTIONS,
+    SAFE_OPERATORS,
+    SafeASTVisitor,
+)
+from .data_sources import AVAILABLE_DATA_SOURCES
+from .novelty_codes import NOVELTY_CODES
 
 __all__ = [
+    # Main engine
     "FormulaEngine",
+    "calculate_with_rule",
+    "get_available_sources_for_ui",
+    # Exceptions
     "FormulaEngineError",
     "TaxEngineError",
     "ValidationError",
     "CalculationError",
+    # Examples
     "EXAMPLE_IR_NICARAGUA_SCHEMA",
-    "calculate_with_rule_schema",
-    "get_available_sources_for_ui",
+    # Utilities
+    "to_decimal",
+    "safe_divide",
+    # AST modules
+    "ASTVisitor",
+    "SafeASTVisitor",
+    "ExpressionEvaluator",
+    "SAFE_OPERATORS",
+    "COMPARISON_OPERATORS",
+    "SAFE_FUNCTIONS",
+    "ALLOWED_AST_TYPES",
+    # Data sources
     "AVAILABLE_DATA_SOURCES",
     "NOVELTY_CODES",
 ]
-
-# Add optional exports if they exist and were loaded
-# Check if to_decimal and safe_divide were successfully loaded
-if globals().get("to_decimal") is not None:
-    __all__.append("to_decimal")
-if globals().get("safe_divide") is not None:
-    __all__.append("safe_divide")
