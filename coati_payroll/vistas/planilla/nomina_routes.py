@@ -140,11 +140,31 @@ def ver_nomina(planilla_id: str, nomina_id: str):
 
     nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
 
+    # Check for errors and warnings in the processing log
+    has_errors = _nomina_has_errors(nomina)
+    has_warnings = _nomina_has_warnings(nomina)
+
+    # Get error and warning messages for display
+    error_messages = []
+    warning_messages = []
+    if nomina.log_procesamiento:
+        for entry in nomina.log_procesamiento:
+            status = entry.get("status") or entry.get("tipo")
+            message = entry.get("message") or entry.get("mensaje") or ""
+            if status == "error":
+                error_messages.append(message)
+            elif status in ("warning", "advertencia_contabilidad"):
+                warning_messages.append(message)
+
     return render_template(
         "modules/planilla/ver_nomina.html",
         planilla=planilla,
         nomina=nomina,
         nomina_empleados=nomina_empleados,
+        has_errors=has_errors,
+        has_warnings=has_warnings,
+        error_messages=error_messages,
+        warning_messages=warning_messages,
     )
 
 
@@ -212,6 +232,28 @@ def progreso_nomina(planilla_id: str, nomina_id: str):
     )
 
 
+def _nomina_has_errors(nomina: Nomina) -> bool:
+    """Check if a nomina has errors in its processing log."""
+    if not nomina.log_procesamiento:
+        return False
+    for entry in nomina.log_procesamiento:
+        status = entry.get("status") or entry.get("tipo")
+        if status == "error":
+            return True
+    return False
+
+
+def _nomina_has_warnings(nomina: Nomina) -> bool:
+    """Check if a nomina has warnings in its processing log."""
+    if not nomina.log_procesamiento:
+        return False
+    for entry in nomina.log_procesamiento:
+        status = entry.get("status") or entry.get("tipo")
+        if status in ("warning", "advertencia_contabilidad"):
+            return True
+    return False
+
+
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aprobar", methods=["POST"])
 @require_write_access()
 def aprobar_nomina(planilla_id: str, nomina_id: str):
@@ -224,6 +266,17 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
 
     if nomina.estado != "generado":
         flash(_("Solo se pueden aprobar nóminas en estado 'generado'."), "error")
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    # Check for errors in the processing log - cannot approve with errors
+    if _nomina_has_errors(nomina):
+        flash(
+            _(
+                "No se puede aprobar una nómina con errores de procesamiento. "
+                "Corrija los errores y recalcule la nómina antes de aprobar."
+            ),
+            "error",
+        )
         return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
 
     nomina.estado = "aprobado"

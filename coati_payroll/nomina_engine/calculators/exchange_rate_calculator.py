@@ -44,7 +44,8 @@ class ExchangeRateCalculator:
                 f"No se encontró tipo de cambio para empleado "
                 f"{empleado.primer_nombre} {empleado.primer_apellido}. "
                 f"Se requiere un tipo de cambio de {empleado.moneda.codigo if empleado.moneda else 'desconocido'} "
-                f"a {planilla.moneda.codigo if planilla.moneda else 'desconocido'}."
+                f"a {planilla.moneda.codigo if planilla.moneda else 'desconocido'} "
+                f"para la fecha {fecha_calculo.strftime('%d/%m/%Y')}."
             )
 
         return Decimal(str(rate))

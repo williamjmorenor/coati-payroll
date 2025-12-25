@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
+from typing import Any
 
 from coati_payroll.model import db, Planilla, Empleado, Nomina
 from coati_payroll.enums import NominaEstado
@@ -29,7 +30,7 @@ from ..repositories.novelty_repository import NoveltyRepository
 from ..repositories.acumulado_repository import AcumuladoRepository
 from ..validators.planilla_validator import PlanillaValidator
 from ..validators.employee_validator import EmployeeValidator
-from ..validators import ValidationError
+from ..validators import ValidationError, NominaEngineError
 from ..calculators.salary_calculator import SalaryCalculator
 from ..calculators.exchange_rate_calculator import ExchangeRateCalculator
 from ..calculators.concept_calculator import ConceptCalculator
@@ -157,9 +158,17 @@ class PayrollExecutionService:
                     vacation_processor,
                 )
                 empleados_calculo.append(emp_calculo)
-            except (ValidationError, FormulaEngineError) as e:
-                # Include the full error message which contains validation details
-                errors.append(str(e))
+            except (NominaEngineError, FormulaEngineError) as e:
+                # Capture all payroll engine and formula errors
+                errors.append(
+                    f"Error procesando empleado {empleado.primer_nombre} {empleado.primer_apellido}: {str(e)}"
+                )
+            except Exception as e:
+                # Capture any unexpected error to prevent 500 errors
+                errors.append(
+                    f"Error inesperado procesando empleado {empleado.primer_nombre} {empleado.primer_apellido}: "
+                    f"{type(e).__name__}: {str(e)}"
+                )
 
         # Calculate totals
         self._calculate_totals(nomina, empleados_calculo)
@@ -167,7 +176,61 @@ class PayrollExecutionService:
         # Update planilla last execution
         planilla.ultima_ejecucion = datetime.now(timezone.utc)
 
+        # Save errors and warnings to log_procesamiento for transparency
+        self._save_log_entries(nomina, errors, warnings, empleados_calculo)
+
         return nomina, empleados_calculo, errors, warnings
+
+    def _save_log_entries(
+        self,
+        nomina: Nomina,
+        errors: list[str],
+        warnings: list[str],
+        empleados_calculo: list[EmpleadoCalculo],
+    ) -> None:
+        """Save errors, warnings and processing info to nomina.log_procesamiento.
+
+        This ensures all processing issues are visible in the nomina log,
+        not just as flash messages.
+        """
+        log_entries: list[dict[str, Any]] = []
+        timestamp = datetime.now(timezone.utc).isoformat()
+
+        # Log successful employee processing
+        for emp_calculo in empleados_calculo:
+            empleado = emp_calculo.empleado
+            log_entries.append(
+                {
+                    "timestamp": timestamp,
+                    "empleado": f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                    "status": "success",
+                    "message": f"Procesado correctamente. Salario neto: {emp_calculo.salario_neto}",
+                }
+            )
+
+        # Log errors
+        for error in errors:
+            log_entries.append(
+                {
+                    "timestamp": timestamp,
+                    "empleado": "SISTEMA",
+                    "status": "error",
+                    "message": error,
+                }
+            )
+
+        # Log warnings
+        for warning in warnings:
+            log_entries.append(
+                {
+                    "timestamp": timestamp,
+                    "empleado": "SISTEMA",
+                    "status": "warning",
+                    "message": warning,
+                }
+            )
+
+        nomina.log_procesamiento = log_entries
 
     def _process_employee(
         self,
