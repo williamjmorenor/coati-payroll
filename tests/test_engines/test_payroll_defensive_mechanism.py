@@ -25,11 +25,9 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import patch, MagicMock
 
-import pytest
 
 from coati_payroll.enums import NominaEstado
 from coati_payroll.model import (
-    db,
     Nomina,
     NominaEmpleado,
     NominaDetalle,
@@ -39,10 +37,8 @@ from coati_payroll.model import (
     TipoPlanilla,
     Moneda,
     Empresa,
-    PrestacionAcumulada,
-    AdelantoAbono,
-    InteresAdelanto,
 )
+
 # Import functions from tasks module
 # Note: Some functions may need to be tested via the module path
 from coati_payroll.queue import tasks
@@ -451,4 +447,3 @@ class TestProcessLargePayrollRollback:
                 db_session.refresh(nomina)
                 assert nomina.estado == NominaEstado.ERROR
                 assert len(nomina.errores_calculo) > 0
-

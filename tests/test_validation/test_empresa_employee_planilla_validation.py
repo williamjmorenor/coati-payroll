@@ -25,7 +25,6 @@ These tests validate:
 from datetime import date
 from decimal import Decimal
 
-import pytest
 from sqlalchemy import select
 
 from coati_payroll.model import (
@@ -35,9 +34,7 @@ from coati_payroll.model import (
     Planilla,
     PlanillaEmpleado,
     TipoPlanilla,
-    db,
 )
-from coati_payroll.nomina_engine import NominaEngine
 from tests.helpers.auth import login_user
 
 
@@ -97,7 +94,9 @@ class TestNominaEngineEmpresaValidation:
             from coati_payroll.nomina_engine.validators.employee_validator import EmployeeValidator
 
             validator = EmployeeValidator()
-            validation_result = validator.validate_employee(empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31))
+            validation_result = validator.validate_employee(
+                empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31)
+            )
             is_valid = validation_result.is_valid
             errors = validation_result.errors  # errors is already a list of strings
 
@@ -163,7 +162,9 @@ class TestNominaEngineEmpresaValidation:
             from coati_payroll.nomina_engine.validators.employee_validator import EmployeeValidator
 
             validator = EmployeeValidator()
-            validation_result = validator.validate_employee(empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31))
+            validation_result = validator.validate_employee(
+                empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31)
+            )
             is_valid = validation_result.is_valid
             errors = validation_result.errors  # errors is already a list of strings
 
@@ -223,7 +224,9 @@ class TestNominaEngineEmpresaValidation:
             from coati_payroll.nomina_engine.validators.employee_validator import EmployeeValidator
 
             validator = EmployeeValidator()
-            validation_result = validator.validate_employee(empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31))
+            validation_result = validator.validate_employee(
+                empleado, planilla.empresa_id, date(2024, 1, 1), date(2024, 1, 31)
+            )
             is_valid = validation_result.is_valid
             errors = validation_result.errors  # errors is already a list of strings
 
@@ -302,9 +305,7 @@ class TestPlanillaEmpleadoAssociationValidation:
             assert b"misma empresa" in response.data or b"same company" in response.data
 
             association = db_session.execute(
-                select(PlanillaEmpleado).filter_by(
-                    planilla_id=planilla.id, empleado_id=empleado.id
-                )
+                select(PlanillaEmpleado).filter_by(planilla_id=planilla.id, empleado_id=empleado.id)
             ).scalar_one_or_none()
             assert association is None
 
@@ -370,9 +371,7 @@ class TestPlanillaEmpleadoAssociationValidation:
             assert b"empresa asignada" in response.data or b"assigned" in response.data
 
             association = db_session.execute(
-                select(PlanillaEmpleado).filter_by(
-                    planilla_id=planilla.id, empleado_id=empleado.id
-                )
+                select(PlanillaEmpleado).filter_by(planilla_id=planilla.id, empleado_id=empleado.id)
             ).scalar_one_or_none()
             assert association is None
 
@@ -437,9 +436,7 @@ class TestPlanillaEmpleadoAssociationValidation:
             assert response.status_code == 200
 
             association = db_session.execute(
-                select(PlanillaEmpleado).filter_by(
-                    planilla_id=planilla.id, empleado_id=empleado.id
-                )
+                select(PlanillaEmpleado).filter_by(planilla_id=planilla.id, empleado_id=empleado.id)
             ).scalar_one_or_none()
             assert association is not None
 

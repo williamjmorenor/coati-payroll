@@ -1178,7 +1178,7 @@ def test_reintentar_nomina_wrong_state(app, client, admin_user, db_session, plan
         db_session.add(nomina)
         db_session.commit()
         db_session.refresh(nomina)
-        
+
         original_estado = nomina.estado
 
         response = client.post(
@@ -1187,15 +1187,18 @@ def test_reintentar_nomina_wrong_state(app, client, admin_user, db_session, plan
         )
 
         assert response.status_code == 200
-        
+
         # Verify nomina state did not change (should still be GENERADO)
         db_session.refresh(nomina)
         assert nomina.estado == original_estado
         assert nomina.estado == NominaEstado.GENERADO
-        
+
         # Verify we were redirected to the nomina view page
         # The response should contain the nomina view (check for common elements)
-        assert response.request.path.endswith(f"/nomina/{nomina.id}") or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.request.url
+        assert (
+            response.request.path.endswith(f"/nomina/{nomina.id}")
+            or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.request.url
+        )
 
 
 def test_reintentar_nomina_requires_authentication(app, client, db_session):
