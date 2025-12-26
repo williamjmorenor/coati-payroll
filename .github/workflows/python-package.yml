@@ -39,10 +39,12 @@ jobs:
         ruff check coati_payroll
     - name: Test with pytest (regular tests)
       run: |
-        pytest -n auto --cov=coati_payroll --cov-report=xml --cov-report=term-missing
+        python -m pip install dramatiq[redis] huey
+        python -m pytest -n auto --cov=coati_payroll --cov-report=xml --cov-report=term-missing
     - name: Test with pytest (validation tests)
       run: |
-        pytest -n auto -m validation --cov=coati_payroll --cov-append --cov-report=xml --cov-report=term-missing
+        python -m pip install dramatiq[redis] huey
+        python -m pytest -n auto -m validation --cov=coati_payroll --cov-append --cov-report=xml --cov-report=term-missing
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
       with:
