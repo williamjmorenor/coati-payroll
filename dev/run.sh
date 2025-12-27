@@ -1,4 +1,4 @@
 unset DATABASER_URL
 export LOG_LEVEL=trace
-payrollctl database seed
+payrollctl database init
 flask run --debugger --reload
