@@ -65,20 +65,31 @@ class ConfigRepository(BaseRepository[ConfiguracionCalculos]):
             return config
 
         # Return default instance (not saved to DB)
+        # =====================================================================
+        # DEFAULT VALUES DISCLAIMER (Per Social Contract)
+        # =====================================================================
+        # These default values are provided SOLELY to facilitate initial adoption.
+        # They do NOT represent legal rules for any specific jurisdiction.
+        # They are completely configurable by the implementer.
+        # They should NOT be assumed as correct for any specific jurisdiction.
+        #
+        # Implementers MUST review and configure these values according to
+        # their specific legal and business requirements before production use.
+        # =====================================================================
         return ConfiguracionCalculos(
             empresa_id=None,
             pais_id=None,
-            dias_mes_nomina=30,
-            dias_anio_nomina=365,
-            horas_jornada_diaria=Decimal("8.00"),
-            dias_mes_vacaciones=30,
-            dias_anio_vacaciones=365,
-            considerar_bisiesto_vacaciones=True,
-            dias_anio_financiero=365,
-            meses_anio_financiero=12,
-            dias_quincena=15,
-            dias_mes_antiguedad=30,
-            dias_anio_antiguedad=365,
+            dias_mes_nomina=30,  # Example default - configure per jurisdiction
+            dias_anio_nomina=365,  # Example default - configure per jurisdiction
+            horas_jornada_diaria=Decimal("8.00"),  # Example default - configure per jurisdiction
+            dias_mes_vacaciones=30,  # Example default - configure per jurisdiction
+            dias_anio_vacaciones=365,  # Example default - configure per jurisdiction
+            considerar_bisiesto_vacaciones=True,  # Example default - configure per jurisdiction
+            dias_anio_financiero=365,  # Example default - configure per jurisdiction
+            meses_anio_financiero=12,  # Example default - configure per jurisdiction
+            dias_quincena=15,  # Example default - configure per jurisdiction
+            dias_mes_antiguedad=30,  # Example default - configure per jurisdiction
+            dias_anio_antiguedad=365,  # Example default - configure per jurisdiction
             activo=True,
         )
 

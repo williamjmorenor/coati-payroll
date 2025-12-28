@@ -330,7 +330,7 @@ class ReglaCalculoForm(FlaskForm):
     codigo = StringField(
         _("Código"),
         validators=[DataRequired(), Length(max=50)],
-        description=_("Código único de la regla (ej: IR_NICARAGUA)"),
+        description=_("Código único de la regla (ej: INCOME_TAX_001)"),
     )
     nombre = StringField(
         _("Nombre"),
@@ -344,7 +344,7 @@ class ReglaCalculoForm(FlaskForm):
     jurisdiccion = StringField(
         _("Jurisdicción"),
         validators=[Optional(), Length(max=100)],
-        description=_("País o región donde aplica (ej: Nicaragua)"),
+        description=_("País o región donde aplica (ej: Country A)"),
     )
     moneda_referencia = StringField(
         _("Moneda de Referencia"),
@@ -510,7 +510,7 @@ class DeduccionForm(FlaskForm):
     codigo = StringField(
         _("Código"),
         validators=[DataRequired(), Length(max=50)],
-        description=_("Código único de la deducción (ej: INSS_LABORAL)"),
+        description=_("Código único de la deducción (ej: SOCIAL_SEC_001)"),
     )
     nombre = StringField(
         _("Nombre"),

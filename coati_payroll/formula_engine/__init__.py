@@ -21,8 +21,13 @@ This package contains the refactored formula engine with modular architecture:
 
 from __future__ import annotations
 
-# Import from formula_engine_examples for backward compatibility
-from coati_payroll.formula_engine_examples import EXAMPLE_IR_NICARAGUA_SCHEMA
+# Import from formula_engine_examples
+# EXAMPLE_PROGRESSIVE_TAX_SCHEMA is the new generic name
+# EXAMPLE_IR_NICARAGUA_SCHEMA is kept for backward compatibility (deprecated)
+from coati_payroll.formula_engine_examples import (
+    EXAMPLE_PROGRESSIVE_TAX_SCHEMA,
+    EXAMPLE_IR_NICARAGUA_SCHEMA,
+)
 
 # Import main engine and functions
 from .engine import FormulaEngine, calculate_with_rule, get_available_sources_for_ui
@@ -57,7 +62,8 @@ __all__ = [
     "ValidationError",
     "CalculationError",
     # Examples
-    "EXAMPLE_IR_NICARAGUA_SCHEMA",
+    "EXAMPLE_PROGRESSIVE_TAX_SCHEMA",
+    "EXAMPLE_IR_NICARAGUA_SCHEMA",  # Deprecated alias for backward compatibility
     # Utilities
     "to_decimal",
     "safe_divide",

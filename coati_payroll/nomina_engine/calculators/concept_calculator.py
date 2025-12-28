@@ -191,7 +191,11 @@ class ConceptCalculator:
                     if ded_obj and ded_obj.antes_impuesto:
                         deducciones_antes_impuesto_periodo += ded.monto
             inputs["deducciones_antes_impuesto_periodo"] = deducciones_antes_impuesto_periodo
+            # Legacy alias for backward compatibility (deprecated but kept to avoid breaking existing schemas)
             inputs["inss_periodo"] = deducciones_antes_impuesto_periodo
+            # New generic aliases (preferred for new schemas)
+            inputs["pre_tax_deductions"] = deducciones_antes_impuesto_periodo
+            inputs["social_security_deduction"] = deducciones_antes_impuesto_periodo
 
             engine = FormulaEngine(formula)
             result = engine.execute(inputs)
@@ -236,7 +240,11 @@ class ConceptCalculator:
                     if ded_obj and ded_obj.antes_impuesto:
                         deducciones_antes_impuesto_periodo += ded.monto
             inputs["deducciones_antes_impuesto_periodo"] = deducciones_antes_impuesto_periodo
+            # Legacy alias for backward compatibility (deprecated but kept to avoid breaking existing schemas)
             inputs["inss_periodo"] = deducciones_antes_impuesto_periodo
+            # New generic aliases (preferred for new schemas)
+            inputs["pre_tax_deductions"] = deducciones_antes_impuesto_periodo
+            inputs["social_security_deduction"] = deducciones_antes_impuesto_periodo
 
             engine = FormulaEngine(regla.esquema_json)
             result = engine.execute(inputs)

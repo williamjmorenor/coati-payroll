@@ -43,7 +43,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">{{ _('Nombre de la regla') }}</label>
                                     <input type="text" class="form-control" id="meta-name" 
-                                           placeholder="{{ _('Ej: IR Laboral Nicaragua') }}">
+                                           placeholder="{{ _('Ej: Income Tax Rule') }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -196,7 +196,7 @@
                             <i class="bi bi-check-lg me-2"></i>{{ _('Guardar Esquema') }}
                         </button>
                         <button type="button" class="btn btn-outline-secondary" onclick="loadExample()">
-                            <i class="bi bi-file-earmark-code me-2"></i>{{ _('Cargar Ejemplo IR Nicaragua') }}
+                            <i class="bi bi-file-earmark-code me-2"></i>{{ _('Cargar Ejemplo de Impuesto Progresivo') }}
                         </button>
                     </div>
                 </div>
@@ -569,7 +569,7 @@ function addTaxTable(name = null, brackets = null) {
             <div class="mb-3">
                 <label class="form-label small">{{ _('Nombre de la tabla') }}</label>
                 <input type="text" class="form-control form-control-sm table-name" 
-                       value="${name || ''}" placeholder="{{ _('Ej: tabla_ir_nicaragua') }}"
+                       value="${name || ''}" placeholder="{{ _('Ej: income_tax_brackets') }}"
                        onchange="updateJsonPreview()">
             </div>
             <div class="brackets-container" id="brackets-${id}">
@@ -816,7 +816,7 @@ function formatJson() {
 }
 
 function loadExample() {
-    if (confirm('{{ _("¿Cargar el ejemplo de IR Nicaragua? Esto reemplazará el esquema actual.") }}')) {
+    if (confirm('{{ _("¿Cargar el ejemplo de impuesto progresivo? Esto reemplazará el esquema actual.") }}')) {
         schema = JSON.parse(JSON.stringify(exampleSchema));
         loadSchemaToEditor();
         updateJsonPreview();

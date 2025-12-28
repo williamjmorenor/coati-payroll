@@ -28,13 +28,13 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from datetime import date
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal, ROUND_HALF_UP
 from typing import NamedTuple
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
 # <-------------------------------------------------------------------------> #
-
 
 # <-------------------------------------------------------------------------> #
 # Local modules
@@ -350,9 +350,6 @@ def generar_tabla_amortizacion(
 
             saldo_nuevo = saldo - capital
 
-            # Estimate payment date (monthly intervals)
-            from dateutil.relativedelta import relativedelta
-
             fecha_estimada = fecha_inicio + relativedelta(months=numero)
 
             tabla.append(
@@ -389,9 +386,6 @@ def generar_tabla_amortizacion(
 
             cuota_total = capital + interes
             saldo_nuevo = saldo - capital
-
-            # Estimate payment date (monthly intervals)
-            from dateutil.relativedelta import relativedelta
 
             fecha_estimada = fecha_inicio + relativedelta(months=numero)
 

@@ -1,7 +1,27 @@
-# Proyecto: Sistema de Nómina Coati (Nicaragua)
+# Proyecto: Coati Payroll - Sistema de Nómina Agnóstico a Jurisdicción
 
 ## Estado Actual
-Validación de IR implementada exitosamente - **COMPLETADO**
+Social Contract Compliance - **COMPLETADO** (28 dic 2025)
+
+## Cambios Recientes - Compliance del Contrato Social
+
+### Refactorización para Cumplimiento del SOCIAL_CONTRACT.md
+
+1. **formula_engine_examples.py**: Renombrado `EXAMPLE_IR_NICARAGUA_SCHEMA` → `EXAMPLE_PROGRESSIVE_TAX_SCHEMA`
+   - Alias de compatibilidad hacia atrás preservado
+   - Disclaimers claros indicando datos ficticios
+
+2. **Variables en ConceptCalculator**: Agregados aliases genéricos
+   - `inss_periodo` (legacy, deprecado pero mantenido)
+   - `pre_tax_deductions` (nuevo, recomendado)
+   - `social_security_deduction` (nuevo, recomendado)
+
+3. **Comentarios y ejemplos**: Cambiados de específicos a genéricos
+   - `IR_NICARAGUA` → `INCOME_TAX_001`
+   - `INSS_LABORAL` → `SOCIAL_SEC_001`
+   - `Nicaragua` → `Country A`
+
+4. **Documentación de valores por defecto**: Agregados disclaimers en config_repository.py
 
 ## Validación del Cálculo de IR
 

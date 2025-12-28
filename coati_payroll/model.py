@@ -148,7 +148,7 @@ class Empresa(database.Model, BaseTabla):
     # Commercial/trade name
     nombre_comercial = database.Column(database.String(200), nullable=True)
 
-    # Tax identification number (RUC in Nicaragua)
+    # Tax identification number (jurisdiction-specific format)
     ruc = database.Column(database.String(50), unique=True, nullable=False)
 
     # Contact information
@@ -1241,19 +1241,21 @@ class ReglaCalculo(database.Model, BaseTabla):
     __tablename__ = "regla_calculo"
     __table_args__ = (database.UniqueConstraint("codigo", "version", name="uq_regla_codigo_version"),)
 
-    codigo = database.Column(database.String(50), nullable=False, index=True)  # e.g., 'IR_NICARAGUA', 'INSS_LABORAL'
+    codigo = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # e.g., 'INCOME_TAX_001', 'SOCIAL_SEC_001'
     nombre = database.Column(database.String(150), nullable=False)
     descripcion = database.Column(database.Text, nullable=True)
-    jurisdiccion = database.Column(database.String(100), nullable=True)  # e.g., 'Nicaragua', 'Costa Rica'
+    jurisdiccion = database.Column(database.String(100), nullable=True)  # e.g., 'Country A', 'Region B'
 
     # Reference currency for the tax rule calculations.
     # The rule is currency-agnostic - the actual payroll currency is defined
     # in TipoPlanilla. When the payroll currency differs from the reference
     # currency, exchange rates are applied during calculation.
-    # Example: IR Nicaragua uses NIO as reference, but payroll can be in USD.
+    # Example: A tax rule may use local currency as reference, but payroll can be in another currency.
     moneda_referencia = database.Column(
         database.String(10), nullable=True
-    )  # e.g., 'NIO', 'USD' - reference currency for rule calculations
+    )  # e.g., 'USD', 'EUR' - reference currency for rule calculations
 
     version = database.Column(database.String(20), nullable=False, default="1.0.0")  # Semantic versioning
 
@@ -1282,13 +1284,13 @@ class ReglaCalculo(database.Model, BaseTabla):
     )
 
 
-# Acumulados anuales por empleado (para cálculos como IR en Nicaragua)
+# Acumulados anuales por empleado (para cálculos de impuestos progresivos)
 class AcumuladoAnual(database.Model, BaseTabla):
     """Annual accumulated values per employee per payroll type per company.
 
     Stores running totals of salary, deductions, and taxes for each employee
     per fiscal year, payroll type, and company. This is essential for progressive tax
-    calculations like Nicaragua's IR which requires annual accumulated values.
+    calculations which require annual accumulated values.
 
     IMPORTANT: Accumulated values are tracked per company (empresa_id) to support
     employees who change companies mid-year. Each company maintains separate
