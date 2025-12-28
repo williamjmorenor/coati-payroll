@@ -834,6 +834,15 @@ class Nomina(database.Model, BaseTabla):
     anulado_en = database.Column(database.DateTime, nullable=True)
     razon_anulacion = database.Column(database.String(500), nullable=True)
 
+    # Recalculation consistency: Snapshot of calculation context
+    # Stores immutable copy of all data needed to reproduce exact same calculation
+    fecha_calculo_original = database.Column(database.Date, nullable=True)  # Original calculation date
+    configuracion_snapshot = database.Column(JSON, nullable=True)  # Company config at calculation time
+    tipos_cambio_snapshot = database.Column(JSON, nullable=True)  # Exchange rates used
+    catalogos_snapshot = database.Column(JSON, nullable=True)  # Percepciones/Deducciones/Prestaciones formulas
+    es_recalculo = database.Column(database.Boolean, nullable=False, default=False)  # Flag if this is a recalculation
+    nomina_original_id = database.Column(database.String(26), nullable=True)  # Reference to original if recalculated
+
     planilla = database.relationship("Planilla", back_populates="nominas")
     nomina_empleados = database.relationship(
         "NominaEmpleado",

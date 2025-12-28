@@ -43,6 +43,7 @@ from ..processors.vacation_processor import VacationProcessor
 from ..processors.novelty_processor import NoveltyProcessor
 from ..processors.accounting_processor import AccountingProcessor
 from ..services.employee_processing_service import EmployeeProcessingService
+from ..services.snapshot_service import SnapshotService
 
 
 class PayrollExecutionService:
@@ -77,6 +78,7 @@ class PayrollExecutionService:
 
         # Initialize services
         self.employee_processing_service = EmployeeProcessingService(self.config_repo, self.acumulado_repo)
+        self.snapshot_service = SnapshotService(session)
 
     def execute_payroll(
         self,
@@ -110,6 +112,9 @@ class PayrollExecutionService:
             errors.extend(validation_result.errors)
             return None, [], errors, warnings
 
+        # Capture configuration snapshots for recalculation consistency
+        snapshot = self.snapshot_service.capture_complete_snapshot(planilla, fecha_calculo)
+
         # Create the Nomina record
         nomina = Nomina(
             planilla_id=planilla.id,
@@ -120,6 +125,10 @@ class PayrollExecutionService:
             total_bruto=Decimal("0.00"),
             total_deducciones=Decimal("0.00"),
             total_neto=Decimal("0.00"),
+            fecha_calculo_original=fecha_calculo,
+            configuracion_snapshot=snapshot["configuracion"],
+            tipos_cambio_snapshot=snapshot["tipos_cambio"],
+            catalogos_snapshot=snapshot["catalogos"],
         )
         db.session.add(nomina)
         db.session.flush()

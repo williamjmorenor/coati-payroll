@@ -166,9 +166,11 @@ class NominaService:
             AdelantoAbono,
         )
 
-        # Store the original period information
+        # Store the original period and calculation date for consistency
         periodo_inicio = nomina.periodo_inicio
         periodo_fin = nomina.periodo_fin
+        fecha_calculo_original = nomina.fecha_calculo_original or nomina.fecha_generacion.date()
+        nomina_original_id = nomina.id
 
         # Delete related AdelantoAbono records
         db.session.execute(db.delete(AdelantoAbono).where(AdelantoAbono.nomina_id == nomina.id))
@@ -192,14 +194,40 @@ class NominaService:
         db.session.delete(nomina)
         db.session.commit()
 
-        # Re-execute the payroll with the same period
+        # Re-execute the payroll with the ORIGINAL calculation date for consistency
         engine = NominaEngine(
             planilla=planilla,
             periodo_inicio=periodo_inicio,
             periodo_fin=periodo_fin,
-            fecha_calculo=date.today(),
+            fecha_calculo=fecha_calculo_original,
             usuario=usuario,
         )
 
         new_nomina = engine.ejecutar()
+
+        # Mark as recalculation and link to original
+        if new_nomina:
+            new_nomina.es_recalculo = True
+            new_nomina.nomina_original_id = nomina_original_id
+
+            # Create audit log for recalculation
+            from coati_payroll.audit_helpers import crear_log_auditoria_nomina
+
+            crear_log_auditoria_nomina(
+                nomina=new_nomina,
+                accion="recalculated",
+                usuario=usuario,
+                descripcion=f"Nómina recalculada desde nómina original {nomina_original_id}",
+                cambios={
+                    "nomina_original_id": nomina_original_id,
+                    "fecha_calculo_original": fecha_calculo_original.isoformat(),
+                    "periodo_inicio": periodo_inicio.isoformat(),
+                    "periodo_fin": periodo_fin.isoformat(),
+                },
+                estado_anterior="deleted",
+                estado_nuevo=new_nomina.estado,
+            )
+
+            db.session.commit()
+
         return new_nomina, engine.errors, engine.warnings
