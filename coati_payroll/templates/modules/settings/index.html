@@ -249,6 +249,26 @@
                 </div>
             </div>
         </div>
+
+        <!-- Plugins -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-secondary bg-opacity-10 rounded p-3 me-3">
+                            <i class="bi bi-plug text-secondary fs-3"></i>
+                        </div>
+                        <h5 class="card-title mb-0">{{ _('Plugins') }}</h5>
+                    </div>
+                    <p class="card-text text-muted">{{ _('Administrar plugins instalados') }}</p>
+                    <div class="mt-auto">
+                        <a href="{{ url_for('plugins.index') }}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-arrow-right-circle me-1"></i>{{ _('Acceder') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

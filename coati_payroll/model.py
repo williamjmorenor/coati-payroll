@@ -105,6 +105,17 @@ class BaseTabla:
     modificado_por = database.Column(database.String(150), nullable=True)
 
 
+class PluginRegistry(database.Model, BaseTabla):
+    __tablename__ = "plugin_registry"
+    __table_args__ = (database.UniqueConstraint("distribution_name", name="uq_plugin_distribution_name"),)
+
+    distribution_name = database.Column(database.String(200), nullable=False, unique=True, index=True)
+    plugin_id = database.Column(database.String(200), nullable=False, index=True)
+    version = database.Column(database.String(50), nullable=True)
+    active = database.Column(database.Boolean(), default=False, nullable=False)
+    installed = database.Column(database.Boolean(), default=True, nullable=False)
+
+
 # Gestión de usuarios con acceso a la aplicación
 class Usuario(database.Model, BaseTabla, UserMixin):
     __tablename__ = "usuario"

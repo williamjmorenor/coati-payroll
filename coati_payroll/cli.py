@@ -42,6 +42,7 @@ from flask.cli import with_appcontext
 from coati_payroll.model import db, Usuario
 from coati_payroll.auth import proteger_passwd
 from coati_payroll.log import log
+from coati_payroll.plugin_manager import discover_installed_plugins, load_plugin_module
 
 
 # Global context to store CLI options
@@ -65,6 +66,68 @@ def output_result(ctx, message, data=None, success=True):
     else:
         symbol = "✓" if success else "✗"
         click.echo(f"{symbol} {message}")
+
+
+class PluginsCommand(click.MultiCommand):
+    def list_commands(self, cli_ctx):
+        try:
+            return [p.plugin_id for p in discover_installed_plugins()]
+        except Exception:
+            return []
+
+    def get_command(self, cli_ctx, name):
+        try:
+            module = load_plugin_module(name)
+        except Exception as exc:
+            message = str(exc)
+
+            def _missing():
+                raise click.ClickException(message)
+
+            return click.Command(name, callback=lambda: _missing())
+
+        @click.group(name=name)
+        def plugin_group():
+            pass
+
+        @plugin_group.command("init")
+        @with_appcontext
+        @pass_context
+        def plugin_init(ctx):
+            init_fn = getattr(module, "init", None)
+            if init_fn is None or not callable(init_fn):
+                raise click.ClickException("Plugin does not provide callable 'init()'")
+
+            try:
+                init_fn()
+                db.create_all()
+                output_result(ctx, f"Plugin '{name}' initialized")
+            except Exception as exc:
+                log.exception("Plugin init failed")
+                output_result(ctx, f"Plugin '{name}' init failed: {exc}", None, False)
+                raise click.ClickException(str(exc))
+
+        @plugin_group.command("update")
+        @with_appcontext
+        @pass_context
+        def plugin_update(ctx):
+            update_fn = getattr(module, "update", None)
+            if update_fn is None or not callable(update_fn):
+                raise click.ClickException("Plugin does not provide callable 'update()'")
+
+            try:
+                update_fn()
+                db.create_all()
+                output_result(ctx, f"Plugin '{name}' updated")
+            except Exception as exc:
+                log.exception("Plugin update failed")
+                output_result(ctx, f"Plugin '{name}' update failed: {exc}", None, False)
+                raise click.ClickException(str(exc))
+
+        return plugin_group
+
+
+plugins = PluginsCommand(name="plugins")
 
 
 # ============================================================================
@@ -962,6 +1025,7 @@ def register_cli_commands(app):
     app.cli.add_command(cache)
     app.cli.add_command(maintenance)
     app.cli.add_command(debug)
+    app.cli.add_command(plugins)
 
 
 def main():

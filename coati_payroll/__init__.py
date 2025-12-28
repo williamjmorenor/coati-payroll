@@ -45,6 +45,7 @@ from coati_payroll.config import DIRECTORIO_ARCHIVOS_BASE, DIRECTORIO_PLANTILLAS
 from coati_payroll.i18n import _
 from coati_payroll.model import Usuario, db
 from coati_payroll.log import log
+from coati_payroll.plugin_manager import get_active_plugins_menu_entries, register_active_plugins, sync_plugin_registry
 
 
 # Patch Flask-Session to use extend_existing=True for the sessions table
@@ -175,6 +176,12 @@ def create_app(config) -> Flask:
         # No interrumpir el arranque si la inicialización automática falla.
         pass
 
+    try:
+        with app.app_context():
+            sync_plugin_registry()
+    except Exception as exc:
+        log.trace(f"create_app: sync_plugin_registry raised: {exc}")
+
     # Configure session storage
     # In testing mode, respect the SESSION_TYPE from config (e.g., filesystem)
     # to avoid conflicts with parallel test execution
@@ -227,6 +234,12 @@ def create_app(config) -> Flask:
     app.register_blueprint(auth, url_prefix="/auth")
     app.register_blueprint(app_blueprint, url_prefix="/")
 
+    try:
+        with app.app_context():
+            register_active_plugins(app)
+    except Exception as exc:
+        log.trace(f"create_app: register_active_plugins raised: {exc}")
+
     # Register CRUD blueprints
     from coati_payroll.vistas import (
         user_bp,
@@ -248,6 +261,7 @@ def create_app(config) -> Flask:
         prestacion_management_bp,
         report_bp,
         settings_bp,
+        plugins_bp,
         config_calculos_bp,
         liquidacion_bp,
     )
@@ -271,8 +285,17 @@ def create_app(config) -> Flask:
     app.register_blueprint(prestacion_management_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(plugins_bp)
     app.register_blueprint(config_calculos_bp)
     app.register_blueprint(liquidacion_bp)
+
+    @app.context_processor
+    def inject_plugins_menu():
+        try:
+            plugin_actives = get_active_plugins_menu_entries()
+        except Exception:
+            plugin_actives = []
+        return {"plugin_actives": plugin_actives}
 
     # Register CLI commands
     from coati_payroll.cli import register_cli_commands

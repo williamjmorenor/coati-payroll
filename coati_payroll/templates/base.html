@@ -196,6 +196,15 @@
                         </a>
                     </li>
 
+                    {% for active_plugin in plugin_actives %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ active_plugin.url }}">
+                            <i class="{{ active_plugin.icon or 'bi bi-puzzle' }} me-2"></i
+                            ><span><span>{{ active_plugin.label }}</span></span>
+                        </a>
+                    </li>
+                    {% endfor %}
+
                     <!-- Configuración -->
                     <li class="nav-item">
                         <a
