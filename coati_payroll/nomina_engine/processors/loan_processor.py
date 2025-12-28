@@ -18,7 +18,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from coati_payroll.model import db, Adelanto, AdelantoAbono, Nomina
+from coati_payroll.model import db, Adelanto, AdelantoAbono, Nomina, Liquidacion
 from coati_payroll.enums import AdelantoEstado
 from coati_payroll.i18n import _
 from ..domain.calculation_items import DeduccionItem
@@ -27,11 +27,21 @@ from ..domain.calculation_items import DeduccionItem
 class LoanProcessor:
     """Processor for automatic loan and advance deductions."""
 
-    def __init__(self, nomina: Nomina | None, fecha_calculo: date, periodo_inicio: date, periodo_fin: date):
+    def __init__(
+        self,
+        nomina: Nomina | None,
+        fecha_calculo: date,
+        periodo_inicio: date,
+        periodo_fin: date,
+        liquidacion: Liquidacion | None = None,
+        calcular_interes: bool = True,
+    ):
         self.nomina = nomina
+        self.liquidacion = liquidacion
         self.fecha_calculo = fecha_calculo
         self.periodo_inicio = periodo_inicio
         self.periodo_fin = periodo_fin
+        self.calcular_interes = calcular_interes
 
     def process_loans(
         self, empleado_id: str, saldo_disponible: Decimal, aplicar_prestamos: bool, prioridad_prestamos: int
@@ -63,7 +73,8 @@ class LoanProcessor:
                 break
 
             # Calculate and apply interest if applicable
-            self._calculate_interest(prestamo)
+            if self.calcular_interes:
+                self._calculate_interest(prestamo)
 
             monto_cuota = Decimal(str(prestamo.monto_por_cuota or 0))
             if monto_cuota <= 0:
@@ -201,11 +212,12 @@ class LoanProcessor:
         abono = AdelantoAbono(
             adelanto_id=adelanto.id,
             nomina_id=self.nomina.id if self.nomina else None,
+            liquidacion_id=self.liquidacion.id if self.liquidacion else None,
             fecha_abono=self.fecha_calculo,
             monto_abonado=monto,
             saldo_anterior=saldo_anterior,
             saldo_posterior=max(saldo_posterior, Decimal("0.00")),
-            tipo_abono="nomina",
+            tipo_abono="liquidacion" if self.liquidacion else "nomina",
         )
         db.session.add(abono)
 

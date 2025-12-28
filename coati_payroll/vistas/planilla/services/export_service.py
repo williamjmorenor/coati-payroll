@@ -20,6 +20,8 @@ from coati_payroll.model import (
     Nomina,
     NominaEmpleado,
     NominaDetalle,
+    Liquidacion,
+    LiquidacionDetalle,
 )
 from coati_payroll.vistas.planilla.helpers.excel_helpers import check_openpyxl_available
 
@@ -267,6 +269,106 @@ class ExportService:
         output.seek(0)
 
         filename = f"prestaciones_{planilla.nombre}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
+        return output, filename
+
+    @staticmethod
+    def exportar_liquidacion_excel(liquidacion: Liquidacion) -> tuple[BytesIO, str]:
+        openpyxl_classes = check_openpyxl_available()
+        if not openpyxl_classes:
+            raise ImportError("openpyxl no está disponible")
+
+        Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
+
+        liquidacion = db.session.merge(liquidacion)
+        empleado = liquidacion.empleado
+
+        detalles = (
+            db.session.execute(
+                db.select(LiquidacionDetalle)
+                .filter_by(liquidacion_id=liquidacion.id)
+                .order_by(LiquidacionDetalle.orden)
+            )
+            .scalars()
+            .all()
+        )
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Liquidación"
+
+        header_font = Font(bold=True, size=14, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        subheader_font = Font(bold=True, size=11)
+        subheader_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
+        border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin"),
+        )
+
+        ws.merge_cells("A1:F1")
+        title_cell = ws["A1"]
+        title_cell.value = "LIQUIDACIÓN"
+        title_cell.font = header_font
+        title_cell.fill = header_fill
+        title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        row = 3
+        ws[f"A{row}"] = "Empleado:"
+        ws[f"B{row}"] = (
+            f"{empleado.codigo_empleado} - {empleado.primer_nombre} {empleado.primer_apellido}" if empleado else ""
+        )
+        row += 1
+        ws[f"A{row}"] = "Fecha cálculo:"
+        ws[f"B{row}"] = str(liquidacion.fecha_calculo)
+        row += 1
+        ws[f"A{row}"] = "Último día pagado:"
+        ws[f"B{row}"] = str(liquidacion.ultimo_dia_pagado or "")
+        row += 1
+        ws[f"A{row}"] = "Días por pagar:"
+        ws[f"B{row}"] = liquidacion.dias_por_pagar
+        row += 1
+        ws[f"A{row}"] = "Estado:"
+        ws[f"B{row}"] = liquidacion.estado
+        row += 2
+
+        headers = ["Tipo", "Código", "Descripción", "Monto"]
+        for col, header in enumerate(headers, start=1):
+            cell = ws.cell(row=row, column=col, value=header)
+            cell.font = subheader_font
+            cell.fill = subheader_fill
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            cell.border = border
+
+        for d in detalles:
+            row += 1
+            ws.cell(row=row, column=1, value=d.tipo).border = border
+            ws.cell(row=row, column=2, value=d.codigo).border = border
+            ws.cell(row=row, column=3, value=d.descripcion or "").border = border
+            ws.cell(row=row, column=4, value=float(d.monto)).border = border
+
+        row += 2
+        ws[f"A{row}"] = "Total bruto:"
+        ws[f"B{row}"] = float(liquidacion.total_bruto or 0)
+        row += 1
+        ws[f"A{row}"] = "Total deducciones:"
+        ws[f"B{row}"] = float(liquidacion.total_deducciones or 0)
+        row += 1
+        ws[f"A{row}"] = "Total neto:"
+        ws[f"B{row}"] = float(liquidacion.total_neto or 0)
+
+        ws.column_dimensions["A"].width = 18
+        ws.column_dimensions["B"].width = 25
+        ws.column_dimensions["C"].width = 45
+        ws.column_dimensions["D"].width = 15
+
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        emp_code = empleado.codigo_empleado if empleado else "empleado"
+        filename = f"liquidacion_{emp_code}_{liquidacion.fecha_calculo.strftime('%Y%m%d')}_{liquidacion.id[:8]}.xlsx"
         return output, filename
 
     @staticmethod

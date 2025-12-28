@@ -88,6 +88,9 @@ class ConfigRepository(BaseRepository[ConfiguracionCalculos]):
             dias_anio_financiero=365,  # Example default - configure per jurisdiction
             meses_anio_financiero=12,  # Example default - configure per jurisdiction
             dias_quincena=15,  # Example default - configure per jurisdiction
+            liquidacion_modo_dias="calendario",
+            liquidacion_factor_calendario=30,
+            liquidacion_factor_laboral=28,
             dias_mes_antiguedad=30,  # Example default - configure per jurisdiction
             dias_anio_antiguedad=365,  # Example default - configure per jurisdiction
             activo=True,

@@ -110,6 +110,11 @@ def db_session(app):
         # Replace the default session with our transactional session
         _db.session = session
 
+        # IMPORTANT: For SQLite in-memory databases, schema is per-connection.
+        # Ensure tables exist on this connection, otherwise tests will see
+        # "no such table" errors.
+        _db.metadata.create_all(bind=connection)
+
         yield session
 
         # Rollback the transaction after the test

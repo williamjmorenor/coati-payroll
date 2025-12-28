@@ -830,6 +830,64 @@ class NominaDetalle(database.Model, BaseTabla):
     prestacion = database.relationship("Prestacion", back_populates="nomina_detalles", foreign_keys=[prestacion_id])
 
 
+# Liquidaciones (terminaciones laborales)
+class LiquidacionConcepto(database.Model, BaseTabla):
+    __tablename__ = "liquidacion_concepto"
+
+    codigo = database.Column(database.String(50), unique=True, nullable=False, index=True)
+    nombre = database.Column(database.String(150), nullable=False)
+    descripcion = database.Column(database.String(255), nullable=True)
+    activo = database.Column(database.Boolean(), default=True, nullable=False)
+
+
+class Liquidacion(database.Model, BaseTabla):
+    __tablename__ = "liquidacion"
+
+    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    concepto_id = database.Column(
+        database.String(26), database.ForeignKey("liquidacion_concepto.id"), nullable=True, index=True
+    )
+
+    fecha_calculo = database.Column(database.Date, nullable=False, default=date.today)
+    ultimo_dia_pagado = database.Column(database.Date, nullable=True)
+    dias_por_pagar = database.Column(database.Integer, nullable=False, default=0)
+
+    estado = database.Column(database.String(30), nullable=False, default="borrador")  # borrador, aplicada, pagada
+
+    total_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
+    total_deducciones = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
+    total_neto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
+
+    errores_calculo = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+    advertencias_calculo = database.Column(JSON, nullable=True, default=list)
+
+    empleado = database.relationship("Empleado")
+    concepto = database.relationship("LiquidacionConcepto")
+    detalles = database.relationship("LiquidacionDetalle", back_populates="liquidacion", cascade="all,delete-orphan")
+
+
+class LiquidacionDetalle(database.Model, BaseTabla):
+    __tablename__ = "liquidacion_detalle"
+
+    liquidacion_id = database.Column(
+        database.String(26), database.ForeignKey("liquidacion.id"), nullable=False, index=True
+    )
+    tipo = database.Column(database.String(15), nullable=False)  # 'ingreso' | 'deduccion' | 'prestacion'
+    codigo = database.Column(database.String(50), nullable=False)
+    descripcion = database.Column(database.String(255), nullable=True)
+    monto = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    orden = database.Column(database.Integer, nullable=True, default=0)
+
+    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
+
+    liquidacion = database.relationship("Liquidacion", back_populates="detalles")
+    percepcion = database.relationship("Percepcion", foreign_keys=[percepcion_id])
+    deduccion = database.relationship("Deduccion", foreign_keys=[deduccion_id])
+    prestacion = database.relationship("Prestacion", foreign_keys=[prestacion_id])
+
+
 class NominaNovedad(database.Model, BaseTabla):
     __tablename__ = "nomina_novedad"
 
@@ -1110,6 +1168,7 @@ class AdelantoAbono(database.Model, BaseTabla):
         index=True,
     )
     nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=True)
+    liquidacion_id = database.Column(database.String(26), database.ForeignKey("liquidacion.id"), nullable=True)
     fecha_abono = database.Column(database.Date, nullable=False, default=date.today)
     monto_abonado = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     saldo_anterior = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -1145,6 +1204,7 @@ class AdelantoAbono(database.Model, BaseTabla):
 
     adelanto = database.relationship("Adelanto", back_populates="abonos")
     nomina = database.relationship("Nomina")
+    liquidacion = database.relationship("Liquidacion")
 
 
 # Interest journal for loans
@@ -1437,6 +1497,11 @@ class ConfiguracionCalculos(database.Model, BaseTabla):
 
     # Quincenas
     dias_quincena = database.Column(database.Integer, nullable=False, default=15)  # 14 o 15
+
+    # Liquidaciones
+    liquidacion_modo_dias = database.Column(database.String(20), nullable=False, default="calendario")
+    liquidacion_factor_calendario = database.Column(database.Integer, nullable=False, default=30)
+    liquidacion_factor_laboral = database.Column(database.Integer, nullable=False, default=28)
 
     # Antigüedad
     dias_mes_antiguedad = database.Column(database.Integer, nullable=False, default=30)

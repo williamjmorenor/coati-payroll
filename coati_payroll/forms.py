@@ -98,6 +98,39 @@ class UserForm(FlaskForm):
     submit = SubmitField(_("Guardar"))
 
 
+class ConfiguracionCalculosForm(FlaskForm):
+    """Form for editing global calculation configuration parameters."""
+
+    liquidacion_modo_dias = SelectField(
+        _("Modo de Días (Liquidación)"),
+        choices=[
+            ("calendario", _("Calendario")),
+            ("laboral", _("Laboral")),
+        ],
+        validators=[DataRequired()],
+        description=_(
+            "Define qué factor se usará como base de días para prorrateos en liquidaciones. "
+            "Calendario usa el factor calendario; Laboral usa el factor laboral."
+        ),
+    )
+
+    liquidacion_factor_calendario = IntegerField(
+        _("Factor Días Calendario (Liquidación)"),
+        validators=[DataRequired(), NumberRange(min=1, max=366)],
+        default=30,
+        description=_("Factor base cuando el modo es Calendario (por defecto 30)."),
+    )
+
+    liquidacion_factor_laboral = IntegerField(
+        _("Factor Días Laborales (Liquidación)"),
+        validators=[DataRequired(), NumberRange(min=1, max=366)],
+        default=28,
+        description=_("Factor base cuando el modo es Laboral (por defecto 28)."),
+    )
+
+    submit = SubmitField(_("Guardar"))
+
+
 class ProfileForm(FlaskForm):
     """Form for editing user profile and password."""
 
