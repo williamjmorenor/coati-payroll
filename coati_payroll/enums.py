@@ -127,6 +127,13 @@ class TipoUsuario(StrEnum):
     AUDIT = "audit"  # Auditor
 
 
+class EstadoAprobacion(StrEnum):
+    """Approval states for payroll concepts (percepciones, deducciones, prestaciones)."""
+
+    BORRADOR = "borrador"  # Draft - not yet approved
+    APROBADO = "aprobado"  # Approved and ready for use
+
+
 class TipoDetalle(StrEnum):
     """Types of payroll detail entries."""
 

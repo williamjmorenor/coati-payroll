@@ -24,6 +24,15 @@ from decimal import Decimal
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
+from coati_payroll.audit_helpers import (
+    aprobar_concepto,
+    crear_log_auditoria,
+    detectar_cambios,
+    marcar_como_borrador_si_editado,
+    puede_aprobar_concepto,
+    rechazar_concepto,
+)
+from coati_payroll.enums import EstadoAprobacion
 from coati_payroll.forms import (
     DeduccionForm,
     PercepcionForm,
@@ -125,9 +134,23 @@ def create_concept(concept_type: str):
         populate_concept_from_form(concept, form)
         concept.creado_por = current_user.usuario
 
+        # Set initial status as draft
+        concept.estado_aprobacion = EstadoAprobacion.BORRADOR
+
         db.session.add(concept)
+        db.session.flush()  # Get the ID before creating audit log
+
+        # Create audit log for creation
+        crear_log_auditoria(
+            concepto=concept,
+            accion="created",
+            usuario=current_user.usuario,
+            descripcion=f"Creó {concept_type} '{concept.nombre}' (código: {concept.codigo})",
+            estado_nuevo=EstadoAprobacion.BORRADOR,
+        )
+
         db.session.commit()
-        flash(_("%(type)s creada exitosamente.", type=config["singular"]), "success")
+        flash(_("%(type)s creada exitosamente en estado borrador.", type=config["singular"]), "success")
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     return render_template(
@@ -149,14 +172,51 @@ def edit_concept(concept_type: str, concept_id: str):
         flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
+    # Store original values for change detection
+    original_data = {
+        "nombre": concept.nombre,
+        "descripcion": concept.descripcion,
+        "codigo": concept.codigo,
+        "formula_tipo": concept.formula_tipo,
+        "monto_default": concept.monto_default,
+        "porcentaje": concept.porcentaje,
+        "base_calculo": concept.base_calculo,
+        "activo": concept.activo,
+    }
+
     form = Form(obj=concept)
 
     if form.validate_on_submit():
         populate_concept_from_form(concept, form)
         concept.modificado_por = current_user.usuario
 
+        # Detect changes
+        new_data = {
+            "nombre": concept.nombre,
+            "descripcion": concept.descripcion,
+            "codigo": concept.codigo,
+            "formula_tipo": concept.formula_tipo,
+            "monto_default": concept.monto_default,
+            "porcentaje": concept.porcentaje,
+            "base_calculo": concept.base_calculo,
+            "activo": concept.activo,
+        }
+        cambios = detectar_cambios(original_data, new_data)
+
+        # Mark as draft if edited (unless created by plugin)
+        if cambios:
+            marcar_como_borrador_si_editado(concept, current_user.usuario, cambios)
+
         db.session.commit()
-        flash(_("%(type)s actualizada exitosamente.", type=config["singular"]), "success")
+
+        if concept.estado_aprobacion == EstadoAprobacion.BORRADOR and not concept.creado_por_plugin:
+            flash(
+                _("%(type)s actualizada. Estado cambiado a borrador - requiere aprobación.", type=config["singular"]),
+                "warning",
+            )
+        else:
+            flash(_("%(type)s actualizada exitosamente.", type=config["singular"]), "success")
+
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     return render_template(
@@ -372,3 +432,146 @@ def prestacion_edit(concept_id: str):
 def prestacion_delete(concept_id: str):
     """Delete a benefit. Admin and HR can delete benefits."""
     return delete_concept("prestacion", concept_id)
+
+
+# ============================================================================
+# APPROVAL ROUTES (for all concept types)
+# ============================================================================
+
+
+def approve_concept_route(concept_type: str, concept_id: str):
+    """Generic approval route for payroll concepts."""
+    # Check if user can approve
+    if not puede_aprobar_concepto(current_user.tipo):
+        flash(_("No tiene permisos para aprobar conceptos de nómina."), "error")
+        return redirect(url_for(f"{concept_type}.{concept_type}_index"))
+
+    config = get_concept_config(concept_type)
+    Model = config["model"]
+
+    concept = db.session.get(Model, concept_id)
+    if not concept:
+        flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
+        return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
+
+    # Approve the concept
+    if aprobar_concepto(concept, current_user.usuario):
+        db.session.commit()
+        flash(_("%(type)s aprobada exitosamente.", type=config["singular"]), "success")
+    else:
+        flash(_("%(type)s ya está aprobada.", type=config["singular"]), "info")
+
+    return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
+
+
+def reject_concept_route(concept_type: str, concept_id: str):
+    """Generic rejection route for payroll concepts."""
+    # Check if user can approve/reject
+    if not puede_aprobar_concepto(current_user.tipo):
+        flash(_("No tiene permisos para rechazar conceptos de nómina."), "error")
+        return redirect(url_for(f"{concept_type}.{concept_type}_index"))
+
+    config = get_concept_config(concept_type)
+    Model = config["model"]
+
+    concept = db.session.get(Model, concept_id)
+    if not concept:
+        flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
+        return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
+
+    # Get rejection reason from form
+    razon = request.form.get("razon", "")
+
+    # Reject the concept
+    rechazar_concepto(concept, current_user.usuario, razon)
+    db.session.commit()
+    flash(_("%(type)s marcada como borrador.", type=config["singular"]), "warning")
+
+    return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
+
+
+def view_audit_log_route(concept_type: str, concept_id: str):
+    """View audit log for a specific concept."""
+    config = get_concept_config(concept_type)
+    Model = config["model"]
+
+    concept = db.session.get(Model, concept_id)
+    if not concept:
+        flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
+        return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
+
+    # Get audit logs
+    audit_logs = sorted(concept.audit_logs, key=lambda x: x.timestamp, reverse=True)
+
+    return render_template(
+        "modules/payroll_concepts/audit_log.html",
+        concept=concept,
+        audit_logs=audit_logs,
+        config=config,
+    )
+
+
+# Percepcion approval routes
+@percepcion_bp.route("/approve/<string:concept_id>", methods=["POST"])
+@require_write_access()
+def percepcion_approve(concept_id: str):
+    """Approve a perception. Only ADMIN and HHRR can approve."""
+    return approve_concept_route("percepcion", concept_id)
+
+
+@percepcion_bp.route("/reject/<string:concept_id>", methods=["POST"])
+@require_write_access()
+def percepcion_reject(concept_id: str):
+    """Reject a perception. Only ADMIN and HHRR can reject."""
+    return reject_concept_route("percepcion", concept_id)
+
+
+@percepcion_bp.route("/audit/<string:concept_id>")
+@require_read_access()
+def percepcion_audit(concept_id: str):
+    """View audit log for a perception."""
+    return view_audit_log_route("percepcion", concept_id)
+
+
+# Deduccion approval routes
+@deduccion_bp.route("/approve/<string:concept_id>", methods=["POST"])
+@require_write_access()
+def deduccion_approve(concept_id: str):
+    """Approve a deduction. Only ADMIN and HHRR can approve."""
+    return approve_concept_route("deduccion", concept_id)
+
+
+@deduccion_bp.route("/reject/<string:concept_id>", methods=["POST"])
+@require_write_access()
+def deduccion_reject(concept_id: str):
+    """Reject a deduction. Only ADMIN and HHRR can reject."""
+    return reject_concept_route("deduccion", concept_id)
+
+
+@deduccion_bp.route("/audit/<string:concept_id>")
+@require_read_access()
+def deduccion_audit(concept_id: str):
+    """View audit log for a deduction."""
+    return view_audit_log_route("deduccion", concept_id)
+
+
+# Prestacion approval routes
+@prestacion_bp.route("/approve/<string:concept_id>", methods=["POST"])
+@require_write_access()
+def prestacion_approve(concept_id: str):
+    """Approve a benefit. Only ADMIN and HHRR can approve."""
+    return approve_concept_route("prestacion", concept_id)
+
+
+@prestacion_bp.route("/reject/<string:concept_id>", methods=["POST"])
+@require_write_access()
+def prestacion_reject(concept_id: str):
+    """Reject a benefit. Only ADMIN and HHRR can reject."""
+    return reject_concept_route("prestacion", concept_id)
+
+
+@prestacion_bp.route("/audit/<string:concept_id>")
+@require_read_access()
+def prestacion_audit(concept_id: str):
+    """View audit log for a benefit."""
+    return view_audit_log_route("prestacion", concept_id)

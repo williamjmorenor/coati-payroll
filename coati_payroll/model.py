@@ -450,10 +450,22 @@ class Planilla(database.Model, BaseTabla):
         back_populates="planilla",
     )
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     # ejecuciones históricas (nominas)
     nominas = database.relationship(
         "Nomina",
         back_populates="planilla",
+    )
+    audit_logs = database.relationship(
+        "PlanillaAuditLog",
+        back_populates="planilla",
+        cascade="all, delete-orphan",
     )
 
 
@@ -507,11 +519,24 @@ class Percepcion(database.Model, BaseTabla):
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     planillas = database.relationship(
         "PlanillaIngreso",
         back_populates="percepcion",
     )
     nomina_detalles = database.relationship("NominaDetalle", back_populates="percepcion")
+    audit_logs = database.relationship(
+        "ConceptoAuditLog",
+        back_populates="percepcion",
+        foreign_keys="ConceptoAuditLog.percepcion_id",
+        cascade="all, delete-orphan",
+    )
 
 
 class Deduccion(database.Model, BaseTabla):
@@ -551,6 +576,13 @@ class Deduccion(database.Model, BaseTabla):
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     planillas = database.relationship(
         "PlanillaDeduccion",
         back_populates="deduccion",
@@ -558,6 +590,12 @@ class Deduccion(database.Model, BaseTabla):
     nomina_detalles = database.relationship("NominaDetalle", back_populates="deduccion")
     tablas_impuesto = database.relationship("TablaImpuesto", back_populates="deduccion")
     adelantos = database.relationship("Adelanto", back_populates="deduccion")
+    audit_logs = database.relationship(
+        "ConceptoAuditLog",
+        back_populates="deduccion",
+        foreign_keys="ConceptoAuditLog.deduccion_id",
+        cascade="all, delete-orphan",
+    )
 
 
 # Prestaciones (aportes del empleador: seguridad social, etc.)
@@ -615,6 +653,13 @@ class Prestacion(database.Model, BaseTabla):
         database.String(20), nullable=False, default="mensual"
     )  # mensual | anual | vida_laboral
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     planillas = database.relationship(
         "PlanillaPrestacion",
         back_populates="prestacion",
@@ -625,6 +670,12 @@ class Prestacion(database.Model, BaseTabla):
     )
     cargas_iniciales = database.relationship(
         "CargaInicialPrestacion", back_populates="prestacion", cascade="all,delete-orphan"
+    )
+    audit_logs = database.relationship(
+        "ConceptoAuditLog",
+        back_populates="prestacion",
+        foreign_keys="ConceptoAuditLog.prestacion_id",
+        cascade="all, delete-orphan",
     )
 
 
@@ -774,6 +825,15 @@ class Nomina(database.Model, BaseTabla):
     log_procesamiento = database.Column(JSON, nullable=True)  # Stores list of log entries as JSON
     empleado_actual = database.Column(database.String(255), nullable=True)
 
+    # Audit fields for state changes
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    aplicado_por = database.Column(database.String(150), nullable=True)
+    aplicado_en = database.Column(database.DateTime, nullable=True)
+    anulado_por = database.Column(database.String(150), nullable=True)
+    anulado_en = database.Column(database.DateTime, nullable=True)
+    razon_anulacion = database.Column(database.String(500), nullable=True)
+
     planilla = database.relationship("Planilla", back_populates="nominas")
     nomina_empleados = database.relationship(
         "NominaEmpleado",
@@ -787,6 +847,11 @@ class Nomina(database.Model, BaseTabla):
         "ComprobanteContable",
         back_populates="nomina",
         uselist=False,
+    )
+    audit_logs = database.relationship(
+        "NominaAuditLog",
+        back_populates="nomina",
+        cascade="all, delete-orphan",
     )
 
 
@@ -2094,3 +2159,114 @@ class ReportAudit(database.Model, BaseTabla):
     changes = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     # Timestamp is inherited from BaseTabla
+
+
+class ConceptoAuditLog(database.Model, BaseTabla):
+    """Audit trail for payroll concept changes (percepciones, deducciones, prestaciones).
+
+    Records all changes to payroll concepts including creation, modification, and approval.
+    Tracks who made changes, when, and what was changed for governance and compliance.
+    """
+
+    __tablename__ = "concepto_audit_log"
+
+    # Foreign keys to the concepts (only one will be set)
+    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
+
+    # Type of concept (for easier filtering)
+    tipo_concepto = database.Column(
+        database.String(20), nullable=False, index=True
+    )  # percepcion | deduccion | prestacion
+
+    # Action performed
+    accion = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # created | updated | approved | rejected | status_changed
+
+    # User who performed the action
+    usuario = database.Column(database.String(150), nullable=False, index=True)
+
+    # Description of the change (human-readable)
+    descripcion = database.Column(database.String(1000), nullable=True)
+
+    # Detailed changes (JSON storing field-level before/after values)
+    cambios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+    # Previous and new approval status (if applicable)
+    estado_anterior = database.Column(database.String(20), nullable=True)
+    estado_nuevo = database.Column(database.String(20), nullable=True)
+
+    # Relationships
+    percepcion = database.relationship("Percepcion", back_populates="audit_logs")
+    deduccion = database.relationship("Deduccion", back_populates="audit_logs")
+    prestacion = database.relationship("Prestacion", back_populates="audit_logs")
+
+
+class PlanillaAuditLog(database.Model, BaseTabla):
+    """Audit trail for Planilla changes.
+
+    Records all changes to planillas including creation, modification, approval,
+    and configuration changes (adding/removing employees, concepts, etc.).
+    """
+
+    __tablename__ = "planilla_audit_log"
+
+    # Foreign key to planilla
+    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
+
+    # Action performed
+    accion = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # created | updated | approved | rejected | employee_added | employee_removed | concept_added | concept_removed
+
+    # User who performed the action
+    usuario = database.Column(database.String(150), nullable=False, index=True)
+
+    # Description of the change (human-readable)
+    descripcion = database.Column(database.String(1000), nullable=True)
+
+    # Detailed changes (JSON storing field-level before/after values)
+    cambios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+    # Previous and new approval status (if applicable)
+    estado_anterior = database.Column(database.String(20), nullable=True)
+    estado_nuevo = database.Column(database.String(20), nullable=True)
+
+    # Relationship
+    planilla = database.relationship("Planilla", back_populates="audit_logs")
+
+
+class NominaAuditLog(database.Model, BaseTabla):
+    """Audit trail for Nomina state changes.
+
+    Records all state transitions of nominas: generation, approval, application,
+    cancellation, and any modifications.
+    """
+
+    __tablename__ = "nomina_audit_log"
+
+    # Foreign key to nomina
+    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False)
+
+    # Action performed
+    accion = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # generated | approved | applied | cancelled | recalculated | modified
+
+    # User who performed the action
+    usuario = database.Column(database.String(150), nullable=False, index=True)
+
+    # Description of the change (human-readable)
+    descripcion = database.Column(database.String(1000), nullable=True)
+
+    # Detailed changes (JSON storing field-level before/after values)
+    cambios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+    # Previous and new state (for state transitions)
+    estado_anterior = database.Column(database.String(30), nullable=True)
+    estado_nuevo = database.Column(database.String(30), nullable=True)
+
+    # Relationship
+    nomina = database.relationship("Nomina", back_populates="audit_logs")

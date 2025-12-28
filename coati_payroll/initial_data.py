@@ -386,8 +386,10 @@ def load_income_concepts() -> None:
 
     Concept names and descriptions are translated based on the configured
     language in the database. This function is idempotent.
+    Default concepts are created with approved status.
     """
-    from coati_payroll.model import Percepcion, db
+    from coati_payroll.model import Percepcion, db, utc_now
+    from coati_payroll.enums import EstadoAprobacion
     from coati_payroll.log import log
 
     concepts_loaded = 0
@@ -409,6 +411,11 @@ def load_income_concepts() -> None:
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True
+            # Default concepts are pre-approved
+            concept.estado_aprobacion = EstadoAprobacion.APROBADO
+            concept.aprobado_por = "system"
+            concept.aprobado_en = utc_now()
+            concept.creado_por = "system"
 
             db.session.add(concept)
             concepts_loaded += 1
@@ -425,8 +432,10 @@ def load_deduction_concepts() -> None:
 
     Concept names and descriptions are translated based on the configured
     language in the database. This function is idempotent.
+    Default concepts are created with approved status.
     """
-    from coati_payroll.model import Deduccion, db
+    from coati_payroll.model import Deduccion, db, utc_now
+    from coati_payroll.enums import EstadoAprobacion
     from coati_payroll.log import log
 
     concepts_loaded = 0
@@ -450,6 +459,11 @@ def load_deduction_concepts() -> None:
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True
+            # Default concepts are pre-approved
+            concept.estado_aprobacion = EstadoAprobacion.APROBADO
+            concept.aprobado_por = "system"
+            concept.aprobado_en = utc_now()
+            concept.creado_por = "system"
 
             db.session.add(concept)
             concepts_loaded += 1
@@ -466,8 +480,10 @@ def load_benefit_concepts() -> None:
 
     Concept names and descriptions are translated based on the configured
     language in the database. This function is idempotent.
+    Default concepts are created with approved status.
     """
-    from coati_payroll.model import Prestacion, db
+    from coati_payroll.model import Prestacion, db, utc_now
+    from coati_payroll.enums import EstadoAprobacion
     from coati_payroll.log import log
 
     concepts_loaded = 0
@@ -489,6 +505,11 @@ def load_benefit_concepts() -> None:
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True
+            # Default concepts are pre-approved
+            concept.estado_aprobacion = EstadoAprobacion.APROBADO
+            concept.aprobado_por = "system"
+            concept.aprobado_en = utc_now()
+            concept.creado_por = "system"
 
             db.session.add(concept)
             concepts_loaded += 1

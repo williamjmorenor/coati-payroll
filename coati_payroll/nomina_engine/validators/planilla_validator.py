@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from sqlalchemy import or_, and_
 
+from coati_payroll.audit_helpers import obtener_conceptos_en_borrador
 from coati_payroll.model import Nomina
 from coati_payroll.enums import NominaEstado
 from ..domain.payroll_context import PayrollContext
@@ -55,6 +56,9 @@ class PlanillaValidator(BaseValidator):
         # Validate period not duplicated
         if not self._validate_periodo_no_duplicado(planilla, context):
             result.add_error("El período se solapa con una nómina existente.")
+
+        # Check for draft concepts and add warnings (not errors - allow test runs)
+        self._check_draft_concepts(planilla, result)
 
         return result
 
@@ -98,3 +102,35 @@ class PlanillaValidator(BaseValidator):
         )
 
         return existing is None
+
+    def _check_draft_concepts(self, planilla, result: ValidationResult) -> None:
+        """Check for draft concepts and add warnings.
+
+        Draft concepts are allowed in payroll runs (for testing), but we warn
+        the user to carefully validate results.
+        """
+        conceptos_borrador = obtener_conceptos_en_borrador(planilla.id)
+
+        if conceptos_borrador["percepciones"]:
+            percepciones_nombres = [p.nombre for p in conceptos_borrador["percepciones"]]
+            result.add_warning(
+                f"ADVERTENCIA: {len(percepciones_nombres)} percepción(es) en estado BORRADOR: "
+                f"{', '.join(percepciones_nombres)}. "
+                "Valide cuidadosamente los resultados de la nómina."
+            )
+
+        if conceptos_borrador["deducciones"]:
+            deducciones_nombres = [d.nombre for d in conceptos_borrador["deducciones"]]
+            result.add_warning(
+                f"ADVERTENCIA: {len(deducciones_nombres)} deducción(es) en estado BORRADOR: "
+                f"{', '.join(deducciones_nombres)}. "
+                "Valide cuidadosamente los resultados de la nómina."
+            )
+
+        if conceptos_borrador["prestaciones"]:
+            prestaciones_nombres = [p.nombre for p in conceptos_borrador["prestaciones"]]
+            result.add_warning(
+                f"ADVERTENCIA: {len(prestaciones_nombres)} prestación(es) en estado BORRADOR: "
+                f"{', '.join(prestaciones_nombres)}. "
+                "Valide cuidadosamente los resultados de la nómina."
+            )
