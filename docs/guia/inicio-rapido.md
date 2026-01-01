@@ -3,7 +3,7 @@
 ¡Bienvenido a Coati Payroll! Esta guía le ayudará a evaluar rápidamente el sistema siguiendo un flujo de trabajo completo: desde la instalación hasta calcular su primera nómina.
 
 !!! warning "Importante: Ejemplos Ilustrativos"
-    Esta guía utiliza **ejemplos con valores y conceptos genéricos** para demostrar las capacidades del sistema. Los nombres de conceptos (como "INSS"), porcentajes (7%, 22.5%) y cálculos mostrados son **ejemplos ilustrativos** que NO representan reglas legales de ninguna jurisdicción específica.
+    Esta guía utiliza **ejemplos con valores y conceptos genéricos** para demostrar las capacidades del sistema. Los nombres de conceptos, porcentajes y cálculos mostrados son **ejemplos ilustrativos** que NO representan reglas legales de ninguna jurisdicción específica.
     
     **Usted debe configurar** los conceptos, porcentajes y reglas de cálculo según las leyes y políticas de **su jurisdicción específica**. El motor no incluye ni impondrá reglas legales predefinidas.
     

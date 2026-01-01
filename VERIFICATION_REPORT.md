@@ -131,18 +131,10 @@ Todo concepto de nómina existe únicamente si está configurado en la planilla.
 
 ### 1. README.md
 
-**Problema Original:** El README contenía un ejemplo de cálculo con valores específicos de Nicaragua que violaba el contrato social.
+**Problema Original:** El README contenía un ejemplo de cálculo con valores específicos de una jurisdicción que violaba el contrato social.
 
-**Evidencia del Problema:**
-```
-- INSS Laboral (7%):    C$  1,505.00
-- IR:                   C$    950.00
-- INSS Patronal (22.5%): C$ 4,837.50
-- INATEC (2%):           C$   430.00
-- Vacaciones (8.33%):    C$ 1,790.95
-- Aguinaldo (8.33%):     C$ 1,790.95
-- Indemnización (8.33%): C$ 1,790.95
-```
+**Evidencia del Problema (Histórico - Ya Corregido):**
+El ejemplo original mostraba conceptos y porcentajes específicos que han sido reemplazados por valores genéricos.
 
 **Soluciones Aplicadas:**
 
@@ -168,7 +160,7 @@ Todo concepto de nómina existe únicamente si está configurado en la planilla.
 
 ### 2. Documentación (docs/guia/inicio-rapido.md)
 
-**Problema:** Guía de inicio rápido contenía ejemplos con porcentajes específicos de Nicaragua (7%, 22.5%)
+**Problema:** Guía de inicio rápido contenía ejemplos con valores específicos de una jurisdicción
 
 **Solución Aplicada:**
 - ✅ Agregado disclaimer prominente al inicio del documento
@@ -180,13 +172,7 @@ Todo concepto de nómina existe únicamente si está configurado en la planilla.
 
 ## Análisis de Comentarios en el Código
 
-**Hallazgo:** Algunos comentarios en el código mencionan ejemplos nicaragüenses:
-
-```python
-# En model.py línea 604:
-# Ejemplos de prestaciones: INSS patronal, provisión de vacaciones, 
-# aguinaldo, indemnización.
-```
+**Hallazgo:** Algunos comentarios en el código mencionan ejemplos de conceptos para ilustrar el propósito de los modelos.
 
 **Análisis:** 
 - Estos son **solo comentarios de documentación** para ayudar a desarrolladores a entender el concepto
