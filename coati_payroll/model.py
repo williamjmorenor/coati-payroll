@@ -1422,10 +1422,22 @@ class ReglaCalculo(database.Model, BaseTabla):
     percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
     prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     # Relationship to planillas that use this rule
     planillas = database.relationship(
         "PlanillaReglaCalculo",
         back_populates="regla_calculo",
+    )
+    audit_logs = database.relationship(
+        "ReglaCalculoAuditLog",
+        back_populates="regla_calculo",
+        cascade="all, delete-orphan",
     )
 
 
@@ -2279,3 +2291,37 @@ class NominaAuditLog(database.Model, BaseTabla):
 
     # Relationship
     nomina = database.relationship("Nomina", back_populates="audit_logs")
+
+
+class ReglaCalculoAuditLog(database.Model, BaseTabla):
+    """Audit trail for ReglaCalculo changes.
+
+    Records all changes to calculation rules including creation, modification,
+    approval, schema changes, and versioning for SOX/COSO compliance.
+    """
+
+    __tablename__ = "regla_calculo_audit_log"
+
+    # Foreign key to regla_calculo
+    regla_calculo_id = database.Column(database.String(26), database.ForeignKey("regla_calculo.id"), nullable=False)
+
+    # Action performed
+    accion = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # created | updated | approved | rejected | schema_changed | version_changed | status_changed
+
+    # User who performed the action
+    usuario = database.Column(database.String(150), nullable=False, index=True)
+
+    # Description of the change (human-readable)
+    descripcion = database.Column(database.String(1000), nullable=True)
+
+    # Detailed changes (JSON storing field-level before/after values)
+    cambios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+    # Previous and new approval status (if applicable)
+    estado_anterior = database.Column(database.String(20), nullable=True)
+    estado_nuevo = database.Column(database.String(20), nullable=True)
+
+    # Relationship
+    regla_calculo = database.relationship("ReglaCalculo", back_populates="audit_logs")

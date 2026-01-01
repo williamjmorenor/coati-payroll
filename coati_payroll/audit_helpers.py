@@ -23,11 +23,13 @@ from coati_payroll.model import (
     ConceptoAuditLog,
     PlanillaAuditLog,
     NominaAuditLog,
+    ReglaCalculoAuditLog,
     Percepcion,
     Deduccion,
     Prestacion,
     Planilla,
     Nomina,
+    ReglaCalculo,
     db,
     utc_now,
 )
@@ -654,3 +656,238 @@ def anular_nomina(nomina: Nomina, usuario: str, razon: str) -> bool:
     )
 
     return True
+
+
+# ============================================================================
+# REGLA CALCULO AUDIT FUNCTIONS
+# ============================================================================
+
+
+def crear_log_auditoria_regla_calculo(
+    regla_calculo: ReglaCalculo,
+    accion: str,
+    usuario: str,
+    descripcion: Optional[str] = None,
+    cambios: Optional[Dict[str, Any]] = None,
+    estado_anterior: Optional[str] = None,
+    estado_nuevo: Optional[str] = None,
+) -> ReglaCalculoAuditLog:
+    """Create an audit log entry for a calculation rule change.
+
+    Args:
+        regla_calculo: The calculation rule that was changed
+        accion: Action performed (created, updated, approved, rejected, etc.)
+        usuario: Username who performed the action
+        descripcion: Human-readable description of the change
+        cambios: Dictionary of field-level changes
+        estado_anterior: Previous approval status
+        estado_nuevo: New approval status
+
+    Returns:
+        The created audit log entry
+    """
+    log = ReglaCalculoAuditLog(
+        regla_calculo_id=regla_calculo.id,
+        accion=accion,
+        usuario=usuario,
+        descripcion=descripcion,
+        cambios=cambios or {},
+        estado_anterior=estado_anterior,
+        estado_nuevo=estado_nuevo,
+    )
+
+    db.session.add(log)
+    return log
+
+
+def aprobar_regla_calculo(regla_calculo: ReglaCalculo, usuario: str) -> bool:
+    """Approve a calculation rule.
+
+    Changes status from 'borrador' to 'aprobado' and records approval information.
+
+    Args:
+        regla_calculo: The calculation rule to approve
+        usuario: Username who is approving
+
+    Returns:
+        True if approved successfully, False if already approved or invalid
+    """
+    if regla_calculo.estado_aprobacion == EstadoAprobacion.APROBADO:
+        return False
+
+    estado_anterior = regla_calculo.estado_aprobacion
+    regla_calculo.estado_aprobacion = EstadoAprobacion.APROBADO
+    regla_calculo.aprobado_por = usuario
+    regla_calculo.aprobado_en = utc_now()
+
+    # Create audit log
+    crear_log_auditoria_regla_calculo(
+        regla_calculo=regla_calculo,
+        accion="approved",
+        usuario=usuario,
+        descripcion=f"Aprobó regla de cálculo '{regla_calculo.nombre}' (código: {regla_calculo.codigo}, versión: {regla_calculo.version})",
+        estado_anterior=estado_anterior,
+        estado_nuevo=EstadoAprobacion.APROBADO,
+    )
+
+    return True
+
+
+def rechazar_regla_calculo(
+    regla_calculo: ReglaCalculo,
+    usuario: str,
+    razon: Optional[str] = None,
+) -> bool:
+    """Reject a calculation rule (keep as draft).
+
+    Args:
+        regla_calculo: The calculation rule to reject
+        usuario: Username who is rejecting
+        razon: Reason for rejection
+
+    Returns:
+        True if rejected successfully
+    """
+    estado_anterior = regla_calculo.estado_aprobacion
+    regla_calculo.estado_aprobacion = EstadoAprobacion.BORRADOR
+    regla_calculo.aprobado_por = None
+    regla_calculo.aprobado_en = None
+
+    # Create audit log
+    descripcion = f"Rechazó regla de cálculo '{regla_calculo.nombre}' (código: {regla_calculo.codigo}, versión: {regla_calculo.version})"
+    if razon:
+        descripcion += f" - Razón: {razon}"
+
+    crear_log_auditoria_regla_calculo(
+        regla_calculo=regla_calculo,
+        accion="rejected",
+        usuario=usuario,
+        descripcion=descripcion,
+        estado_anterior=estado_anterior,
+        estado_nuevo=EstadoAprobacion.BORRADOR,
+    )
+
+    return True
+
+
+def marcar_regla_calculo_como_borrador_si_editada(
+    regla_calculo: ReglaCalculo,
+    usuario: str,
+    cambios: Dict[str, Any],
+) -> None:
+    """Mark calculation rule as draft if it was edited while approved.
+
+    When an approved calculation rule is edited, it must return to draft status
+    unless it was created by a plugin.
+
+    Args:
+        regla_calculo: The calculation rule that was edited
+        usuario: Username who edited
+        cambios: Dictionary of changes made
+    """
+    # Don't change status if created by plugin
+    if regla_calculo.creado_por_plugin:
+        return
+
+    # If currently approved, mark as draft
+    if regla_calculo.estado_aprobacion == EstadoAprobacion.APROBADO:
+        estado_anterior = regla_calculo.estado_aprobacion
+        regla_calculo.estado_aprobacion = EstadoAprobacion.BORRADOR
+        regla_calculo.aprobado_por = None
+        regla_calculo.aprobado_en = None
+
+        # Create audit log
+        descripcion_cambios = generar_descripcion_cambios(cambios)
+
+        crear_log_auditoria_regla_calculo(
+            regla_calculo=regla_calculo,
+            accion="updated",
+            usuario=usuario,
+            descripcion=f"Editó regla de cálculo '{regla_calculo.nombre}' - {descripcion_cambios}. Estado cambiado a borrador.",
+            cambios=cambios,
+            estado_anterior=estado_anterior,
+            estado_nuevo=EstadoAprobacion.BORRADOR,
+        )
+
+
+def obtener_reglas_calculo_en_borrador(planilla_id: str) -> list:
+    """Get all draft calculation rules associated with a planilla.
+
+    Args:
+        planilla_id: ID of the planilla
+
+    Returns:
+        List of draft calculation rules
+    """
+    from coati_payroll.model import PlanillaReglaCalculo
+
+    reglas_borrador = (
+        db.session.query(ReglaCalculo)
+        .join(PlanillaReglaCalculo)
+        .filter(
+            PlanillaReglaCalculo.planilla_id == planilla_id,
+            ReglaCalculo.estado_aprobacion == EstadoAprobacion.BORRADOR,
+            ReglaCalculo.activo == True,  # noqa: E712
+        )
+        .all()
+    )
+
+    return reglas_borrador
+
+
+def validar_configuracion_nomina(planilla_id: str) -> Dict[str, Any]:
+    """Validate payroll configuration before execution.
+
+    Checks for draft concepts and calculation rules that may affect payroll accuracy.
+    Returns warnings but does not prevent execution (allows test runs).
+
+    Args:
+        planilla_id: ID of the planilla
+
+    Returns:
+        Dictionary with validation results:
+        {
+            "tiene_advertencias": bool,
+            "advertencias": list of warning messages,
+            "conceptos_borrador": dict with draft concepts,
+            "reglas_borrador": list of draft calculation rules
+        }
+    """
+    advertencias = []
+
+    # Check for draft concepts
+    conceptos_borrador = obtener_conceptos_en_borrador(planilla_id)
+
+    if conceptos_borrador["percepciones"]:
+        percepciones_nombres = [p.nombre for p in conceptos_borrador["percepciones"]]
+        advertencias.append(
+            f"⚠️ Hay {len(percepciones_nombres)} percepción(es) en estado BORRADOR: {', '.join(percepciones_nombres)}"
+        )
+
+    if conceptos_borrador["deducciones"]:
+        deducciones_nombres = [d.nombre for d in conceptos_borrador["deducciones"]]
+        advertencias.append(
+            f"⚠️ Hay {len(deducciones_nombres)} deducción(es) en estado BORRADOR: {', '.join(deducciones_nombres)}"
+        )
+
+    if conceptos_borrador["prestaciones"]:
+        prestaciones_nombres = [p.nombre for p in conceptos_borrador["prestaciones"]]
+        advertencias.append(
+            f"⚠️ Hay {len(prestaciones_nombres)} prestación(es) en estado BORRADOR: {', '.join(prestaciones_nombres)}"
+        )
+
+    # Check for draft calculation rules
+    reglas_borrador = obtener_reglas_calculo_en_borrador(planilla_id)
+
+    if reglas_borrador:
+        reglas_nombres = [f"{r.nombre} (v{r.version})" for r in reglas_borrador]
+        advertencias.append(
+            f"⚠️ Hay {len(reglas_nombres)} regla(s) de cálculo en estado BORRADOR: {', '.join(reglas_nombres)}"
+        )
+
+    return {
+        "tiene_advertencias": bool(advertencias),
+        "advertencias": advertencias,
+        "conceptos_borrador": conceptos_borrador,
+        "reglas_borrador": reglas_borrador,
+    }
