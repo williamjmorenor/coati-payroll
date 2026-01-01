@@ -196,6 +196,39 @@ def save_schema(id: str):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@calculation_rule_bp.route("/api/validate-schema/<string:id>", methods=["POST"])
+@require_write_access()
+def validate_schema_api(id: str):
+    """API endpoint to validate a JSON schema without saving it."""
+    rule = db.session.get(ReglaCalculo, id)
+    if not rule:
+        return jsonify({"success": False, "error": "Regla no encontrada"}), 404
+
+    try:
+        data = request.get_json()
+        schema = data.get("schema", {})
+
+        # Validate schema structure and formula safety
+        from coati_payroll.schema_validator import validate_schema_deep
+
+        try:
+            validate_schema_deep(schema)
+        except Exception as e:
+            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
+
+        # Also validate by trying to create a FormulaEngine instance
+        try:
+            FormulaEngine(schema)
+        except FormulaEngineError as e:
+            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
+
+        return jsonify({"success": True, "message": "Esquema válido"})
+    except json.JSONDecodeError as e:
+        return jsonify({"success": False, "error": f"JSON inválido: {e}"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @calculation_rule_bp.route("/api/test-schema/<string:id>", methods=["POST"])
 @require_write_access()
 def test_schema(id: str):
