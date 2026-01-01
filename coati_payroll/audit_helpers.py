@@ -248,7 +248,8 @@ def marcar_como_borrador_si_editado(
             concepto=concepto,
             accion="updated",
             usuario=usuario,
-            descripcion=f"Editó {tipo_concepto} '{concepto.nombre}' - {descripcion_cambios}. Estado cambiado a borrador.",
+            descripcion=f"Editó {tipo_concepto} '{concepto.nombre}' - {descripcion_cambios}."
+            + " Estado cambiado a borrador.",
             cambios=cambios,
             estado_anterior=estado_anterior,
             estado_nuevo=EstadoAprobacion.BORRADOR,
@@ -725,7 +726,11 @@ def aprobar_regla_calculo(regla_calculo: ReglaCalculo, usuario: str) -> bool:
         regla_calculo=regla_calculo,
         accion="approved",
         usuario=usuario,
-        descripcion=f"Aprobó regla de cálculo '{regla_calculo.nombre}' (código: {regla_calculo.codigo}, versión: {regla_calculo.version})",
+        descripcion=(
+            "Aprobó regla de cálculo "
+            + f"'{regla_calculo.nombre}' (código: {regla_calculo.codigo}, "
+            + f"versión: {regla_calculo.version})"
+        ),
         estado_anterior=estado_anterior,
         estado_nuevo=EstadoAprobacion.APROBADO,
     )
@@ -754,7 +759,10 @@ def rechazar_regla_calculo(
     regla_calculo.aprobado_en = None
 
     # Create audit log
-    descripcion = f"Rechazó regla de cálculo '{regla_calculo.nombre}' (código: {regla_calculo.codigo}, versión: {regla_calculo.version})"
+    descripcion = (
+        f"Rechazó regla de cálculo '{regla_calculo.nombre}' "
+        + f"(código: {regla_calculo.codigo}, versión: {regla_calculo.version})"
+    )
     if razon:
         descripcion += f" - Razón: {razon}"
 
@@ -803,7 +811,10 @@ def marcar_regla_calculo_como_borrador_si_editada(
             regla_calculo=regla_calculo,
             accion="updated",
             usuario=usuario,
-            descripcion=f"Editó regla de cálculo '{regla_calculo.nombre}' - {descripcion_cambios}. Estado cambiado a borrador.",
+            descripcion=(
+                f"Editó regla de cálculo '{regla_calculo.nombre}' - "
+                + f"{descripcion_cambios}. Estado cambiado a borrador."
+            ),
             cambios=cambios,
             estado_anterior=estado_anterior,
             estado_nuevo=EstadoAprobacion.BORRADOR,

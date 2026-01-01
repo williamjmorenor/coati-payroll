@@ -135,11 +135,11 @@ def _validate_formula_safety(formula: str, error_class: Type[Exception] = Valida
         for node in ast.walk(tree.body):
             # Block dangerous operations
             if isinstance(node, (ast.Import, ast.ImportFrom)):
-                raise error_class(f"Import statements are not allowed in formulas")
+                raise error_class("Import statements are not allowed in formulas")
 
             # Block attribute access (prevents __import__, etc.)
             if isinstance(node, ast.Attribute):
-                raise error_class(f"Attribute access is not allowed in formulas")
+                raise error_class("Attribute access is not allowed in formulas")
 
             # Block function calls to __import__ and other dangerous builtins
             if isinstance(node, ast.Call):
