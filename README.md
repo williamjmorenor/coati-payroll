@@ -5,24 +5,29 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Sistema de administración de nóminas y planillas desarrollado por BMO Soluciones, S.A.
+Motor de cálculo de planillas agnóstico a la jurisdicción desarrollado por BMO Soluciones, S.A.
 
 ## Descripción
 
-Coati Payroll es una aplicación web diseñada para facilitar la gestión completa del proceso de nómina de una empresa. El sistema permite configurar y ejecutar nóminas con percepciones, deducciones, prestaciones patronales y préstamos a empleados.
+Coati Payroll es un **motor de cálculo de nóminas flexible y extensible**, completamente agnóstico a la jurisdicción. El sistema está diseñado para que organizaciones e implementadores puedan definir sus propias reglas de nómina mediante configuración, sin necesidad de modificar el código fuente.
+
+El motor no incorpora reglas legales hardcodeadas. Todas las percepciones, deducciones, prestaciones, impuestos y otros conceptos de nómina existen únicamente si el implementador los configura.
+
+> **Importante**: Este proyecto se rige por un [Contrato Social](SOCIAL_CONTRACT.md) que define claramente su alcance, propósito y limitaciones. Por favor, léalo antes de usar el sistema en producción.
 
 ### Características Principales
 
+- **Agnóstico a la Jurisdicción**: No incorpora reglas legales hardcodeadas; toda la lógica de nómina se define por configuración
+- **Motor de Cálculo Configurable**: Procesamiento de nóminas con fórmulas y esquemas completamente configurables
+- **Reglas de Cálculo Flexibles**: Sistema de reglas que permite implementar cualquier lógica de nómina mediante configuración
 - **Multi-empresa**: Gestione nóminas para múltiples empresas o entidades desde un solo sistema
 - **Gestión de Empleados**: Registro completo de información personal, laboral y salarial
 - **Campos Personalizados**: Extienda la información de empleados con campos personalizados
-- **Percepciones Configurables**: Bonos, comisiones, horas extras y otros ingresos
-- **Deducciones con Prioridad**: INSS, IR, préstamos y otras deducciones en orden configurable
-- **Prestaciones Patronales**: INSS patronal, INATEC, vacaciones, aguinaldo, indemnización
-- **Reglas de Cálculo**: Motor de reglas con esquemas configurables para cálculos complejos (IR, INSS, etc.)
+- **Percepciones Configurables**: Defina cualquier tipo de ingreso adicional (bonos, comisiones, horas extras, etc.)
+- **Deducciones con Prioridad**: Configure deducciones en orden de prioridad según sus necesidades
+- **Prestaciones Patronales**: Configure prestaciones y aportes patronales según requerimientos
 - **Préstamos y Adelantos**: Control de préstamos con deducción automática de cuotas
 - **Multi-moneda**: Soporte para múltiples monedas con tipos de cambio
-- **Motor de Cálculo**: Procesamiento automático de nóminas con fórmulas configurables
 - **Procesamiento en Segundo Plano**: Sistema de colas para nóminas grandes con Dramatiq/Huey
 - **Gestión de Vacaciones**: Módulo completo de acumulación, uso y auditoría de vacaciones con políticas configurables
 - **Control de Acceso Basado en Roles (RBAC)**: Sistema de permisos con roles Admin, HHRR y Audit
@@ -371,30 +376,44 @@ graph LR
 
 El motor de nómina procesa en este orden:
 
-1. **Percepciones**: Se suman al salario base → Salario Bruto
-2. **Deducciones**: Se restan en orden de prioridad → Salario Neto
-3. **Prestaciones**: Se calculan como costos patronales (no afectan salario neto)
+1. **Salario Base**: Salario definido para el empleado según el período de planilla
+2. **Percepciones**: Se suman al salario base → Salario Bruto
+3. **Deducciones**: Se restan en orden de prioridad → Salario Neto
+4. **Prestaciones**: Se calculan como costos patronales (no afectan salario neto)
 
-### Ejemplo de Cálculo
+### Ejemplo Ilustrativo de Cálculo
+
+> **Nota Importante**: Este es un ejemplo ilustrativo con valores y conceptos genéricos. Los nombres de conceptos, porcentajes y cálculos específicos **deben ser configurados por el implementador** según las leyes y políticas de su jurisdicción. El motor **no incluye reglas legales predefinidas**.
 
 ```
-Salario Base:           C$ 20,000.00
-+ Bono Productividad:   C$  1,500.00
-= SALARIO BRUTO:        C$ 21,500.00
+Salario Base:              $ 10,000.00
++ Percepción A:            $    500.00
++ Percepción B:            $    300.00
+= SALARIO BRUTO:           $ 10,800.00
 
-- INSS Laboral (7%):    C$  1,505.00
-- IR:                   C$    950.00
-- Cuota Préstamo:       C$  2,000.00
-= SALARIO NETO:         C$ 17,045.00
+- Deducción A (X%):        $    756.00
+- Deducción B (Y%):        $    540.00
+- Deducción C:             $    200.00
+= SALARIO NETO:            $  9,304.00
 
-Prestaciones Patronales:
-+ INSS Patronal (22.5%): C$ 4,837.50
-+ INATEC (2%):           C$   430.00
-+ Vacaciones (8.33%):    C$ 1,790.95
-+ Aguinaldo (8.33%):     C$ 1,790.95
-+ Indemnización (8.33%): C$ 1,790.95
-= COSTO TOTAL EMPRESA:   C$ 32,140.35
+Prestaciones Patronales (Costos Empresa):
++ Prestación A (W%):       $  2,160.00
++ Prestación B (Z%):       $    216.00
++ Prestación C (P%):       $    899.64
++ Prestación D (P%):       $    899.64
++ Prestación E (P%):       $    899.64
+= COSTO TOTAL EMPRESA:     $ 15,178.92
 ```
+
+**¿Cómo configurar estos conceptos?**
+
+Todos los conceptos, porcentajes y reglas de cálculo se definen mediante:
+- **Percepciones configurables**: Defina cualquier tipo de ingreso adicional
+- **Deducciones con prioridad**: Configure el orden y fórmula de cada deducción
+- **Prestaciones patronales**: Configure los aportes según su jurisdicción
+- **Reglas de cálculo**: Use el motor de reglas para implementar lógicas complejas (tramos, topes, exenciones, etc.)
+
+Consulte la [documentación completa](docs/) para aprender a configurar su sistema de nómina.
 
 ## Desarrollo
 
@@ -452,6 +471,46 @@ Los principales modelos son:
 - `ReportRole`: Permisos de reportes por rol
 - `ReportExecution`: Historial de ejecuciones de reportes
 - `ReportAudit`: Auditoría de reportes
+
+## Contrato Social y Responsabilidades
+
+Este proyecto se rige por un [Contrato Social](SOCIAL_CONTRACT.md) que establece claramente:
+
+### Alcance del Proyecto
+
+- **Motor agnóstico a la jurisdicción**: No incluye ni incluirá reglas legales hardcodeadas
+- **Separación estricta**: Entre motor de cálculo, configuración de reglas y orquestación de nómina
+- **Cálculo predecible y reproducible**: Los cálculos son determinísticos y auditables
+- **Extensible por configuración**: Cualquier cambio legal se implementa mediante configuración, no código
+
+### Funcionalidad por Defecto
+
+El motor, por defecto, **solo** calcula:
+1. Salario base del empleado según el período definido
+2. Cuotas de anticipos salariales cuando existen
+
+Todos los demás conceptos (percepciones, deducciones, prestaciones, impuestos, topes, tramos, exenciones) existen únicamente si el implementador los configura.
+
+### Responsabilidad del Implementador
+
+El uso correcto del motor requiere que el implementador:
+- Tenga conocimiento de cómo se calcula una nómina en su jurisdicción
+- Comprenda el marco legal aplicable
+- Sea capaz de calcular manualmente una nómina completa
+- Compare resultados manuales con los del sistema
+- Identifique y corrija errores de configuración
+
+### Garantías y Limitaciones
+
+Este software se distribuye bajo la Licencia Apache 2.0 **"tal como está" (AS IS)**:
+- ✅ **Promete**: Cálculos predecibles, reproducibles y auditables
+- ✅ **Promete**: Mantenerse agnóstico a la jurisdicción
+- ✅ **Promete**: Separación entre motor y configuración
+- ❌ **No garantiza**: Cumplimiento normativo de ninguna jurisdicción
+- ❌ **No garantiza**: Resultados correctos sin configuración apropiada
+- ❌ **No sustituye**: Conocimiento profesional ni asesoría legal
+
+**Para más detalles, lea el [Contrato Social](SOCIAL_CONTRACT.md) completo antes de usar este sistema en producción.**
 
 ## Licencia
 
