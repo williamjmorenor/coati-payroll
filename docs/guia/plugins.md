@@ -338,7 +338,7 @@ Esta sección proporciona una guía paso a paso para crear, empaquetar y distrib
 
 ## Paso 1: Estructura del Proyecto
 
-Crea un nuevo directorio para tu plugin. El nombre del directorio puede ser cualquiera, pero el **nombre del paquete** debe seguir la convención `coati-payroll-plugin-XXXXXXXX`.
+Crea un nuevo directorio para tu plugin. El nombre del directorio puede ser cualquiera, pero el **nombre del paquete** debe seguir la convención `coati-payroll-plugin-XXXXXXXX`, donde `XXXXXXXX` es un identificador descriptivo (generalmente el código de país ISO de 2 letras, como `gt`, `sv`, `pa`, etc., o un nombre descriptivo para plugins funcionales).
 
 Para este ejemplo, crearemos un plugin para El Salvador (`coati-payroll-plugin-sv`):
 
@@ -382,7 +382,7 @@ readme = "README.md"
 authors = [
     {name = "Tu Nombre", email = "tu@email.com"}
 ]
-license = {text = "Apache-2.0"}
+license = {text = "Apache-2.0"}  # O la licencia de tu elección: MIT, BSD, GPL, etc.
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -475,6 +475,15 @@ def get_menu_entry():
     }
 
 
+# Alternativa: usar una constante en lugar de una función
+# MENU_ENTRY = {
+#     "label": "El Salvador",
+#     "icon": "bi bi-geo-alt-fill",
+#     "url": "/sv/",
+# }
+# Nota: Si defines MENU_ENTRY, no es necesario definir get_menu_entry()
+
+
 # ============================================================================
 # COMANDO INIT (OBLIGATORIO)
 # ============================================================================
@@ -496,7 +505,8 @@ def init():
         TipoPlanilla,
     )
     
-    # Función auxiliar para upsert
+    # Función auxiliar para upsert (asume que los modelos tienen campo 'codigo')
+    # Adaptar según la estructura de tu modelo si usa otro campo como clave
     def _upsert_by_codigo(Model, codigo: str, **kwargs):
         existing = db.session.execute(
             db.select(Model).filter_by(codigo=codigo)
@@ -753,8 +763,20 @@ Plugin que implementa las reglas de nómina específicas para El Salvador.
 
 ## Instalación
 
+### Desde PyPI (cuando esté publicado)
+
 ```bash
 pip install coati-payroll-plugin-sv
+```
+
+### Desde repositorio local (para desarrollo)
+
+```bash
+# Desde el directorio del plugin
+pip install -e .
+
+# O desde archivo wheel
+pip install dist/coati-payroll-plugin-sv-1.0.0-py3-none-any.whl
 ```
 
 ## Configuración
@@ -1042,9 +1064,23 @@ Para compartir el plugin con la comunidad:
 
    ```bash
    # Crear archivo ~/.pypirc
+   # ⚠️ ADVERTENCIA: Protege este archivo (chmod 600 ~/.pypirc)
+   # ⚠️ Nunca compartas tu token en repositorios públicos
    [pypi]
    username = __token__
-   password = pypi-tu-token-aqui
+   password = pypi-tu-token-aqui  # Token API de PyPI
+   ```
+   
+   **Alternativa más segura**: Usar variables de entorno o keyring:
+   
+   ```bash
+   # Usar variables de entorno
+   export TWINE_USERNAME=__token__
+   export TWINE_PASSWORD=pypi-tu-token-aqui
+   
+   # O usar keyring (recomendado)
+   pip install keyring
+   keyring set https://upload.pypi.org/legacy/ __token__
    ```
 
 3. Publica el plugin:
@@ -1115,7 +1151,7 @@ Al crear un plugin, asegúrate de tener:
 - [ ] Nombre de módulo correcto: `coati_payroll_plugin_XXXXXXXX`
 - [ ] Archivo `pyproject.toml` configurado
 - [ ] Función `register_blueprints(app)` implementada
-- [ ] Función `get_menu_entry()` o constante `MENU_ENTRY`
+- [ ] Función `get_menu_entry()` implementada (devuelve dict con label, icon, url)
 - [ ] Función `init()` implementada e idempotente
 - [ ] Función `update()` implementada e idempotente
 - [ ] Blueprint con al menos una ruta
