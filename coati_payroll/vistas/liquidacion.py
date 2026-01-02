@@ -32,6 +32,9 @@ from coati_payroll.vistas.planilla.services import ExportService
 
 liquidacion_bp = Blueprint("liquidacion", __name__, url_prefix="/liquidaciones")
 
+# Constants
+ROUTE_LIQUIDACION_VER = "liquidacion.ver"
+
 
 @liquidacion_bp.route("/")
 @login_required
@@ -83,7 +86,7 @@ def nueva():
 
         if liquidacion:
             flash(_("Liquidación calculada."), "success")
-            return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion.id))
+            return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
         return redirect(url_for("liquidacion.nueva"))
 
@@ -119,7 +122,7 @@ def recalcular(liquidacion_id: str):
 
     if nueva:
         flash(_("Liquidación recalculada."), "success")
-    return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion.id))
+    return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
 
 @liquidacion_bp.route("/<liquidacion_id>/aplicar", methods=["POST"])
@@ -130,12 +133,12 @@ def aplicar(liquidacion_id: str):
 
     if liquidacion.estado != "borrador":
         flash(_("Solo se pueden aplicar liquidaciones en borrador."), "error")
-        return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion.id))
+        return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
     empleado = db.session.get(Empleado, liquidacion.empleado_id)
     if not empleado:
         flash(_("Empleado no encontrado."), "error")
-        return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion.id))
+        return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
     # Mark employee inactive
     empleado.activo = False
@@ -160,7 +163,7 @@ def aplicar(liquidacion_id: str):
     liquidacion.estado = "aplicada"
     db.session.commit()
     flash(_("Liquidación aplicada. Empleado marcado como inactivo y desvinculado de planillas."), "success")
-    return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion.id))
+    return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
 
 @liquidacion_bp.route("/<liquidacion_id>/pagar", methods=["POST"])
@@ -171,12 +174,12 @@ def pagar(liquidacion_id: str):
 
     if liquidacion.estado != "aplicada":
         flash(_("Solo se pueden pagar liquidaciones aplicadas."), "error")
-        return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion.id))
+        return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
     liquidacion.estado = "pagada"
     db.session.commit()
     flash(_("Liquidación marcada como pagada."), "success")
-    return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion.id))
+    return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
 
 @liquidacion_bp.route("/<liquidacion_id>/exportar-excel")
@@ -185,7 +188,7 @@ def pagar(liquidacion_id: str):
 def exportar_excel(liquidacion_id: str):
     if not check_openpyxl_available():
         flash(_("Excel export no disponible. Instale openpyxl."), "warning")
-        return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion_id))
+        return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion_id))
 
     liquidacion = db.get_or_404(Liquidacion, liquidacion_id)
 
@@ -199,4 +202,4 @@ def exportar_excel(liquidacion_id: str):
         )
     except Exception as e:
         flash(_("Error al exportar liquidación: {}").format(str(e)), "error")
-        return redirect(url_for("liquidacion.ver", liquidacion_id=liquidacion_id))
+        return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion_id))

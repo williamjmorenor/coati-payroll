@@ -23,6 +23,9 @@ from coati_payroll.vistas.planilla import planilla_bp
 from coati_payroll.vistas.planilla.helpers import check_openpyxl_available
 from coati_payroll.vistas.planilla.services import ExportService
 
+# Constants
+ROUTE_VER_NOMINA = "planilla.ver_nomina"
+
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/exportar-excel")
 @login_required
@@ -31,7 +34,7 @@ def exportar_nomina_excel(planilla_id: str, nomina_id: str):
     """Export nomina to Excel with employee details and calculations."""
     if not check_openpyxl_available():
         flash(_("Excel export no disponible. Instale openpyxl."), "warning")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     planilla = db.get_or_404(Planilla, planilla_id)
     nomina = db.get_or_404(Nomina, nomina_id)
@@ -50,7 +53,7 @@ def exportar_nomina_excel(planilla_id: str, nomina_id: str):
         )
     except Exception as e:
         flash(_("Error al exportar nómina: {}").format(str(e)), "error")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/exportar-prestaciones-excel")
@@ -60,7 +63,7 @@ def exportar_prestaciones_excel(planilla_id: str, nomina_id: str):
     """Export benefits (prestaciones) to Excel separately."""
     if not check_openpyxl_available():
         flash(_("Excel export no disponible. Instale openpyxl."), "warning")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     planilla = db.get_or_404(Planilla, planilla_id)
     nomina = db.get_or_404(Nomina, nomina_id)
@@ -79,7 +82,7 @@ def exportar_prestaciones_excel(planilla_id: str, nomina_id: str):
         )
     except Exception as e:
         flash(_("Error al exportar prestaciones: {}").format(str(e)), "error")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/exportar-comprobante-excel")

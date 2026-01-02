@@ -24,6 +24,12 @@ from coati_payroll.vistas.planilla import planilla_bp
 from coati_payroll.vistas.planilla.helpers import populate_novedad_form_choices
 from coati_payroll.vistas.planilla.services import NovedadService
 
+# Constants
+ROUTE_LISTAR_NOVEDADES = "planilla.listar_novedades"
+ROUTE_LISTAR_NOMINAS = "planilla.listar_nominas"
+ERROR_NOMINA_NO_PERTENECE = "La nómina no pertenece a esta planilla."
+TEMPLATE_NOVEDAD_FORM = "modules/planilla/novedades/form.html"
+
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/novedades")
 @require_read_access()
@@ -33,8 +39,8 @@ def listar_novedades(planilla_id: str, nomina_id: str):
     nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     novedades = NovedadService.listar_novedades(planilla, nomina)
 
@@ -54,14 +60,14 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
     nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     if nomina.estado == "aplicado":
         flash(_("No se pueden agregar novedades a una nómina aplicada."), "error")
         return redirect(
             url_for(
-                "planilla.listar_novedades",
+                ROUTE_LISTAR_NOVEDADES,
                 planilla_id=planilla_id,
                 nomina_id=nomina_id,
             )
@@ -76,7 +82,7 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
         if not is_valid:
             flash(error_message, "error")
             return render_template(
-                "modules/planilla/novedades/form.html",
+                TEMPLATE_NOVEDAD_FORM,
                 form=form,
                 planilla=planilla,
                 nomina=nomina,
@@ -86,14 +92,14 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
         flash(_("Novedad agregada exitosamente."), "success")
         return redirect(
             url_for(
-                "planilla.listar_novedades",
+                ROUTE_LISTAR_NOVEDADES,
                 planilla_id=planilla_id,
                 nomina_id=nomina_id,
             )
         )
 
     return render_template(
-        "modules/planilla/novedades/form.html",
+        TEMPLATE_NOVEDAD_FORM,
         planilla=planilla,
         nomina=nomina,
         form=form,
@@ -113,14 +119,14 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     novedad = db.get_or_404(NominaNovedad, novedad_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     if novedad.nomina_id != nomina_id:
         flash(_("La novedad no pertenece a esta nómina."), "error")
         return redirect(
             url_for(
-                "planilla.listar_novedades",
+                ROUTE_LISTAR_NOVEDADES,
                 planilla_id=planilla_id,
                 nomina_id=nomina_id,
             )
@@ -130,7 +136,7 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
         flash(_("No se pueden editar novedades de una nómina aplicada."), "error")
         return redirect(
             url_for(
-                "planilla.listar_novedades",
+                ROUTE_LISTAR_NOVEDADES,
                 planilla_id=planilla_id,
                 nomina_id=nomina_id,
             )
@@ -154,7 +160,7 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
         if not is_valid:
             flash(error_message, "error")
             return render_template(
-                "modules/planilla/novedades/form.html",
+                TEMPLATE_NOVEDAD_FORM,
                 form=form,
                 planilla=planilla,
                 nomina=nomina,
@@ -165,14 +171,14 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
         flash(_("Novedad actualizada exitosamente."), "success")
         return redirect(
             url_for(
-                "planilla.listar_novedades",
+                ROUTE_LISTAR_NOVEDADES,
                 planilla_id=planilla_id,
                 nomina_id=nomina_id,
             )
         )
 
     return render_template(
-        "modules/planilla/novedades/form.html",
+        TEMPLATE_NOVEDAD_FORM,
         planilla=planilla,
         nomina=nomina,
         form=form,
@@ -192,14 +198,14 @@ def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     novedad = db.get_or_404(NominaNovedad, novedad_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     if novedad.nomina_id != nomina_id:
         flash(_("La novedad no pertenece a esta nómina."), "error")
         return redirect(
             url_for(
-                "planilla.listar_novedades",
+                ROUTE_LISTAR_NOVEDADES,
                 planilla_id=planilla_id,
                 nomina_id=nomina_id,
             )
@@ -209,7 +215,7 @@ def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
         flash(_("No se pueden eliminar novedades de una nómina aplicada."), "error")
         return redirect(
             url_for(
-                "planilla.listar_novedades",
+                ROUTE_LISTAR_NOVEDADES,
                 planilla_id=planilla_id,
                 nomina_id=nomina_id,
             )
@@ -218,4 +224,4 @@ def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     db.session.delete(novedad)
     db.session.commit()
     flash(_("Novedad eliminada exitosamente."), "success")
-    return redirect(url_for("planilla.listar_novedades", planilla_id=planilla_id, nomina_id=nomina_id))
+    return redirect(url_for(ROUTE_LISTAR_NOVEDADES, planilla_id=planilla_id, nomina_id=nomina_id))

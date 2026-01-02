@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import import_module
-from importlib.metadata import PackageNotFoundError, distributions
+from importlib.metadata import distributions
 
 from flask import Flask
 
@@ -119,7 +119,7 @@ def register_active_plugins(app: Flask) -> None:
                 raise AttributeError("Missing callable 'register_blueprints(app)'")
 
             register(app)
-        except (ModuleNotFoundError, AttributeError, PackageNotFoundError) as exc:
+        except (ModuleNotFoundError, AttributeError) as exc:
             log.warning(f"Plugin '{plugin.distribution_name}' could not be registered: {exc}")
             plugin.active = False
             plugin.installed = False

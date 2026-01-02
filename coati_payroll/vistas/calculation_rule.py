@@ -34,6 +34,9 @@ from coati_payroll.formula_engine import (
 
 calculation_rule_bp = Blueprint("calculation_rule", __name__, url_prefix="/calculation-rule")
 
+# Constants
+ERROR_RULE_NOT_FOUND = "Regla no encontrada"
+
 
 @calculation_rule_bp.route("/")
 @require_read_access()
@@ -116,7 +119,7 @@ def edit(id: str):
     """Edit an existing calculation rule metadata."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        flash(_("Regla de cálculo no encontrada."), "error")
+        flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
 
     form = ReglaCalculoForm(obj=rule)
@@ -152,7 +155,7 @@ def edit_schema(id: str):
     """Edit the JSON schema of a calculation rule."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        flash(_("Regla de cálculo no encontrada."), "error")
+        flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
 
     # Get available data sources for the UI
@@ -173,7 +176,7 @@ def save_schema(id: str):
     """API endpoint to save the JSON schema."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        return jsonify({"success": False, "error": "Regla no encontrada"}), 404
+        return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
 
     try:
         data = request.get_json()
@@ -202,7 +205,7 @@ def validate_schema_api(id: str):
     """API endpoint to validate a JSON schema without saving it."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        return jsonify({"success": False, "error": "Regla no encontrada"}), 404
+        return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
 
     try:
         data = request.get_json()
@@ -235,7 +238,7 @@ def test_schema(id: str):
     """API endpoint to test the calculation schema with sample data."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        return jsonify({"success": False, "error": "Regla no encontrada"}), 404
+        return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
 
     try:
         data = request.get_json()
@@ -258,7 +261,7 @@ def delete(id: str):
     """Delete a calculation rule."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        flash(_("Regla de cálculo no encontrada."), "error")
+        flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
 
     db.session.delete(rule)
@@ -273,7 +276,7 @@ def duplicate(id: str):
     """Duplicate a calculation rule with a new version."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        flash(_("Regla de cálculo no encontrada."), "error")
+        flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
 
     # Create a new rule with incremented version

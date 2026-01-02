@@ -25,6 +25,12 @@ from coati_payroll.vistas.planilla import planilla_bp
 from coati_payroll.vistas.planilla.services import NominaService
 from coati_payroll.queue.tasks import retry_failed_nomina
 
+# Constants
+ROUTE_EJECUTAR_NOMINA = "planilla.ejecutar_nomina"
+ROUTE_VER_NOMINA = "planilla.ver_nomina"
+ROUTE_LISTAR_NOMINAS = "planilla.listar_nominas"
+ERROR_NOMINA_NO_PERTENECE = "La nómina no pertenece a esta planilla."
+
 
 @planilla_bp.route("/<planilla_id>/ejecutar", methods=["GET", "POST"])
 @require_write_access()
@@ -39,7 +45,7 @@ def ejecutar_nomina(planilla_id: str):
 
         if not periodo_inicio or not periodo_fin:
             flash(_("Debe especificar el período de la nómina."), "error")
-            return redirect(url_for("planilla.ejecutar_nomina", planilla_id=planilla_id))
+            return redirect(url_for(ROUTE_EJECUTAR_NOMINA, planilla_id=planilla_id))
 
         # Parse dates
         try:
@@ -48,7 +54,7 @@ def ejecutar_nomina(planilla_id: str):
             fecha_calculo = date.fromisoformat(fecha_calculo) if fecha_calculo else date.today()
         except ValueError:
             flash(_("Formato de fecha inválido."), "error")
-            return redirect(url_for("planilla.ejecutar_nomina", planilla_id=planilla_id))
+            return redirect(url_for(ROUTE_EJECUTAR_NOMINA, planilla_id=planilla_id))
 
         nomina, errors, warnings = NominaService.ejecutar_nomina(
             planilla=planilla,
@@ -82,13 +88,13 @@ def ejecutar_nomina(planilla_id: str):
                 flash(_("Nómina generada exitosamente."), "success")
             return redirect(
                 url_for(
-                    "planilla.ver_nomina",
+                    ROUTE_VER_NOMINA,
                     planilla_id=planilla_id,
                     nomina_id=nomina.id,
                 )
             )
         else:
-            return redirect(url_for("planilla.ejecutar_nomina", planilla_id=planilla_id))
+            return redirect(url_for(ROUTE_EJECUTAR_NOMINA, planilla_id=planilla_id))
 
     # GET - show execution form
     periodo_inicio, periodo_fin = NominaService.calcular_periodo_sugerido(planilla)
@@ -135,8 +141,8 @@ def ver_nomina(planilla_id: str, nomina_id: str):
     nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
 
@@ -178,7 +184,7 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
 
     if nomina_empleado.nomina_id != nomina_id:
         flash(_("El detalle no pertenece a esta nómina."), "error")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     detalles = (
         db.session.execute(
@@ -261,12 +267,12 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
     nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     if nomina.estado != "generado":
         flash(_("Solo se pueden aprobar nóminas en estado 'generado'."), "error")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     # Check for errors in the processing log - cannot approve with errors
     if _nomina_has_errors(nomina):
@@ -277,14 +283,14 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
             ),
             "error",
         )
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     nomina.estado = "aprobado"
     nomina.modificado_por = current_user.usuario
     db.session.commit()
 
     flash(_("Nómina aprobada exitosamente."), "success")
-    return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+    return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aplicar", methods=["POST"])
@@ -294,12 +300,12 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
     nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     if nomina.estado != "aprobado":
         flash(_("Solo se pueden aplicar nóminas en estado 'aprobado'."), "error")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     nomina.estado = "aplicado"
     nomina.modificado_por = current_user.usuario
@@ -332,7 +338,7 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         _("Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas.").format(len(novedades)),
         "success",
     )
-    return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+    return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/reintentar", methods=["POST"])
@@ -342,12 +348,12 @@ def reintentar_nomina(planilla_id: str, nomina_id: str):
     nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     if nomina.estado != NominaEstado.ERROR:
         flash(_("Solo se pueden reintentar nóminas en estado 'error'."), "error")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     # Call the retry function
     result = retry_failed_nomina(nomina_id, current_user.usuario)
@@ -356,10 +362,10 @@ def reintentar_nomina(planilla_id: str, nomina_id: str):
         flash(
             _("Reintento de nómina iniciado exitosamente. El procesamiento se realizará en segundo plano."), "success"
         )
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
     else:
         flash(_("Error al reintentar la nómina: {}").format(result.get("error", "Error desconocido")), "error")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/recalcular", methods=["POST"])
@@ -370,12 +376,12 @@ def recalcular_nomina(planilla_id: str, nomina_id: str):
     planilla = db.get_or_404(Planilla, planilla_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     if nomina.estado == "aplicado":
         flash(_("No se puede recalcular una nómina en estado 'aplicado' (pagada)."), "error")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     new_nomina, errors, warnings = NominaService.recalcular_nomina(nomina, planilla, current_user.usuario)
 
@@ -389,10 +395,10 @@ def recalcular_nomina(planilla_id: str, nomina_id: str):
 
     if new_nomina:
         flash(_("Nómina recalculada exitosamente."), "success")
-        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=new_nomina.id))
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=new_nomina.id))
     else:
         flash(_("Error al recalcular la nómina."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/log")
@@ -403,8 +409,8 @@ def ver_log_nomina(planilla_id: str, nomina_id: str):
     nomina = db.get_or_404(Nomina, nomina_id)
 
     if nomina.planilla_id != planilla_id:
-        flash(_("La nómina no pertenece a esta planilla."), "error")
-        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     # Get log entries
     log_entries = nomina.log_procesamiento or []

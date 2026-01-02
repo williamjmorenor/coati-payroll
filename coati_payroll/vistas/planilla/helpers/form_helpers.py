@@ -18,23 +18,26 @@ from coati_payroll.forms import PlanillaForm
 from coati_payroll.i18n import _
 from sqlalchemy.orm import joinedload
 
+# Constants
+SELECT_PLACEHOLDER = "-- Seleccionar --"
+
 
 def populate_form_choices(form: PlanillaForm):
     """Populate form select choices from database."""
     tipos = (
         db.session.execute(db.select(TipoPlanilla).filter_by(activo=True).order_by(TipoPlanilla.codigo)).scalars().all()
     )
-    form.tipo_planilla_id.choices = [("", _("-- Seleccionar --"))] + [
+    form.tipo_planilla_id.choices = [("", _(SELECT_PLACEHOLDER))] + [
         (t.id, f"{t.codigo} - {t.descripcion or t.codigo}") for t in tipos
     ]
 
     monedas = db.session.execute(db.select(Moneda).filter_by(activo=True).order_by(Moneda.codigo)).scalars().all()
-    form.moneda_id.choices = [("", _("-- Seleccionar --"))] + [(m.id, f"{m.codigo} - {m.nombre}") for m in monedas]
+    form.moneda_id.choices = [("", _(SELECT_PLACEHOLDER))] + [(m.id, f"{m.codigo} - {m.nombre}") for m in monedas]
 
     empresas = (
         db.session.execute(db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)).scalars().all()
     )
-    form.empresa_id.choices = [("", _("-- Seleccionar --"))] + [
+    form.empresa_id.choices = [("", _(SELECT_PLACEHOLDER))] + [
         (e.id, f"{e.codigo} - {e.razon_social}") for e in empresas
     ]
 

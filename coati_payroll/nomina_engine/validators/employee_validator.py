@@ -57,12 +57,11 @@ class EmployeeValidator(BaseValidator):
         else:
             result.add_error(f"Empleado {empleado.codigo_empleado} no tiene fecha de ingreso definida")
 
-        if empleado.fecha_baja:
-            if empleado.fecha_baja < periodo_inicio:
-                result.add_error(
-                    f"Empleado {empleado.codigo_empleado}: fecha de salida ({empleado.fecha_baja}) "
-                    f"es anterior al inicio del período ({periodo_inicio})"
-                )
+        if empleado.fecha_baja and empleado.fecha_baja < periodo_inicio:
+            result.add_error(
+                f"Empleado {empleado.codigo_empleado}: fecha de salida ({empleado.fecha_baja}) "
+                f"es anterior al inicio del período ({periodo_inicio})"
+            )
 
         if not empleado.identificacion_personal:
             result.add_error(f"Empleado {empleado.codigo_empleado} no tiene identificación personal")

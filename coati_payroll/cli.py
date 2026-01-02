@@ -88,6 +88,10 @@ class PluginsCommand(click.MultiCommand):
 
         @click.group(name=name)
         def plugin_group():
+            """Empty group function that serves as a container for plugin subcommands.
+
+            Subcommands (init, update) are dynamically added below.
+            """
             pass
 
         @plugin_group.command("init")

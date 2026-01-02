@@ -95,7 +95,7 @@ def validate_schema_deep(schema: dict[str, Any], error_class: Type[Exception] = 
         # Validate step type
         if step_type not in valid_step_types:
             raise error_class(
-                f"Step {i} has invalid type '{step_type}'. " f"Valid types are: {', '.join(valid_step_types)}"
+                f"Step {i} has invalid type '{step_type}'. Valid types are: {', '.join(valid_step_types)}"
             )
 
         # Validate formulas for calculation steps
@@ -142,27 +142,26 @@ def _validate_formula_safety(formula: str, error_class: Type[Exception] = Valida
                 raise error_class("Attribute access is not allowed in formulas")
 
             # Block function calls to __import__ and other dangerous builtins
-            if isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Name):
-                    func_name = node.func.id
-                    dangerous_functions = {
-                        "__import__",
-                        "eval",
-                        "exec",
-                        "compile",
-                        "open",
-                        "input",
-                        "__builtins__",
-                        "globals",
-                        "locals",
-                        "vars",
-                        "dir",
-                        "getattr",
-                        "setattr",
-                        "delattr",
-                        "hasattr",
-                    }
-                    if func_name in dangerous_functions:
-                        raise error_class(f"Function '{func_name}' is not allowed in formulas")
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                func_name = node.func.id
+                dangerous_functions = {
+                    "__import__",
+                    "eval",
+                    "exec",
+                    "compile",
+                    "open",
+                    "input",
+                    "__builtins__",
+                    "globals",
+                    "locals",
+                    "vars",
+                    "dir",
+                    "getattr",
+                    "setattr",
+                    "delattr",
+                    "hasattr",
+                }
+                if func_name in dangerous_functions:
+                    raise error_class(f"Function '{func_name}' is not allowed in formulas")
     except SyntaxError as e:
         raise error_class(f"Invalid formula syntax: {e}") from e
