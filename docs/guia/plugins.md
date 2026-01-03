@@ -504,6 +504,7 @@ def init():
         Prestacion,
         TipoPlanilla,
     )
+    from coati_payroll.log import log
     
     # Función auxiliar para upsert (asume que los modelos tienen campo 'codigo')
     # Adaptar según la estructura de tu modelo si usa otro campo como clave
@@ -603,11 +604,11 @@ def init():
     
     db.session.commit()
     
-    print("✓ Plugin 'sv' inicializado correctamente")
-    print("  - Percepciones: 2")
-    print("  - Deducciones: 3")
-    print("  - Prestaciones: 2")
-    print("  - Tipos de planilla: 1")
+    log.info("Plugin 'sv' inicializado correctamente")
+    log.info("  - Percepciones: 2")
+    log.info("  - Deducciones: 3")
+    log.info("  - Prestaciones: 2")
+    log.info("  - Tipos de planilla: 1")
 
 
 # ============================================================================
@@ -624,6 +625,7 @@ def update():
     Debe ser idempotente.
     """
     from coati_payroll.model import db, Percepcion
+    from coati_payroll.log import log
     
     # Ejemplo: actualizar descripción de una percepción
     p = db.session.execute(
@@ -633,9 +635,9 @@ def update():
     if p is not None:
         p.descripcion = "Salario ordinario mensual (actualizado)"
         db.session.commit()
-        print("✓ Plugin 'sv' actualizado correctamente")
+        log.info("Plugin 'sv' actualizado correctamente")
     else:
-        print("⚠ Percepción 'SALARIO' no encontrada. Ejecute 'init' primero.")
+        log.warning("Percepción 'SALARIO' no encontrada. Ejecute 'init' primero.")
 ```
 
 ### 3.2: Crear plantillas HTML (opcional)
@@ -971,7 +973,7 @@ def init():
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        print(f"✗ Error al inicializar: {e}")
+        log.error(f"Error al inicializar: {e}")
         raise
 ```
 
