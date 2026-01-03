@@ -33,6 +33,7 @@ from flask import Flask, flash, redirect, url_for
 from flask_babel import Babel
 from flask_login import LoginManager
 from flask_session import Session
+from flask_wtf.csrf import CSRFProtect
 import flask_session.sqlalchemy.sqlalchemy as fs_sqlalchemy
 from sqlalchemy import Column, DateTime, Integer, LargeBinary, Sequence, String
 
@@ -89,6 +90,8 @@ fs_sqlalchemy.create_session_model = _patched_create_session_model
 session_manager = Session()
 login_manager = LoginManager()
 babel = Babel()
+csrf = CSRFProtect()
+limiter = None  # Will be initialized in create_app()
 
 
 # ---------------------------------------------------------------------------------------
@@ -199,6 +202,15 @@ def create_app(config) -> Flask:
             app.config["SESSION_PERMANENT"] = False
             app.config["SESSION_USE_SIGNER"] = True
 
+    # Configure secure session cookies
+    # These settings protect against session hijacking and cookie theft
+    from datetime import timedelta
+    
+    app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent JavaScript access to cookies
+    app.config["SESSION_COOKIE_SECURE"] = not DESARROLLO  # Only send over HTTPS in production
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)  # Session timeout
+
     # Configure Flask-Babel
     app.config["BABEL_DEFAULT_LOCALE"] = "en"
     app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
@@ -206,6 +218,17 @@ def create_app(config) -> Flask:
 
     session_manager.init_app(app)
     login_manager.init_app(app)
+    
+    # Initialize CSRF protection globally
+    # This protects all forms from Cross-Site Request Forgery attacks
+    # CSRF is automatically disabled in testing mode (WTF_CSRF_ENABLED = False in test config)
+    csrf.init_app(app)
+    
+    # Initialize rate limiting
+    # Protects against brute force attacks and abuse
+    global limiter
+    from coati_payroll.rate_limiting import configure_rate_limiting
+    limiter = configure_rate_limiting(app)
 
     # Load initial data and demo data after Babel is initialized
     # This allows translations to work properly
@@ -301,6 +324,12 @@ def create_app(config) -> Flask:
     from coati_payroll.cli import register_cli_commands
 
     register_cli_commands(app)
+    
+    # Configure security headers
+    # This adds HTTP security headers to all responses to protect against
+    # common web vulnerabilities (XSS, clickjacking, MIME sniffing, etc.)
+    from coati_payroll.security import configure_security_headers
+    configure_security_headers(app)
 
     return app
 

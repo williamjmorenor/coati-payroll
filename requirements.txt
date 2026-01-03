@@ -6,6 +6,7 @@ email-validator
 flask
 flask-babel
 flask-caching
+flask-limiter
 flask-login
 flask-mail
 flask-reuploaded

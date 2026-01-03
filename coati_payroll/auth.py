@@ -41,7 +41,12 @@ auth = Blueprint("auth", __name__)
 
 @auth.route("/login", methods=["GET", "POST"])
 def login():
-    """Mostrar y procesar el formulario de inicio de sesión."""
+    """Mostrar y procesar el formulario de inicio de sesión.
+    
+    Rate limited to 5 attempts per minute per IP address to prevent
+    brute force attacks on user credentials. Rate limiting is configured
+    in coati_payroll/__init__.py using Flask-Limiter.
+    """
     form = LoginForm()
 
     if form.validate_on_submit():
