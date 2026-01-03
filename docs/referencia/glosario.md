@@ -7,6 +7,9 @@ Términos y conceptos utilizados en Coati Payroll.
 ### Adelanto Salarial
 Porción del salario pagada anticipadamente al empleado. Se descuenta en la siguiente nómina o en cuotas acordadas.
 
+### Agnóstico a la Jurisdicción
+Característica fundamental del sistema que indica que no incorpora reglas legales específicas de ningún país. Todas las regulaciones se implementan mediante configuración, permitiendo su uso en cualquier jurisdicción.
+
 ### Aguinaldo
 También conocido como "treceavo mes". Prestación equivalente a un mes de salario que se paga anualmente. En Nicaragua se paga en diciembre.
 
@@ -37,6 +40,9 @@ Campo adicional definido por el usuario para almacenar información específica 
 
 ### Centro de Costos
 Unidad organizacional o proyecto al que se imputan los gastos de nómina. Permite segmentar el costo de personal por departamento o proyecto.
+
+### Comprobante Contable
+Registro contable generado automáticamente al aplicar una nómina. Contiene los asientos contables (débitos y créditos) para integración con sistemas de contabilidad.
 
 ### Cuota
 Monto fijo que se descuenta periódicamente de un préstamo o adelanto hasta saldar la deuda.
@@ -106,6 +112,9 @@ Sistema de colas de tareas ligero que usa filesystem como backend. Utilizado com
 
 ## I
 
+### i18n (Internacionalización)
+Sistema de soporte multi-idioma del sistema. Permite configurar el idioma de la interfaz (español, inglés) y traducir todos los textos de la aplicación.
+
 ### INATEC
 Instituto Nacional Tecnológico de Nicaragua. El aporte al INATEC es del 2% del salario bruto, pagado por el empleador.
 
@@ -129,16 +138,25 @@ Impuesto que se aplica sobre los ingresos del empleado. En Nicaragua se calcula 
 
 ## L
 
+### Libro Mayor de Vacaciones (VacationLedger)
+Registro inmutable y auditable de todas las transacciones que afectan el balance de vacaciones de un empleado. Incluye acumulaciones, usos, ajustes, vencimientos y pagos.
+
 ### Liquidación
 Cálculo de finiquito o liquidación laboral cuando termina la relación laboral con un empleado. Incluye cálculo de indemnización, vacaciones pendientes, aguinaldo proporcional y otros conceptos finales.
 
 ## M
+
+### Método de Acumulación
+Forma en que se calculan las vacaciones acumuladas. Puede ser: **Periódico** (cantidad fija por período), **Proporcional** (basado en días/horas trabajadas) o **Antigüedad** (escalonado por años de servicio).
 
 ### Método de Amortización
 Sistema para calcular cuotas de préstamos con interés. Puede ser: **Francés** (cuota constante, cambia la proporción capital/interés) o **Alemán** (amortización constante, cuota decreciente).
 
 ### Moneda
 Unidad monetaria en la que se expresan y pagan los salarios. El sistema soporta múltiples monedas.
+
+### Motor de Nómina
+Componente central del sistema que ejecuta los cálculos de nómina. Es agnóstico a la jurisdicción y procesa salarios, percepciones, deducciones y prestaciones según la configuración establecida.
 
 ## N
 
@@ -162,8 +180,14 @@ Concepto que se suma al salario base del empleado. Ejemplos: bonos, comisiones, 
 ### Período Fiscal
 Año fiscal para efectos de cálculos tributarios. Puede coincidir o no con el año calendario.
 
+### Periodicidad
+Frecuencia con la que se ejecuta una nómina. Puede ser: **Mensual** (una vez al mes), **Quincenal** (cada dos semanas), **Semanal** (cada semana) o **Diario** (diario).
+
 ### Planilla
 Configuración maestra que define qué empleados se procesan, qué conceptos se aplican y cómo se calculan. Es el elemento central del sistema.
+
+### Política de Vacaciones
+Configuración que define cómo se acumulan, usan y vencen las vacaciones. Incluye método de acumulación, frecuencia, límites de balance, reglas de vencimiento y otras características del sistema de vacaciones.
 
 ### Prestación
 Aporte o beneficio que paga el empleador pero que **NO** afecta el salario neto del empleado. Son costos patronales. Ejemplos: INSS patronal, vacaciones, aguinaldo.
