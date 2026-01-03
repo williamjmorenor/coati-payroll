@@ -13,6 +13,12 @@ También conocido como "treceavo mes". Prestación equivalente a un mes de salar
 ### Acumulado Anual
 Registro que mantiene los valores acumulados de salario e impuestos de un empleado durante el año fiscal. Utilizado para cálculos progresivos como el IR.
 
+### Acumulación de Prestación
+Suma de prestaciones patronales durante un período determinado. Puede ser mensual (INSS, INATEC), anual (aguinaldo, vacaciones) o durante toda la vida laboral (indemnización).
+
+### Auditoría
+Sistema de registro y trazabilidad de cambios en el sistema. Cada modificación a conceptos de nómina, planillas y nóminas se registra con información de quién, cuándo y qué cambió.
+
 ## B
 
 ### Base de Cálculo
@@ -35,6 +41,9 @@ Unidad organizacional o proyecto al que se imputan los gastos de nómina. Permit
 ### Cuota
 Monto fijo que se descuenta periódicamente de un préstamo o adelanto hasta saldar la deuda.
 
+### Carga Inicial
+Proceso de configuración de saldos iniciales de prestaciones acumuladas (como vacaciones o indemnización) para empleados existentes al momento de implementar el sistema.
+
 ## D
 
 ### Deducción
@@ -54,17 +63,30 @@ Deducción que se aplica aunque el salario disponible no sea suficiente. Se usa 
 ### Empleado
 Persona que trabaja para la empresa y recibe un salario procesado a través del sistema de nómina.
 
+### Esquema JSON
+Estructura de datos en formato JSON utilizada para configurar reglas de cálculo y fórmulas complejas en el sistema. Permite definir lógica de cálculo sin programación.
+
+### Estado de Aprobación
+Situación de un concepto de nómina (percepción, deducción o prestación). Puede ser: **Borrador** (requiere aprobación) o **Aprobado** (validado para uso en producción).
+
 ### Estado de Nómina
 Situación en que se encuentra una nómina:
 
+- **Calculando**: Procesando en segundo plano
 - **Generado**: Calculada, pendiente de revisión
 - **Aprobado**: Revisada y autorizada para pago
 - **Aplicado**: Pagada/completada
+- **Pagado**: Sinónimo de aplicado (compatibilidad)
+- **Anulado**: Cancelada/anulada
+- **Error**: Error durante el cálculo (puede reintentarse)
 
 ## F
 
 ### Fórmula
 Expresión matemática utilizada para calcular el monto de una percepción, deducción o prestación. Puede incluir variables como salario_base, días_trabajados, etc.
+
+### FormulaEngine
+Motor de ejecución de fórmulas y esquemas JSON que permite calcular conceptos de nómina utilizando expresiones configurables. Soporta cálculos simples y complejos mediante pasos secuenciales.
 
 ### Fecha de Alta
 Fecha en que el empleado comenzó a trabajar en la empresa. Importante para cálculos de antigüedad y prestaciones.
@@ -99,10 +121,21 @@ Aporte del trabajador al INSS (7% del salario bruto). Es una deducción.
 ### INSS Patronal
 Aporte del empleador al INSS (22.5% en régimen integral). Es una prestación/costo patronal.
 
+### Interés
+Costo adicional que se aplica sobre un préstamo. Puede ser simple (se calcula sobre el capital inicial) o compuesto (se calcula sobre capital e intereses acumulados).
+
 ### IR (Impuesto sobre la Renta)
 Impuesto que se aplica sobre los ingresos del empleado. En Nicaragua se calcula con una tabla progresiva sobre la expectativa salarial anual.
 
+## L
+
+### Liquidación
+Cálculo de finiquito o liquidación laboral cuando termina la relación laboral con un empleado. Incluye cálculo de indemnización, vacaciones pendientes, aguinaldo proporcional y otros conceptos finales.
+
 ## M
+
+### Método de Amortización
+Sistema para calcular cuotas de préstamos con interés. Puede ser: **Francés** (cuota constante, cambia la proporción capital/interés) o **Alemán** (amortización constante, cuota decreciente).
 
 ### Moneda
 Unidad monetaria en la que se expresan y pagan los salarios. El sistema soporta múltiples monedas.
@@ -138,16 +171,25 @@ Aporte o beneficio que paga el empleador pero que **NO** afecta el salario neto 
 ### Préstamo
 Monto otorgado al empleado que se recupera en cuotas periódicas descontadas de la nómina.
 
+### Plugin
+Extensión instalable que agrega funcionalidades específicas de una jurisdicción al sistema. Permite mantener el motor agnóstico mientras se adapta a leyes locales.
+
 ### Prioridad
 Número que determina el orden en que se aplican las deducciones. Menor número = mayor prioridad (se aplica primero).
 
 ## R
+
+### RBAC (Control de Acceso Basado en Roles)
+Sistema de permisos que controla qué usuarios pueden realizar qué acciones según su rol. El sistema tiene tres roles: Admin, HHRR y Audit.
 
 ### Recurrente
 Que se aplica automáticamente en cada período de nómina sin necesidad de configuración adicional.
 
 ### Regla de Cálculo (ReglaCalculo)
 Esquema JSON configurable que define lógica de cálculo compleja, como tablas de impuestos progresivos o seguridad social con topes. Permite definir cálculos por tramos sin necesidad de programar.
+
+### Reporte
+Consulta o informe configurable del sistema. Puede ser un **Reporte de Sistema** (predefinido y optimizado) o un **Reporte Personalizado** (definido por el usuario con SQL o templates).
 
 ## S
 
@@ -180,11 +222,20 @@ Salario Neto = Salario Bruto - Total Deducciones
 ### Tipo de Cambio
 Tasa de conversión entre dos monedas. Se usa cuando el empleado tiene salario en una moneda diferente a la planilla.
 
+### Tipo de Cálculo (FormulaType)
+Método utilizado para calcular el monto de un concepto de nómina. Puede ser: fijo, porcentaje, porcentaje del salario base, porcentaje del bruto, fórmula compleja, regla de cálculo, por horas o por días.
+
 ### Tipo de Planilla
 Configuración que define la periodicidad de pago (mensual, quincenal, semanal) y parámetros del período fiscal.
 
+### Tipo de Usuario
+Rol asignado a un usuario del sistema: **Admin** (acceso completo), **HHRR** (gestión de personal y nómina), o **Audit** (solo lectura para auditoría).
+
 ### Tope
 Monto máximo sobre el cual se aplica un cálculo. Por ejemplo, el INSS patronal tiene un tope salarial sobre el cual se calcula.
+
+### Tramo
+Rango o segmento dentro de una tabla de cálculo progresivo. Usado en impuestos progresivos donde diferentes montos tienen diferentes tasas.
 
 ## U
 
