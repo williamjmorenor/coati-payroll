@@ -4,6 +4,9 @@
 [![codecov](https://codecov.io/github/bmosoluciones/coati-payroll/graph/badge.svg?token=gT6jVct2KT)](https://codecov.io/github/bmosoluciones/coati-payroll)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Code style: black](https://img.shields.io/badge/Python%20code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code style: Prettier](https://img.shields.io/badge/HTML%20code%20style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 Motor de cálculo de planillas agnóstico a la jurisdicción desarrollado por BMO Soluciones, S.A.
 
