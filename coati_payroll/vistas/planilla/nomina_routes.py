@@ -423,3 +423,58 @@ def ver_log_nomina(planilla_id: str, nomina_id: str):
         log_entries=log_entries,
         comprobante_warnings=comprobante_warnings,
     )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/regenerar-comprobante", methods=["POST"])
+@login_required
+@require_write_access()
+def regenerar_comprobante_contable(planilla_id: str, nomina_id: str):
+    """Regenerate accounting voucher for an applied/paid nomina without recalculating.
+
+    This is useful when accounting configuration was incomplete at the time of calculation
+    and has been updated afterwards. Only regenerates the accounting entries based on
+    existing payroll calculations.
+    """
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_("La nómina no pertenece a esta planilla."), "error")
+        return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
+
+    # Only allow for applied or paid nominas
+    from coati_payroll.enums import NominaEstado
+
+    if nomina.estado not in (NominaEstado.APLICADO, NominaEstado.PAGADO):
+        flash(
+            _(
+                "Solo se puede regenerar el comprobante contable para nóminas en estado 'aplicado' o 'pagado'. "
+                "Para nóminas en otros estados, use 'recalcular'."
+            ),
+            "error",
+        )
+        return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
+
+    try:
+        from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
+
+        accounting_service = AccountingVoucherService(db.session)
+
+        # Regenerate voucher using existing nomina data
+        fecha_calculo = nomina.fecha_calculo_original or nomina.periodo_fin
+        comprobante = accounting_service.generate_accounting_voucher(nomina, planilla, fecha_calculo)
+
+        db.session.commit()
+
+        flash(_("Comprobante contable regenerado exitosamente."), "success")
+
+        # Show warnings if configuration is still incomplete
+        if comprobante.advertencias:
+            for warning in comprobante.advertencias:
+                flash(warning, "warning")
+
+    except Exception as e:
+        db.session.rollback()
+        flash(_("Error al regenerar comprobante contable: {}").format(str(e)), "error")
+
+    return redirect(url_for("planilla.ver_log_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
