@@ -32,7 +32,6 @@ from coati_payroll.model import Usuario, db
 def test_system_status(app, db_session):
     """Test _system_status returns correct data."""
     from coati_payroll.cli import _system_status
-    from coati_payroll.model import Usuario
 
     with app.app_context():
         # Delete all admin users that may have been created during setup
