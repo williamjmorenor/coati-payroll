@@ -3,6 +3,7 @@ babel
 configobj
 cryptography
 dramatiq[redis]
+email_validator
 huey
 flask
 flask-babel
