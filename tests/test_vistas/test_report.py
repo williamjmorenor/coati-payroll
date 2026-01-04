@@ -147,9 +147,7 @@ def test_report_execute_form_success(app, client, db_session, admin_user):
         db_session.commit()
 
         # Add permissions for admin
-        perm = ReportRole(
-            report_id=report.id, role=TipoUsuario.ADMIN, can_view=True, can_execute=True, can_export=True
-        )
+        perm = ReportRole(report_id=report.id, role=TipoUsuario.ADMIN, can_view=True, can_execute=True, can_export=True)
         db_session.add(perm)
         db_session.commit()
 
@@ -343,9 +341,7 @@ def test_report_detail_success(app, client, db_session, admin_user):
         db_session.commit()
 
         # Add permissions for admin
-        perm = ReportRole(
-            report_id=report.id, role=TipoUsuario.ADMIN, can_view=True, can_execute=True, can_export=True
-        )
+        perm = ReportRole(report_id=report.id, role=TipoUsuario.ADMIN, can_view=True, can_execute=True, can_export=True)
         db_session.add(perm)
         db_session.commit()
 

@@ -20,7 +20,7 @@ from io import BytesIO
 
 import pytest
 
-from coati_payroll.model import db, Empresa, Empleado, Liquidacion, LiquidacionDetalle
+from coati_payroll.model import Empresa, Empleado, Liquidacion, LiquidacionDetalle
 
 
 def test_exportar_liquidacion_excel_success(app, db_session):

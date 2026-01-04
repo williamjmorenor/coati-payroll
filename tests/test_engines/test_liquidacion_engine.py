@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -25,12 +25,10 @@ from coati_payroll.model import (
     ConfiguracionCalculos,
     Deduccion,
     Empleado,
-    Liquidacion,
     Nomina,
     NominaEmpleado,
     Adelanto,
     AdelantoAbono,
-    PlanillaEmpleado,
     Planilla,
     TipoPlanilla,
     Moneda,

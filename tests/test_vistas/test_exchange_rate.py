@@ -394,10 +394,10 @@ def create_excel_file(rows):
     """
     wb = Workbook()
     ws = wb.active
-    
+
     for row in rows:
         ws.append(row)
-    
+
     excel_file = io.BytesIO()
     wb.save(excel_file)
     excel_file.seek(0)
@@ -410,7 +410,7 @@ def test_exchange_rate_import_post_no_file(app, client, admin_user, db_session):
         login_user(client, admin_user.usuario, "admin-password")
 
         response = client.post("/exchange_rate/import", data={}, follow_redirects=False)
-        
+
         assert response.status_code == 302
         assert "/exchange_rate/import" in response.location
 
@@ -425,7 +425,7 @@ def test_exchange_rate_import_post_empty_filename(app, client, admin_user, db_se
             data={"file": (io.BytesIO(b""), "")},
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
         assert "/exchange_rate/import" in response.location
 
@@ -440,7 +440,7 @@ def test_exchange_rate_import_post_non_excel_file(app, client, admin_user, db_se
             data={"file": (io.BytesIO(b"test content"), "test.txt")},
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
         assert "/exchange_rate/import" in response.location
 
@@ -457,11 +457,13 @@ def test_exchange_rate_import_valid_excel_creates_records(app, client, admin_use
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with valid data
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 1.2],
-            ["2025-01-16", "EUR", "USD", 0.83],
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 1.2],
+                ["2025-01-16", "EUR", "USD", 0.83],
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -469,7 +471,7 @@ def test_exchange_rate_import_valid_excel_creates_records(app, client, admin_use
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
         assert "/exchange_rate/" in response.location
 
@@ -504,10 +506,12 @@ def test_exchange_rate_import_valid_excel_updates_existing(app, client, admin_us
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with updated rate
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 1.2],
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 1.2],
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -515,7 +519,7 @@ def test_exchange_rate_import_valid_excel_updates_existing(app, client, admin_us
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
 
         # Verify record was updated
@@ -534,10 +538,12 @@ def test_exchange_rate_import_insufficient_columns(app, client, admin_user, db_s
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with insufficient columns
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD"],  # Only 2 columns
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD"],  # Only 2 columns
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -545,9 +551,9 @@ def test_exchange_rate_import_insufficient_columns(app, client, admin_user, db_s
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify no records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 0
@@ -565,11 +571,13 @@ def test_exchange_rate_import_invalid_date_formats(app, client, admin_user, db_s
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with invalid dates
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["invalid-date", "USD", "EUR", 1.2],
-            ["32/13/2025", "USD", "EUR", 1.2],
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["invalid-date", "USD", "EUR", 1.2],
+                ["32/13/2025", "USD", "EUR", 1.2],
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -577,9 +585,9 @@ def test_exchange_rate_import_invalid_date_formats(app, client, admin_user, db_s
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify no records were created due to errors
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 0
@@ -597,13 +605,15 @@ def test_exchange_rate_import_various_valid_date_formats(app, client, admin_user
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with different valid date formats
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 1.2],  # ISO format
-            ["15/01/2025", "EUR", "USD", 0.83],  # DD/MM/YYYY format
-            [datetime(2025, 1, 17), "USD", "EUR", 1.25],  # datetime object
-            [date(2025, 1, 18), "EUR", "USD", 0.8],  # date object
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 1.2],  # ISO format
+                ["15/01/2025", "EUR", "USD", 0.83],  # DD/MM/YYYY format
+                [datetime(2025, 1, 17), "USD", "EUR", 1.25],  # datetime object
+                [date(2025, 1, 18), "EUR", "USD", 0.8],  # date object
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -611,9 +621,9 @@ def test_exchange_rate_import_various_valid_date_formats(app, client, admin_user
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify all records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 4
@@ -625,13 +635,15 @@ def test_exchange_rate_import_empty_currency_codes(app, client, admin_user, db_s
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with empty currency codes
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "", "EUR", 1.2],  # Empty origin
-            ["2025-01-16", "USD", "", 1.2],  # Empty destination
-            ["2025-01-17", None, "EUR", 1.2],  # None origin
-            ["2025-01-18", "USD", None, 1.2],  # None destination
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "", "EUR", 1.2],  # Empty origin
+                ["2025-01-16", "USD", "", 1.2],  # Empty destination
+                ["2025-01-17", None, "EUR", 1.2],  # None origin
+                ["2025-01-18", "USD", None, 1.2],  # None destination
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -639,9 +651,9 @@ def test_exchange_rate_import_empty_currency_codes(app, client, admin_user, db_s
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify no records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 0
@@ -658,11 +670,13 @@ def test_exchange_rate_import_nonexistent_currencies(app, client, admin_user, db
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with non-existent currencies
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "XXX", 1.2],  # XXX doesn't exist
-            ["2025-01-16", "YYY", "USD", 1.2],  # YYY doesn't exist
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "XXX", 1.2],  # XXX doesn't exist
+                ["2025-01-16", "YYY", "USD", 1.2],  # YYY doesn't exist
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -670,9 +684,9 @@ def test_exchange_rate_import_nonexistent_currencies(app, client, admin_user, db
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify no records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 0
@@ -690,13 +704,15 @@ def test_exchange_rate_import_invalid_rate_values(app, client, admin_user, db_se
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with invalid rates
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 0],  # Zero
-            ["2025-01-16", "USD", "EUR", -1.2],  # Negative
-            ["2025-01-17", "USD", "EUR", "invalid"],  # Non-numeric string
-            ["2025-01-18", "USD", "EUR", None],  # None
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 0],  # Zero
+                ["2025-01-16", "USD", "EUR", -1.2],  # Negative
+                ["2025-01-17", "USD", "EUR", "invalid"],  # Non-numeric string
+                ["2025-01-18", "USD", "EUR", None],  # None
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -704,9 +720,9 @@ def test_exchange_rate_import_invalid_rate_values(app, client, admin_user, db_se
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify no records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 0
@@ -724,12 +740,14 @@ def test_exchange_rate_import_numeric_rate_types(app, client, admin_user, db_ses
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with various numeric types
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 1.2],  # Float
-            ["2025-01-16", "EUR", "USD", 1],  # Integer
-            ["2025-01-17", "USD", "EUR", "1.25"],  # String number
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 1.2],  # Float
+                ["2025-01-16", "EUR", "USD", 1],  # Integer
+                ["2025-01-17", "USD", "EUR", "1.25"],  # String number
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -737,9 +755,9 @@ def test_exchange_rate_import_numeric_rate_types(app, client, admin_user, db_ses
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify all records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 3
@@ -757,14 +775,16 @@ def test_exchange_rate_import_mixed_success_and_errors(app, client, admin_user, 
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with mix of valid and invalid data
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 1.2],  # Valid
-            ["invalid-date", "USD", "EUR", 1.2],  # Invalid date
-            ["2025-01-16", "USD", "XXX", 1.2],  # Invalid currency
-            ["2025-01-17", "EUR", "USD", 0.83],  # Valid
-            ["2025-01-18", "USD", "EUR", -1],  # Invalid rate
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 1.2],  # Valid
+                ["invalid-date", "USD", "EUR", 1.2],  # Invalid date
+                ["2025-01-16", "USD", "XXX", 1.2],  # Invalid currency
+                ["2025-01-17", "EUR", "USD", 0.83],  # Valid
+                ["2025-01-18", "USD", "EUR", -1],  # Invalid rate
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -772,9 +792,9 @@ def test_exchange_rate_import_mixed_success_and_errors(app, client, admin_user, 
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify only valid records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 2
@@ -792,13 +812,15 @@ def test_exchange_rate_import_skip_empty_rows(app, client, admin_user, db_sessio
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with empty rows
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 1.2],  # Valid
-            [],  # Empty row
-            [None, None, None, None],  # Row with all None
-            ["2025-01-16", "EUR", "USD", 0.83],  # Valid
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 1.2],  # Valid
+                [],  # Empty row
+                [None, None, None, None],  # Row with all None
+                ["2025-01-16", "EUR", "USD", 0.83],  # Valid
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -806,9 +828,9 @@ def test_exchange_rate_import_skip_empty_rows(app, client, admin_user, db_sessio
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify only valid records were created (empty rows skipped)
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 2
@@ -826,12 +848,14 @@ def test_exchange_rate_import_case_insensitive_currency_codes(app, client, admin
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with lowercase and mixed case currency codes
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "usd", "eur", 1.2],  # lowercase
-            ["2025-01-16", "Usd", "Eur", 0.83],  # mixed case
-            ["2025-01-17", "  USD  ", "  EUR  ", 1.25],  # with spaces
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "usd", "eur", 1.2],  # lowercase
+                ["2025-01-16", "Usd", "Eur", 0.83],  # mixed case
+                ["2025-01-17", "  USD  ", "  EUR  ", 1.25],  # with spaces
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -839,9 +863,9 @@ def test_exchange_rate_import_case_insensitive_currency_codes(app, client, admin
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify all records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 3
@@ -861,7 +885,7 @@ def test_exchange_rate_import_general_exception_handling(app, client, admin_user
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
         assert "/exchange_rate/import" in response.location
 
@@ -884,9 +908,9 @@ def test_exchange_rate_import_many_errors_limited_display(app, client, admin_use
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify no records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 0
@@ -904,10 +928,12 @@ def test_exchange_rate_import_xls_extension(app, client, admin_user, db_session)
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with .xls extension
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 1.2],
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 1.2],
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -915,7 +941,7 @@ def test_exchange_rate_import_xls_extension(app, client, admin_user, db_session)
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
         assert "/exchange_rate/" in response.location
 
@@ -932,10 +958,12 @@ def test_exchange_rate_import_inactive_currency_not_found(app, client, admin_use
         login_user(client, admin_user.usuario, "admin-password")
 
         # Try to import with inactive currency
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            ["2025-01-15", "USD", "EUR", 1.2],  # EUR is inactive
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                ["2025-01-15", "USD", "EUR", 1.2],  # EUR is inactive
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -943,9 +971,9 @@ def test_exchange_rate_import_inactive_currency_not_found(app, client, admin_use
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify no records were created (EUR is inactive)
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 0
@@ -963,10 +991,12 @@ def test_exchange_rate_import_non_string_date_invalid_type(app, client, admin_us
         login_user(client, admin_user.usuario, "admin-password")
 
         # Create Excel file with numeric date (not datetime/date/string)
-        excel_file = create_excel_file([
-            ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
-            [12345, "USD", "EUR", 1.2],  # Numeric date (not datetime object)
-        ])
+        excel_file = create_excel_file(
+            [
+                ["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"],
+                [12345, "USD", "EUR", 1.2],  # Numeric date (not datetime object)
+            ]
+        )
 
         response = client.post(
             "/exchange_rate/import",
@@ -974,9 +1004,9 @@ def test_exchange_rate_import_non_string_date_invalid_type(app, client, admin_us
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify no records were created
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 0
@@ -1000,7 +1030,7 @@ def test_exchange_rate_import_row_exception_continues(app, client, admin_user, d
         ws.append(["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"])
         ws.append(["2025-01-15", "USD"])  # Short row - will trigger error
         ws.append(["2025-01-16", "USD", "EUR", 1.2])  # Valid row
-        
+
         excel_file = io.BytesIO()
         wb.save(excel_file)
         excel_file.seek(0)
@@ -1011,9 +1041,9 @@ def test_exchange_rate_import_row_exception_continues(app, client, admin_user, d
             content_type="multipart/form-data",
             follow_redirects=False,
         )
-        
+
         assert response.status_code == 302
-        
+
         # Verify the valid row was created despite the error in previous row
         rates = db_session.execute(select(TipoCambio)).scalars().all()
         assert len(rates) == 1

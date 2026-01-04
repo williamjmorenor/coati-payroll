@@ -312,9 +312,7 @@ def test_validate_schema_api_with_valid_schema(app, client, admin_user, db_sessi
         valid_schema = {
             "meta": {"name": "Test Schema", "reference_currency": "USD"},
             "inputs": [{"name": "salary", "type": "decimal", "default": 1000}],
-            "steps": [
-                {"name": "annual_salary", "type": "calculation", "formula": "salary * 12"}
-            ],
+            "steps": [{"name": "annual_salary", "type": "calculation", "formula": "salary * 12"}],
             "output": "annual_salary",
         }
 
@@ -395,9 +393,7 @@ def test_validate_schema_api_with_invalid_step_type(app, client, admin_user, db_
         invalid_schema = {
             "meta": {"name": "Test Schema"},
             "inputs": [],
-            "steps": [
-                {"name": "invalid_step", "type": "invalid_type", "formula": "1 + 1"}
-            ],
+            "steps": [{"name": "invalid_step", "type": "invalid_type", "formula": "1 + 1"}],
         }
 
         response = client.post(
@@ -436,9 +432,7 @@ def test_validate_schema_api_with_missing_step_name(app, client, admin_user, db_
         invalid_schema = {
             "meta": {"name": "Test Schema"},
             "inputs": [],
-            "steps": [
-                {"type": "calculation", "formula": "1 + 1"}  # Missing name
-            ],
+            "steps": [{"type": "calculation", "formula": "1 + 1"}],  # Missing name
         }
 
         response = client.post(
@@ -479,9 +473,7 @@ def test_validate_schema_api_with_unsafe_formula(app, client, admin_user, db_ses
         unsafe_schema = {
             "meta": {"name": "Unsafe Schema"},
             "inputs": [{"name": "x", "type": "decimal", "default": 10}],
-            "steps": [
-                {"name": "unsafe_step", "type": "calculation", "formula": "__import__('os').system('ls')"}
-            ],
+            "steps": [{"name": "unsafe_step", "type": "calculation", "formula": "__import__('os').system('ls')"}],
             "output": "unsafe_step",
         }
 
@@ -622,9 +614,7 @@ def test_validate_schema_api_with_assignment_step(app, client, admin_user, db_se
         valid_schema = {
             "meta": {"name": "Assignment Schema"},
             "inputs": [{"name": "base_salary", "type": "decimal", "default": 1000}],
-            "steps": [
-                {"name": "salary", "type": "assignment", "value": "base_salary"}
-            ],
+            "steps": [{"name": "salary", "type": "assignment", "value": "base_salary"}],
             "output": "salary",
         }
 

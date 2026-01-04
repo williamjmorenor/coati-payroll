@@ -430,6 +430,7 @@ def test_backup_postgresql(app, db_session, monkeypatch):
         class Result:
             returncode = 0
             stderr = ""
+
         return Result()
 
     monkeypatch.setattr(subprocess, "run", mock_run)
@@ -458,6 +459,7 @@ def test_backup_postgresql_failure(app, db_session, monkeypatch):
         class Result:
             returncode = 1
             stderr = "pg_dump error"
+
         return Result()
 
     monkeypatch.setattr(subprocess, "run", mock_run)
@@ -485,6 +487,7 @@ def test_backup_mysql(app, db_session, monkeypatch):
         class Result:
             returncode = 0
             stderr = ""
+
         return Result()
 
     monkeypatch.setattr(subprocess, "run", mock_run)
@@ -513,6 +516,7 @@ def test_backup_mysql_failure(app, db_session, monkeypatch):
         class Result:
             returncode = 1
             stderr = "mysqldump error"
+
         return Result()
 
     monkeypatch.setattr(subprocess, "run", mock_run)
@@ -654,6 +658,7 @@ def test_backup_postgresql_with_auto_timestamp(app, db_session, monkeypatch):
         class Result:
             returncode = 0
             stderr = ""
+
         return Result()
 
     monkeypatch.setattr(subprocess, "run", mock_run)
@@ -682,6 +687,7 @@ def test_backup_mysql_with_auto_timestamp(app, db_session, monkeypatch):
         class Result:
             returncode = 0
             stderr = ""
+
         return Result()
 
     monkeypatch.setattr(subprocess, "run", mock_run)
@@ -712,7 +718,7 @@ def test_system_env_command():
     from coati_payroll.cli import system
 
     runner = CliRunner()
-    result = runner.invoke(system, ['env'])
+    result = runner.invoke(system, ["env"])
     assert result.exit_code == 0
     assert "FLASK_APP" in result.output
 
@@ -728,10 +734,10 @@ def test_register_cli_commands(app):
 
     # Check that commands were added
     assert len(app.cli.commands) >= initial_commands
-    assert 'system' in app.cli.commands
-    assert 'database' in app.cli.commands
-    assert 'users' in app.cli.commands
-    assert 'cache' in app.cli.commands
-    assert 'maintenance' in app.cli.commands
-    assert 'debug' in app.cli.commands
-    assert 'plugins' in app.cli.commands
+    assert "system" in app.cli.commands
+    assert "database" in app.cli.commands
+    assert "users" in app.cli.commands
+    assert "cache" in app.cli.commands
+    assert "maintenance" in app.cli.commands
+    assert "debug" in app.cli.commands
+    assert "plugins" in app.cli.commands

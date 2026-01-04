@@ -20,7 +20,6 @@ from unittest.mock import patch, MagicMock
 
 from coati_payroll.enums import NominaEstado
 from coati_payroll.model import (
-    db,
     Empresa,
     Empleado,
     Moneda,

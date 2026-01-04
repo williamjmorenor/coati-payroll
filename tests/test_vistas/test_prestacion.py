@@ -225,9 +225,7 @@ def test_initial_balance_bulk_post_no_file(app, client, admin_user, db_session):
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
 
-        response = client.post(
-            "/prestacion-management/initial-balance/bulk", data={}, follow_redirects=False
-        )
+        response = client.post("/prestacion-management/initial-balance/bulk", data={}, follow_redirects=False)
 
         assert response.status_code == 302
         assert "/prestacion-management/initial-balance/bulk" in response.location

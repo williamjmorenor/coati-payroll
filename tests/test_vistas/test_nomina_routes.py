@@ -805,3 +805,223 @@ def test_ver_log_nomina_wrong_planilla_redirects(app, client, admin_user, db_ses
 
         response = client.get(f"/planilla/{other_planilla.id}/nomina/{nomina.id}/log", follow_redirects=False)
         assert response.status_code == 302
+
+
+# ============================================================================
+# TESTS FOR regenerar_comprobante_contable
+# ============================================================================
+
+
+def test_regenerar_comprobante_contable_requires_write_access(app, client, db_session, planilla, nomina):
+    """Test that regenerar_comprobante_contable requires write access."""
+    with app.app_context():
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+        )
+        assert response.status_code == 302
+
+
+def test_regenerar_comprobante_contable_wrong_planilla_redirects(app, client, admin_user, db_session, planilla, nomina):
+    """Test that regenerar_comprobante_contable redirects if nomina doesn't belong to planilla."""
+    with app.app_context():
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda
+        from coati_payroll.model import db
+
+        # Create another planilla
+        tipo_planilla = db_session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one()
+        moneda = db_session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+
+        other_planilla = Planilla(
+            nombre="Other Planilla",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            activo=True,
+        )
+        db_session.add(other_planilla)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.post(
+            f"/planilla/{other_planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+        )
+        assert response.status_code == 302
+
+
+def test_regenerar_comprobante_contable_invalid_state(app, client, admin_user, db_session, planilla, nomina):
+    """Test that regenerar_comprobante_contable only works for APLICADO or PAGADO state."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'generado' state (invalid for regenerar_comprobante)
+        nomina = db.session.merge(nomina)
+        nomina.estado = "generado"
+        db_session.commit()
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+        )
+        assert response.status_code == 302
+        # Should redirect to ver_nomina with error message
+
+
+def test_regenerar_comprobante_contable_aplicado_state_success(app, client, admin_user, db_session, planilla, nomina):
+    """Test successful comprobante regeneration for APLICADO state."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'aplicado' state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aplicado"
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService
+        mock_comprobante = MagicMock()
+        mock_comprobante.advertencias = []
+
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.return_value = mock_comprobante
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            assert f"/planilla/{planilla.id}/nomina/{nomina.id}/log" in response.location
+
+
+def test_regenerar_comprobante_contable_pagado_state_success(app, client, admin_user, db_session, planilla, nomina):
+    """Test successful comprobante regeneration for PAGADO state."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'pagado' state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "pagado"
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService
+        mock_comprobante = MagicMock()
+        mock_comprobante.advertencias = []
+
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.return_value = mock_comprobante
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            assert f"/planilla/{planilla.id}/nomina/{nomina.id}/log" in response.location
+
+
+def test_regenerar_comprobante_contable_with_warnings(app, client, admin_user, db_session, planilla, nomina):
+    """Test comprobante regeneration displays warnings if configuration incomplete."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'aplicado' state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aplicado"
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService with warnings
+        mock_comprobante = MagicMock()
+        mock_comprobante.advertencias = ["Warning 1: Configuration incomplete", "Warning 2: Missing account"]
+
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.return_value = mock_comprobante
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            # Warnings should be flashed to the user
+
+
+def test_regenerar_comprobante_contable_handles_exception(app, client, admin_user, db_session, planilla, nomina):
+    """Test that regenerar_comprobante_contable handles exceptions gracefully."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'aplicado' state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aplicado"
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService to raise an exception
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.side_effect = Exception("Database error")
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            # Should redirect to ver_log_nomina with error message
+
+
+def test_regenerar_comprobante_contable_uses_fecha_calculo_original(
+    app, client, admin_user, db_session, planilla, nomina
+):
+    """Test that regenerar_comprobante_contable uses fecha_calculo_original if available."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'aplicado' state with fecha_calculo_original
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aplicado"
+        nomina.fecha_calculo_original = date(2025, 1, 15)
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService
+        mock_comprobante = MagicMock()
+        mock_comprobante.advertencias = []
+
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.return_value = mock_comprobante
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            assert f"/planilla/{planilla.id}/nomina/{nomina.id}/log" in response.location

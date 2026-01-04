@@ -320,7 +320,6 @@ class TestSecurityValidation:
             engine.execute({"x": 10})
 
 
-
 class TestConditionalLogic:
     """Tests for conditional step execution."""
 

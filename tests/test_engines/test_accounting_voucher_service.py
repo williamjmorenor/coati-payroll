@@ -41,11 +41,9 @@ from coati_payroll.model import (
     NominaDetalle,
     Percepcion,
     Deduccion,
-    Prestacion,
     Adelanto,
     PlanillaIngreso,
     PlanillaDeduccion,
-    PlanillaPrestacion,
     ComprobanteContable,
     ComprobanteContableLinea,
 )
@@ -531,7 +529,7 @@ class TestAccountingVoucherGeneration:
 
             # Check lines include loan entries
             lineas = db_session.query(ComprobanteContableLinea).filter_by(comprobante_id=comprobante.id).all()
-            
+
             # Should have base salary (2 lines) + loan (2 lines) = 4 lines
             assert len(lineas) >= 4
 
@@ -1007,9 +1005,12 @@ class TestAccountingBalanceValidation:
 
             # Now manually create an unbalanced scenario by adding a debit-only line
             db_session.flush()
-            orden_max = db_session.query(db.func.max(ComprobanteContableLinea.orden)).filter_by(
-                comprobante_id=comprobante.id
-            ).scalar() or 0
+            orden_max = (
+                db_session.query(db.func.max(ComprobanteContableLinea.orden))
+                .filter_by(comprobante_id=comprobante.id)
+                .scalar()
+                or 0
+            )
 
             unbalanced_line = ComprobanteContableLinea(
                 comprobante_id=comprobante.id,
@@ -1249,12 +1250,14 @@ class TestIncompleteAccountingConfiguration:
             assert comprobante.advertencias  # Should have warnings about missing config
 
             # Verify lines were created with NULL accounts
-            lineas = db_session.execute(
-                db.select(ComprobanteContableLinea).filter_by(comprobante_id=comprobante.id)
-            ).scalars().all()
-            
+            lineas = (
+                db_session.execute(db.select(ComprobanteContableLinea).filter_by(comprobante_id=comprobante.id))
+                .scalars()
+                .all()
+            )
+
             assert len(lineas) == 2  # Debit and credit for base salary
-            
+
             # Both lines should have NULL accounts
             for linea in lineas:
                 assert linea.codigo_cuenta is None
@@ -1351,16 +1354,14 @@ class TestIncompleteAccountingConfiguration:
             # Get detailed view - should work with NULL accounts
             service = AccountingVoucherService(db_session)
             detailed = service.get_detailed_voucher_by_employee(comprobante)
-            
+
             # Should have one employee entry
             assert len(detailed) == 1
             assert detailed[0]["empleado_codigo"] == "EMP001"
             assert len(detailed[0]["lineas"]) == 1
-            
+
             # Line should show NULL account
             linea_detail = detailed[0]["lineas"][0]
             assert linea_detail["codigo_cuenta"] is None
             assert linea_detail["descripcion_cuenta"] is None
             assert linea_detail["debito"] == Decimal("10000.00")
-
-

@@ -14,7 +14,7 @@
 """Comprehensive tests for carga inicial prestacion (coati_payroll/vistas/carga_inicial_prestacion.py)."""
 
 import io
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from openpyxl import load_workbook
@@ -583,20 +583,20 @@ def test_carga_inicial_prestacion_reporte_excel_with_data(app, client, admin_use
         # Should return 200 and Excel file
         assert response.status_code == 200
         assert response.content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        
+
         # Verify the content is a valid Excel file
         excel_data = io.BytesIO(response.data)
         wb = load_workbook(excel_data)
         ws = wb.active
-        
+
         # Verify worksheet name
         assert ws.title == "Prestaciones Acumuladas"
-        
+
         # Verify headers are present
         assert ws.cell(row=1, column=1).value == "ID Transacción"
         assert ws.cell(row=1, column=2).value == "Fecha Transacción"
         assert ws.cell(row=1, column=3).value == "Código Empleado"
-        
+
         # Verify data row exists
         assert ws.cell(row=2, column=1).value == transaccion.id
         assert ws.cell(row=2, column=3).value == empleado.codigo_empleado
@@ -667,9 +667,7 @@ def test_carga_inicial_prestacion_reporte_excel_with_date_filters(app, client, a
         db_session.commit()
 
         # Request Excel report with date filters
-        response = client.get(
-            "/carga-inicial-prestaciones/reporte/excel?fecha_desde=2024-06-01&fecha_hasta=2024-06-30"
-        )
+        response = client.get("/carga-inicial-prestaciones/reporte/excel?fecha_desde=2024-06-01&fecha_hasta=2024-06-30")
 
         # Should return 200 and Excel file
         assert response.status_code == 200
@@ -683,6 +681,7 @@ def test_carga_inicial_prestacion_reporte_excel_without_openpyxl(app, client, ad
 
         # Mock ImportError for openpyxl
         import builtins
+
         original_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):
