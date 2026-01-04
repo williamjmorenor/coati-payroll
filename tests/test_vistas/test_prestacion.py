@@ -15,6 +15,7 @@
 
 import io
 from decimal import Decimal
+from unittest.mock import patch
 
 from openpyxl import Workbook
 
@@ -662,8 +663,6 @@ def test_initial_balance_bulk_post_commit_exception(app, client, admin_user, db_
         )
 
         # Mock the db.session.commit to raise an exception
-        from unittest.mock import patch
-
         with patch("coati_payroll.model.db.session.commit") as mock_commit:
             mock_commit.side_effect = Exception("Database error")
 
