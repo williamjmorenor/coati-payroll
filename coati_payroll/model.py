@@ -1025,6 +1025,12 @@ class ComprobanteContable(database.Model, BaseTabla):
     This model preserves the accounting voucher header generated at the time of payroll
     calculation, preventing configuration changes from affecting historical records.
     Detail lines are stored in ComprobanteContableLinea.
+    
+    Audit Trail:
+    - aplicado_por: User who applied the nomina (immutable)
+    - fecha_aplicacion: Date when nomina was applied (immutable)
+    - modificado_por: User who last regenerated the voucher
+    - fecha_modificacion: Date when voucher was last regenerated
     """
 
     __tablename__ = "comprobante_contable"
@@ -1044,6 +1050,15 @@ class ComprobanteContable(database.Model, BaseTabla):
     # Warnings about incomplete configurations
     advertencias = database.Column(JSON, nullable=True, default=list)
 
+    # Audit trail - immutable fields (set once when nomina is applied)
+    aplicado_por = database.Column(database.String(150), nullable=True)
+    fecha_aplicacion = database.Column(database.DateTime, nullable=True)
+
+    # Audit trail - modification tracking (updated each time voucher is regenerated)
+    modificado_por = database.Column(database.String(150), nullable=True)
+    fecha_modificacion = database.Column(database.DateTime, nullable=True)
+    veces_modificado = database.Column(database.Integer, nullable=False, default=0)
+
     nomina = database.relationship("Nomina", back_populates="comprobante_contable")
     moneda = database.relationship("Moneda")
     lineas = database.relationship(
@@ -1058,7 +1073,15 @@ class ComprobanteContableLinea(database.Model, BaseTabla):
     """Stores individual accounting entry lines for each employee's payroll calculation.
 
     Each line represents a single accounting entry (debit or credit) for a specific
-    employee, concept, account, and cost center. Summarization happens at export time.
+    employee, concept, account, and cost center. Provides complete audit trail.
+    
+    Audit Fields:
+    - Empleado: empleado_id, empleado_codigo, empleado_nombre
+    - Cuenta: codigo_cuenta, descripcion_cuenta
+    - Centro de costos: centro_costos
+    - Concepto origen: concepto_codigo (código de percepción/deducción/prestación)
+    - Tipo: tipo_debito_credito ('debito' o 'credito')
+    - Monto: debito o credito (solo uno tiene valor, el otro es 0)
     """
 
     __tablename__ = "comprobante_contable_linea"
@@ -1069,32 +1092,38 @@ class ComprobanteContableLinea(database.Model, BaseTabla):
     nomina_empleado_id = database.Column(
         database.String(26), database.ForeignKey("nomina_empleado.id"), nullable=False, index=True
     )
+    
+    # Employee information for audit trail (denormalized for easier reporting)
     empleado_id = database.Column(
         database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True
     )
+    empleado_codigo = database.Column(database.String(20), nullable=False, index=True)
+    empleado_nombre = database.Column(database.String(255), nullable=False)
 
-    # Employee information snapshot for audit trail (denormalized for easier reporting)
-    empleado_codigo = database.Column(database.String(20), nullable=True)
-    empleado_nombre = database.Column(database.String(255), nullable=True)
-
-    # Accounting information
+    # Accounting account information
     codigo_cuenta = database.Column(database.String(64), nullable=False, index=True)
-    descripcion_cuenta = database.Column(database.String(255), nullable=True)
+    descripcion_cuenta = database.Column(database.String(255), nullable=False)
+    
+    # Cost center for cost allocation
     centro_costos = database.Column(database.String(150), nullable=True, index=True)
 
-    # Debit or Credit
+    # Amount (only one should be non-zero: debito OR credito)
+    tipo_debito_credito = database.Column(database.String(10), nullable=False, index=True)  # 'debito' or 'credito'
     debito = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     credito = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    
+    # Calculated amount (the actual value, duplicated for convenience)
+    monto_calculado = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
 
-    # Source information for audit trail
-    concepto = database.Column(database.String(255), nullable=True)  # Description of the concept
+    # Source concept information for complete audit trail
+    concepto = database.Column(database.String(255), nullable=False)  # Description of the concept
     tipo_concepto = database.Column(
-        database.String(20), nullable=True
+        database.String(20), nullable=False, index=True
     )  # 'salario_base', 'percepcion', 'deduccion', 'prestacion', 'prestamo'
-    concepto_codigo = database.Column(database.String(50), nullable=True)  # Code of the source concept
+    concepto_codigo = database.Column(database.String(50), nullable=False, index=True)  # Code from source concept
 
     # Order for consistent display
-    orden = database.Column(database.Integer, nullable=False, default=0)
+    orden = database.Column(database.Integer, nullable=False, default=0, index=True)
 
     comprobante = database.relationship("ComprobanteContable", back_populates="lineas")
     nomina_empleado = database.relationship("NominaEmpleado")

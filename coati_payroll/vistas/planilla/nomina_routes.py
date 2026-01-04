@@ -457,12 +457,14 @@ def regenerar_comprobante_contable(planilla_id: str, nomina_id: str):
 
     try:
         from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
+        from flask_login import current_user
 
         accounting_service = AccountingVoucherService(db.session)
 
         # Regenerate voucher using existing nomina data
         fecha_calculo = nomina.fecha_calculo_original or nomina.periodo_fin
-        comprobante = accounting_service.generate_accounting_voucher(nomina, planilla, fecha_calculo)
+        usuario = current_user.nombre_usuario if current_user and current_user.is_authenticated else None
+        comprobante = accounting_service.generate_accounting_voucher(nomina, planilla, fecha_calculo, usuario)
 
         db.session.commit()
 

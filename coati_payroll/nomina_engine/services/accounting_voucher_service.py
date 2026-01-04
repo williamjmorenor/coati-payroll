@@ -131,7 +131,7 @@ class AccountingVoucherService:
         return is_valid, warnings
 
     def generate_accounting_voucher(
-        self, nomina: Nomina, planilla: Planilla, fecha_calculo: date = None
+        self, nomina: Nomina, planilla: Planilla, fecha_calculo: date = None, usuario: str = None
     ) -> ComprobanteContable:
         """Generate accounting voucher for a nomina with individual lines per employee.
 
@@ -139,10 +139,13 @@ class AccountingVoucherService:
             nomina: The nomina to generate voucher for
             planilla: The planilla configuration
             fecha_calculo: Calculation date (defaults to nomina periodo_fin)
+            usuario: User generating/regenerating the voucher
 
         Returns:
             ComprobanteContable with generated line entries
         """
+        from datetime import datetime, timezone
+        
         # Validate configuration
         is_valid, warnings = self.validate_accounting_configuration(planilla)
 
@@ -159,7 +162,7 @@ class AccountingVoucherService:
         )
 
         if comprobante:
-            # Delete existing lines to regenerate
+            # Regenerating - update modification audit trail
             self.session.execute(
                 db.delete(ComprobanteContableLinea).where(ComprobanteContableLinea.comprobante_id == comprobante.id)
             )
@@ -169,8 +172,21 @@ class AccountingVoucherService:
             comprobante.concepto = concepto
             comprobante.moneda_id = planilla.moneda_id
             comprobante.advertencias = warnings
+            # Update modification tracking
+            comprobante.modificado_por = usuario or nomina.generado_por
+            comprobante.fecha_modificacion = datetime.now(timezone.utc)
+            comprobante.veces_modificado += 1
         else:
-            # Create new comprobante
+            # Creating new - set initial audit trail
+            # Check if nomina is already applied to set aplicado_por
+            from coati_payroll.enums import NominaEstado
+            
+            aplicado_por = None
+            fecha_aplicacion = None
+            if nomina.estado in (NominaEstado.APLICADO, NominaEstado.PAGADO):
+                aplicado_por = nomina.aplicado_por or usuario or nomina.generado_por
+                fecha_aplicacion = nomina.aplicado_en or datetime.now(timezone.utc)
+            
             comprobante = ComprobanteContable(
                 nomina_id=nomina.id,
                 fecha_calculo=fecha_calculo,
@@ -180,6 +196,9 @@ class AccountingVoucherService:
                 total_creditos=Decimal("0.00"),
                 balance=Decimal("0.00"),
                 advertencias=warnings,
+                aplicado_por=aplicado_por,
+                fecha_aplicacion=fecha_aplicacion,
+                veces_modificado=0,
             )
             self.session.add(comprobante)
             self.session.flush()
@@ -215,8 +234,10 @@ class AccountingVoucherService:
                     codigo_cuenta=planilla.codigo_cuenta_debe_salario,
                     descripcion_cuenta=planilla.descripcion_cuenta_debe_salario or "Gasto por Salario",
                     centro_costos=centro_costos,
+                    tipo_debito_credito="debito",
                     debito=salario_base,
                     credito=Decimal("0.00"),
+                    monto_calculado=salario_base,
                     concepto="Salario Base",
                     tipo_concepto="salario_base",
                     concepto_codigo="SALARIO_BASE",
@@ -236,8 +257,10 @@ class AccountingVoucherService:
                     codigo_cuenta=planilla.codigo_cuenta_haber_salario,
                     descripcion_cuenta=planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
                     centro_costos=centro_costos,
+                    tipo_debito_credito="credito",
                     debito=Decimal("0.00"),
                     credito=salario_base,
+                    monto_calculado=salario_base,
                     concepto="Salario Base",
                     tipo_concepto="salario_base",
                     concepto_codigo="SALARIO_BASE",
@@ -294,9 +317,11 @@ class AccountingVoucherService:
                             codigo_cuenta=planilla.codigo_cuenta_haber_salario,
                             descripcion_cuenta=planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
                             centro_costos=centro_costos,
-                            debito=detalle.monto,
-                            credito=Decimal("0.00"),
-                            concepto=detalle.descripcion or "Préstamo/Adelanto",
+                            tipo_debito_credito="debito",
+                                debito=detalle.monto,
+                                credito=Decimal("0.00"),
+                                monto_calculado=detalle.monto,
+                                concepto=detalle.descripcion or "Préstamo/Adelanto",
                             tipo_concepto="prestamo",
                             concepto_codigo=detalle.codigo,
                             orden=orden,
@@ -315,9 +340,11 @@ class AccountingVoucherService:
                         codigo_cuenta=cuenta_control_prestamo,
                         descripcion_cuenta="Cuenta de Control Préstamos/Adelantos",
                         centro_costos=centro_costos,
-                        debito=Decimal("0.00"),
-                        credito=detalle.monto,
-                        concepto=detalle.descripcion or "Préstamo/Adelanto",
+                        tipo_debito_credito="credito",
+                                debito=Decimal("0.00"),
+                                credito=detalle.monto,
+                                monto_calculado=detalle.monto,
+                                concepto=detalle.descripcion or "Préstamo/Adelanto",
                         tipo_concepto="prestamo",
                         concepto_codigo=detalle.codigo,
                         orden=orden,
@@ -341,9 +368,11 @@ class AccountingVoucherService:
                                     codigo_cuenta=percepcion.codigo_cuenta_debe,
                                     descripcion_cuenta=percepcion.descripcion_cuenta_debe or percepcion.nombre,
                                     centro_costos=centro_costos,
-                                    debito=detalle.monto,
-                                    credito=Decimal("0.00"),
-                                    concepto=detalle.descripcion or percepcion.nombre,
+                                    tipo_debito_credito="debito",
+                                debito=detalle.monto,
+                                credito=Decimal("0.00"),
+                                monto_calculado=detalle.monto,
+                                concepto=detalle.descripcion or percepcion.nombre,
                                     tipo_concepto="percepcion",
                                     concepto_codigo=percepcion.codigo,
                                     orden=orden,
@@ -362,9 +391,11 @@ class AccountingVoucherService:
                                     codigo_cuenta=percepcion.codigo_cuenta_haber,
                                     descripcion_cuenta=percepcion.descripcion_cuenta_haber or percepcion.nombre,
                                     centro_costos=centro_costos,
-                                    debito=Decimal("0.00"),
-                                    credito=detalle.monto,
-                                    concepto=detalle.descripcion or percepcion.nombre,
+                                    tipo_debito_credito="credito",
+                                debito=Decimal("0.00"),
+                                credito=detalle.monto,
+                                monto_calculado=detalle.monto,
+                                concepto=detalle.descripcion or percepcion.nombre,
                                     tipo_concepto="percepcion",
                                     concepto_codigo=percepcion.codigo,
                                     orden=orden,
@@ -386,9 +417,11 @@ class AccountingVoucherService:
                                     codigo_cuenta=deduccion.codigo_cuenta_debe,
                                     descripcion_cuenta=deduccion.descripcion_cuenta_debe or deduccion.nombre,
                                     centro_costos=centro_costos,
-                                    debito=detalle.monto,
-                                    credito=Decimal("0.00"),
-                                    concepto=detalle.descripcion or deduccion.nombre,
+                                    tipo_debito_credito="debito",
+                                debito=detalle.monto,
+                                credito=Decimal("0.00"),
+                                monto_calculado=detalle.monto,
+                                concepto=detalle.descripcion or deduccion.nombre,
                                     tipo_concepto="deduccion",
                                     concepto_codigo=deduccion.codigo,
                                     orden=orden,
@@ -407,9 +440,11 @@ class AccountingVoucherService:
                                     codigo_cuenta=deduccion.codigo_cuenta_haber,
                                     descripcion_cuenta=deduccion.descripcion_cuenta_haber or deduccion.nombre,
                                     centro_costos=centro_costos,
-                                    debito=Decimal("0.00"),
-                                    credito=detalle.monto,
-                                    concepto=detalle.descripcion or deduccion.nombre,
+                                    tipo_debito_credito="credito",
+                                debito=Decimal("0.00"),
+                                credito=detalle.monto,
+                                monto_calculado=detalle.monto,
+                                concepto=detalle.descripcion or deduccion.nombre,
                                     tipo_concepto="deduccion",
                                     concepto_codigo=deduccion.codigo,
                                     orden=orden,
@@ -431,9 +466,11 @@ class AccountingVoucherService:
                                     codigo_cuenta=prestacion.codigo_cuenta_debe,
                                     descripcion_cuenta=prestacion.descripcion_cuenta_debe or prestacion.nombre,
                                     centro_costos=centro_costos,
-                                    debito=detalle.monto,
-                                    credito=Decimal("0.00"),
-                                    concepto=detalle.descripcion or prestacion.nombre,
+                                    tipo_debito_credito="debito",
+                                debito=detalle.monto,
+                                credito=Decimal("0.00"),
+                                monto_calculado=detalle.monto,
+                                concepto=detalle.descripcion or prestacion.nombre,
                                     tipo_concepto="prestacion",
                                     concepto_codigo=prestacion.codigo,
                                     orden=orden,
@@ -452,9 +489,11 @@ class AccountingVoucherService:
                                     codigo_cuenta=prestacion.codigo_cuenta_haber,
                                     descripcion_cuenta=prestacion.descripcion_cuenta_haber or prestacion.nombre,
                                     centro_costos=centro_costos,
-                                    debito=Decimal("0.00"),
-                                    credito=detalle.monto,
-                                    concepto=detalle.descripcion or prestacion.nombre,
+                                    tipo_debito_credito="credito",
+                                debito=Decimal("0.00"),
+                                credito=detalle.monto,
+                                monto_calculado=detalle.monto,
+                                concepto=detalle.descripcion or prestacion.nombre,
                                     tipo_concepto="prestacion",
                                     concepto_codigo=prestacion.codigo,
                                     orden=orden,

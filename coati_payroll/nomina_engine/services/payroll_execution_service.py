@@ -193,7 +193,7 @@ class PayrollExecutionService:
         # Generate accounting voucher
         try:
             comprobante = self.accounting_voucher_service.generate_accounting_voucher(
-                nomina, planilla, fecha_calculo
+                nomina, planilla, fecha_calculo, usuario
             )
             db.session.flush()
         except Exception as e:

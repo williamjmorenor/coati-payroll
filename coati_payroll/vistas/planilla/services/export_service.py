@@ -455,6 +455,32 @@ class ExportService:
             ws[f"B{row}"] = f"{comprobante.moneda.codigo} - {comprobante.moneda.nombre}"
             row += 1
 
+        # Audit trail information
+        if comprobante.aplicado_por:
+            ws[f"A{row}"] = "Aplicado por:"
+            ws[f"B{row}"] = comprobante.aplicado_por
+            row += 1
+        
+        if comprobante.fecha_aplicacion:
+            ws[f"A{row}"] = "Fecha aplicación:"
+            ws[f"B{row}"] = comprobante.fecha_aplicacion.strftime('%d/%m/%Y %H:%M')
+            row += 1
+        
+        if comprobante.veces_modificado > 0:
+            ws[f"A{row}"] = "Modificado:"
+            ws[f"B{row}"] = f"{comprobante.veces_modificado} vez/veces"
+            row += 1
+            
+            if comprobante.modificado_por:
+                ws[f"A{row}"] = "Última modificación por:"
+                ws[f"B{row}"] = comprobante.modificado_por
+                row += 1
+            
+            if comprobante.fecha_modificacion:
+                ws[f"A{row}"] = "Fecha última modificación:"
+                ws[f"B{row}"] = comprobante.fecha_modificacion.strftime('%d/%m/%Y %H:%M')
+                row += 1
+
         row += 1
 
         # Warnings if any
