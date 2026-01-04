@@ -33,6 +33,14 @@ from coati_payroll.vistas.planilla import planilla_bp
 from coati_payroll.vistas.planilla.helpers.association_helpers import agregar_asociacion
 from coati_payroll.vistas.planilla.validators.planilla_validators import PlanillaValidator
 
+# Constants
+ROUTE_CONFIG_EMPLEADOS = "planilla.config_empleados"
+ROUTE_CONFIG_PERCEPCIONES = "planilla.config_percepciones"
+ROUTE_CONFIG_DEDUCCIONES = "planilla.config_deducciones"
+ROUTE_CONFIG_PRESTACIONES = "planilla.config_prestaciones"
+ROUTE_CONFIG_REGLAS = "planilla.config_reglas"
+ERROR_NOT_FOUND = "no encontrada"
+
 
 @planilla_bp.route("/<planilla_id>/empleado/add", methods=["POST"])
 @require_write_access()
@@ -43,7 +51,7 @@ def add_empleado(planilla_id: str):
 
     if not empleado_id:
         flash(_("Debe seleccionar un empleado."), "error")
-        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+        return redirect(url_for(ROUTE_CONFIG_EMPLEADOS, planilla_id=planilla_id))
 
     # Check if already exists
     existing = db.session.execute(
@@ -52,14 +60,14 @@ def add_empleado(planilla_id: str):
 
     if existing:
         flash(_("El empleado ya está asignado a esta planilla."), "warning")
-        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+        return redirect(url_for(ROUTE_CONFIG_EMPLEADOS, planilla_id=planilla_id))
 
     # Validate that employee and planilla belong to the same company
     empleado = db.get_or_404(Empleado, empleado_id)
     is_valid, error_message = PlanillaValidator.validar_empresa_empleado(planilla, empleado)
     if not is_valid:
         flash(_(error_message), "error")
-        return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+        return redirect(url_for(ROUTE_CONFIG_EMPLEADOS, planilla_id=planilla_id))
 
     association = PlanillaEmpleado(
         planilla_id=planilla_id,
@@ -99,11 +107,11 @@ def add_percepcion(planilla_id: str):
     )
 
     if not success:
-        flash(_(error_message), "error" if "no encontrada" in error_message else "warning")
-        return redirect(url_for("planilla.config_percepciones", planilla_id=planilla_id))
+        flash(_(error_message), "error" if ERROR_NOT_FOUND in error_message else "warning")
+        return redirect(url_for(ROUTE_CONFIG_PERCEPCIONES, planilla_id=planilla_id))
 
     flash(_("Percepción agregada exitosamente."), "success")
-    return redirect(url_for("planilla.config_percepciones", planilla_id=planilla_id))
+    return redirect(url_for(ROUTE_CONFIG_PERCEPCIONES, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/percepcion/<association_id>/remove", methods=["POST"])
@@ -132,11 +140,11 @@ def add_deduccion(planilla_id: str):
     )
 
     if not success:
-        flash(_(error_message), "error" if "no encontrada" in error_message else "warning")
-        return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
+        flash(_(error_message), "error" if ERROR_NOT_FOUND in error_message else "warning")
+        return redirect(url_for(ROUTE_CONFIG_DEDUCCIONES, planilla_id=planilla_id))
 
     flash(_("Deducción agregada exitosamente."), "success")
-    return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
+    return redirect(url_for(ROUTE_CONFIG_DEDUCCIONES, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/deduccion/<association_id>/remove", methods=["POST"])
@@ -180,11 +188,11 @@ def add_prestacion(planilla_id: str):
     )
 
     if not success:
-        flash(_(error_message), "error" if "no encontrada" in error_message else "warning")
-        return redirect(url_for("planilla.config_prestaciones", planilla_id=planilla_id))
+        flash(_(error_message), "error" if ERROR_NOT_FOUND in error_message else "warning")
+        return redirect(url_for(ROUTE_CONFIG_PRESTACIONES, planilla_id=planilla_id))
 
     flash(_("Prestación agregada exitosamente."), "success")
-    return redirect(url_for("planilla.config_prestaciones", planilla_id=planilla_id))
+    return redirect(url_for(ROUTE_CONFIG_PRESTACIONES, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/prestacion/<association_id>/remove", methods=["POST"])
@@ -212,11 +220,11 @@ def add_regla(planilla_id: str):
     )
 
     if not success:
-        flash(_(error_message), "error" if "no encontrada" in error_message else "warning")
-        return redirect(url_for("planilla.config_reglas", planilla_id=planilla_id))
+        flash(_(error_message), "error" if ERROR_NOT_FOUND in error_message else "warning")
+        return redirect(url_for(ROUTE_CONFIG_REGLAS, planilla_id=planilla_id))
 
     flash(_("Regla de cálculo agregada exitosamente."), "success")
-    return redirect(url_for("planilla.config_reglas", planilla_id=planilla_id))
+    return redirect(url_for(ROUTE_CONFIG_REGLAS, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/regla/<association_id>/remove", methods=["POST"])

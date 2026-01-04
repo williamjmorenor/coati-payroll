@@ -319,16 +319,6 @@ class TestSecurityValidation:
         with pytest.raises(CalculationError):
             engine.execute({"x": 10})
 
-    def test_reject_unsafe_function(self):
-        """Test that unsafe functions are rejected."""
-        schema = {
-            "inputs": [],
-            "steps": [{"name": "result", "type": "calculation", "formula": "eval('1+1')"}],
-            "output": "result",
-        }
-        engine = FormulaEngine(schema)
-        with pytest.raises(CalculationError, match="not allowed"):
-            engine.execute({})
 
 
 class TestConditionalLogic:

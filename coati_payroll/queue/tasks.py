@@ -162,7 +162,7 @@ def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str,
         if nomina.estado != NominaEstado.ERROR:
             return {
                 "success": False,
-                "error": f"Nomina is not in ERROR state (current: {nomina.estado}). Only failed nominas can be retried.",
+                "error": f"Nomina not in ERROR state (current: {nomina.estado}). Only failed nominas can be retried.",
             }
 
         # Get planilla information

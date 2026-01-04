@@ -48,6 +48,9 @@ percepcion_bp = Blueprint("percepcion", __name__, url_prefix="/percepciones")
 deduccion_bp = Blueprint("deduccion", __name__, url_prefix="/deducciones")
 prestacion_bp = Blueprint("prestacion", __name__, url_prefix="/prestaciones")
 
+# Constants
+ERROR_CONCEPT_NOT_FOUND = "%(type)s no encontrada."
+
 
 # ============================================================================
 # SHARED UTILITIES
@@ -169,7 +172,7 @@ def edit_concept(concept_type: str, concept_id: str):
 
     concept = db.session.get(Model, concept_id)
     if not concept:
-        flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
+        flash(_(ERROR_CONCEPT_NOT_FOUND, type=config["singular"]), "error")
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     # Store original values for change detection
@@ -235,7 +238,7 @@ def delete_concept(concept_type: str, concept_id: str):
 
     concept = db.session.get(Model, concept_id)
     if not concept:
-        flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
+        flash(_(ERROR_CONCEPT_NOT_FOUND, type=config["singular"]), "error")
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     # Check if concept is in use
@@ -451,7 +454,7 @@ def approve_concept_route(concept_type: str, concept_id: str):
 
     concept = db.session.get(Model, concept_id)
     if not concept:
-        flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
+        flash(_(ERROR_CONCEPT_NOT_FOUND, type=config["singular"]), "error")
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     # Approve the concept
@@ -476,7 +479,7 @@ def reject_concept_route(concept_type: str, concept_id: str):
 
     concept = db.session.get(Model, concept_id)
     if not concept:
-        flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
+        flash(_(ERROR_CONCEPT_NOT_FOUND, type=config["singular"]), "error")
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     # Get rejection reason from form
@@ -497,7 +500,7 @@ def view_audit_log_route(concept_type: str, concept_id: str):
 
     concept = db.session.get(Model, concept_id)
     if not concept:
-        flash(_("%(type)s no encontrada.", type=config["singular"]), "error")
+        flash(_(ERROR_CONCEPT_NOT_FOUND, type=config["singular"]), "error")
         return redirect(url_for(f"{config['blueprint']}.{concept_type}_index"))
 
     # Get audit logs

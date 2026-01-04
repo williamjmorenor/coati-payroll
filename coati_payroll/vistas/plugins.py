@@ -9,6 +9,9 @@ from coati_payroll.rbac import require_write_access
 
 plugins_bp = Blueprint("plugins", __name__, url_prefix="/plugins")
 
+# Constants
+ROUTE_PLUGINS_INDEX = "plugins.index"
+
 
 @plugins_bp.route("/")
 @require_write_access()
@@ -23,13 +26,13 @@ def toggle(plugin_id: str):
     plugin = db.session.get(PluginRegistry, plugin_id)
     if not plugin:
         flash(_("Plugin no encontrado."), "error")
-        return redirect(url_for("plugins.index"))
+        return redirect(url_for(ROUTE_PLUGINS_INDEX))
 
     if not plugin.installed and plugin.active:
         plugin.active = False
         db.session.commit()
         flash(_("Plugin marcado como inactivo."), "success")
-        return redirect(url_for("plugins.index"))
+        return redirect(url_for(ROUTE_PLUGINS_INDEX))
 
     plugin.active = not plugin.active
     db.session.commit()
@@ -39,4 +42,4 @@ def toggle(plugin_id: str):
     else:
         flash(_("Plugin desactivado."), "success")
 
-    return redirect(url_for("plugins.index"))
+    return redirect(url_for(ROUTE_PLUGINS_INDEX))

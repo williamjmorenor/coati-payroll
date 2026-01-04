@@ -44,7 +44,7 @@ class CurrencyValidator(BaseValidator):
         rate = self.exchange_rate_repo.get_rate(moneda_origen_id, moneda_destino_id, fecha)
         if rate is None:
             result.add_error(
-                f"No se encontró tipo de cambio de {moneda_origen_id} a {moneda_destino_id} " f"para la fecha {fecha}"
+                f"No se encontró tipo de cambio de {moneda_origen_id} a {moneda_destino_id} para la fecha {fecha}"
             )
 
         return result
