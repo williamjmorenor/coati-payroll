@@ -13,8 +13,12 @@
 # limitations under the License.
 """Comprehensive tests for carga inicial prestacion (coati_payroll/vistas/carga_inicial_prestacion.py)."""
 
-from sqlalchemy import func, select
+import io
+from datetime import date, datetime
 from decimal import Decimal
+
+from openpyxl import load_workbook
+from sqlalchemy import func, select
 
 from coati_payroll.model import CargaInicialPrestacion, Empleado, Empresa, Moneda, Prestacion, PrestacionAcumulada
 from tests.helpers.auth import login_user
@@ -554,7 +558,6 @@ def test_carga_inicial_prestacion_reporte_excel_with_data(app, client, admin_use
         db_session.refresh(carga)
 
         # Apply the carga to create a transaction
-        from datetime import datetime
         transaccion = PrestacionAcumulada(
             empleado_id=carga.empleado_id,
             prestacion_id=carga.prestacion_id,
@@ -582,9 +585,6 @@ def test_carga_inicial_prestacion_reporte_excel_with_data(app, client, admin_use
         assert response.content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         
         # Verify the content is a valid Excel file
-        import io
-        from openpyxl import load_workbook
-
         excel_data = io.BytesIO(response.data)
         wb = load_workbook(excel_data)
         ws = wb.active
@@ -611,7 +611,6 @@ def test_carga_inicial_prestacion_reporte_excel_with_filters(app, client, admin_
         empresa, moneda, prestacion, empleado = _create_test_data(db_session)
 
         # Create transaction
-        from datetime import datetime
         transaccion = PrestacionAcumulada(
             empleado_id=empleado.id,
             prestacion_id=prestacion.id,
@@ -649,7 +648,6 @@ def test_carga_inicial_prestacion_reporte_excel_with_date_filters(app, client, a
         empresa, moneda, prestacion, empleado = _create_test_data(db_session)
 
         # Create transaction
-        from datetime import datetime, date
         transaccion = PrestacionAcumulada(
             empleado_id=empleado.id,
             prestacion_id=prestacion.id,
