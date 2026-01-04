@@ -22,8 +22,10 @@ from coati_payroll.model import (
     NominaDetalle,
     Liquidacion,
     LiquidacionDetalle,
+    ComprobanteContable,
 )
 from coati_payroll.vistas.planilla.helpers.excel_helpers import check_openpyxl_available
+from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
 
 # Constants
 ERROR_OPENPYXL_NOT_AVAILABLE = "openpyxl no está disponible"
@@ -375,33 +377,205 @@ class ExportService:
         return output, filename
 
     @staticmethod
-    def exportar_comprobante_excel(planilla: Planilla, nomina: Nomina, usuario: str) -> tuple[BytesIO, str]:
-        """Export accounting voucher (comprobante contable) to Excel.
+    def exportar_comprobante_excel(planilla: Planilla, nomina: Nomina) -> tuple[BytesIO, str]:
+        """Export summarized accounting voucher (comprobante contable) to Excel.
+
+        Exports the accounting voucher grouped by account and cost center with netted amounts.
+
+        Raises ValueError if accounting configuration is incomplete.
 
         Args:
             planilla: The planilla
             nomina: The nomina to export
-            usuario: Username of the user exporting
 
         Returns:
             Tuple of (BytesIO file object, filename)
+
+        Raises:
+            ValueError: If comprobante doesn't exist or has incomplete accounting configuration
         """
-        # This is a very large function, so I'll keep the core logic here
-        # but reference the original implementation
-        # For brevity, I'll create a simplified version that calls the original logic
-        # In a real refactoring, this would be further broken down
+        openpyxl_classes = check_openpyxl_available()
+        if not openpyxl_classes:
+            raise ImportError("openpyxl no está disponible")
 
-        # Note: The full implementation is very long (200+ lines)
-        # This service method would contain the full logic from the original
-        # exportar_comprobante_excel function
+        Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
 
-        # For now, I'll create a placeholder that indicates where the full implementation goes
-        raise NotImplementedError("Full implementation needed - see original exportar_comprobante_excel function")
+        # Get comprobante
+        comprobante = db.session.execute(
+            db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)
+        ).scalar_one_or_none()
+
+        if not comprobante:
+            raise ValueError("No existe comprobante contable para esta nómina")
+
+        # Get summarized entries - will raise ValueError if accounts are NULL
+        accounting_service = AccountingVoucherService(db.session)
+        try:
+            summarized_entries = accounting_service.summarize_voucher(comprobante)
+        except ValueError as e:
+            # Re-raise with clear message about incomplete configuration
+            raise ValueError(
+                f"No se puede exportar comprobante sumarizado: {str(e)} "
+                "Utilice la exportación detallada para auditoría."
+            ) from e
+
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Comprobante Contable"
+
+        # Define styles
+        header_font = Font(bold=True, size=14, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        subheader_font = Font(bold=True, size=11)
+        subheader_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
+        total_font = Font(bold=True, size=11)
+        total_fill = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
+        border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin"),
+        )
+
+        # Title
+        ws.merge_cells("A1:F1")
+        title_cell = ws["A1"]
+        title_cell.value = f"COMPROBANTE CONTABLE - {planilla.nombre}"
+        title_cell.font = header_font
+        title_cell.fill = header_fill
+        title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # Comprobante info
+        row = 3
+        if planilla.empresa_id and planilla.empresa:
+            ws[f"A{row}"] = "Empresa:"
+            ws[f"B{row}"] = planilla.empresa.razon_social
+            row += 1
+
+        ws[f"A{row}"] = "Concepto:"
+        ws[f"B{row}"] = comprobante.concepto or ""
+        row += 1
+
+        ws[f"A{row}"] = "Fecha de Cálculo:"
+        ws[f"B{row}"] = comprobante.fecha_calculo.strftime("%d/%m/%Y")
+        row += 1
+
+        ws[f"A{row}"] = "Período:"
+        ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+        row += 1
+
+        if comprobante.moneda:
+            ws[f"A{row}"] = "Moneda:"
+            ws[f"B{row}"] = f"{comprobante.moneda.codigo} - {comprobante.moneda.nombre}"
+            row += 1
+
+        # Audit trail information
+        if comprobante.aplicado_por:
+            ws[f"A{row}"] = "Aplicado por:"
+            ws[f"B{row}"] = comprobante.aplicado_por
+            row += 1
+
+        if comprobante.fecha_aplicacion:
+            ws[f"A{row}"] = "Fecha aplicación:"
+            ws[f"B{row}"] = comprobante.fecha_aplicacion.strftime("%d/%m/%Y %H:%M")
+            row += 1
+
+        if comprobante.veces_modificado > 0:
+            ws[f"A{row}"] = "Modificado:"
+            ws[f"B{row}"] = f"{comprobante.veces_modificado} vez/veces"
+            row += 1
+
+            if comprobante.modificado_por:
+                ws[f"A{row}"] = "Última modificación por:"
+                ws[f"B{row}"] = comprobante.modificado_por
+                row += 1
+
+            if comprobante.fecha_modificacion:
+                ws[f"A{row}"] = "Fecha última modificación:"
+                ws[f"B{row}"] = comprobante.fecha_modificacion.strftime("%d/%m/%Y %H:%M")
+                row += 1
+
+        row += 1
+
+        # Warnings if any
+        if comprobante.advertencias:
+            ws[f"A{row}"] = "ADVERTENCIAS:"
+            ws[f"A{row}"].font = Font(bold=True, color="FF0000")
+            row += 1
+            for warning in comprobante.advertencias:
+                ws[f"A{row}"] = f"• {warning}"
+                ws[f"A{row}"].font = Font(color="FF0000")
+                row += 1
+            row += 1
+
+        # Table headers
+        headers = ["Código Cuenta", "Descripción", "Centro de Costos", "Débito", "Crédito"]
+
+        for col, header in enumerate(headers, start=1):
+            cell = ws.cell(row=row, column=col, value=header)
+            cell.font = subheader_font
+            cell.fill = subheader_fill
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            cell.border = border
+
+        # Data rows
+        for entry in summarized_entries:
+            row += 1
+            ws.cell(row=row, column=1, value=entry["codigo_cuenta"]).border = border
+            ws.cell(row=row, column=2, value=entry["descripcion"]).border = border
+            ws.cell(row=row, column=3, value=entry["centro_costos"] or "").border = border
+            ws.cell(row=row, column=4, value=float(entry["debito"])).border = border
+            ws.cell(row=row, column=5, value=float(entry["credito"])).border = border
+
+        # Totals row
+        row += 1
+        ws.cell(row=row, column=1, value="TOTALES").font = total_font
+        ws.cell(row=row, column=1).fill = total_fill
+        ws.cell(row=row, column=1).border = border
+        ws.cell(row=row, column=2).border = border
+        ws.cell(row=row, column=3).border = border
+
+        cell_debito = ws.cell(row=row, column=4, value=float(comprobante.total_debitos))
+        cell_debito.font = total_font
+        cell_debito.fill = total_fill
+        cell_debito.border = border
+
+        cell_credito = ws.cell(row=row, column=5, value=float(comprobante.total_creditos))
+        cell_credito.font = total_font
+        cell_credito.fill = total_fill
+        cell_credito.border = border
+
+        # Balance check
+        row += 2
+        ws[f"A{row}"] = "Balance (debe ser 0):"
+        ws[f"B{row}"] = float(comprobante.balance)
+        if comprobante.balance != 0:
+            ws[f"B{row}"].font = Font(bold=True, color="FF0000")
+
+        # Auto-adjust column widths
+        ws.column_dimensions["A"].width = 18
+        ws.column_dimensions["B"].width = 40
+        ws.column_dimensions["C"].width = 20
+        ws.column_dimensions["D"].width = 15
+        ws.column_dimensions["E"].width = 15
+
+        # Save to BytesIO
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        filename = f"comprobante_{planilla.nombre}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
+        return output, filename
 
     @staticmethod
     def exportar_comprobante_detallado_excel(planilla: Planilla, nomina: Nomina) -> tuple[BytesIO, str]:
         """Export detailed accounting voucher per employee to Excel.
 
+        Exports the full accounting voucher with all lines per employee for audit purposes.
+        This export works even with incomplete accounting configuration, showing NULL for
+        missing account fields.
+
         Args:
             planilla: The planilla
             nomina: The nomina to export
@@ -409,8 +583,105 @@ class ExportService:
         Returns:
             Tuple of (BytesIO file object, filename)
         """
-        # Similar to exportar_comprobante_excel, this is a large function
-        # Full implementation needed from original
-        raise NotImplementedError(
-            "Full implementation needed - see original exportar_comprobante_detallado_excel function"
+        openpyxl_classes = check_openpyxl_available()
+        if not openpyxl_classes:
+            raise ImportError("openpyxl no está disponible")
+
+        Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
+
+        # Get comprobante
+        comprobante = db.session.execute(
+            db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)
+        ).scalar_one_or_none()
+
+        if not comprobante:
+            raise ValueError("No existe comprobante contable para esta nómina")
+
+        # Get detailed entries
+        accounting_service = AccountingVoucherService(db.session)
+        detailed_entries = accounting_service.get_detailed_voucher_by_employee(comprobante)
+
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Comprobante Detallado"
+
+        # Define styles
+        header_font = Font(bold=True, size=14, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        subheader_font = Font(bold=True, size=11)
+        subheader_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
+        border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin"),
         )
+
+        # Title
+        ws.merge_cells("A1:G1")
+        title_cell = ws["A1"]
+        title_cell.value = f"COMPROBANTE CONTABLE DETALLADO - {planilla.nombre}"
+        title_cell.font = header_font
+        title_cell.fill = header_fill
+        title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # Comprobante info
+        row = 3
+        if planilla.empresa_id and planilla.empresa:
+            ws[f"A{row}"] = "Empresa:"
+            ws[f"B{row}"] = planilla.empresa.razon_social
+            row += 1
+
+        ws[f"A{row}"] = "Concepto:"
+        ws[f"B{row}"] = comprobante.concepto or ""
+        row += 1
+
+        ws[f"A{row}"] = "Fecha de Cálculo:"
+        ws[f"B{row}"] = comprobante.fecha_calculo.strftime("%d/%m/%Y")
+        row += 1
+
+        ws[f"A{row}"] = "Período:"
+        ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+        row += 2
+
+        # Table headers
+        headers = ["Código Empleado", "Empleado", "Concepto", "Código Cuenta", "Descripción", "Débito", "Crédito"]
+
+        for col, header in enumerate(headers, start=1):
+            cell = ws.cell(row=row, column=col, value=header)
+            cell.font = subheader_font
+            cell.fill = subheader_fill
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            cell.border = border
+
+        # Data rows - per employee
+        for employee_entry in detailed_entries:
+            for linea in employee_entry["lineas"]:
+                row += 1
+                ws.cell(row=row, column=1, value=employee_entry["empleado_codigo"]).border = border
+                ws.cell(row=row, column=2, value=employee_entry["empleado_nombre"]).border = border
+                ws.cell(row=row, column=3, value=linea["concepto"]).border = border
+                ws.cell(row=row, column=4, value=linea["codigo_cuenta"]).border = border
+                ws.cell(row=row, column=5, value=linea["descripcion_cuenta"]).border = border
+                ws.cell(row=row, column=6, value=float(linea["debito"])).border = border
+                ws.cell(row=row, column=7, value=float(linea["credito"])).border = border
+
+        # Auto-adjust column widths
+        ws.column_dimensions["A"].width = 18
+        ws.column_dimensions["B"].width = 30
+        ws.column_dimensions["C"].width = 30
+        ws.column_dimensions["D"].width = 18
+        ws.column_dimensions["E"].width = 35
+        ws.column_dimensions["F"].width = 15
+        ws.column_dimensions["G"].width = 15
+
+        # Save to BytesIO
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        filename = (
+            f"comprobante_detallado_{planilla.nombre}_{nomina.periodo_inicio.strftime('%Y%m%d')}_{nomina.id[:8]}.xlsx"
+        )
+        return output, filename

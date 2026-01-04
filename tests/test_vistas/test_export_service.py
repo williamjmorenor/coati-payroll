@@ -664,18 +664,18 @@ class TestExportarPrestacionesExcel:
 class TestExportarComprobanteExcel:
     """Tests for exportar_comprobante_excel method."""
 
-    def test_exportar_comprobante_excel_not_implemented(self, app, db_session, planilla, nomina):
+    def test_exportar_comprobante_excel_requires_comprobante(self, app, db_session, planilla, nomina):
         """
-        Test that exportar_comprobante_excel raises NotImplementedError.
+        Test that exportar_comprobante_excel requires an existing comprobante.
 
         Setup:
-            - Create planilla and nomina
+            - Create planilla and nomina without comprobante
 
         Action:
             - Call exportar_comprobante_excel
 
         Verification:
-            - Raises NotImplementedError
+            - Raises ValueError when comprobante doesn't exist
         """
         global ExportService
         if ExportService is None:
@@ -686,25 +686,25 @@ class TestExportarComprobanteExcel:
         with app.app_context():
             planilla, nomina = _prepare_objects_for_export(planilla, nomina)
 
-            with pytest.raises(NotImplementedError):
-                ExportService.exportar_comprobante_excel(planilla, nomina, "test_user")
+            with pytest.raises(ValueError, match="No existe comprobante contable"):
+                ExportService.exportar_comprobante_excel(planilla, nomina)
 
 
 class TestExportarComprobanteDetalladoExcel:
     """Tests for exportar_comprobante_detallado_excel method."""
 
-    def test_exportar_comprobante_detallado_excel_not_implemented(self, app, db_session, planilla, nomina):
+    def test_exportar_comprobante_detallado_excel_requires_comprobante(self, app, db_session, planilla, nomina):
         """
-        Test that exportar_comprobante_detallado_excel raises NotImplementedError.
+        Test that exportar_comprobante_detallado_excel requires an existing comprobante.
 
         Setup:
-            - Create planilla and nomina
+            - Create planilla and nomina without comprobante
 
         Action:
             - Call exportar_comprobante_detallado_excel
 
         Verification:
-            - Raises NotImplementedError
+            - Raises ValueError when comprobante doesn't exist
         """
         global ExportService
         if ExportService is None:
@@ -715,5 +715,5 @@ class TestExportarComprobanteDetalladoExcel:
         with app.app_context():
             planilla, nomina = _prepare_objects_for_export(planilla, nomina)
 
-            with pytest.raises(NotImplementedError):
+            with pytest.raises(ValueError, match="No existe comprobante contable"):
                 ExportService.exportar_comprobante_detallado_excel(planilla, nomina)
