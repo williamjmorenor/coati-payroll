@@ -124,11 +124,13 @@ def test_vacation_policy_detail_success(app, client, admin_user, db_session):
         db_session.commit()
 
         # Create vacation policy without planilla (global policy)
+        # Note: planilla_id is None to create a global policy, avoiding dependency
+        # on planilla.view route which may not be implemented
         policy = VacationPolicy(
             codigo="POL001",
             nombre="Test Policy",
             empresa_id=empresa.id,
-            planilla_id=None,  # No planilla to avoid template rendering issues
+            planilla_id=None,
             accrual_rate=Decimal("15.0000"),
             activo=True,
         )
@@ -136,7 +138,6 @@ def test_vacation_policy_detail_success(app, client, admin_user, db_session):
         db_session.commit()
 
         policy_id = policy.id
-        db_session.expunge_all()
 
         # Test viewing the policy detail
         login_user(client, admin_user.usuario, "admin-password")
