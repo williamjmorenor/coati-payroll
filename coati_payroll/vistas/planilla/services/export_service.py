@@ -594,8 +594,6 @@ class ExportService:
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
         subheader_font = Font(bold=True, size=11)
         subheader_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
-        employee_font = Font(bold=True, size=10)
-        employee_fill = PatternFill(start_color="E7E6E6", end_color="E7E6E6", fill_type="solid")
         border = Border(
             left=Side(style="thin"),
             right=Side(style="thin"),

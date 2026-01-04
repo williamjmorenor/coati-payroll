@@ -15,7 +15,7 @@
 
 from datetime import date
 from flask import flash, jsonify, redirect, render_template, request, url_for
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 from coati_payroll.model import db, Planilla, Nomina, NominaEmpleado, NominaDetalle, NominaNovedad
 from coati_payroll.enums import NominaEstado, NovedadEstado

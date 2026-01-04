@@ -100,7 +100,6 @@ def exportar_comprobante_excel(planilla_id: str, nomina_id: str):
 
     # Check if comprobante exists
     from coati_payroll.model import ComprobanteContable
-    from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
 
     comprobante = db.session.execute(
         db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)
