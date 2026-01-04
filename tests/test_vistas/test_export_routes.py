@@ -178,6 +178,48 @@ def comprobante_contable(app, db_session, nomina):
         return comprobante
 
 
+@pytest.fixture
+def other_planilla(app, db_session, tipo_planilla, moneda, empresa, admin_user):
+    """Create another Planilla for testing mismatched nomina scenarios."""
+    with app.app_context():
+        from coati_payroll.model import Planilla
+
+        other_planilla = Planilla(
+            nombre="Other Planilla",
+            descripcion="Another planilla",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            empresa_id=empresa.id,
+            periodo_fiscal_inicio=date(2024, 1, 1),
+            periodo_fiscal_fin=date(2024, 12, 31),
+            prioridad_prestamos=250,
+            prioridad_adelantos=251,
+            aplicar_prestamos_automatico=True,
+            aplicar_adelantos_automatico=True,
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(other_planilla)
+        db_session.commit()
+        db_session.refresh(other_planilla)
+        return other_planilla
+
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+
+def assert_redirects_to_ver_nomina(response, planilla_id, nomina_id):
+    """Helper to assert redirect to ver_nomina or planilla detail page."""
+    assert response.status_code == 302
+    # Check for either the route name or the URL path
+    assert (
+        "planilla.ver_nomina" in response.location
+        or f"/planilla/{planilla_id}/nomina/{nomina_id}" in response.location
+    )
+
+
 # ============================================================================
 # AUTHENTICATION & AUTHORIZATION TESTS
 # ============================================================================
@@ -272,33 +314,11 @@ def test_exportar_nomina_excel_with_invalid_nomina_id(app, client, admin_user, d
 
 
 def test_exportar_nomina_excel_with_mismatched_nomina(
-    app, client, admin_user, db_session, planilla, tipo_planilla, moneda, empresa, nomina
+    app, client, admin_user, db_session, other_planilla, nomina
 ):
     """Test exportar_nomina_excel when nomina doesn't belong to planilla."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
-
-        # Create another planilla
-        from coati_payroll.model import Planilla
-
-        other_planilla = Planilla(
-            nombre="Other Planilla",
-            descripcion="Another planilla",
-            tipo_planilla_id=tipo_planilla.id,
-            moneda_id=moneda.id,
-            empresa_id=empresa.id,
-            periodo_fiscal_inicio=date(2024, 1, 1),
-            periodo_fiscal_fin=date(2024, 12, 31),
-            prioridad_prestamos=250,
-            prioridad_adelantos=251,
-            aplicar_prestamos_automatico=True,
-            aplicar_adelantos_automatico=True,
-            activo=True,
-            creado_por=admin_user.usuario,
-        )
-        db_session.add(other_planilla)
-        db_session.commit()
-        db_session.refresh(other_planilla)
 
         with patch("coati_payroll.vistas.planilla.export_routes.check_openpyxl_available", return_value=True):
             response = client.get(
@@ -379,33 +399,11 @@ def test_exportar_prestaciones_excel_with_invalid_planilla_id(app, client, admin
 
 
 def test_exportar_prestaciones_excel_with_mismatched_nomina(
-    app, client, admin_user, db_session, planilla, tipo_planilla, moneda, empresa, nomina
+    app, client, admin_user, db_session, other_planilla, nomina
 ):
     """Test exportar_prestaciones_excel when nomina doesn't belong to planilla."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
-
-        # Create another planilla
-        from coati_payroll.model import Planilla
-
-        other_planilla = Planilla(
-            nombre="Other Planilla",
-            descripcion="Another planilla",
-            tipo_planilla_id=tipo_planilla.id,
-            moneda_id=moneda.id,
-            empresa_id=empresa.id,
-            periodo_fiscal_inicio=date(2024, 1, 1),
-            periodo_fiscal_fin=date(2024, 12, 31),
-            prioridad_prestamos=250,
-            prioridad_adelantos=251,
-            aplicar_prestamos_automatico=True,
-            aplicar_adelantos_automatico=True,
-            activo=True,
-            creado_por=admin_user.usuario,
-        )
-        db_session.add(other_planilla)
-        db_session.commit()
-        db_session.refresh(other_planilla)
 
         with patch("coati_payroll.vistas.planilla.export_routes.check_openpyxl_available", return_value=True):
             response = client.get(
@@ -471,8 +469,7 @@ def test_exportar_comprobante_excel_without_openpyxl(app, client, admin_user, db
                 follow_redirects=False,
             )
             # Should redirect when openpyxl not available
-            assert response.status_code == 302
-            assert "planilla.ver_nomina" in response.location or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.location
+            assert_redirects_to_ver_nomina(response, planilla.id, nomina.id)
 
 
 def test_exportar_comprobante_excel_with_invalid_planilla_id(app, client, admin_user, db_session):
@@ -486,33 +483,11 @@ def test_exportar_comprobante_excel_with_invalid_planilla_id(app, client, admin_
 
 
 def test_exportar_comprobante_excel_with_mismatched_nomina(
-    app, client, admin_user, db_session, planilla, tipo_planilla, moneda, empresa, nomina
+    app, client, admin_user, db_session, other_planilla, nomina
 ):
     """Test exportar_comprobante_excel when nomina doesn't belong to planilla."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
-
-        # Create another planilla
-        from coati_payroll.model import Planilla
-
-        other_planilla = Planilla(
-            nombre="Other Planilla",
-            descripcion="Another planilla",
-            tipo_planilla_id=tipo_planilla.id,
-            moneda_id=moneda.id,
-            empresa_id=empresa.id,
-            periodo_fiscal_inicio=date(2024, 1, 1),
-            periodo_fiscal_fin=date(2024, 12, 31),
-            prioridad_prestamos=250,
-            prioridad_adelantos=251,
-            aplicar_prestamos_automatico=True,
-            aplicar_adelantos_automatico=True,
-            activo=True,
-            creado_por=admin_user.usuario,
-        )
-        db_session.add(other_planilla)
-        db_session.commit()
-        db_session.refresh(other_planilla)
 
         with patch("coati_payroll.vistas.planilla.export_routes.check_openpyxl_available", return_value=True):
             response = client.get(
@@ -535,8 +510,7 @@ def test_exportar_comprobante_excel_without_comprobante(app, client, admin_user,
                 follow_redirects=False,
             )
             # Should redirect when comprobante doesn't exist
-            assert response.status_code == 302
-            assert "planilla.ver_nomina" in response.location or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.location
+            assert_redirects_to_ver_nomina(response, planilla.id, nomina.id)
 
 
 def test_exportar_comprobante_excel_with_warnings(
@@ -606,8 +580,7 @@ def test_exportar_comprobante_excel_handles_exception(
                     follow_redirects=False,
                 )
                 # Should redirect on error
-                assert response.status_code == 302
-                assert "planilla.ver_nomina" in response.location or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.location
+                assert_redirects_to_ver_nomina(response, planilla.id, nomina.id)
 
 
 # ============================================================================
@@ -626,8 +599,7 @@ def test_exportar_comprobante_detallado_excel_without_openpyxl(app, client, admi
                 follow_redirects=False,
             )
             # Should redirect when openpyxl not available
-            assert response.status_code == 302
-            assert "planilla.ver_nomina" in response.location or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.location
+            assert_redirects_to_ver_nomina(response, planilla.id, nomina.id)
 
 
 def test_exportar_comprobante_detallado_excel_with_invalid_planilla_id(app, client, admin_user, db_session):
@@ -643,33 +615,11 @@ def test_exportar_comprobante_detallado_excel_with_invalid_planilla_id(app, clie
 
 
 def test_exportar_comprobante_detallado_excel_with_mismatched_nomina(
-    app, client, admin_user, db_session, planilla, tipo_planilla, moneda, empresa, nomina
+    app, client, admin_user, db_session, other_planilla, nomina
 ):
     """Test exportar_comprobante_detallado_excel when nomina doesn't belong to planilla."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
-
-        # Create another planilla
-        from coati_payroll.model import Planilla
-
-        other_planilla = Planilla(
-            nombre="Other Planilla",
-            descripcion="Another planilla",
-            tipo_planilla_id=tipo_planilla.id,
-            moneda_id=moneda.id,
-            empresa_id=empresa.id,
-            periodo_fiscal_inicio=date(2024, 1, 1),
-            periodo_fiscal_fin=date(2024, 12, 31),
-            prioridad_prestamos=250,
-            prioridad_adelantos=251,
-            aplicar_prestamos_automatico=True,
-            aplicar_adelantos_automatico=True,
-            activo=True,
-            creado_por=admin_user.usuario,
-        )
-        db_session.add(other_planilla)
-        db_session.commit()
-        db_session.refresh(other_planilla)
 
         with patch("coati_payroll.vistas.planilla.export_routes.check_openpyxl_available", return_value=True):
             response = client.get(
@@ -694,8 +644,7 @@ def test_exportar_comprobante_detallado_excel_without_comprobante(
                 follow_redirects=False,
             )
             # Should redirect when comprobante doesn't exist
-            assert response.status_code == 302
-            assert "planilla.ver_nomina" in response.location or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.location
+            assert_redirects_to_ver_nomina(response, planilla.id, nomina.id)
 
 
 def test_exportar_comprobante_detallado_excel_with_warnings(
@@ -767,5 +716,4 @@ def test_exportar_comprobante_detallado_excel_handles_exception(
                     follow_redirects=False,
                 )
                 # Should redirect on error
-                assert response.status_code == 302
-                assert "planilla.ver_nomina" in response.location or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.location
+                assert_redirects_to_ver_nomina(response, planilla.id, nomina.id)
