@@ -1020,21 +1020,23 @@ class NominaNovedad(database.Model, BaseTabla):
 
 # Comprobante Contable (Accounting Voucher)
 class ComprobanteContable(database.Model, BaseTabla):
-    """Stores the accounting voucher for audit purposes.
+    """Stores the accounting voucher header for audit purposes.
 
-    This model preserves the accounting entries generated at the time of payroll
+    This model preserves the accounting voucher header generated at the time of payroll
     calculation, preventing configuration changes from affecting historical records.
+    Detail lines are stored in ComprobanteContableLinea.
     """
 
     __tablename__ = "comprobante_contable"
 
     nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False, unique=True)
 
-    # Store the complete voucher as JSON for historical preservation
-    # Structure: [{"codigo_cuenta": "...", "descripcion": "...", "debito": 0.0, "credito": 0.0}, ...]
-    asientos_contables = database.Column(JSON, nullable=False)
+    # Header information
+    fecha_calculo = database.Column(database.Date, nullable=False, default=date.today)
+    concepto = database.Column(database.String(255), nullable=True)  # Description/concept of the voucher
+    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=True)
 
-    # Summary totals
+    # Summary totals (calculated from lines)
     total_debitos = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     total_creditos = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     balance = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -1043,6 +1045,52 @@ class ComprobanteContable(database.Model, BaseTabla):
     advertencias = database.Column(JSON, nullable=True, default=list)
 
     nomina = database.relationship("Nomina", back_populates="comprobante_contable")
+    moneda = database.relationship("Moneda")
+    lineas = database.relationship(
+        "ComprobanteContableLinea",
+        back_populates="comprobante",
+        cascade="all, delete-orphan",
+        order_by="ComprobanteContableLinea.orden",
+    )
+
+
+class ComprobanteContableLinea(database.Model, BaseTabla):
+    """Stores individual accounting entry lines for each employee's payroll calculation.
+
+    Each line represents a single accounting entry (debit or credit) for a specific
+    employee, concept, account, and cost center. Summarization happens at export time.
+    """
+
+    __tablename__ = "comprobante_contable_linea"
+
+    comprobante_id = database.Column(
+        database.String(26), database.ForeignKey("comprobante_contable.id"), nullable=False, index=True
+    )
+    nomina_empleado_id = database.Column(
+        database.String(26), database.ForeignKey("nomina_empleado.id"), nullable=False, index=True
+    )
+
+    # Accounting information
+    codigo_cuenta = database.Column(database.String(64), nullable=False, index=True)
+    descripcion_cuenta = database.Column(database.String(255), nullable=True)
+    centro_costos = database.Column(database.String(150), nullable=True, index=True)
+
+    # Debit or Credit
+    debito = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    credito = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+
+    # Source information for audit trail
+    concepto = database.Column(database.String(255), nullable=True)  # Description of the concept
+    tipo_concepto = database.Column(
+        database.String(20), nullable=True
+    )  # 'salario_base', 'percepcion', 'deduccion', 'prestacion', 'prestamo'
+    concepto_codigo = database.Column(database.String(50), nullable=True)  # Code of the source concept
+
+    # Order for consistent display
+    orden = database.Column(database.Integer, nullable=False, default=0)
+
+    comprobante = database.relationship("ComprobanteContable", back_populates="lineas")
+    nomina_empleado = database.relationship("NominaEmpleado")
 
 
 # Historial de cambios de salario
