@@ -141,7 +141,7 @@ plugins = PluginsCommand(name="plugins")
 
 def _system_status():
     """Get system status data.
-    
+
     Returns:
         dict: Dictionary containing database status, admin user status, and app mode.
     """
@@ -188,7 +188,7 @@ def system_status(ctx):
 
 def _system_check():
     """Run system checks and return results.
-    
+
     Returns:
         list: List of check results with name, status, and optional error/missing data.
     """
@@ -255,7 +255,7 @@ def system_check(ctx):
 
 def _system_info():
     """Get system information.
-    
+
     Returns:
         dict: Dictionary containing version, python version, database URI, and flask version.
     """
@@ -302,7 +302,7 @@ def system_info(ctx):
 
 def _system_env():
     """Get environment variables.
-    
+
     Returns:
         dict: Dictionary containing relevant environment variables.
     """
@@ -336,7 +336,7 @@ def system_env(ctx):
 
 def _database_status():
     """Get database status.
-    
+
     Returns:
         dict: Dictionary containing table count, table names, and record counts.
     """
@@ -385,10 +385,10 @@ def database_status(ctx):
 
 def _database_init(app):
     """Initialize database tables and admin user.
-    
+
     Args:
         app: Flask application instance
-        
+
     Returns:
         str: Admin username that was created/initialized
     """
@@ -396,7 +396,7 @@ def _database_init(app):
 
     db.create_all()
     ensure_database_initialized(app)
-    
+
     return os.environ.get("ADMIN_USER", "coati-admin")
 
 
@@ -409,7 +409,7 @@ def database_init(ctx):
         click.echo("Initializing database...")
 
         admin_user = _database_init(current_app)
-        
+
         output_result(ctx, "Database tables created")
         output_result(ctx, f"Administrator user '{admin_user}' is ready")
 
@@ -440,7 +440,7 @@ def database_seed(ctx):
         click.echo("Seeding database with initial data...")
 
         _database_seed()
-        
+
         output_result(ctx, "Database tables verified")
         output_result(ctx, "Initial data loaded")
 
@@ -482,16 +482,16 @@ def database_drop(ctx):
 
 def _backup_sqlite(db_url_str, output=None):
     """Backup SQLite database.
-    
+
     Args:
         db_url_str: Database URL string
         output: Optional output file path
-        
+
     Returns:
         Path: Output file path
     """
     db_path = db_url_str.replace("sqlite:///", "").replace("sqlite://", "")
-    
+
     # Remove query parameters if present (e.g., ?check_same_thread=False)
     if "?" in db_path:
         db_path = db_path.split("?")[0]
@@ -515,11 +515,11 @@ def _backup_sqlite(db_url_str, output=None):
 
 def _backup_postgresql(db_url_str, output=None):
     """Backup PostgreSQL database.
-    
+
     Args:
         db_url_str: Database URL string
         output: Optional output file path
-        
+
     Returns:
         Path: Output file path
     """
@@ -558,11 +558,11 @@ def _backup_postgresql(db_url_str, output=None):
 
 def _backup_mysql(db_url_str, output=None):
     """Backup MySQL database.
-    
+
     Args:
         db_url_str: Database URL string
         output: Optional output file path
-        
+
     Returns:
         Path: Output file path
     """
@@ -610,8 +610,8 @@ def database_backup(ctx, output):
 
         if db_url_str.startswith("sqlite"):
             db_path = db_url_str.replace("sqlite:///", "").replace("sqlite://", "")
-            
-            click.echo(f"Creating SQLite backup...")
+
+            click.echo("Creating SQLite backup...")
             if db_path == ":memory:":
                 click.echo("Source: in-memory database")
             else:
@@ -626,8 +626,8 @@ def database_backup(ctx, output):
 
         elif "postgresql" in db_url_str or "postgres" in db_url_str:
             parsed = urlparse(db_url_str)
-            
-            click.echo(f"Creating PostgreSQL backup...")
+
+            click.echo("Creating PostgreSQL backup...")
             click.echo(f"Database: {parsed.path.lstrip('/')}")
 
             output_path = _backup_postgresql(db_url_str, output)
@@ -639,8 +639,8 @@ def database_backup(ctx, output):
 
         elif "mysql" in db_url_str:
             parsed = urlparse(db_url_str)
-            
-            click.echo(f"Creating MySQL backup...")
+
+            click.echo("Creating MySQL backup...")
             click.echo(f"Database: {parsed.path.lstrip('/')}")
 
             output_path = _backup_mysql(db_url_str, output)
@@ -663,7 +663,7 @@ def database_backup(ctx, output):
 
 def _database_restore_sqlite(backup_file, db_url_str):
     """Restore SQLite database from backup.
-    
+
     Args:
         backup_file: Path to backup file
         db_url_str: Database URL string
@@ -761,7 +761,7 @@ def database_upgrade(ctx):
 
 def _users_list():
     """Get list of all users.
-    
+
     Returns:
         list: List of user dictionaries with username, name, type, active status, and email.
     """
@@ -813,14 +813,14 @@ def users_list(ctx):
 
 def _users_create(username, password, name, email, user_type):
     """Create a new user.
-    
+
     Args:
         username: Username for the new user
         password: Password for the new user
         name: Full name of the user
         email: Email address (optional)
         user_type: Type of user (admin or operador)
-        
+
     Raises:
         ValueError: If user already exists
     """
@@ -868,10 +868,10 @@ def users_create(ctx, username, password, name, email, user_type):
 
 def _users_disable(username):
     """Disable a user.
-    
+
     Args:
         username: Username to disable
-        
+
     Raises:
         ValueError: If user not found
     """
@@ -902,11 +902,11 @@ def users_disable(ctx, username):
 
 def _users_reset_password(username, password):
     """Reset user password.
-    
+
     Args:
         username: Username to reset password for
         password: New password
-        
+
     Raises:
         ValueError: If user not found
     """
@@ -938,13 +938,13 @@ def users_reset_password(ctx, username, password):
 
 def _users_set_admin(username, password):
     """Create or update an administrator user.
-    
+
     Args:
         username: Username for the admin
         password: Password for the admin
-        
+
     Returns:
-        tuple: (is_new_user, existing_admin_count) - whether user was created or updated, 
+        tuple: (is_new_user, existing_admin_count) - whether user was created or updated,
                and how many existing admins were deactivated
     """
     admins = db.session.execute(db.select(Usuario).filter_by(tipo="admin")).scalars().all()
@@ -1040,7 +1040,7 @@ def _cache_clear():
 
 def _cache_warm():
     """Warm up caches.
-    
+
     Returns:
         str: Language code that was cached
     """
@@ -1051,7 +1051,7 @@ def _cache_warm():
 
 def _cache_status():
     """Get cache status.
-    
+
     Returns:
         dict: Cache status information
     """
@@ -1184,10 +1184,10 @@ def maintenance_run_jobs(ctx):
 
 def _debug_config(app):
     """Get application configuration.
-    
+
     Args:
         app: Flask application instance
-        
+
     Returns:
         dict: Configuration data
     """
@@ -1200,10 +1200,10 @@ def _debug_config(app):
 
 def _debug_routes(app):
     """Get application routes.
-    
+
     Args:
         app: Flask application instance
-        
+
     Returns:
         list: List of route dictionaries with endpoint, methods, and path
     """

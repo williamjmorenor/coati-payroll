@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-import os
 import tempfile
 from pathlib import Path
 
@@ -165,7 +164,7 @@ def test_backup_sqlite(app, db_session):
         try:
             # Use the actual in-memory database URL
             db_url = str(db.engine.url)
-            
+
             # The function should handle in-memory databases
             result = _backup_sqlite(db_url, output_file)
 
@@ -634,7 +633,7 @@ def test_backup_sqlite_with_auto_timestamp(app, db_session):
 
     with app.app_context():
         db_url = str(db.engine.url)
-        
+
         # Call without specifying output file
         result = _backup_sqlite(db_url)
 
@@ -662,7 +661,7 @@ def test_backup_postgresql_with_auto_timestamp(app, db_session, monkeypatch):
 
     with app.app_context():
         db_url = "postgresql://user:pass@localhost/dbname"
-        
+
         # Call without specifying output file
         result = _backup_postgresql(db_url)
 
@@ -690,7 +689,7 @@ def test_backup_mysql_with_auto_timestamp(app, db_session, monkeypatch):
 
     with app.app_context():
         db_url = "mysql://user:pass@localhost/dbname"
-        
+
         # Call without specifying output file
         result = _backup_mysql(db_url)
 
@@ -725,9 +724,9 @@ def test_register_cli_commands(app):
 
     # Count commands before
     initial_commands = len(app.cli.commands)
-    
+
     register_cli_commands(app)
-    
+
     # Check that commands were added
     assert len(app.cli.commands) >= initial_commands
     assert 'system' in app.cli.commands
