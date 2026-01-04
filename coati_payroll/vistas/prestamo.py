@@ -407,7 +407,7 @@ def pago_extraordinario(prestamo_id):
         return redirect(url_for("prestamo.index"))
 
     # Ensure empleado relationship is loaded to avoid DetachedInstanceError
-    _ = prestamo.empleado
+    _empleado = prestamo.empleado
 
     # Only allow payments on approved/active loans
     if prestamo.estado not in [AdelantoEstado.APROBADO, AdelantoEstado.APLICADO]:
