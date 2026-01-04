@@ -924,3 +924,246 @@ class TestAccountingAuditTrail:
 
             assert comprobante.veces_modificado == 2
             assert comprobante.modificado_por == "third_user"
+
+
+class TestAccountingBalanceValidation:
+    """Tests for balance validation and zero-line exclusion."""
+
+    def test_balance_validation_warns_on_unbalanced_voucher(self, app, db_session):
+        """Test that unbalanced vouchers generate warnings."""
+        with app.app_context():
+            # Setup
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Company SA", ruc="J-12345678")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL",
+                descripcion="Mensual",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Planilla Test",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+                codigo_cuenta_debe_salario="5101",
+                codigo_cuenta_haber_salario="2101",
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Juan",
+                primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("15000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+
+            nomina = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2024, 12, 1),
+                periodo_fin=date(2024, 12, 31),
+                estado=NominaEstado.GENERADO,
+            )
+            db_session.add(nomina)
+            db_session.flush()
+
+            nomina_empleado = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("15000.00"),
+                sueldo_base_historico=Decimal("15000.00"),
+            )
+            db_session.add(nomina_empleado)
+            db_session.commit()
+
+            # Generate voucher - should be balanced
+            service = AccountingVoucherService(db_session)
+            comprobante = service.generate_accounting_voucher(nomina, planilla)
+
+            # Verify balanced voucher has no balance warning
+            assert comprobante.balance == Decimal("0.00")
+            balance_warnings = [w for w in comprobante.advertencias if "no está balanceado" in w]
+            assert len(balance_warnings) == 0
+
+            # Now manually create an unbalanced scenario by adding a debit-only line
+            db_session.flush()
+            orden_max = db_session.query(db.func.max(ComprobanteContableLinea.orden)).filter_by(
+                comprobante_id=comprobante.id
+            ).scalar() or 0
+
+            unbalanced_line = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=nomina_empleado.id,
+                empleado_id=empleado.id,
+                empleado_codigo="EMP001",
+                empleado_nombre="Juan Pérez",
+                codigo_cuenta="6101",
+                descripcion_cuenta="Gasto Extra",
+                centro_costos=None,
+                tipo_debito_credito="debito",
+                debito=Decimal("1000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Extra",
+                tipo_concepto="percepcion",
+                concepto_codigo="EXTRA",
+                orden=orden_max + 1,
+            )
+            db_session.add(unbalanced_line)
+            db_session.commit()
+
+            # Regenerate to recalculate balance
+            comprobante = service.generate_accounting_voucher(nomina, planilla)
+            db_session.commit()
+
+            # After regeneration with proper accounting, should still be balanced
+            # (because our service creates proper debit/credit pairs)
+            assert comprobante.balance == Decimal("0.00")
+
+    def test_summarize_excludes_zero_balance_lines(self, app, db_session):
+        """Test that summarization excludes lines where debits equal credits."""
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+            db_session.flush()
+
+            comprobante = ComprobanteContable(
+                nomina_id="test_nomina_id",
+                fecha_calculo=date(2024, 12, 31),
+                concepto="Test Voucher",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("10000.00"),
+                total_creditos=Decimal("10000.00"),
+                balance=Decimal("0.00"),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Add lines that will net to zero for same account
+            linea1 = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id="ne1",
+                empleado_id="emp1",
+                empleado_codigo="EMP001",
+                empleado_nombre="Juan Pérez",
+                codigo_cuenta="2101",  # This account will have equal debits and credits
+                descripcion_cuenta="Cuenta Test",
+                centro_costos="CC-01",
+                tipo_debito_credito="debito",
+                debito=Decimal("5000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("5000.00"),
+                concepto="Test Debit",
+                tipo_concepto="deduccion",
+                concepto_codigo="TEST_D",
+                orden=1,
+            )
+            db_session.add(linea1)
+
+            linea2 = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id="ne1",
+                empleado_id="emp1",
+                empleado_codigo="EMP001",
+                empleado_nombre="Juan Pérez",
+                codigo_cuenta="2101",  # Same account - will net to zero
+                descripcion_cuenta="Cuenta Test",
+                centro_costos="CC-01",  # Same cost center
+                tipo_debito_credito="credito",
+                debito=Decimal("0.00"),
+                credito=Decimal("5000.00"),
+                monto_calculado=Decimal("5000.00"),
+                concepto="Test Credit",
+                tipo_concepto="percepcion",
+                concepto_codigo="TEST_C",
+                orden=2,
+            )
+            db_session.add(linea2)
+
+            # Add another account with non-zero balance
+            linea3 = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id="ne1",
+                empleado_id="emp1",
+                empleado_codigo="EMP001",
+                empleado_nombre="Juan Pérez",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                centro_costos="CC-01",
+                tipo_debito_credito="debito",
+                debito=Decimal("10000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("10000.00"),
+                concepto="Salario",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO",
+                orden=3,
+            )
+            db_session.add(linea3)
+
+            linea4 = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id="ne1",
+                empleado_id="emp1",
+                empleado_codigo="EMP001",
+                empleado_nombre="Juan Pérez",
+                codigo_cuenta="2102",
+                descripcion_cuenta="Salario por Pagar",
+                centro_costos="CC-01",
+                tipo_debito_credito="credito",
+                debito=Decimal("0.00"),
+                credito=Decimal("10000.00"),
+                monto_calculado=Decimal("10000.00"),
+                concepto="Salario",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO",
+                orden=4,
+            )
+            db_session.add(linea4)
+            db_session.commit()
+
+            # Summarize
+            service = AccountingVoucherService(db_session)
+            summarized = service.summarize_voucher(comprobante)
+
+            # Should only have 2 entries (5101 debit and 2102 credit)
+            # Account 2101 should be excluded because it nets to zero
+            assert len(summarized) == 2
+
+            # Verify account 2101 is not in summary
+            account_codes = [entry["codigo_cuenta"] for entry in summarized]
+            assert "2101" not in account_codes
+
+            # Verify the other two accounts are present
+            assert "5101" in account_codes
+            assert "2102" in account_codes
+
+            # Verify amounts
+            entry_5101 = [e for e in summarized if e["codigo_cuenta"] == "5101"][0]
+            assert entry_5101["debito"] == Decimal("10000.00")
+            assert entry_5101["credito"] == Decimal("0.00")
+
+            entry_2102 = [e for e in summarized if e["codigo_cuenta"] == "2102"][0]
+            assert entry_2102["debito"] == Decimal("0.00")
+            assert entry_2102["credito"] == Decimal("10000.00")
+

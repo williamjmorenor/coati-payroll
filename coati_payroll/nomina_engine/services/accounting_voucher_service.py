@@ -504,6 +504,16 @@ class AccountingVoucherService:
         # Calculate balance (should be 0 for balanced voucher)
         balance = total_debitos - total_creditos
 
+        # Validate balance
+        if balance != Decimal("0.00"):
+            balance_warning = (
+                f"ADVERTENCIA: El comprobante no está balanceado. "
+                f"Débitos: {total_debitos}, Créditos: {total_creditos}, "
+                f"Diferencia: {abs(balance)}"
+            )
+            if balance_warning not in warnings:
+                warnings.append(balance_warning)
+
         # Update comprobante totals
         comprobante.total_debitos = total_debitos
         comprobante.total_creditos = total_creditos
@@ -579,7 +589,8 @@ class AccountingVoucherService:
                         "credito": monto_neto,
                     }
                 )
-            # If debito == credito, they cancel out, no entry needed
+            # If debito == credito, they cancel out completely, so line is excluded from summary
+            # This is intentional: zero-balance entries don't need to appear in the summarized voucher
 
         # Sort by account code and cost center
         summarized_entries.sort(key=lambda x: (x["codigo_cuenta"], x["centro_costos"] or ""))
