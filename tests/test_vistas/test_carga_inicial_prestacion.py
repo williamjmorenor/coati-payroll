@@ -13,8 +13,12 @@
 # limitations under the License.
 """Comprehensive tests for carga inicial prestacion (coati_payroll/vistas/carga_inicial_prestacion.py)."""
 
-from sqlalchemy import func, select
+import io
+from datetime import date, datetime
 from decimal import Decimal
+
+from openpyxl import load_workbook
+from sqlalchemy import func, select
 
 from coati_payroll.model import CargaInicialPrestacion, Empleado, Empresa, Moneda, Prestacion, PrestacionAcumulada
 from tests.helpers.auth import login_user
@@ -504,3 +508,193 @@ def test_carga_inicial_prestacion_eliminar_applied_redirects(app, client, admin_
         still_exists = db_session.execute(select(CargaInicialPrestacion).filter_by(id=carga_id)).scalar_one_or_none()
         assert still_exists is not None
         assert still_exists.estado == "aplicado"
+
+
+def test_carga_inicial_prestacion_reporte_excel_requires_authentication(app, client, db_session):
+    """Test that Excel report requires authentication."""
+    with app.app_context():
+        response = client.get("/carga-inicial-prestaciones/reporte/excel", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_carga_inicial_prestacion_reporte_excel_accessible_to_authenticated_users(app, client, admin_user, db_session):
+    """Test that authenticated users can download Excel report."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get("/carga-inicial-prestaciones/reporte/excel")
+
+        # Should return 200 and Excel file
+        assert response.status_code == 200
+        assert response.content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert "attachment" in response.headers.get("Content-Disposition", "")
+        assert "prestaciones_acumuladas.xlsx" in response.headers.get("Content-Disposition", "")
+
+
+def test_carga_inicial_prestacion_reporte_excel_with_data(app, client, admin_user, db_session):
+    """Test Excel report generation with actual data."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create test data
+        empresa, moneda, prestacion, empleado = _create_test_data(db_session)
+
+        # Create and apply a carga inicial to generate transactions
+        carga = CargaInicialPrestacion(
+            empleado_id=empleado.id,
+            prestacion_id=prestacion.id,
+            anio_corte=2024,
+            mes_corte=6,
+            moneda_id=moneda.id,
+            saldo_acumulado=Decimal("1000.00"),
+            tipo_cambio=Decimal("1.0"),
+            saldo_convertido=Decimal("1000.00"),
+            observaciones="Test for Excel export",
+            estado="borrador",
+            creado_por="test",
+        )
+        db_session.add(carga)
+        db_session.commit()
+        db_session.refresh(carga)
+
+        # Apply the carga to create a transaction
+        transaccion = PrestacionAcumulada(
+            empleado_id=carga.empleado_id,
+            prestacion_id=carga.prestacion_id,
+            fecha_transaccion=date(2024, 6, 15),
+            tipo_transaccion="saldo_inicial",
+            anio=carga.anio_corte,
+            mes=carga.mes_corte,
+            moneda_id=carga.moneda_id,
+            monto_transaccion=carga.saldo_convertido,
+            saldo_anterior=Decimal("0.00"),
+            saldo_nuevo=carga.saldo_convertido,
+            carga_inicial_id=carga.id,
+            observaciones=f"Carga inicial - {carga.observaciones or ''}",
+            procesado_por="test",
+            creado_por="test",
+        )
+        db_session.add(transaccion)
+        db_session.commit()
+
+        # Request Excel report
+        response = client.get("/carga-inicial-prestaciones/reporte/excel")
+
+        # Should return 200 and Excel file
+        assert response.status_code == 200
+        assert response.content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
+        # Verify the content is a valid Excel file
+        excel_data = io.BytesIO(response.data)
+        wb = load_workbook(excel_data)
+        ws = wb.active
+        
+        # Verify worksheet name
+        assert ws.title == "Prestaciones Acumuladas"
+        
+        # Verify headers are present
+        assert ws.cell(row=1, column=1).value == "ID Transacción"
+        assert ws.cell(row=1, column=2).value == "Fecha Transacción"
+        assert ws.cell(row=1, column=3).value == "Código Empleado"
+        
+        # Verify data row exists
+        assert ws.cell(row=2, column=1).value == transaccion.id
+        assert ws.cell(row=2, column=3).value == empleado.codigo_empleado
+
+
+def test_carga_inicial_prestacion_reporte_excel_with_filters(app, client, admin_user, db_session):
+    """Test Excel report generation with query filters."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create test data
+        empresa, moneda, prestacion, empleado = _create_test_data(db_session)
+
+        # Create transaction
+        transaccion = PrestacionAcumulada(
+            empleado_id=empleado.id,
+            prestacion_id=prestacion.id,
+            fecha_transaccion=date(2024, 6, 15),
+            tipo_transaccion="saldo_inicial",
+            anio=2024,
+            mes=6,
+            moneda_id=moneda.id,
+            monto_transaccion=Decimal("1000.00"),
+            saldo_anterior=Decimal("0.00"),
+            saldo_nuevo=Decimal("1000.00"),
+            observaciones="Test transaction",
+            procesado_por="test",
+            creado_por="test",
+        )
+        db_session.add(transaccion)
+        db_session.commit()
+
+        # Request Excel report with filters
+        response = client.get(
+            f"/carga-inicial-prestaciones/reporte/excel?empleado_id={empleado.id}&prestacion_id={prestacion.id}"
+        )
+
+        # Should return 200 and Excel file
+        assert response.status_code == 200
+        assert response.content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def test_carga_inicial_prestacion_reporte_excel_with_date_filters(app, client, admin_user, db_session):
+    """Test Excel report generation with date filters."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create test data
+        empresa, moneda, prestacion, empleado = _create_test_data(db_session)
+
+        # Create transaction
+        transaccion = PrestacionAcumulada(
+            empleado_id=empleado.id,
+            prestacion_id=prestacion.id,
+            fecha_transaccion=date(2024, 6, 15),
+            tipo_transaccion="saldo_inicial",
+            anio=2024,
+            mes=6,
+            moneda_id=moneda.id,
+            monto_transaccion=Decimal("1000.00"),
+            saldo_anterior=Decimal("0.00"),
+            saldo_nuevo=Decimal("1000.00"),
+            observaciones="Test transaction",
+            procesado_por="test",
+            creado_por="test",
+        )
+        db_session.add(transaccion)
+        db_session.commit()
+
+        # Request Excel report with date filters
+        response = client.get(
+            "/carga-inicial-prestaciones/reporte/excel?fecha_desde=2024-06-01&fecha_hasta=2024-06-30"
+        )
+
+        # Should return 200 and Excel file
+        assert response.status_code == 200
+        assert response.content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def test_carga_inicial_prestacion_reporte_excel_without_openpyxl(app, client, admin_user, db_session, monkeypatch):
+    """Test Excel report when openpyxl is not available."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Mock ImportError for openpyxl
+        import builtins
+        original_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "openpyxl":
+                raise ImportError("openpyxl not available")
+            return original_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", mock_import)
+
+        # Request Excel report
+        response = client.get("/carga-inicial-prestaciones/reporte/excel", follow_redirects=False)
+
+        # Should redirect to reporte page with error message
+        assert response.status_code == 302
+        assert "/carga-inicial-prestaciones/reporte" in response.location

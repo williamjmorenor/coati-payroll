@@ -101,3 +101,45 @@ def test_vacation_account_view_requires_authentication(app, client, db_session):
         response = client.get("/vacation/accounts/999", follow_redirects=False)
         assert response.status_code == 302
         assert "/auth/login" in response.location
+
+
+def test_vacation_policy_detail_not_found(app, client, admin_user, db_session):
+    """Test that viewing a non-existent vacation policy redirects to index."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+        response = client.get("/vacation/policies/non-existent-policy-id", follow_redirects=True)
+        assert response.status_code == 200
+        # Should redirect to policy index after not finding the policy
+
+
+def test_vacation_policy_detail_success(app, client, admin_user, db_session):
+    """Test that viewing an existing vacation policy shows details."""
+    from decimal import Decimal
+    from coati_payroll.model import VacationPolicy, Empresa
+
+    with app.app_context():
+        # Create required entities
+        empresa = Empresa(codigo="TEST001", razon_social="Test Company", ruc="J-123", activo=True)
+        db_session.add(empresa)
+        db_session.commit()
+
+        # Create vacation policy without planilla (global policy)
+        # Note: planilla_id is None to create a global policy, avoiding dependency
+        # on planilla.view route which may not be implemented
+        policy = VacationPolicy(
+            codigo="POL001",
+            nombre="Test Policy",
+            empresa_id=empresa.id,
+            planilla_id=None,
+            accrual_rate=Decimal("15.0000"),
+            activo=True,
+        )
+        db_session.add(policy)
+        db_session.commit()
+
+        policy_id = policy.id
+
+        # Test viewing the policy detail
+        login_user(client, admin_user.usuario, "admin-password")
+        response = client.get(f"/vacation/policies/{policy_id}")
+        assert response.status_code == 200

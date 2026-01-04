@@ -285,7 +285,7 @@ def duplicate(id: str):
     new_rule.nombre = rule.nombre
     new_rule.descripcion = rule.descripcion
     new_rule.jurisdiccion = rule.jurisdiccion
-    new_rule.moneda_codigo = rule.moneda_codigo
+    new_rule.moneda_referencia = rule.moneda_referencia
     new_rule.tipo_regla = rule.tipo_regla
     new_rule.vigente_desde = rule.vigente_desde
     new_rule.vigente_hasta = rule.vigente_hasta
