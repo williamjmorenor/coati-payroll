@@ -384,11 +384,11 @@ def test_exchange_rate_filter_by_currency(app, client, admin_user, db_session):
 # Helper function to create Excel file for testing
 def create_excel_file(rows):
     """Create an Excel file in memory with the given rows.
-    
+
     Args:
         rows: List of lists representing rows in the Excel file.
               First row should be headers.
-    
+
     Returns:
         io.BytesIO: In-memory Excel file
     """
@@ -867,11 +867,11 @@ def test_exchange_rate_import_general_exception_handling(app, client, admin_user
 
 
 def test_exchange_rate_import_many_errors_limited_display(app, client, admin_user, db_session):
-    """Test import_excel limits error display to MAX_ERRORS_DISPLAYED."""
+    """Test import_excel limits error display when many errors occur."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Create Excel file with many invalid rows (more than MAX_ERRORS_DISPLAYED = 10)
+        # Create Excel file with many invalid rows (more than the display limit)
         rows = [["Fecha", "Moneda Base", "Moneda Destino", "Tipo de Cambio"]]
         for i in range(15):
             rows.append(["invalid-date", "USD", "EUR", 1.2])
