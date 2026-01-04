@@ -154,7 +154,11 @@ class AccountingVoucherService:
             fecha_calculo = nomina.fecha_calculo_original or nomina.periodo_fin
 
         # Generate voucher concept
-        concepto = f"Nómina {planilla.nombre} - Período {nomina.periodo_inicio.strftime('%d/%m/%Y')} al {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+        concepto = (
+            f"Nómina {planilla.nombre}"
+            + f" - Período {nomina.periodo_inicio.strftime('%d/%m/%Y')} al "
+            + f"{nomina.periodo_fin.strftime('%d/%m/%Y')}"
+        )
 
         # Get or create comprobante
         comprobante = self.session.execute(
