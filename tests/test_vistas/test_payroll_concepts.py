@@ -570,7 +570,6 @@ def test_view_audit_log_route_success(app, client, admin_user, db_session):
     with app.app_context():
         from coati_payroll.enums import EstadoAprobacion
         from coati_payroll.audit_helpers import crear_log_auditoria
-        from coati_payroll.vistas.payroll_concepts import view_audit_log_route
 
         # Create a percepcion
         perc = Percepcion(
@@ -709,7 +708,7 @@ def test_audit_log_ordering(app, client, admin_user, db_session):
         db_session.flush()
 
         # Create audit log entries with slight delays
-        log1 = crear_log_auditoria(
+        crear_log_auditoria(
             concepto=perc,
             accion="created",
             usuario="admin-test",
@@ -718,7 +717,7 @@ def test_audit_log_ordering(app, client, admin_user, db_session):
         db_session.flush()
         time.sleep(0.01)
 
-        log2 = crear_log_auditoria(
+        crear_log_auditoria(
             concepto=perc,
             accion="updated",
             usuario="admin-test",
@@ -727,7 +726,7 @@ def test_audit_log_ordering(app, client, admin_user, db_session):
         db_session.flush()
         time.sleep(0.01)
 
-        log3 = crear_log_auditoria(
+        crear_log_auditoria(
             concepto=perc,
             accion="approved",
             usuario="admin-test",
