@@ -18,6 +18,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any
 from collections import defaultdict
+from datetime import date
 
 from coati_payroll.model import (
     db,
@@ -197,6 +198,7 @@ class AccountingVoucherService:
         for ne in nomina_empleados:
             empleado = ne.empleado
             centro_costos = ne.centro_costos_snapshot or empleado.centro_costos
+            empleado_nombre_completo = f"{empleado.primer_nombre} {empleado.primer_apellido}"
 
             # 1. Base Salary Accounting
             if planilla.codigo_cuenta_debe_salario and planilla.codigo_cuenta_haber_salario:
@@ -207,6 +209,9 @@ class AccountingVoucherService:
                 linea_debe = ComprobanteContableLinea(
                     comprobante_id=comprobante.id,
                     nomina_empleado_id=ne.id,
+                    empleado_id=empleado.id,
+                    empleado_codigo=empleado.codigo_empleado,
+                    empleado_nombre=empleado_nombre_completo,
                     codigo_cuenta=planilla.codigo_cuenta_debe_salario,
                     descripcion_cuenta=planilla.descripcion_cuenta_debe_salario or "Gasto por Salario",
                     centro_costos=centro_costos,
@@ -225,6 +230,9 @@ class AccountingVoucherService:
                 linea_haber = ComprobanteContableLinea(
                     comprobante_id=comprobante.id,
                     nomina_empleado_id=ne.id,
+                    empleado_id=empleado.id,
+                    empleado_codigo=empleado.codigo_empleado,
+                    empleado_nombre=empleado_nombre_completo,
                     codigo_cuenta=planilla.codigo_cuenta_haber_salario,
                     descripcion_cuenta=planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
                     centro_costos=centro_costos,
@@ -241,7 +249,9 @@ class AccountingVoucherService:
             # 2. Process Loans and Advances (special treatment)
             # Loans/advances debit salary payable and credit loan control account
             detalles = (
-                self.session.execute(db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id).order_by(NominaDetalle.orden))
+                self.session.execute(
+                    db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id).order_by(NominaDetalle.orden)
+                )
                 .scalars()
                 .all()
             )
@@ -274,16 +284,46 @@ class AccountingVoucherService:
                     # Loan/advance: Debit salary payable, Credit loan control
                     # Debit: Salary Payable (same as base salary credit account)
                     if planilla.codigo_cuenta_haber_salario:
-                        key_debe = (
-                            planilla.codigo_cuenta_haber_salario,
-                            planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
-                            centro_costos,
+                        orden += 1
+                        linea_debe = ComprobanteContableLinea(
+                            comprobante_id=comprobante.id,
+                            nomina_empleado_id=ne.id,
+                            empleado_id=empleado.id,
+                            empleado_codigo=empleado.codigo_empleado,
+                            empleado_nombre=empleado_nombre_completo,
+                            codigo_cuenta=planilla.codigo_cuenta_haber_salario,
+                            descripcion_cuenta=planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
+                            centro_costos=centro_costos,
+                            debito=detalle.monto,
+                            credito=Decimal("0.00"),
+                            concepto=detalle.descripcion or "Préstamo/Adelanto",
+                            tipo_concepto="prestamo",
+                            concepto_codigo=detalle.codigo,
+                            orden=orden,
                         )
-                        entries_dict[key_debe]["debito"] += detalle.monto
+                        self.session.add(linea_debe)
+                        total_debitos += detalle.monto
 
                     # Credit: Loan Control Account
-                    key_haber = (cuenta_control_prestamo, "Cuenta de Control Préstamos/Adelantos", centro_costos)
-                    entries_dict[key_haber]["credito"] += detalle.monto
+                    orden += 1
+                    linea_haber = ComprobanteContableLinea(
+                        comprobante_id=comprobante.id,
+                        nomina_empleado_id=ne.id,
+                        empleado_id=empleado.id,
+                        empleado_codigo=empleado.codigo_empleado,
+                        empleado_nombre=empleado_nombre_completo,
+                        codigo_cuenta=cuenta_control_prestamo,
+                        descripcion_cuenta="Cuenta de Control Préstamos/Adelantos",
+                        centro_costos=centro_costos,
+                        debito=Decimal("0.00"),
+                        credito=detalle.monto,
+                        concepto=detalle.descripcion or "Préstamo/Adelanto",
+                        tipo_concepto="prestamo",
+                        concepto_codigo=detalle.codigo,
+                        orden=orden,
+                    )
+                    self.session.add(linea_haber)
+                    total_creditos += detalle.monto
 
                 else:
                     # Regular concept - use configured accounts
@@ -291,124 +331,145 @@ class AccountingVoucherService:
                         percepcion = self.session.get(Percepcion, detalle.percepcion_id)
                         if percepcion and percepcion.contabilizable:
                             if percepcion.codigo_cuenta_debe:
-                                key_debe = (
-                                    percepcion.codigo_cuenta_debe,
-                                    percepcion.descripcion_cuenta_debe or percepcion.nombre,
-                                    centro_costos,
+                                orden += 1
+                                linea_debe = ComprobanteContableLinea(
+                                    comprobante_id=comprobante.id,
+                                    nomina_empleado_id=ne.id,
+                                    empleado_id=empleado.id,
+                                    empleado_codigo=empleado.codigo_empleado,
+                                    empleado_nombre=empleado_nombre_completo,
+                                    codigo_cuenta=percepcion.codigo_cuenta_debe,
+                                    descripcion_cuenta=percepcion.descripcion_cuenta_debe or percepcion.nombre,
+                                    centro_costos=centro_costos,
+                                    debito=detalle.monto,
+                                    credito=Decimal("0.00"),
+                                    concepto=detalle.descripcion or percepcion.nombre,
+                                    tipo_concepto="percepcion",
+                                    concepto_codigo=percepcion.codigo,
+                                    orden=orden,
                                 )
-                                entries_dict[key_debe]["debito"] += detalle.monto
+                                self.session.add(linea_debe)
+                                total_debitos += detalle.monto
 
                             if percepcion.codigo_cuenta_haber:
-                                key_haber = (
-                                    percepcion.codigo_cuenta_haber,
-                                    percepcion.descripcion_cuenta_haber or percepcion.nombre,
-                                    centro_costos,
+                                orden += 1
+                                linea_haber = ComprobanteContableLinea(
+                                    comprobante_id=comprobante.id,
+                                    nomina_empleado_id=ne.id,
+                                    empleado_id=empleado.id,
+                                    empleado_codigo=empleado.codigo_empleado,
+                                    empleado_nombre=empleado_nombre_completo,
+                                    codigo_cuenta=percepcion.codigo_cuenta_haber,
+                                    descripcion_cuenta=percepcion.descripcion_cuenta_haber or percepcion.nombre,
+                                    centro_costos=centro_costos,
+                                    debito=Decimal("0.00"),
+                                    credito=detalle.monto,
+                                    concepto=detalle.descripcion or percepcion.nombre,
+                                    tipo_concepto="percepcion",
+                                    concepto_codigo=percepcion.codigo,
+                                    orden=orden,
                                 )
-                                entries_dict[key_haber]["credito"] += detalle.monto
+                                self.session.add(linea_haber)
+                                total_creditos += detalle.monto
 
                     elif detalle.tipo == "deduccion" and detalle.deduccion_id:
                         deduccion = self.session.get(Deduccion, detalle.deduccion_id)
                         if deduccion and deduccion.contabilizable:
                             if deduccion.codigo_cuenta_debe:
-                                key_debe = (
-                                    deduccion.codigo_cuenta_debe,
-                                    deduccion.descripcion_cuenta_debe or deduccion.nombre,
-                                    centro_costos,
+                                orden += 1
+                                linea_debe = ComprobanteContableLinea(
+                                    comprobante_id=comprobante.id,
+                                    nomina_empleado_id=ne.id,
+                                    empleado_id=empleado.id,
+                                    empleado_codigo=empleado.codigo_empleado,
+                                    empleado_nombre=empleado_nombre_completo,
+                                    codigo_cuenta=deduccion.codigo_cuenta_debe,
+                                    descripcion_cuenta=deduccion.descripcion_cuenta_debe or deduccion.nombre,
+                                    centro_costos=centro_costos,
+                                    debito=detalle.monto,
+                                    credito=Decimal("0.00"),
+                                    concepto=detalle.descripcion or deduccion.nombre,
+                                    tipo_concepto="deduccion",
+                                    concepto_codigo=deduccion.codigo,
+                                    orden=orden,
                                 )
-                                entries_dict[key_debe]["debito"] += detalle.monto
+                                self.session.add(linea_debe)
+                                total_debitos += detalle.monto
 
                             if deduccion.codigo_cuenta_haber:
-                                key_haber = (
-                                    deduccion.codigo_cuenta_haber,
-                                    deduccion.descripcion_cuenta_haber or deduccion.nombre,
-                                    centro_costos,
+                                orden += 1
+                                linea_haber = ComprobanteContableLinea(
+                                    comprobante_id=comprobante.id,
+                                    nomina_empleado_id=ne.id,
+                                    empleado_id=empleado.id,
+                                    empleado_codigo=empleado.codigo_empleado,
+                                    empleado_nombre=empleado_nombre_completo,
+                                    codigo_cuenta=deduccion.codigo_cuenta_haber,
+                                    descripcion_cuenta=deduccion.descripcion_cuenta_haber or deduccion.nombre,
+                                    centro_costos=centro_costos,
+                                    debito=Decimal("0.00"),
+                                    credito=detalle.monto,
+                                    concepto=detalle.descripcion or deduccion.nombre,
+                                    tipo_concepto="deduccion",
+                                    concepto_codigo=deduccion.codigo,
+                                    orden=orden,
                                 )
-                                entries_dict[key_haber]["credito"] += detalle.monto
+                                self.session.add(linea_haber)
+                                total_creditos += detalle.monto
 
                     elif detalle.tipo == "prestacion" and detalle.prestacion_id:
                         prestacion = self.session.get(Prestacion, detalle.prestacion_id)
                         if prestacion and prestacion.contabilizable:
                             if prestacion.codigo_cuenta_debe:
-                                key_debe = (
-                                    prestacion.codigo_cuenta_debe,
-                                    prestacion.descripcion_cuenta_debe or prestacion.nombre,
-                                    centro_costos,
+                                orden += 1
+                                linea_debe = ComprobanteContableLinea(
+                                    comprobante_id=comprobante.id,
+                                    nomina_empleado_id=ne.id,
+                                    empleado_id=empleado.id,
+                                    empleado_codigo=empleado.codigo_empleado,
+                                    empleado_nombre=empleado_nombre_completo,
+                                    codigo_cuenta=prestacion.codigo_cuenta_debe,
+                                    descripcion_cuenta=prestacion.descripcion_cuenta_debe or prestacion.nombre,
+                                    centro_costos=centro_costos,
+                                    debito=detalle.monto,
+                                    credito=Decimal("0.00"),
+                                    concepto=detalle.descripcion or prestacion.nombre,
+                                    tipo_concepto="prestacion",
+                                    concepto_codigo=prestacion.codigo,
+                                    orden=orden,
                                 )
-                                entries_dict[key_debe]["debito"] += detalle.monto
+                                self.session.add(linea_debe)
+                                total_debitos += detalle.monto
 
                             if prestacion.codigo_cuenta_haber:
-                                key_haber = (
-                                    prestacion.codigo_cuenta_haber,
-                                    prestacion.descripcion_cuenta_haber or prestacion.nombre,
-                                    centro_costos,
+                                orden += 1
+                                linea_haber = ComprobanteContableLinea(
+                                    comprobante_id=comprobante.id,
+                                    nomina_empleado_id=ne.id,
+                                    empleado_id=empleado.id,
+                                    empleado_codigo=empleado.codigo_empleado,
+                                    empleado_nombre=empleado_nombre_completo,
+                                    codigo_cuenta=prestacion.codigo_cuenta_haber,
+                                    descripcion_cuenta=prestacion.descripcion_cuenta_haber or prestacion.nombre,
+                                    centro_costos=centro_costos,
+                                    debito=Decimal("0.00"),
+                                    credito=detalle.monto,
+                                    concepto=detalle.descripcion or prestacion.nombre,
+                                    tipo_concepto="prestacion",
+                                    concepto_codigo=prestacion.codigo,
+                                    orden=orden,
                                 )
-                                entries_dict[key_haber]["credito"] += detalle.monto
-
-        # Net debits and credits for same account + cost center combination
-        asientos_contables = []
-        total_debitos = Decimal("0.00")
-        total_creditos = Decimal("0.00")
-
-        for (codigo_cuenta, descripcion, centro_costos), amounts in entries_dict.items():
-            debito = amounts["debito"]
-            credito = amounts["credito"]
-
-            # Net debits and credits
-            if debito > credito:
-                monto_neto = debito - credito
-                asientos_contables.append(
-                    {
-                        "codigo_cuenta": codigo_cuenta,
-                        "descripcion": descripcion,
-                        "centro_costos": centro_costos,
-                        "debito": float(monto_neto),
-                        "credito": 0.0,
-                    }
-                )
-                total_debitos += monto_neto
-            elif credito > debito:
-                monto_neto = credito - debito
-                asientos_contables.append(
-                    {
-                        "codigo_cuenta": codigo_cuenta,
-                        "descripcion": descripcion,
-                        "centro_costos": centro_costos,
-                        "debito": 0.0,
-                        "credito": float(monto_neto),
-                    }
-                )
-                total_creditos += monto_neto
-            # If debito == credito, they cancel out, no entry needed
-
-        # Sort by account code
-        asientos_contables.sort(key=lambda x: (x["codigo_cuenta"], x["centro_costos"] or ""))
+                                self.session.add(linea_haber)
+                                total_creditos += detalle.monto
 
         # Calculate balance (should be 0 for balanced voucher)
         balance = total_debitos - total_creditos
 
-        # Create or update comprobante
-        comprobante = (
-            self.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)).scalar_one_or_none()
-        )
-
-        if comprobante:
-            # Update existing
-            comprobante.asientos_contables = asientos_contables
-            comprobante.total_debitos = total_debitos
-            comprobante.total_creditos = total_creditos
-            comprobante.balance = balance
-            comprobante.advertencias = warnings
-        else:
-            # Create new
-            comprobante = ComprobanteContable(
-                nomina_id=nomina.id,
-                asientos_contables=asientos_contables,
-                total_debitos=total_debitos,
-                total_creditos=total_creditos,
-                balance=balance,
-                advertencias=warnings,
-            )
-            self.session.add(comprobante)
+        # Update comprobante totals
+        comprobante.total_debitos = total_debitos
+        comprobante.total_creditos = total_creditos
+        comprobante.balance = balance
+        comprobante.advertencias = warnings
 
         return comprobante
 
@@ -497,49 +558,49 @@ class AccountingVoucherService:
         """
         detailed_entries = []
 
-        # Get all nomina employees
-        nomina_empleados = (
+        # Get all lines grouped by employee using the denormalized employee info
+        lineas = (
             self.session.execute(
-                db.select(NominaEmpleado)
-                .join(ComprobanteContable, ComprobanteContable.nomina_id == NominaEmpleado.nomina_id)
-                .filter(ComprobanteContable.id == comprobante.id)
+                db.select(ComprobanteContableLinea)
+                .filter_by(comprobante_id=comprobante.id)
+                .order_by(ComprobanteContableLinea.empleado_codigo, ComprobanteContableLinea.orden)
             )
             .scalars()
             .all()
         )
 
-        for ne in nomina_empleados:
-            empleado = ne.empleado
-            
-            # Get all lines for this employee
-            lineas = (
-                self.session.execute(
-                    db.select(ComprobanteContableLinea)
-                    .filter_by(comprobante_id=comprobante.id, nomina_empleado_id=ne.id)
-                    .order_by(ComprobanteContableLinea.orden)
-                )
-                .scalars()
-                .all()
+        # Group by employee
+        current_empleado_codigo = None
+        current_entry = None
+
+        for linea in lineas:
+            if linea.empleado_codigo != current_empleado_codigo:
+                # New employee, save previous and start new
+                if current_entry:
+                    detailed_entries.append(current_entry)
+
+                current_empleado_codigo = linea.empleado_codigo
+                current_entry = {
+                    "empleado_codigo": linea.empleado_codigo,
+                    "empleado_nombre": linea.empleado_nombre,
+                    "centro_costos": linea.centro_costos,
+                    "lineas": [],
+                }
+
+            # Add line to current employee
+            current_entry["lineas"].append(
+                {
+                    "concepto": linea.concepto,
+                    "tipo_concepto": linea.tipo_concepto,
+                    "codigo_cuenta": linea.codigo_cuenta,
+                    "descripcion_cuenta": linea.descripcion_cuenta,
+                    "debito": linea.debito,
+                    "credito": linea.credito,
+                }
             )
 
-            if lineas:  # Only include employees with accounting lines
-                employee_entry = {
-                    "empleado_codigo": empleado.codigo_empleado,
-                    "empleado_nombre": f"{empleado.primer_nombre} {empleado.primer_apellido}",
-                    "centro_costos": ne.centro_costos_snapshot or empleado.centro_costos,
-                    "lineas": [
-                        {
-                            "concepto": linea.concepto,
-                            "tipo_concepto": linea.tipo_concepto,
-                            "codigo_cuenta": linea.codigo_cuenta,
-                            "descripcion_cuenta": linea.descripcion_cuenta,
-                            "debito": linea.debito,
-                            "credito": linea.credito,
-                        }
-                        for linea in lineas
-                    ],
-                }
-                detailed_entries.append(employee_entry)
+        # Don't forget the last employee
+        if current_entry:
+            detailed_entries.append(current_entry)
 
         return detailed_entries
-

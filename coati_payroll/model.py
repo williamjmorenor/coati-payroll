@@ -1069,6 +1069,13 @@ class ComprobanteContableLinea(database.Model, BaseTabla):
     nomina_empleado_id = database.Column(
         database.String(26), database.ForeignKey("nomina_empleado.id"), nullable=False, index=True
     )
+    empleado_id = database.Column(
+        database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True
+    )
+
+    # Employee information snapshot for audit trail (denormalized for easier reporting)
+    empleado_codigo = database.Column(database.String(20), nullable=True)
+    empleado_nombre = database.Column(database.String(255), nullable=True)
 
     # Accounting information
     codigo_cuenta = database.Column(database.String(64), nullable=False, index=True)
@@ -1091,6 +1098,7 @@ class ComprobanteContableLinea(database.Model, BaseTabla):
 
     comprobante = database.relationship("ComprobanteContable", back_populates="lineas")
     nomina_empleado = database.relationship("NominaEmpleado")
+    empleado = database.relationship("Empleado")
 
 
 # Historial de cambios de salario

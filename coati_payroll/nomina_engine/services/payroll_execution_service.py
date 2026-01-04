@@ -44,6 +44,7 @@ from ..processors.novelty_processor import NoveltyProcessor
 from ..processors.accounting_processor import AccountingProcessor
 from ..services.employee_processing_service import EmployeeProcessingService
 from ..services.snapshot_service import SnapshotService
+from ..services.accounting_voucher_service import AccountingVoucherService
 
 
 class PayrollExecutionService:
@@ -79,6 +80,7 @@ class PayrollExecutionService:
         # Initialize services
         self.employee_processing_service = EmployeeProcessingService(self.config_repo, self.acumulado_repo)
         self.snapshot_service = SnapshotService(session)
+        self.accounting_voucher_service = AccountingVoucherService(session)
 
     def execute_payroll(
         self,
@@ -187,6 +189,16 @@ class PayrollExecutionService:
 
         # Save errors and warnings to log_procesamiento for transparency
         self._save_log_entries(nomina, errors, warnings, empleados_calculo)
+
+        # Generate accounting voucher
+        try:
+            comprobante = self.accounting_voucher_service.generate_accounting_voucher(
+                nomina, planilla, fecha_calculo
+            )
+            db.session.flush()
+        except Exception as e:
+            # Don't fail the payroll if voucher generation fails
+            warnings.append(f"Advertencia al generar comprobante contable: {str(e)}")
 
         return nomina, empleados_calculo, errors, warnings
 
