@@ -1134,3 +1134,816 @@ class TestBadInputNominaEngine:
 
             # Negative hours should return 0 (calculator should handle this)
             assert monto == Decimal("0.00")
+
+
+class TestConceptCalculatorFormulaMethods:
+    """Tests for _calculate_formula and _calculate_regla_calculo methods."""
+
+    def test_calculate_formula_with_valid_formula(self, app, db_session):
+        """Test _calculate_formula with valid formula."""
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda, Empresa, Empleado
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="TEST",
+                descripcion="Test",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Test Planilla",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Test",
+                primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+            db_session.commit()
+
+            emp_calculo = EmpleadoCalculo(empleado, planilla)
+            emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.salario_bruto = Decimal("10500.00")
+            emp_calculo.total_percepciones = Decimal("500.00")
+            emp_calculo.total_deducciones = Decimal("0.00")
+            emp_calculo.variables_calculo = {"dias_trabajados": 30}
+
+            # Create a simple formula: salario_bruto * 0.07
+            formula = {
+                "inputs": [{"name": "salario_bruto", "type": "decimal", "default": 0}],
+                "steps": [
+                    {
+                        "name": "calculate_tax",
+                        "type": "calculation",
+                        "formula": "salario_bruto * 0.07",
+                    }
+                ],
+                "output": "calculate_tax",
+            }
+
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
+                emp_calculo=emp_calculo,
+                formula_tipo=FormulaType.FORMULA,
+                monto_default=None,
+                porcentaje=None,
+                formula=formula,
+                monto_override=None,
+                porcentaje_override=None,
+                codigo_concepto="TAX_TEST",
+            )
+
+            # 10500 * 0.07 = 735.00
+            assert monto == Decimal("735.00")
+            assert len(warnings) == 0
+
+    def test_calculate_formula_with_empty_formula(self, app, db_session):
+        """Test _calculate_formula with None/empty formula returns 0."""
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda, Empresa, Empleado
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="TEST",
+                descripcion="Test",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Test Planilla",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Test",
+                primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+            db_session.commit()
+
+            emp_calculo = EmpleadoCalculo(empleado, planilla)
+            emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.variables_calculo = {}
+
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            # Test with None formula
+            monto = calculator.calculate(
+                emp_calculo=emp_calculo,
+                formula_tipo=FormulaType.FORMULA,
+                monto_default=None,
+                porcentaje=None,
+                formula=None,
+                monto_override=None,
+                porcentaje_override=None,
+                codigo_concepto="TAX_TEST",
+            )
+
+            assert monto == Decimal("0.00")
+            assert len(warnings) == 0
+
+    def test_calculate_formula_with_invalid_formula(self, app, db_session):
+        """Test _calculate_formula with invalid formula raises error and returns 0."""
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda, Empresa, Empleado
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="TEST",
+                descripcion="Test",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Test Planilla",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Test",
+                primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+            db_session.commit()
+
+            emp_calculo = EmpleadoCalculo(empleado, planilla)
+            emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.variables_calculo = {}
+
+            # Create an invalid formula (missing output field)
+            formula = {
+                "inputs": [{"name": "salario_bruto", "type": "decimal", "default": 0}],
+                "steps": [
+                    {
+                        "name": "calculate_tax",
+                        "type": "calculation",
+                        "formula": "undefined_variable * 0.07",
+                    }
+                ],
+                "output": "calculate_tax",
+            }
+
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
+                emp_calculo=emp_calculo,
+                formula_tipo=FormulaType.FORMULA,
+                monto_default=None,
+                porcentaje=None,
+                formula=formula,
+                monto_override=None,
+                porcentaje_override=None,
+                codigo_concepto="TAX_TEST",
+            )
+
+            # Should return 0 and add a warning
+            assert monto == Decimal("0.00")
+            assert len(warnings) > 0
+            assert "Error en fórmula" in warnings[0]
+
+    def test_calculate_formula_with_before_tax_deductions(self, app, db_session):
+        """Test _calculate_formula correctly includes before-tax deductions."""
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda, Empresa, Empleado, Deduccion
+        from coati_payroll.nomina_engine.domain.calculation_items import DeduccionItem
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="TEST",
+                descripcion="Test",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Test Planilla",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            # Create a before-tax deduction (INSS)
+            deduccion_inss = Deduccion(
+                codigo="INSS",
+                nombre="INSS",
+                descripcion="Seguro Social",
+                formula_tipo="porcentaje",
+                porcentaje=Decimal("7.00"),
+                antes_impuesto=True,
+                activo=True,
+            )
+            db_session.add(deduccion_inss)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Test",
+                primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+            db_session.commit()
+
+            emp_calculo = EmpleadoCalculo(empleado, planilla)
+            emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.salario_bruto = Decimal("10000.00")
+            emp_calculo.total_percepciones = Decimal("0.00")
+            emp_calculo.total_deducciones = Decimal("700.00")
+            emp_calculo.variables_calculo = {}
+
+            # Add a before-tax deduction
+            deduccion_item = DeduccionItem(
+                codigo="INSS",
+                nombre="INSS",
+                monto=Decimal("700.00"),
+                prioridad=1,
+                es_obligatoria=True,
+                deduccion_id=deduccion_inss.id,
+            )
+            emp_calculo.deducciones.append(deduccion_item)
+
+            # Formula that uses pre_tax_deductions: (salario_bruto - pre_tax_deductions) * 0.15
+            formula = {
+                "inputs": [
+                    {"name": "salario_bruto", "type": "decimal", "default": 0},
+                    {"name": "pre_tax_deductions", "type": "decimal", "default": 0},
+                ],
+                "steps": [
+                    {
+                        "name": "taxable_income",
+                        "type": "calculation",
+                        "formula": "salario_bruto - pre_tax_deductions",
+                    },
+                    {
+                        "name": "calculate_tax",
+                        "type": "calculation",
+                        "formula": "taxable_income * 0.15",
+                    },
+                ],
+                "output": "calculate_tax",
+            }
+
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
+                emp_calculo=emp_calculo,
+                formula_tipo=FormulaType.FORMULA,
+                monto_default=None,
+                porcentaje=None,
+                formula=formula,
+                monto_override=None,
+                porcentaje_override=None,
+                codigo_concepto="IR",
+            )
+
+            # (10000 - 700) * 0.15 = 9300 * 0.15 = 1395.00
+            assert monto == Decimal("1395.00")
+            assert len(warnings) == 0
+
+    def test_calculate_regla_calculo_with_valid_rule(self, app, db_session):
+        """Test _calculate_regla_calculo with valid ReglaCalculo."""
+        from coati_payroll.model import (
+            Planilla,
+            TipoPlanilla,
+            Moneda,
+            Empresa,
+            Empleado,
+            Deduccion,
+            ReglaCalculo,
+        )
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="TEST",
+                descripcion="Test",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Test Planilla",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            # Create a deduction with ReglaCalculo
+            deduccion_ir = Deduccion(
+                codigo="IR",
+                nombre="Impuesto sobre la Renta",
+                descripcion="Income Tax",
+                formula_tipo="regla_calculo",
+                activo=True,
+            )
+            db_session.add(deduccion_ir)
+            db_session.flush()
+
+            # Create ReglaCalculo for the deduction
+            esquema = {
+                "inputs": [{"name": "salario_bruto", "type": "decimal", "default": 0}],
+                "steps": [
+                    {
+                        "name": "calculate_tax",
+                        "type": "calculation",
+                        "formula": "salario_bruto * 0.15",
+                    }
+                ],
+                "output": "calculate_tax",
+            }
+
+            regla = ReglaCalculo(
+                codigo="IR_RULE_001",
+                nombre="Income Tax Rule",
+                descripcion="Basic income tax calculation",
+                tipo_regla="impuesto",
+                esquema_json=esquema,
+                vigente_desde=date(2024, 1, 1),
+                activo=True,
+                deduccion_id=deduccion_ir.id,
+            )
+            db_session.add(regla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Test",
+                primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+            db_session.commit()
+
+            emp_calculo = EmpleadoCalculo(empleado, planilla)
+            emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.salario_bruto = Decimal("10000.00")
+            emp_calculo.total_percepciones = Decimal("0.00")
+            emp_calculo.total_deducciones = Decimal("0.00")
+            emp_calculo.variables_calculo = {}
+
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
+                emp_calculo=emp_calculo,
+                formula_tipo=FormulaType.REGLA_CALCULO,
+                monto_default=None,
+                porcentaje=None,
+                formula=None,
+                monto_override=None,
+                porcentaje_override=None,
+                codigo_concepto="IR",
+            )
+
+            # 10000 * 0.15 = 1500.00
+            assert monto == Decimal("1500.00")
+            assert len(warnings) == 0
+
+    def test_calculate_regla_calculo_not_found(self, app, db_session):
+        """Test _calculate_regla_calculo when ReglaCalculo is not found."""
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda, Empresa, Empleado
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="TEST",
+                descripcion="Test",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Test Planilla",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Test",
+                primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+            db_session.commit()
+
+            emp_calculo = EmpleadoCalculo(empleado, planilla)
+            emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.variables_calculo = {}
+
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            # Try to calculate with non-existent ReglaCalculo
+            monto = calculator.calculate(
+                emp_calculo=emp_calculo,
+                formula_tipo=FormulaType.REGLA_CALCULO,
+                monto_default=None,
+                porcentaje=None,
+                formula=None,
+                monto_override=None,
+                porcentaje_override=None,
+                codigo_concepto="NON_EXISTENT",
+            )
+
+            # Should return 0 and add a warning
+            assert monto == Decimal("0.00")
+            assert len(warnings) > 0
+            assert "ReglaCalculo no encontrada" in warnings[0]
+
+    def test_calculate_regla_calculo_with_formula_error(self, app, db_session):
+        """Test _calculate_regla_calculo handles FormulaEngineError."""
+        from coati_payroll.model import (
+            Planilla,
+            TipoPlanilla,
+            Moneda,
+            Empresa,
+            Empleado,
+            Deduccion,
+            ReglaCalculo,
+        )
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="TEST",
+                descripcion="Test",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Test Planilla",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            # Create a deduction with ReglaCalculo
+            deduccion_ir = Deduccion(
+                codigo="IR",
+                nombre="Impuesto sobre la Renta",
+                descripcion="Income Tax",
+                formula_tipo="regla_calculo",
+                activo=True,
+            )
+            db_session.add(deduccion_ir)
+            db_session.flush()
+
+            # Create ReglaCalculo with invalid formula
+            esquema = {
+                "inputs": [{"name": "salario_bruto", "type": "decimal", "default": 0}],
+                "steps": [
+                    {
+                        "name": "calculate_tax",
+                        "type": "calculation",
+                        "formula": "undefined_var * 0.15",
+                    }
+                ],
+                "output": "calculate_tax",
+            }
+
+            regla = ReglaCalculo(
+                codigo="IR_RULE_001",
+                nombre="Income Tax Rule",
+                descripcion="Basic income tax calculation",
+                tipo_regla="impuesto",
+                esquema_json=esquema,
+                vigente_desde=date(2024, 1, 1),
+                activo=True,
+                deduccion_id=deduccion_ir.id,
+            )
+            db_session.add(regla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Test",
+                primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+            db_session.commit()
+
+            emp_calculo = EmpleadoCalculo(empleado, planilla)
+            emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.salario_bruto = Decimal("10000.00")
+            emp_calculo.variables_calculo = {}
+
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            monto = calculator.calculate(
+                emp_calculo=emp_calculo,
+                formula_tipo=FormulaType.REGLA_CALCULO,
+                monto_default=None,
+                porcentaje=None,
+                formula=None,
+                monto_override=None,
+                porcentaje_override=None,
+                codigo_concepto="IR",
+            )
+
+            # Should return 0 and add a warning about the error
+            assert monto == Decimal("0.00")
+            assert len(warnings) > 0
+            assert "Error en ReglaCalculo" in warnings[0]
+
+    def test_calculate_regla_calculo_by_deduccion_codigo(self, app, db_session):
+        """Test _calculate_regla_calculo finds ReglaCalculo by deduccion codigo."""
+        from coati_payroll.model import (
+            Planilla,
+            TipoPlanilla,
+            Moneda,
+            Empresa,
+            Empleado,
+            Deduccion,
+            ReglaCalculo,
+        )
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="TEST",
+                descripcion="Test",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Test Planilla",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            # Create a deduction
+            deduccion_ir = Deduccion(
+                codigo="IR",
+                nombre="Impuesto sobre la Renta",
+                descripcion="Income Tax",
+                formula_tipo="regla_calculo",
+                activo=True,
+            )
+            db_session.add(deduccion_ir)
+            db_session.flush()
+
+            # Create ReglaCalculo linked to deduccion by ID (not by codigo)
+            esquema = {
+                "inputs": [{"name": "salario_bruto", "type": "decimal", "default": 0}],
+                "steps": [
+                    {
+                        "name": "calculate_tax",
+                        "type": "calculation",
+                        "formula": "salario_bruto * 0.10",
+                    }
+                ],
+                "output": "calculate_tax",
+            }
+
+            regla = ReglaCalculo(
+                codigo="IR_RULE_002",
+                nombre="Income Tax Rule 2",
+                descripcion="Tax rule linked by deduccion ID",
+                tipo_regla="impuesto",
+                esquema_json=esquema,
+                vigente_desde=date(2024, 1, 1),
+                activo=True,
+                deduccion_id=deduccion_ir.id,  # Linked by ID, not by codigo
+            )
+            db_session.add(regla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Test",
+                primer_apellido="User",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("10000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+            db_session.commit()
+
+            emp_calculo = EmpleadoCalculo(empleado, planilla)
+            emp_calculo.salario_base = Decimal("10000.00")
+            emp_calculo.salario_mensual = Decimal("10000.00")
+            emp_calculo.salario_bruto = Decimal("10000.00")
+            emp_calculo.total_percepciones = Decimal("0.00")
+            emp_calculo.total_deducciones = Decimal("0.00")
+            emp_calculo.variables_calculo = {}
+
+            config_repo = ConfigRepository(db.session)
+            warnings = []
+            calculator = ConceptCalculator(config_repo, warnings)
+
+            # Search by deduccion codigo "IR" - should find the rule via deduccion lookup
+            monto = calculator.calculate(
+                emp_calculo=emp_calculo,
+                formula_tipo=FormulaType.REGLA_CALCULO,
+                monto_default=None,
+                porcentaje=None,
+                formula=None,
+                monto_override=None,
+                porcentaje_override=None,
+                codigo_concepto="IR",  # Using deduccion codigo
+            )
+
+            # 10000 * 0.10 = 1000.00
+            assert monto == Decimal("1000.00")
+            assert len(warnings) == 0
