@@ -1167,3 +1167,200 @@ class TestAccountingBalanceValidation:
             assert entry_2102["debito"] == Decimal("0.00")
             assert entry_2102["credito"] == Decimal("10000.00")
 
+
+class TestIncompleteAccountingConfiguration:
+    """Tests for handling incomplete accounting configuration."""
+
+    def test_generate_voucher_with_missing_accounts(self, app, db_session):
+        """Test that voucher generates with NULL accounts when configuration is missing."""
+        with app.app_context():
+            # Setup without account configuration
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Company SA", ruc="J-12345678")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL",
+                descripcion="Mensual",
+                periodicidad="mensual",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            # Planilla WITHOUT accounting configuration
+            planilla = Planilla(
+                nombre="Planilla Test",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+                # NO codigo_cuenta_debe_salario
+                # NO codigo_cuenta_haber_salario
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Juan",
+                primer_apellido="Pérez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("15000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+
+            nomina = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2024, 12, 1),
+                periodo_fin=date(2024, 12, 31),
+                estado=NominaEstado.GENERADO,
+            )
+            db_session.add(nomina)
+            db_session.flush()
+
+            nomina_empleado = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("15000.00"),
+                sueldo_base_historico=Decimal("15000.00"),
+            )
+            db_session.add(nomina_empleado)
+            db_session.commit()
+
+            # Generate voucher - should work even without accounts
+            service = AccountingVoucherService(db_session)
+            comprobante = service.generate_accounting_voucher(nomina, planilla)
+            db_session.commit()
+
+            # Verify comprobante was created
+            assert comprobante is not None
+            assert comprobante.advertencias  # Should have warnings about missing config
+
+            # Verify lines were created with NULL accounts
+            lineas = db_session.execute(
+                db.select(ComprobanteContableLinea).filter_by(comprobante_id=comprobante.id)
+            ).scalars().all()
+            
+            assert len(lineas) == 2  # Debit and credit for base salary
+            
+            # Both lines should have NULL accounts
+            for linea in lineas:
+                assert linea.codigo_cuenta is None
+                assert linea.descripcion_cuenta is None
+                assert linea.monto_calculado == Decimal("15000.00")
+
+    def test_summarize_fails_with_null_accounts(self, app, db_session):
+        """Test that summarization fails when accounts are NULL."""
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+            db_session.flush()
+
+            comprobante = ComprobanteContable(
+                nomina_id="test_nomina_id",
+                fecha_calculo=date(2024, 12, 31),
+                concepto="Test Voucher",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("10000.00"),
+                total_creditos=Decimal("10000.00"),
+                balance=Decimal("0.00"),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Add line with NULL account
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id="ne1",
+                empleado_id="emp1",
+                empleado_codigo="EMP001",
+                empleado_nombre="Juan Pérez",
+                codigo_cuenta=None,  # NULL account
+                descripcion_cuenta=None,
+                centro_costos="CC-01",
+                tipo_debito_credito="debito",
+                debito=Decimal("10000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("10000.00"),
+                concepto="Test",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            # Try to summarize - should fail
+            service = AccountingVoucherService(db_session)
+            with pytest.raises(ValueError, match="No se puede generar comprobante sumarizado"):
+                service.summarize_voucher(comprobante)
+
+    def test_detailed_view_works_with_null_accounts(self, app, db_session):
+        """Test that detailed audit view works even with NULL accounts."""
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+            db_session.flush()
+
+            comprobante = ComprobanteContable(
+                nomina_id="test_nomina_id",
+                fecha_calculo=date(2024, 12, 31),
+                concepto="Test Voucher",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("10000.00"),
+                total_creditos=Decimal("10000.00"),
+                balance=Decimal("0.00"),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Add line with NULL account
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id="ne1",
+                empleado_id="emp1",
+                empleado_codigo="EMP001",
+                empleado_nombre="Juan Pérez",
+                codigo_cuenta=None,  # NULL account
+                descripcion_cuenta=None,
+                centro_costos="CC-01",
+                tipo_debito_credito="debito",
+                debito=Decimal("10000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("10000.00"),
+                concepto="Test",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            # Get detailed view - should work with NULL accounts
+            service = AccountingVoucherService(db_session)
+            detailed = service.get_detailed_voucher_by_employee(comprobante)
+            
+            # Should have one employee entry
+            assert len(detailed) == 1
+            assert detailed[0]["empleado_codigo"] == "EMP001"
+            assert len(detailed[0]["lineas"]) == 1
+            
+            # Line should show NULL account
+            linea_detail = detailed[0]["lineas"][0]
+            assert linea_detail["codigo_cuenta"] is None
+            assert linea_detail["descripcion_cuenta"] is None
+            assert linea_detail["debito"] == Decimal("10000.00")
+
+

@@ -378,6 +378,8 @@ class ExportService:
         """Export summarized accounting voucher (comprobante contable) to Excel.
 
         Exports the accounting voucher grouped by account and cost center with netted amounts.
+        
+        Raises ValueError if accounting configuration is incomplete.
 
         Args:
             planilla: The planilla
@@ -385,6 +387,9 @@ class ExportService:
 
         Returns:
             Tuple of (BytesIO file object, filename)
+            
+        Raises:
+            ValueError: If comprobante doesn't exist or has incomplete accounting configuration
         """
         openpyxl_classes = check_openpyxl_available()
         if not openpyxl_classes:
@@ -400,9 +405,16 @@ class ExportService:
         if not comprobante:
             raise ValueError("No existe comprobante contable para esta nómina")
 
-        # Get summarized entries
+        # Get summarized entries - will raise ValueError if accounts are NULL
         accounting_service = AccountingVoucherService(db.session)
-        summarized_entries = accounting_service.summarize_voucher(comprobante)
+        try:
+            summarized_entries = accounting_service.summarize_voucher(comprobante)
+        except ValueError as e:
+            # Re-raise with clear message about incomplete configuration
+            raise ValueError(
+                f"No se puede exportar comprobante sumarizado: {str(e)} "
+                "Utilice la exportación detallada para auditoría."
+            ) from e
 
         # Create workbook
         wb = Workbook()
@@ -558,6 +570,8 @@ class ExportService:
         """Export detailed accounting voucher per employee to Excel.
 
         Exports the full accounting voucher with all lines per employee for audit purposes.
+        This export works even with incomplete accounting configuration, showing NULL for
+        missing account fields.
 
         Args:
             planilla: The planilla

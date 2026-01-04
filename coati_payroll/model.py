@@ -1100,9 +1100,9 @@ class ComprobanteContableLinea(database.Model, BaseTabla):
     empleado_codigo = database.Column(database.String(20), nullable=False, index=True)
     empleado_nombre = database.Column(database.String(255), nullable=False)
 
-    # Accounting account information
-    codigo_cuenta = database.Column(database.String(64), nullable=False, index=True)
-    descripcion_cuenta = database.Column(database.String(255), nullable=False)
+    # Accounting account information (nullable to support incomplete configuration)
+    codigo_cuenta = database.Column(database.String(64), nullable=True, index=True)
+    descripcion_cuenta = database.Column(database.String(255), nullable=True)
     
     # Cost center for cost allocation
     centro_costos = database.Column(database.String(150), nullable=True, index=True)

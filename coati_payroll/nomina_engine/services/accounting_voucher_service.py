@@ -220,54 +220,54 @@ class AccountingVoucherService:
             empleado_nombre_completo = f"{empleado.primer_nombre} {empleado.primer_apellido}"
 
             # 1. Base Salary Accounting
-            if planilla.codigo_cuenta_debe_salario and planilla.codigo_cuenta_haber_salario:
-                salario_base = ne.sueldo_base_historico
+            # Always generate lines even if accounts are missing (use NULL for missing accounts)
+            salario_base = ne.sueldo_base_historico
 
-                # Debit: Salary Expense
-                orden += 1
-                linea_debe = ComprobanteContableLinea(
-                    comprobante_id=comprobante.id,
-                    nomina_empleado_id=ne.id,
-                    empleado_id=empleado.id,
-                    empleado_codigo=empleado.codigo_empleado,
-                    empleado_nombre=empleado_nombre_completo,
-                    codigo_cuenta=planilla.codigo_cuenta_debe_salario,
-                    descripcion_cuenta=planilla.descripcion_cuenta_debe_salario or "Gasto por Salario",
-                    centro_costos=centro_costos,
-                    tipo_debito_credito="debito",
-                    debito=salario_base,
-                    credito=Decimal("0.00"),
-                    monto_calculado=salario_base,
-                    concepto="Salario Base",
-                    tipo_concepto="salario_base",
-                    concepto_codigo="SALARIO_BASE",
-                    orden=orden,
-                )
-                self.session.add(linea_debe)
-                total_debitos += salario_base
+            # Debit: Salary Expense
+            orden += 1
+            linea_debe = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=empleado_nombre_completo,
+                codigo_cuenta=planilla.codigo_cuenta_debe_salario,  # Can be None if not configured
+                descripcion_cuenta=planilla.descripcion_cuenta_debe_salario or ("Gasto por Salario" if planilla.codigo_cuenta_debe_salario else None),
+                centro_costos=centro_costos,
+                tipo_debito_credito="debito",
+                debito=salario_base,
+                credito=Decimal("0.00"),
+                monto_calculado=salario_base,
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=orden,
+            )
+            self.session.add(linea_debe)
+            total_debitos += salario_base
 
-                # Credit: Salary Payable
-                orden += 1
-                linea_haber = ComprobanteContableLinea(
-                    comprobante_id=comprobante.id,
-                    nomina_empleado_id=ne.id,
-                    empleado_id=empleado.id,
-                    empleado_codigo=empleado.codigo_empleado,
-                    empleado_nombre=empleado_nombre_completo,
-                    codigo_cuenta=planilla.codigo_cuenta_haber_salario,
-                    descripcion_cuenta=planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
-                    centro_costos=centro_costos,
-                    tipo_debito_credito="credito",
-                    debito=Decimal("0.00"),
-                    credito=salario_base,
-                    monto_calculado=salario_base,
-                    concepto="Salario Base",
-                    tipo_concepto="salario_base",
-                    concepto_codigo="SALARIO_BASE",
-                    orden=orden,
-                )
-                self.session.add(linea_haber)
-                total_creditos += salario_base
+            # Credit: Salary Payable
+            orden += 1
+            linea_haber = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=empleado_nombre_completo,
+                codigo_cuenta=planilla.codigo_cuenta_haber_salario,  # Can be None if not configured
+                descripcion_cuenta=planilla.descripcion_cuenta_haber_salario or ("Salario por Pagar" if planilla.codigo_cuenta_haber_salario else None),
+                centro_costos=centro_costos,
+                tipo_debito_credito="credito",
+                debito=Decimal("0.00"),
+                credito=salario_base,
+                monto_calculado=salario_base,
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=orden,
+            )
+            self.session.add(linea_haber)
+            total_creditos += salario_base
 
             # 2. Process Loans and Advances (special treatment)
             # Loans/advances debit salary payable and credit loan control account
@@ -303,33 +303,34 @@ class AccountingVoucherService:
                                     cuenta_control_prestamo = adelanto.cuenta_haber
                                     break
 
-                if is_loan_advance and cuenta_control_prestamo:
+                if is_loan_advance:
                     # Loan/advance: Debit salary payable, Credit loan control
-                    # Debit: Salary Payable (same as base salary credit account)
-                    if planilla.codigo_cuenta_haber_salario:
-                        orden += 1
-                        linea_debe = ComprobanteContableLinea(
-                            comprobante_id=comprobante.id,
-                            nomina_empleado_id=ne.id,
-                            empleado_id=empleado.id,
-                            empleado_codigo=empleado.codigo_empleado,
-                            empleado_nombre=empleado_nombre_completo,
-                            codigo_cuenta=planilla.codigo_cuenta_haber_salario,
-                            descripcion_cuenta=planilla.descripcion_cuenta_haber_salario or "Salario por Pagar",
-                            centro_costos=centro_costos,
-                            tipo_debito_credito="debito",
-                                debito=detalle.monto,
-                                credito=Decimal("0.00"),
-                                monto_calculado=detalle.monto,
-                                concepto=detalle.descripcion or "Préstamo/Adelanto",
-                            tipo_concepto="prestamo",
-                            concepto_codigo=detalle.codigo,
-                            orden=orden,
-                        )
-                        self.session.add(linea_debe)
-                        total_debitos += detalle.monto
+                    # Always create both lines even if accounts are NULL
+                    
+                    # Debit: Salary Payable (same as base salary credit account, can be NULL)
+                    orden += 1
+                    linea_debe = ComprobanteContableLinea(
+                        comprobante_id=comprobante.id,
+                        nomina_empleado_id=ne.id,
+                        empleado_id=empleado.id,
+                        empleado_codigo=empleado.codigo_empleado,
+                        empleado_nombre=empleado_nombre_completo,
+                        codigo_cuenta=planilla.codigo_cuenta_haber_salario,  # Can be None
+                        descripcion_cuenta=(planilla.descripcion_cuenta_haber_salario or "Salario por Pagar") if planilla.codigo_cuenta_haber_salario else None,
+                        centro_costos=centro_costos,
+                        tipo_debito_credito="debito",
+                        debito=detalle.monto,
+                        credito=Decimal("0.00"),
+                        monto_calculado=detalle.monto,
+                        concepto=detalle.descripcion or "Préstamo/Adelanto",
+                        tipo_concepto="prestamo",
+                        concepto_codigo=detalle.codigo,
+                        orden=orden,
+                    )
+                    self.session.add(linea_debe)
+                    total_debitos += detalle.monto
 
-                    # Credit: Loan Control Account
+                    # Credit: Loan Control Account (can be NULL)
                     orden += 1
                     linea_haber = ComprobanteContableLinea(
                         comprobante_id=comprobante.id,
@@ -337,14 +338,14 @@ class AccountingVoucherService:
                         empleado_id=empleado.id,
                         empleado_codigo=empleado.codigo_empleado,
                         empleado_nombre=empleado_nombre_completo,
-                        codigo_cuenta=cuenta_control_prestamo,
-                        descripcion_cuenta="Cuenta de Control Préstamos/Adelantos",
+                        codigo_cuenta=cuenta_control_prestamo,  # Can be None
+                        descripcion_cuenta="Cuenta de Control Préstamos/Adelantos" if cuenta_control_prestamo else None,
                         centro_costos=centro_costos,
                         tipo_debito_credito="credito",
-                                debito=Decimal("0.00"),
-                                credito=detalle.monto,
-                                monto_calculado=detalle.monto,
-                                concepto=detalle.descripcion or "Préstamo/Adelanto",
+                        debito=Decimal("0.00"),
+                        credito=detalle.monto,
+                        monto_calculado=detalle.monto,
+                        concepto=detalle.descripcion or "Préstamo/Adelanto",
                         tipo_concepto="prestamo",
                         concepto_codigo=detalle.codigo,
                         orden=orden,
@@ -353,153 +354,153 @@ class AccountingVoucherService:
                     total_creditos += detalle.monto
 
                 else:
-                    # Regular concept - use configured accounts
+                    # Regular concept - use configured accounts (or NULL if missing)
                     if detalle.tipo == "ingreso" and detalle.percepcion_id:
                         percepcion = self.session.get(Percepcion, detalle.percepcion_id)
                         if percepcion and percepcion.contabilizable:
-                            if percepcion.codigo_cuenta_debe:
-                                orden += 1
-                                linea_debe = ComprobanteContableLinea(
-                                    comprobante_id=comprobante.id,
-                                    nomina_empleado_id=ne.id,
-                                    empleado_id=empleado.id,
-                                    empleado_codigo=empleado.codigo_empleado,
-                                    empleado_nombre=empleado_nombre_completo,
-                                    codigo_cuenta=percepcion.codigo_cuenta_debe,
-                                    descripcion_cuenta=percepcion.descripcion_cuenta_debe or percepcion.nombre,
-                                    centro_costos=centro_costos,
-                                    tipo_debito_credito="debito",
+                            # Always create debit line (even if account is NULL)
+                            orden += 1
+                            linea_debe = ComprobanteContableLinea(
+                                comprobante_id=comprobante.id,
+                                nomina_empleado_id=ne.id,
+                                empleado_id=empleado.id,
+                                empleado_codigo=empleado.codigo_empleado,
+                                empleado_nombre=empleado_nombre_completo,
+                                codigo_cuenta=percepcion.codigo_cuenta_debe,  # Can be None
+                                descripcion_cuenta=(percepcion.descripcion_cuenta_debe or percepcion.nombre) if percepcion.codigo_cuenta_debe else None,
+                                centro_costos=centro_costos,
+                                tipo_debito_credito="debito",
                                 debito=detalle.monto,
                                 credito=Decimal("0.00"),
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or percepcion.nombre,
-                                    tipo_concepto="percepcion",
-                                    concepto_codigo=percepcion.codigo,
-                                    orden=orden,
-                                )
-                                self.session.add(linea_debe)
-                                total_debitos += detalle.monto
+                                tipo_concepto="percepcion",
+                                concepto_codigo=percepcion.codigo,
+                                orden=orden,
+                            )
+                            self.session.add(linea_debe)
+                            total_debitos += detalle.monto
 
-                            if percepcion.codigo_cuenta_haber:
-                                orden += 1
-                                linea_haber = ComprobanteContableLinea(
-                                    comprobante_id=comprobante.id,
-                                    nomina_empleado_id=ne.id,
-                                    empleado_id=empleado.id,
-                                    empleado_codigo=empleado.codigo_empleado,
-                                    empleado_nombre=empleado_nombre_completo,
-                                    codigo_cuenta=percepcion.codigo_cuenta_haber,
-                                    descripcion_cuenta=percepcion.descripcion_cuenta_haber or percepcion.nombre,
-                                    centro_costos=centro_costos,
-                                    tipo_debito_credito="credito",
+                            # Always create credit line (even if account is NULL)
+                            orden += 1
+                            linea_haber = ComprobanteContableLinea(
+                                comprobante_id=comprobante.id,
+                                nomina_empleado_id=ne.id,
+                                empleado_id=empleado.id,
+                                empleado_codigo=empleado.codigo_empleado,
+                                empleado_nombre=empleado_nombre_completo,
+                                codigo_cuenta=percepcion.codigo_cuenta_haber,  # Can be None
+                                descripcion_cuenta=(percepcion.descripcion_cuenta_haber or percepcion.nombre) if percepcion.codigo_cuenta_haber else None,
+                                centro_costos=centro_costos,
+                                tipo_debito_credito="credito",
                                 debito=Decimal("0.00"),
                                 credito=detalle.monto,
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or percepcion.nombre,
-                                    tipo_concepto="percepcion",
-                                    concepto_codigo=percepcion.codigo,
-                                    orden=orden,
-                                )
-                                self.session.add(linea_haber)
-                                total_creditos += detalle.monto
+                                tipo_concepto="percepcion",
+                                concepto_codigo=percepcion.codigo,
+                                orden=orden,
+                            )
+                            self.session.add(linea_haber)
+                            total_creditos += detalle.monto
 
                     elif detalle.tipo == "deduccion" and detalle.deduccion_id:
                         deduccion = self.session.get(Deduccion, detalle.deduccion_id)
                         if deduccion and deduccion.contabilizable:
-                            if deduccion.codigo_cuenta_debe:
-                                orden += 1
-                                linea_debe = ComprobanteContableLinea(
-                                    comprobante_id=comprobante.id,
-                                    nomina_empleado_id=ne.id,
-                                    empleado_id=empleado.id,
-                                    empleado_codigo=empleado.codigo_empleado,
-                                    empleado_nombre=empleado_nombre_completo,
-                                    codigo_cuenta=deduccion.codigo_cuenta_debe,
-                                    descripcion_cuenta=deduccion.descripcion_cuenta_debe or deduccion.nombre,
-                                    centro_costos=centro_costos,
-                                    tipo_debito_credito="debito",
+                            # Always create debit line (even if account is NULL)
+                            orden += 1
+                            linea_debe = ComprobanteContableLinea(
+                                comprobante_id=comprobante.id,
+                                nomina_empleado_id=ne.id,
+                                empleado_id=empleado.id,
+                                empleado_codigo=empleado.codigo_empleado,
+                                empleado_nombre=empleado_nombre_completo,
+                                codigo_cuenta=deduccion.codigo_cuenta_debe,  # Can be None
+                                descripcion_cuenta=(deduccion.descripcion_cuenta_debe or deduccion.nombre) if deduccion.codigo_cuenta_debe else None,
+                                centro_costos=centro_costos,
+                                tipo_debito_credito="debito",
                                 debito=detalle.monto,
                                 credito=Decimal("0.00"),
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or deduccion.nombre,
-                                    tipo_concepto="deduccion",
-                                    concepto_codigo=deduccion.codigo,
-                                    orden=orden,
-                                )
-                                self.session.add(linea_debe)
-                                total_debitos += detalle.monto
+                                tipo_concepto="deduccion",
+                                concepto_codigo=deduccion.codigo,
+                                orden=orden,
+                            )
+                            self.session.add(linea_debe)
+                            total_debitos += detalle.monto
 
-                            if deduccion.codigo_cuenta_haber:
-                                orden += 1
-                                linea_haber = ComprobanteContableLinea(
-                                    comprobante_id=comprobante.id,
-                                    nomina_empleado_id=ne.id,
-                                    empleado_id=empleado.id,
-                                    empleado_codigo=empleado.codigo_empleado,
-                                    empleado_nombre=empleado_nombre_completo,
-                                    codigo_cuenta=deduccion.codigo_cuenta_haber,
-                                    descripcion_cuenta=deduccion.descripcion_cuenta_haber or deduccion.nombre,
-                                    centro_costos=centro_costos,
-                                    tipo_debito_credito="credito",
+                            # Always create credit line (even if account is NULL)
+                            orden += 1
+                            linea_haber = ComprobanteContableLinea(
+                                comprobante_id=comprobante.id,
+                                nomina_empleado_id=ne.id,
+                                empleado_id=empleado.id,
+                                empleado_codigo=empleado.codigo_empleado,
+                                empleado_nombre=empleado_nombre_completo,
+                                codigo_cuenta=deduccion.codigo_cuenta_haber,  # Can be None
+                                descripcion_cuenta=(deduccion.descripcion_cuenta_haber or deduccion.nombre) if deduccion.codigo_cuenta_haber else None,
+                                centro_costos=centro_costos,
+                                tipo_debito_credito="credito",
                                 debito=Decimal("0.00"),
                                 credito=detalle.monto,
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or deduccion.nombre,
-                                    tipo_concepto="deduccion",
-                                    concepto_codigo=deduccion.codigo,
-                                    orden=orden,
-                                )
-                                self.session.add(linea_haber)
-                                total_creditos += detalle.monto
+                                tipo_concepto="deduccion",
+                                concepto_codigo=deduccion.codigo,
+                                orden=orden,
+                            )
+                            self.session.add(linea_haber)
+                            total_creditos += detalle.monto
 
                     elif detalle.tipo == "prestacion" and detalle.prestacion_id:
                         prestacion = self.session.get(Prestacion, detalle.prestacion_id)
                         if prestacion and prestacion.contabilizable:
-                            if prestacion.codigo_cuenta_debe:
-                                orden += 1
-                                linea_debe = ComprobanteContableLinea(
-                                    comprobante_id=comprobante.id,
-                                    nomina_empleado_id=ne.id,
-                                    empleado_id=empleado.id,
-                                    empleado_codigo=empleado.codigo_empleado,
-                                    empleado_nombre=empleado_nombre_completo,
-                                    codigo_cuenta=prestacion.codigo_cuenta_debe,
-                                    descripcion_cuenta=prestacion.descripcion_cuenta_debe or prestacion.nombre,
-                                    centro_costos=centro_costos,
-                                    tipo_debito_credito="debito",
+                            # Always create debit line (even if account is NULL)
+                            orden += 1
+                            linea_debe = ComprobanteContableLinea(
+                                comprobante_id=comprobante.id,
+                                nomina_empleado_id=ne.id,
+                                empleado_id=empleado.id,
+                                empleado_codigo=empleado.codigo_empleado,
+                                empleado_nombre=empleado_nombre_completo,
+                                codigo_cuenta=prestacion.codigo_cuenta_debe,  # Can be None
+                                descripcion_cuenta=(prestacion.descripcion_cuenta_debe or prestacion.nombre) if prestacion.codigo_cuenta_debe else None,
+                                centro_costos=centro_costos,
+                                tipo_debito_credito="debito",
                                 debito=detalle.monto,
                                 credito=Decimal("0.00"),
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or prestacion.nombre,
-                                    tipo_concepto="prestacion",
-                                    concepto_codigo=prestacion.codigo,
-                                    orden=orden,
-                                )
-                                self.session.add(linea_debe)
-                                total_debitos += detalle.monto
+                                tipo_concepto="prestacion",
+                                concepto_codigo=prestacion.codigo,
+                                orden=orden,
+                            )
+                            self.session.add(linea_debe)
+                            total_debitos += detalle.monto
 
-                            if prestacion.codigo_cuenta_haber:
-                                orden += 1
-                                linea_haber = ComprobanteContableLinea(
-                                    comprobante_id=comprobante.id,
-                                    nomina_empleado_id=ne.id,
-                                    empleado_id=empleado.id,
-                                    empleado_codigo=empleado.codigo_empleado,
-                                    empleado_nombre=empleado_nombre_completo,
-                                    codigo_cuenta=prestacion.codigo_cuenta_haber,
-                                    descripcion_cuenta=prestacion.descripcion_cuenta_haber or prestacion.nombre,
-                                    centro_costos=centro_costos,
-                                    tipo_debito_credito="credito",
+                            # Always create credit line (even if account is NULL)
+                            orden += 1
+                            linea_haber = ComprobanteContableLinea(
+                                comprobante_id=comprobante.id,
+                                nomina_empleado_id=ne.id,
+                                empleado_id=empleado.id,
+                                empleado_codigo=empleado.codigo_empleado,
+                                empleado_nombre=empleado_nombre_completo,
+                                codigo_cuenta=prestacion.codigo_cuenta_haber,  # Can be None
+                                descripcion_cuenta=(prestacion.descripcion_cuenta_haber or prestacion.nombre) if prestacion.codigo_cuenta_haber else None,
+                                centro_costos=centro_costos,
+                                tipo_debito_credito="credito",
                                 debito=Decimal("0.00"),
                                 credito=detalle.monto,
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or prestacion.nombre,
-                                    tipo_concepto="prestacion",
-                                    concepto_codigo=prestacion.codigo,
-                                    orden=orden,
-                                )
-                                self.session.add(linea_haber)
-                                total_creditos += detalle.monto
+                                tipo_concepto="prestacion",
+                                concepto_codigo=prestacion.codigo,
+                                orden=orden,
+                            )
+                            self.session.add(linea_haber)
+                            total_creditos += detalle.monto
 
         # Calculate balance (should be 0 for balanced voucher)
         balance = total_debitos - total_creditos
@@ -528,12 +529,18 @@ class AccountingVoucherService:
         Groups lines by (codigo_cuenta, centro_costos) and nets debits/credits.
         If same account+cost center has both debits and credits, they are netted
         and only one line with the net amount is shown.
+        
+        Lines with NULL accounts are skipped from summarization as they indicate
+        incomplete accounting configuration.
 
         Args:
             comprobante: The comprobante to summarize
 
         Returns:
             List of summarized entries sorted by account code
+            
+        Raises:
+            ValueError: If comprobante has NULL accounts (incomplete configuration)
         """
         # Dictionary to accumulate by (account, cost_center)
         summary_dict: dict[tuple[str, str | None], dict[str, Any]] = defaultdict(
@@ -551,8 +558,19 @@ class AccountingVoucherService:
             .all()
         )
 
-        # Accumulate by account + cost center
+        # Check for NULL accounts and raise error if found
+        null_account_lines = [linea for linea in lineas if linea.codigo_cuenta is None]
+        if null_account_lines:
+            raise ValueError(
+                "No se puede generar comprobante sumarizado: existen líneas con cuentas contables sin configurar. "
+                "Por favor configure todas las cuentas contables o utilice el comprobante de auditoría."
+            )
+
+        # Accumulate by account + cost center (only lines with valid accounts)
         for linea in lineas:
+            if linea.codigo_cuenta is None:
+                continue  # Skip NULL accounts
+                
             key = (linea.codigo_cuenta, linea.centro_costos)
             summary_dict[key]["debito"] += linea.debito
             summary_dict[key]["credito"] += linea.credito
