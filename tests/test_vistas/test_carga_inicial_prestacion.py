@@ -523,7 +523,7 @@ def test_carga_inicial_prestacion_reporte_excel_accessible_to_authenticated_user
         login_user(client, admin_user.usuario, "admin-password")
 
         response = client.get("/carga-inicial-prestaciones/reporte/excel")
-        
+
         # Should return 200 and Excel file
         assert response.status_code == 200
         assert response.content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -561,7 +561,7 @@ def test_carga_inicial_prestacion_reporte_excel_with_data(app, client, admin_use
         transaccion = PrestacionAcumulada(
             empleado_id=carga.empleado_id,
             prestacion_id=carga.prestacion_id,
-            fecha_transaccion=datetime.now().date(),
+            fecha_transaccion=date(2024, 6, 15),
             tipo_transaccion="saldo_inicial",
             anio=carga.anio_corte,
             mes=carga.mes_corte,
@@ -614,7 +614,7 @@ def test_carga_inicial_prestacion_reporte_excel_with_filters(app, client, admin_
         transaccion = PrestacionAcumulada(
             empleado_id=empleado.id,
             prestacion_id=prestacion.id,
-            fecha_transaccion=datetime.now().date(),
+            fecha_transaccion=date(2024, 6, 15),
             tipo_transaccion="saldo_inicial",
             anio=2024,
             mes=6,
