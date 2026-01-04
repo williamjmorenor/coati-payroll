@@ -689,6 +689,653 @@ class TestExportarComprobanteExcel:
             with pytest.raises(ValueError, match="No existe comprobante contable"):
                 ExportService.exportar_comprobante_excel(planilla, nomina)
 
+    def test_exportar_comprobante_excel_success(self, app, db_session, planilla, nomina, moneda, empleado):
+        """
+        Test successful export of comprobante with complete accounting configuration.
+
+        Setup:
+            - Create planilla, nomina, empleado with complete accounting setup
+            - Create comprobante contable with lines
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Returns BytesIO object and filename
+            - File is valid Excel format
+            - Filename contains planilla name and nomina info
+        """
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+        from datetime import datetime, timezone
+
+        with app.app_context():
+            # Create nomina empleado
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("1000.00"),
+                total_ingresos=Decimal("1000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("1000.00"),
+                sueldo_base_historico=Decimal("1000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            # Create comprobante
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("1000.00"),
+                total_creditos=Decimal("1000.00"),
+                balance=Decimal("0.00"),
+                aplicado_por="test_user",
+                fecha_aplicacion=datetime.now(timezone.utc),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Create comprobante lines
+            linea1 = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                centro_costos="CC-001",
+                tipo_debito_credito="debito",
+                debito=Decimal("1000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            linea2 = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="2101",
+                descripcion_cuenta="Salario por Pagar",
+                centro_costos="CC-001",
+                tipo_debito_credito="credito",
+                debito=Decimal("0.00"),
+                credito=Decimal("1000.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=2,
+            )
+            db_session.add(linea1)
+            db_session.add(linea2)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            output, filename = ExportService.exportar_comprobante_excel(planilla, nomina)
+
+            assert isinstance(output, BytesIO)
+            assert isinstance(filename, str)
+            assert filename.startswith("comprobante_")
+            assert planilla.nombre in filename
+            assert ".xlsx" in filename
+
+            # Verify file is not empty
+            output.seek(0)
+            content = output.read()
+            assert len(content) > 0
+
+            # Verify it's a valid Excel file (starts with ZIP signature)
+            assert content.startswith(b"PK")
+
+    def test_exportar_comprobante_excel_with_empresa(self, app, db_session, planilla, nomina, moneda, empleado):
+        """
+        Test that export includes empresa information when available.
+
+        Setup:
+            - Create planilla with empresa, comprobante with lines
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Export succeeds with empresa info
+        """
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+        with app.app_context():
+            # Create nomina empleado
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("1000.00"),
+                total_ingresos=Decimal("1000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("1000.00"),
+                sueldo_base_historico=Decimal("1000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            # Create comprobante
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("500.00"),
+                total_creditos=Decimal("500.00"),
+                balance=Decimal("0.00"),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Create comprobante lines
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                tipo_debito_credito="debito",
+                debito=Decimal("500.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("500.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            output, filename = ExportService.exportar_comprobante_excel(planilla, nomina)
+
+            assert isinstance(output, BytesIO)
+            assert filename is not None
+
+    def test_exportar_comprobante_excel_without_empresa(
+        self, app, db_session, planilla_sin_empresa, nomina, moneda, empleado
+    ):
+        """
+        Test that export works without empresa.
+
+        Setup:
+            - Create planilla without empresa, comprobante with lines
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Export succeeds even without empresa
+        """
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+        with app.app_context():
+            # Create nomina empleado
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("800.00"),
+                total_ingresos=Decimal("800.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("800.00"),
+                sueldo_base_historico=Decimal("800.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            # Create comprobante
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("800.00"),
+                total_creditos=Decimal("800.00"),
+                balance=Decimal("0.00"),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Create comprobante line
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                tipo_debito_credito="debito",
+                debito=Decimal("800.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("800.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla_sin_empresa, nomina = _prepare_objects_for_export(planilla_sin_empresa, nomina)
+
+            output, filename = ExportService.exportar_comprobante_excel(planilla_sin_empresa, nomina)
+
+            assert isinstance(output, BytesIO)
+            assert filename is not None
+
+    def test_exportar_comprobante_excel_with_warnings(self, app, db_session, planilla, nomina, moneda, empleado):
+        """
+        Test that export includes warnings section when advertencias exist.
+
+        Setup:
+            - Create comprobante with advertencias
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Export succeeds and includes warnings
+        """
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+        with app.app_context():
+            # Create nomina empleado
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("1000.00"),
+                total_ingresos=Decimal("1000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("1000.00"),
+                sueldo_base_historico=Decimal("1000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            # Create comprobante with warnings
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("1000.00"),
+                total_creditos=Decimal("1000.00"),
+                balance=Decimal("0.00"),
+                advertencias=["Cuenta contable no configurada", "Centro de costos faltante"],
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Create comprobante line
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                tipo_debito_credito="debito",
+                debito=Decimal("1000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            output, filename = ExportService.exportar_comprobante_excel(planilla, nomina)
+
+            assert isinstance(output, BytesIO)
+            assert filename is not None
+
+    def test_exportar_comprobante_excel_with_audit_trail(self, app, db_session, planilla, nomina, moneda, empleado):
+        """
+        Test that export includes audit trail information.
+
+        Setup:
+            - Create comprobante with aplicado_por and fecha_aplicacion
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Export succeeds with audit trail info
+        """
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+        from datetime import datetime, timezone
+
+        with app.app_context():
+            # Create nomina empleado
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("1000.00"),
+                total_ingresos=Decimal("1000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("1000.00"),
+                sueldo_base_historico=Decimal("1000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            # Create comprobante with audit trail
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("1000.00"),
+                total_creditos=Decimal("1000.00"),
+                balance=Decimal("0.00"),
+                aplicado_por="admin_user",
+                fecha_aplicacion=datetime(2025, 1, 31, 10, 30, 0, tzinfo=timezone.utc),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Create comprobante line
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                tipo_debito_credito="debito",
+                debito=Decimal("1000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            output, filename = ExportService.exportar_comprobante_excel(planilla, nomina)
+
+            assert isinstance(output, BytesIO)
+            assert filename is not None
+
+    def test_exportar_comprobante_excel_with_modifications(self, app, db_session, planilla, nomina, moneda, empleado):
+        """
+        Test that export includes modification tracking information.
+
+        Setup:
+            - Create comprobante with veces_modificado > 0
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Export succeeds with modification info
+        """
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+        from datetime import datetime, timezone
+
+        with app.app_context():
+            # Create nomina empleado
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("1000.00"),
+                total_ingresos=Decimal("1000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("1000.00"),
+                sueldo_base_historico=Decimal("1000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            # Create comprobante with modification tracking
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("1000.00"),
+                total_creditos=Decimal("1000.00"),
+                balance=Decimal("0.00"),
+                veces_modificado=2,
+                modificado_por="supervisor_user",
+                fecha_modificacion=datetime(2025, 2, 1, 14, 20, 0, tzinfo=timezone.utc),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Create comprobante line
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                tipo_debito_credito="debito",
+                debito=Decimal("1000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            output, filename = ExportService.exportar_comprobante_excel(planilla, nomina)
+
+            assert isinstance(output, BytesIO)
+            assert filename is not None
+
+    def test_exportar_comprobante_excel_with_non_zero_balance(
+        self, app, db_session, planilla, nomina, moneda, empleado
+    ):
+        """
+        Test that export handles non-zero balance (unbalanced voucher).
+
+        Setup:
+            - Create comprobante with balance != 0
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Export succeeds even with unbalanced voucher
+        """
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+        with app.app_context():
+            # Create nomina empleado
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("1000.00"),
+                total_ingresos=Decimal("1000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("1000.00"),
+                sueldo_base_historico=Decimal("1000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            # Create unbalanced comprobante
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("1000.00"),
+                total_creditos=Decimal("950.00"),
+                balance=Decimal("50.00"),  # Non-zero balance
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Create comprobante line
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                tipo_debito_credito="debito",
+                debito=Decimal("1000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            output, filename = ExportService.exportar_comprobante_excel(planilla, nomina)
+
+            assert isinstance(output, BytesIO)
+            assert filename is not None
+
+    def test_exportar_comprobante_excel_incomplete_accounting_config(
+        self, app, db_session, planilla, nomina, moneda, empleado
+    ):
+        """
+        Test that export raises ValueError when summarize_voucher fails.
+
+        Setup:
+            - Create comprobante with NULL account codes (incomplete config)
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Raises ValueError with message about incomplete configuration
+        """
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+        with app.app_context():
+            # Create nomina empleado
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("1000.00"),
+                total_ingresos=Decimal("1000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("1000.00"),
+                sueldo_base_historico=Decimal("1000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            # Create comprobante
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("1000.00"),
+                total_creditos=Decimal("1000.00"),
+                balance=Decimal("0.00"),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            # Create comprobante line with NULL codigo_cuenta (incomplete config)
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta=None,  # NULL account - incomplete config
+                descripcion_cuenta=None,
+                tipo_debito_credito="debito",
+                debito=Decimal("1000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            with pytest.raises(ValueError, match="No se puede exportar comprobante sumarizado"):
+                ExportService.exportar_comprobante_excel(planilla, nomina)
+
+    def test_exportar_comprobante_excel_missing_openpyxl(self, app, db_session, planilla, nomina, monkeypatch):
+        """
+        Test that export raises ImportError when openpyxl is not available.
+
+        Setup:
+            - Mock check_openpyxl_available to return None
+
+        Action:
+            - Call exportar_comprobante_excel
+
+        Verification:
+            - Raises ImportError with appropriate message
+        """
+        from coati_payroll.vistas.planilla.services import export_service
+
+        with app.app_context():
+
+            def mock_check_openpyxl():
+                return None
+
+            # Patch the function in the module where it's imported and used
+            monkeypatch.setattr(export_service, "check_openpyxl_available", mock_check_openpyxl)
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+            with pytest.raises(ImportError, match="openpyxl no está disponible"):
+                ExportService.exportar_comprobante_excel(planilla, nomina)
+
 
 class TestExportarComprobanteDetalladoExcel:
     """Tests for exportar_comprobante_detallado_excel method."""
