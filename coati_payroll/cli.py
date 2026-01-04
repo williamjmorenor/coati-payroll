@@ -491,6 +491,10 @@ def _backup_sqlite(db_url_str, output=None):
         Path: Output file path
     """
     db_path = db_url_str.replace("sqlite:///", "").replace("sqlite://", "")
+    
+    # Remove query parameters if present (e.g., ?check_same_thread=False)
+    if "?" in db_path:
+        db_path = db_path.split("?")[0]
 
     if output is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
