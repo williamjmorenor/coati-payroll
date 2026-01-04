@@ -26,7 +26,7 @@ from flask_limiter.util import get_remote_address
 
 def get_rate_limiter_storage():
     """Get storage backend for rate limiter based on available configuration.
-    
+
     Returns:
         str: Storage URI for rate limiter
         - Uses Redis if REDIS_URL or SESSION_REDIS_URL is available (production)
@@ -34,7 +34,7 @@ def get_rate_limiter_storage():
     """
     # Try to get Redis URL from environment
     redis_url = environ.get("REDIS_URL") or environ.get("SESSION_REDIS_URL")
-    
+
     if redis_url:
         # Use Redis for distributed rate limiting (production)
         return redis_url
@@ -46,27 +46,27 @@ def get_rate_limiter_storage():
 
 def configure_rate_limiting(app):
     """Configure rate limiting for the Flask application.
-    
+
     Sets up Flask-Limiter with appropriate storage backend:
     - Redis for production (distributed, persistent)
     - Memory for development (simple, non-persistent)
-    
+
     Args:
         app: Flask application instance
-        
+
     Returns:
         Limiter: Configured Flask-Limiter instance
     """
     from coati_payroll.log import log
-    
+
     storage_uri = get_rate_limiter_storage()
-    
+
     # Log which storage backend we're using
     if storage_uri.startswith("redis"):
         log.info("Rate limiting configured with Redis storage (production mode)")
     else:
         log.info("Rate limiting configured with memory storage (development mode)")
-    
+
     limiter = Limiter(
         app=app,
         key_func=get_remote_address,
@@ -75,9 +75,9 @@ def configure_rate_limiting(app):
         storage_options={"socket_connect_timeout": 30},
         strategy="fixed-window",  # Count resets at fixed intervals
     )
-    
+
     # Note: Specific endpoint rate limits can be applied using decorators in the blueprints.
     # For the login endpoint, we apply a stricter limit (5 per minute) to prevent brute force.
     # This is documented in the security audit report.
-    
+
     return limiter
