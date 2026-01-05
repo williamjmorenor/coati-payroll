@@ -1,7 +1,7 @@
 """Add email verification and restricted access configuration fields
 
 Revision ID: 001_email_verification
-Revises: 00356a817c87
+Revises: 
 Create Date: 2026-01-05 13:00:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '001_email_verification'
-down_revision = '00356a817c87'
+down_revision = None
 branch_labels = None
 depends_on = None
 
