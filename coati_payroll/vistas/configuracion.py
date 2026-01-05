@@ -28,6 +28,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 # Local modules
 # <-------------------------------------------------------------------------> #
 from coati_payroll.i18n import _
+from coati_payroll.model import ConfiguracionGlobal, db
 from coati_payroll.rbac import require_write_access
 from coati_payroll.locale_config import (
     SUPPORTED_LANGUAGES,
@@ -42,8 +43,6 @@ configuracion_bp = Blueprint("configuracion", __name__, url_prefix="/configuraci
 @require_write_access()
 def index():
     """Display global configuration page."""
-    from coati_payroll.model import ConfiguracionGlobal, db
-    
     current_language = get_language_from_db()
     
     # Get current configuration
@@ -100,8 +99,6 @@ def cambiar_idioma():
 @require_write_access()
 def cambiar_acceso_email():
     """Change the restricted access for unverified email configuration."""
-    from coati_payroll.model import ConfiguracionGlobal, db
-    
     permitir = request.form.get("permitir_acceso_email_no_verificado") == "on"
 
     try:

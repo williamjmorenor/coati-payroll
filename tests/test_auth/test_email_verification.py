@@ -13,6 +13,8 @@
 # limitations under the License.
 """Tests for email verification and restricted access functionality."""
 
+from datetime import datetime
+
 from coati_payroll.auth import proteger_passwd
 from coati_payroll.model import Usuario, ConfiguracionGlobal, db
 from tests.helpers.auth import login_user
@@ -266,7 +268,6 @@ def test_usuario_model_has_email_verification_fields(app, db_session):
         user.activo = True
         user.email_verificado = True
         
-        from datetime import datetime
         user.fecha_verificacion_email = datetime.now()
         
         db.session.add(user)

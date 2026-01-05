@@ -32,7 +32,7 @@ from flask_login import login_user, logout_user
 # Local modules
 # <-------------------------------------------------------------------------> #
 from coati_payroll.log import log
-from coati_payroll.model import Usuario, database
+from coati_payroll.model import Usuario, ConfiguracionGlobal, database
 from coati_payroll.forms import LoginForm
 from coati_payroll.i18n import _
 
@@ -66,8 +66,6 @@ def login():
 
             if registro is not None:
                 # Check if email is verified or if restricted access is allowed
-                from coati_payroll.model import ConfiguracionGlobal
-                
                 config = database.session.execute(
                     database.select(ConfiguracionGlobal)
                 ).scalar_one_or_none()
