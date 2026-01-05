@@ -42,7 +42,15 @@ configuracion_bp = Blueprint("configuracion", __name__, url_prefix="/configuraci
 @require_write_access()
 def index():
     """Display global configuration page."""
+    from coati_payroll.model import ConfiguracionGlobal, db
+    
     current_language = get_language_from_db()
+    
+    # Get current configuration
+    config = db.session.execute(db.select(ConfiguracionGlobal)).scalar_one_or_none()
+    permitir_acceso_email_no_verificado = (
+        config.permitir_acceso_email_no_verificado if config else False
+    )
 
     # Language names for display
     language_names = {"en": "English", "es": "Español"}
@@ -52,6 +60,7 @@ def index():
         current_language=current_language,
         supported_languages=SUPPORTED_LANGUAGES,
         language_names=language_names,
+        permitir_acceso_email_no_verificado=permitir_acceso_email_no_verificado,
     )
 
 
@@ -83,5 +92,42 @@ def cambiar_idioma():
         )
     except Exception as e:
         flash(_("Error al actualizar el idioma: %(error)s", error=str(e)), "danger")
+
+    return redirect(url_for("configuracion.index"))
+
+
+@configuracion_bp.route("/acceso_email", methods=["POST"])
+@require_write_access()
+def cambiar_acceso_email():
+    """Change the restricted access for unverified email configuration."""
+    from coati_payroll.model import ConfiguracionGlobal, db
+    
+    permitir = request.form.get("permitir_acceso_email_no_verificado") == "on"
+
+    try:
+        config = db.session.execute(db.select(ConfiguracionGlobal)).scalar_one_or_none()
+
+        if config:
+            config.permitir_acceso_email_no_verificado = permitir
+        else:
+            # Create new configuration record
+            config = ConfiguracionGlobal()
+            config.permitir_acceso_email_no_verificado = permitir
+            db.session.add(config)
+
+        db.session.commit()
+
+        if permitir:
+            flash(
+                _("Acceso limitado habilitado para usuarios con correo no verificado."),
+                "success",
+            )
+        else:
+            flash(
+                _("Acceso limitado deshabilitado para usuarios con correo no verificado."),
+                "success",
+            )
+    except Exception as e:
+        flash(_("Error al actualizar la configuración: %(error)s", error=str(e)), "danger")
 
     return redirect(url_for("configuracion.index"))

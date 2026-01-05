@@ -132,6 +132,8 @@ class Usuario(database.Model, BaseTabla, UserMixin):
     tipo = database.Column(database.String(20))
     activo = database.Column(database.Boolean(), default=True)
     ultimo_acceso = database.Column(database.DateTime, nullable=True)
+    email_verificado = database.Column(database.Boolean(), default=False, nullable=False)
+    fecha_verificacion_email = database.Column(database.DateTime, nullable=True)
 
 
 # Gestión de empresas/entidades
@@ -1639,6 +1641,9 @@ class ConfiguracionGlobal(database.Model, BaseTabla):
 
     # Language setting: 'en' for English, 'es' for Spanish
     idioma = database.Column(database.String(10), nullable=False, default="en")
+
+    # Allow users with unverified email to have restricted access
+    permitir_acceso_email_no_verificado = database.Column(database.Boolean(), nullable=False, default=False)
 
     # Additional global settings can be stored as JSON
     configuracion_adicional = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)

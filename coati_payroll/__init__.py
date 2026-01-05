@@ -158,6 +158,16 @@ def create_app(config) -> Flask:
     log.trace("create_app: initializing app")
     db.init_app(app)
 
+    # Initialize Flask-Migrate for database migrations
+    try:
+        from flask_migrate import Migrate
+        migrate = Migrate(app, db)
+        log.trace("create_app: Flask-Migrate initialized")
+    except ImportError:
+        log.trace("create_app: Flask-Migrate not available")
+    except Exception as exc:
+        log.trace(f"create_app: Flask-Migrate initialization failed: {exc}")
+
     # Mostrar la URI de la base de datos para diagnóstico
     try:
         db_uri = app.config.get("SQLALCHEMY_DATABASE_URI")

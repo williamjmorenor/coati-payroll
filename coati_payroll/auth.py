@@ -65,6 +65,34 @@ def login():
                 ).scalar_one_or_none()
 
             if registro is not None:
+                # Check if email is verified or if restricted access is allowed
+                from coati_payroll.model import ConfiguracionGlobal
+                
+                config = database.session.execute(
+                    database.select(ConfiguracionGlobal)
+                ).scalar_one_or_none()
+                
+                permitir_acceso_no_verificado = (
+                    config.permitir_acceso_email_no_verificado 
+                    if config else False
+                )
+                
+                # If email is not verified
+                if not registro.email_verificado:
+                    # If restricted access is not allowed, block login
+                    if not permitir_acceso_no_verificado:
+                        flash(
+                            _("Debe verificar su correo electrónico antes de acceder al sistema."),
+                            "warning"
+                        )
+                        return render_template("auth/login.html", form=form)
+                    else:
+                        # Allow restricted access and show warning
+                        flash(
+                            _("Su correo electrónico no ha sido verificado. Su acceso al sistema es limitado."),
+                            "warning"
+                        )
+                
                 login_user(registro)
                 return redirect(url_for("app.index"))
 

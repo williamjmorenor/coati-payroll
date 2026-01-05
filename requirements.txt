@@ -11,6 +11,7 @@ flask-caching
 flask-limiter
 flask-login
 flask-mail
+flask-migrate
 flask-reuploaded
 flask-session
 flask-sqlalchemy
