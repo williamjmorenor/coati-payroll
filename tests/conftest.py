@@ -186,6 +186,7 @@ def admin_user(app, db_session):
         admin.correo_electronico = "admin@test.com"
         admin.tipo = TipoUsuario.ADMIN
         admin.activo = True
+        admin.email_verificado = True  # Admin user has verified email
 
         db_session.add(admin)
         db_session.commit()
