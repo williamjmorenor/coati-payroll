@@ -1,147 +1,146 @@
-# Contrato Social del Proyecto
+# Project Social Contract
 
-*Motor de Cálculo de Planillas Agnostico a la Juridicción*
+*Jurisdiction-Agnostic Payroll Calculation Engine*
 
-## Propósito del proyecto
+## Project Purpose
 
-Este proyecto existe para proveer un motor genérico, predecible y extensible para el cálculo de planillas, agnóstico a la jurisdicción,
-que permita a organizaciones e implementadores definir sus propias reglas de nómina sin necesidad de modificar el código fuente del motor.
+This project exists to provide a generic, predictable, and extensible payroll calculation engine, jurisdiction-agnostic,
+that allows organizations and implementers to define their own payroll rules without needing to modify the engine's source code.
 
-**El proyecto no pretende:**
+**The project does not intend to:**
 
- - Imponer interpretaciones legales.
- - Sustituir conocimiento profesional.
- - Garantizar cumplimiento normativo.
+ - Impose legal interpretations.
+ - Replace professional knowledge.
+ - Guarantee regulatory compliance.
 
-**Qué promete el proyecto a sus usuarios**
+**What the project promises to its users**
 
-El proyecto promete, *de buena fe*, que el motor:
+The project promises, *in good faith*, that the engine:
 
- - Ejecutará cálculos de forma predecible y reproducible.
- - Permanecerá agnóstico a la jurisdicción.
- - No incorporará reglas legales hardcodeadas.
- - Mantendrá una separación estricta entre:
-     * Motor de cálculo.
-     * Configuración de reglas.
-     * Orquestación de nómina.
- - Permitirá que cualquier cambio legal o de política se realice mediante configuración, no mediante cambios de código.
- - Proveerá trazabilidad técnica suficiente para auditar cálculos.
+ - Will execute calculations in a predictable and reproducible manner.
+ - Will remain jurisdiction-agnostic.
+ - Will not incorporate hardcoded legal rules.
+ - Will maintain a strict separation between:
+     * Calculation engine.
+     * Rule configuration.
+     * Payroll orchestration.
+ - Will allow any legal or policy change to be made through configuration, not through code changes.
+ - Will provide sufficient technical traceability to audit calculations.
 
-## Alcance funcional declarado
+## Declared Functional Scope
 
-El proyecto declara explícitamente que el motor, por defecto, solo hace lo siguiente:
+The project explicitly declares that the engine, by default, only does the following:
 
- - Calcula el salario base del empleado según el período definido en la planilla.
- - Aplica cuotas de anticipos salariales cuando estas existen, consumiéndolas desde un módulo externo.
+ - Calculates the employee's base salary according to the period defined in the payroll.
+ - Applies salary advance installments when they exist, consuming them from an external module.
 
-Todo otro concepto de nómina:
+Every other payroll concept:
 
- - Percepciones
- - Deducciones
- - Prestaciones
- - Impuestos
- - Topes
- - Tramos
- - Exenciones
+ - Earnings
+ - Deductions
+ - Benefits
+ - Taxes
+ - Caps
+ - Brackets
+ - Exemptions
 
-Existe únicamente si el implementador lo define por configuración.
+Exists only if the implementer defines it through configuration.
 
-## Valores por defecto
+## Default Values
 
-El proyecto puede ofrecer valores por defecto sanos (por ejemplo, meses de 30 días) con el único objetivo de
-facilitar la adopción inicial.
+The project may offer sensible default values (for example, 30-day months) with the sole purpose of
+facilitating initial adoption.
 
-El proyecto declara que:
+The project declares that:
 
- - Los valores por defecto no representan reglas legales.
- - Son completamente configurables.
- - No deben asumirse como correctos para ninguna jurisdicción específica.
+ - Default values do not represent legal rules.
+ - They are completely configurable.
+ - They should not be assumed as correct for any specific jurisdiction.
 
-## Sobre la responsabilidad del implementador
+## About Implementer Responsibility
 
-El proyecto declara, de forma abierta y honesta, que el uso correcto del motor exige competencia técnica.
+The project declares, openly and honestly, that correct use of the engine requires technical competence.
 
-Se espera que el implementador:
+The implementer is expected to:
 
- - Tenga un conocimiento razonable de cómo se calcula una nómina.
- - Comprenda el marco legal aplicable a la jurisdicción que configura.
- - Sea capaz de calcular manualmente una nómina completa para al menos un empleado.
- - Compare los resultados manuales con los resultados del sistema.
- - Identifique errores de configuración por su cuenta.
+ - Have reasonable knowledge of how payroll is calculated.
+ - Understand the legal framework applicable to the jurisdiction being configured.
+ - Be capable of manually calculating a complete payroll for at least one employee.
+ - Compare manual results with system results.
+ - Identify configuration errors on their own.
 
-El proyecto no pretende proteger al implementador de errores derivados de una configuración incorrecta.
+The project does not intend to protect the implementer from errors derived from incorrect configuration.
 
-## Filosofía del proyecto respecto a errores
+## Project Philosophy Regarding Errors
 
-El proyecto distingue claramente entre:
+The project clearly distinguishes between:
 
- - Errores de configuración, que son responsabilidad del implementador.
- - Errores del motor, que son responsabilidad del proyecto.
+ - Configuration errors, which are the implementer's responsibility.
+ - Engine errors, which are the project's responsibility.
 
-Cuando un implementador identifique un posible error del motor se espera, bajo un principio de buena voluntad, que:
+When an implementer identifies a possible engine error, it is expected, under a principle of good faith, that:
 
-  - El error sea reportado.
-  - Se provea un contexto apropiado para reproducir el error.
+  - The error be reported.
+  - Appropriate context be provided to reproduce the error.
 
-El proyecto puede revisar, analizar y validar el reporte.
+The project may review, analyze, and validate the report.
 
-Sin embargo:
+However:
 
- - No existe obligación de respuesta.
- - No existe compromiso de corrección.
- - No existe garantía de tiempos.
+ - There is no obligation to respond.
+ - There is no commitment to correction.
+ - There is no guarantee of timelines.
 
-Las correcciones se realizan cuando es razonablemente posible y cuando se alinean con los objetivos del proyecto.
+Corrections are made when reasonably possible and when they align with the project's objectives.
 
-Es posible que al implementar el sistema en una juridicción especifica se encuentre que el motor de nomina tiene limitaciones
-tecnicas que dificultan la implementación, estas limitaciones no se consideran un error pues cada juridicción o incluso entidad
-tiene reglas distintas para los calculos asociados a una nomina. Estas limitaciones seran atendidas como un solicitud de una nueva
-caracterista, sin embargo, no se implementaran cambios en el motor de nomina que rompan el contrato social de mantener un producto
-completamente agnostico a la juridicción donde se implementa.
+It is possible that when implementing the system in a specific jurisdiction, the payroll engine may have technical
+limitations that make implementation difficult. These limitations are not considered an error because each jurisdiction or even entity
+has different rules for payroll-related calculations. These limitations will be addressed as a request for a new
+feature, however, no changes will be implemented in the payroll engine that break the social contract of maintaining a product
+completely agnostic to the jurisdiction where it is implemented.
 
-El sistema se compromete a brindar la base para implementar un sistema de nominas flexible con calculos basados en configuración no
-programación.
+The system commits to providing the foundation for implementing a flexible payroll system with calculations based on configuration, not
+programming.
 
-## Licencia y libertad del software
+## License and Software Freedom
 
-El proyecto se distribuye bajo la Licencia Apache, Versión 2.0.
+The project is distributed under the Apache License, Version 2.0.
 
-En coherencia con dicha licencia, el proyecto afirma que:
+In accordance with said license, the project affirms that:
 
- - El software se entrega “tal como está” (AS IS).
- - No se ofrecen garantías de utilidad para un fin particular.
- - No se garantizan resultados correctos ni cumplimiento legal.
+ - The software is provided "as is" (AS IS).
+ - No warranties of fitness for a particular purpose are offered.
+ - Correct results or legal compliance are not guaranteed.
 
-El proyecto valora y promueve:
+The project values and promotes:
 
- - El uso libre.
- - La modificación.
- - La redistribución.
- - La integración en otros sistemas.
+ - Free use.
+ - Modification.
+ - Redistribution.
+ - Integration into other systems.
 
-Siempre respetando los términos de la licencia.
+Always respecting the terms of the license.
 
-## Rol de BMO Soluciones, S.A.
+## Role of BMO Soluciones, S.A.
 
 BMO Soluciones, S.A.:
 
- - Publica y mantiene el proyecto bajo principios de software libre.
- - No asume responsabilidad por el uso del motor en producción.
- - No garantiza resultados correctos ni conformidad legal.
- - Actúa como steward del proyecto, no como proveedor de servicios.
+ - Publishes and maintains the project under free software principles.
+ - Does not assume responsibility for use of the engine in production.
+ - Does not guarantee correct results or legal conformity.
+ - Acts as steward of the project, not as a service provider.
 
-## Compromiso con la honestidad técnica
+## Commitment to Technical Honesty
 
-Este proyecto se compromete a:
+This project commits to:
 
- - No ocultar limitaciones.
- - No presentar el motor como un sistema “listo para cumplir leyes”.
- - No prometer más de lo que el motor puede cumplir.
- - Mantener documentación clara sobre su alcance real.
+ - Not hiding limitations.
+ - Not presenting the engine as a system "ready to comply with laws".
+ - Not promising more than what the engine can deliver.
+ - Maintaining clear documentation about its real scope.
 
-## Declaración final.
+## Final Statement.
 
-Este proyecto existe para servir a implementadores competentes que necesitan un motor de cálculo de planillas flexible y honesto.
-No pretende reemplazar el criterio profesional, conocimiento legal ni responsabilidad humana.
-La libertad que ofrece el motor implica, necesariamente, responsabilidad por parte de quien lo usa.
-
+This project exists to serve competent implementers who need a flexible and honest payroll calculation engine.
+It does not intend to replace professional judgment, legal knowledge, or human responsibility.
+The freedom that the engine offers necessarily implies responsibility on the part of whoever uses it.
