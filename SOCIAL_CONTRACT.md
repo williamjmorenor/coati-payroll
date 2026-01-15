@@ -96,10 +96,10 @@ Corrections are made when reasonably possible and when they align with the proje
 It is possible that when implementing the system in a specific jurisdiction, the payroll engine may have technical
 limitations that make implementation difficult. These limitations are not considered an error because each jurisdiction or even entity
 has different rules for payroll-related calculations. These limitations will be addressed as a request for a new
-feature, however, no changes will be implemented in the payroll engine that break the social contract of maintaining a product
+feature; however, no changes will be implemented in the payroll engine that break the social contract of maintaining a product
 completely agnostic to the jurisdiction where it is implemented.
 
-The system commits to providing the foundation for implementing a flexible payroll system with calculations based on configuration, not
+The system commits to providing the foundation for implementing a flexible payroll system with calculations based on configuration rather than
 programming.
 
 ## License and Software Freedom
