@@ -17,7 +17,7 @@ import pytest
 from datetime import date, timedelta
 from decimal import Decimal
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from tests.helpers.auth import login_user
 
@@ -215,7 +215,8 @@ def assert_redirects_to_ver_nomina(response, planilla_id, nomina_id):
     assert response.status_code == 302
     # Check for either the route name or the URL path
     assert (
-        "planilla.ver_nomina" in response.location or f"/planilla/{planilla_id}/nomina/{nomina_id}" in response.location
+        "planilla.ver_nomina" in response.location
+        or f"/planilla/{planilla_id}/nomina/{nomina_id}" in response.location
     )
 
 
@@ -312,7 +313,9 @@ def test_exportar_nomina_excel_with_invalid_nomina_id(app, client, admin_user, d
             assert response.status_code == 404
 
 
-def test_exportar_nomina_excel_with_mismatched_nomina(app, client, admin_user, db_session, other_planilla, nomina):
+def test_exportar_nomina_excel_with_mismatched_nomina(
+    app, client, admin_user, db_session, other_planilla, nomina
+):
     """Test exportar_nomina_excel when nomina doesn't belong to planilla."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
@@ -479,7 +482,9 @@ def test_exportar_comprobante_excel_with_invalid_planilla_id(app, client, admin_
             assert response.status_code == 404
 
 
-def test_exportar_comprobante_excel_with_mismatched_nomina(app, client, admin_user, db_session, other_planilla, nomina):
+def test_exportar_comprobante_excel_with_mismatched_nomina(
+    app, client, admin_user, db_session, other_planilla, nomina
+):
     """Test exportar_comprobante_excel when nomina doesn't belong to planilla."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")

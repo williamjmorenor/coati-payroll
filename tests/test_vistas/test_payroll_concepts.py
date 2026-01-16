@@ -603,7 +603,7 @@ def test_view_audit_log_route_success(app, client, admin_user, db_session):
 
         # Verify the audit logs exist
         assert len(perc.audit_logs) >= 2
-
+        
         # Verify sorting logic that's used in view_audit_log_route
         audit_logs = sorted(perc.audit_logs, key=lambda x: x.timestamp, reverse=True)
         assert audit_logs[0].accion == "updated"  # Most recent first
