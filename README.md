@@ -9,7 +9,7 @@
 
 A jurisdiction-agnostic payroll calculation engine developed by BMO Soluciones, S.A.
 
-![ScreenShot](https://via.placeholder.com/800x450.png?text=Coati+Payroll+Screenshot)
+![ScreenShot](https://raw.githubusercontent.com/bmosoluciones/coati-payroll/refs/heads/main/docs/CoatiPayrollSystem.png)
 
 -----------
 
