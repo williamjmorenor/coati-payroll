@@ -76,15 +76,11 @@ class PluginsCommand(click.Group):
             return []
 
     def get_command(self, cli_ctx, name):
-        try:
-            module = load_plugin_module(name)
-        except Exception as exc:
-            message = str(exc)
-
-            def _missing():
-                raise click.ClickException(message)
-
-            return click.Command(name, callback=lambda: _missing())
+        def _load_module_or_fail():
+            try:
+                return load_plugin_module(name)
+            except Exception as exc:
+                raise click.ClickException(str(exc))
 
         @click.group(name=name, help=f"Gestión del plugin '{name}'")
         def plugin_group():
@@ -95,6 +91,7 @@ class PluginsCommand(click.Group):
         @with_appcontext
         @pass_context
         def plugin_init(ctx):
+            module = _load_module_or_fail()
             init_fn = getattr(module, "init", None)
             if init_fn is None or not callable(init_fn):
                 raise click.ClickException("Plugin does not provide callable 'init()'")
@@ -112,6 +109,7 @@ class PluginsCommand(click.Group):
         @with_appcontext
         @pass_context
         def plugin_update(ctx):
+            module = _load_module_or_fail()
             update_fn = getattr(module, "update", None)
             if update_fn is None or not callable(update_fn):
                 raise click.ClickException("Plugin does not provide callable 'update()'")
@@ -131,6 +129,7 @@ class PluginsCommand(click.Group):
         def plugin_demo_data(ctx):
             """Carga datos de demostración para pruebas automáticas."""
             # Permitir alias: demo_data o load_demo_data
+            module = _load_module_or_fail()
             demo_fn = getattr(module, "demo_data", None)
             if demo_fn is None or not callable(demo_fn):
                 demo_fn = getattr(module, "load_demo_data", None)

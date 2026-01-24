@@ -29,30 +29,33 @@
                             <td>{{ plugin.version or '-' }}</td>
                             <td>
                                 {% if plugin.installed %}
-                                    <span class="badge bg-success">{{ _('Sí') }}</span>
+                                <span class="badge bg-success">{{ _('Sí') }}</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">{{ _('No') }}</span>
+                                <span class="badge bg-secondary">{{ _('No') }}</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if plugin.active %}
-                                    <span class="badge bg-success">{{ _('Activo') }}</span>
+                                <span class="badge bg-success">{{ _('Activo') }}</span>
                                 {% else %}
-                                    <span class="badge bg-warning">{{ _('Inactivo') }}</span>
+                                <span class="badge bg-warning">{{ _('Inactivo') }}</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <form action="{{ url_for('plugins.toggle', plugin_id=plugin.id) }}" method="POST" class="d-inline">
+                                <form action="{{ url_for('plugins.toggle', plugin_id=plugin.id) }}" method="POST"
+                                    class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     {% if plugin.active %}
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">
-                                            <i class="bi bi-toggle-off"></i>
-                                            {{ _('Desactivar') }}
-                                        </button>
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-toggle-off"></i>
+                                        {{ _('Desactivar') }}
+                                    </button>
                                     {% else %}
-                                        <button type="submit" class="btn btn-sm btn-outline-success" {% if not plugin.installed %}disabled{% endif %}>
-                                            <i class="bi bi-toggle-on"></i>
-                                            {{ _('Activar') }}
-                                        </button>
+                                    <button type="submit" class="btn btn-sm btn-outline-success"
+                                        {% if not plugin.installed %}disabled{% endif %}>
+                                        <i class="bi bi-toggle-on"></i>
+                                        {{ _('Activar') }}
+                                    </button>
                                     {% endif %}
                                 </form>
                             </td>
