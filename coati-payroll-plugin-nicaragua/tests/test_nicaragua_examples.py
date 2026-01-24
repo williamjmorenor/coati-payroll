@@ -9,14 +9,14 @@ que han sido previamente validados por un contador.
 import pytest
 from decimal import Decimal
 
-from coati_payroll.utils.locales.validate_nicaragua_examples import (
+from coati_payroll_plugin_nicaragua.validate_nicaragua_examples import (
     ejecutar_validaciones,
     EJEMPLO_1,
     EJEMPLO_2,
     EJEMPLO_3,
     EJEMPLO_4,
 )
-from coati_payroll.utils.locales.nicaragua import ejecutar_test_nomina_nicaragua
+from coati_payroll_plugin_nicaragua.nicaragua import ejecutar_test_nomina_nicaragua
 
 
 class TestEjemplosNicaraguaIR:

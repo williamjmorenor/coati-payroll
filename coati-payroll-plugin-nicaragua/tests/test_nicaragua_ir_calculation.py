@@ -30,7 +30,7 @@ This proves the system can handle Nicaragua's requirements end-to-end.
 
 import pytest
 
-from coati_payroll.utils.locales.nicaragua import ejecutar_test_nomina_nicaragua
+from coati_payroll_plugin_nicaragua.nicaragua import ejecutar_test_nomina_nicaragua
 
 
 @pytest.mark.validation
