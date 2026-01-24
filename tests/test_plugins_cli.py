@@ -49,3 +49,35 @@ def test_cli_plugin_init_and_update_invoke_module(monkeypatch):
     # These callbacks require app context; wiring is tested at module level.
     assert callable(init_fn)
     assert callable(update_fn)
+
+
+def test_cli_plugin_enable_toggles_active(app, db_session, monkeypatch):
+    from coati_payroll import plugin_manager
+    from coati_payroll.model import PluginRegistry, db
+
+    # Pretend the plugin is installed so sync_plugin_registry keeps it installed
+    monkeypatch.setattr(
+        plugin_manager,
+        "discover_installed_plugins",
+        lambda: [plugin_manager.DiscoveredPlugin("coati-payroll-plugin-gt", "gt", "1.0.0")],
+    )
+
+    with app.app_context():
+        plugin = PluginRegistry(
+            distribution_name="coati-payroll-plugin-gt",
+            plugin_id="gt",
+            version="1.0.0",
+            active=False,
+            installed=True,
+        )
+        db.session.add(plugin)
+        db.session.commit()
+
+    runner = app.test_cli_runner()
+    result = runner.invoke(args=["plugins", "gt", "enable"])
+
+    assert result.exit_code == 0
+
+    with app.app_context():
+        refreshed = db.session.get(PluginRegistry, plugin.id)
+        assert refreshed.active is True

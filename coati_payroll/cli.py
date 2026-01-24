@@ -152,7 +152,15 @@ class PluginsCommand(click.Group):
             """Habilita el plugin en el registro (active=True)."""
             try:
                 sync_plugin_registry()
-                record = db.session.execute(db.select(PluginRegistry).filter_by(plugin_id=name)).scalars().first()
+                record = (
+                    db.session.execute(
+                        db.select(PluginRegistry).filter(
+                            (PluginRegistry.plugin_id == name) | (PluginRegistry.distribution_name == name)
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
                 if record is None:
                     raise click.ClickException("Plugin no registrado en la base de datos")
                 if not record.installed:
@@ -174,7 +182,15 @@ class PluginsCommand(click.Group):
             """Deshabilita el plugin en el registro (active=False)."""
             try:
                 sync_plugin_registry()
-                record = db.session.execute(db.select(PluginRegistry).filter_by(plugin_id=name)).scalars().first()
+                record = (
+                    db.session.execute(
+                        db.select(PluginRegistry).filter(
+                            (PluginRegistry.plugin_id == name) | (PluginRegistry.distribution_name == name)
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
                 if record is None:
                     raise click.ClickException("Plugin no registrado en la base de datos")
                 record.active = False
