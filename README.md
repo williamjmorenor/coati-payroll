@@ -1,4 +1,4 @@
-![Logo](https://via.placeholder.com/400x100.png?text=Coati+Payroll+Logo)
+![Logo](https://raw.githubusercontent.com/bmosoluciones/coati-payroll/refs/heads/main/coati_payroll/static/logo/Icono-small.png)
 
 # Coati Payroll
 
