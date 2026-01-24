@@ -5,6 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{{ _('Coaty - Sistema de Planillas') }}</title>
 
+        <link
+            rel="icon"
+            type="image/x-icon"
+            href="{{ url_for('static', filename='logo/Icono.svg') }}"
+        />
+
         <!-- Google Fonts - Enterprise Typography -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -48,12 +54,13 @@
                 class="navbar-brand fw-bold text-uppercase"
                 href="{{ url_for('app.index') }}"
             >
-                <!-- Logo placeholder - reemplazar con logo real posteriormente -->
-                <span class="logo-placeholder"
-                    ><i class="bi bi-flower1"></i
-                ></span>
-                <span
-                    >{{ _('Coati') }}
+                    <img
+                        src="{{ url_for('static', filename='logo/Icono.png') }}"
+                        alt="Coati Payroll Logo"
+                        height="30"
+                        width="30"
+                    />
+                    {{ _('Coati') }}
                     <span class="fw-normal">Payroll</span></span
                 >
             </a>
@@ -135,7 +142,10 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{{ url_for('liquidacion.index') }}">
+                        <a
+                            class="nav-link d-flex align-items-center"
+                            href="{{ url_for('liquidacion.index') }}"
+                        >
                             <i class="bi bi-file-earmark-text me-2"></i
                             ><span><span>{{ _('Liquidaciones') }}</span></span>
                         </a>
@@ -198,8 +208,13 @@
 
                     {% for active_plugin in plugin_actives %}
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{{ active_plugin.url }}">
-                            <i class="{{ active_plugin.icon or 'bi bi-puzzle' }} me-2"></i
+                        <a
+                            class="nav-link d-flex align-items-center"
+                            href="{{ active_plugin.url }}"
+                        >
+                            <i
+                                class="{{ active_plugin.icon or 'bi bi-puzzle' }} me-2"
+                            ></i
                             ><span><span>{{ active_plugin.label }}</span></span>
                         </a>
                     </li>
