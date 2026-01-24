@@ -1,0 +1,158 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Configuration routes for planilla associations."""
+
+from flask import render_template
+
+from coati_payroll.model import (
+    db,
+    Planilla,
+    Empleado,
+    PlanillaEmpleado,
+    PlanillaIngreso,
+    PlanillaDeduccion,
+    PlanillaPrestacion,
+    PlanillaReglaCalculo,
+    Percepcion,
+    Deduccion,
+    Prestacion,
+    ReglaCalculo,
+)
+from coati_payroll.rbac import require_read_access, require_write_access
+from coati_payroll.vistas.planilla import planilla_bp
+
+
+@planilla_bp.route("/<planilla_id>/config/empleados")
+@require_read_access()
+def config_empleados(planilla_id: str):
+    """View employees associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    empleados_asignados = (
+        db.session.execute(db.select(PlanillaEmpleado).filter_by(planilla_id=planilla_id)).scalars().all()
+    )
+
+    # Filter employees to only show those from the same company as the planilla
+    # CRITICAL: Only employees with matching empresa_id can be added to this planilla
+    query = db.select(Empleado).filter_by(activo=True)
+    if planilla.empresa_id:
+        # Only show employees from the same company (exact match required)
+        query = query.filter(Empleado.empresa_id == planilla.empresa_id)
+    else:
+        # If planilla has no company, show no employees (planilla must have empresa)
+        query = query.filter(db.false())
+    empleados_disponibles = db.session.execute(query.order_by(Empleado.primer_apellido)).scalars().all()
+
+    return render_template(
+        "modules/planilla/config_empleados.html",
+        planilla=planilla,
+        empleados_asignados=empleados_asignados,
+        empleados_disponibles=empleados_disponibles,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config/percepciones")
+@require_read_access()
+def config_percepciones(planilla_id: str):
+    """View perceptions associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    percepciones_asignadas = (
+        db.session.execute(db.select(PlanillaIngreso).filter_by(planilla_id=planilla_id)).scalars().all()
+    )
+
+    percepciones_disponibles = (
+        db.session.execute(db.select(Percepcion).filter_by(activo=True).order_by(Percepcion.nombre)).scalars().all()
+    )
+
+    return render_template(
+        "modules/planilla/config_percepciones.html",
+        planilla=planilla,
+        percepciones_asignadas=percepciones_asignadas,
+        percepciones_disponibles=percepciones_disponibles,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config/deducciones")
+@require_read_access()
+def config_deducciones(planilla_id: str):
+    """View deductions associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    deducciones_asignadas = (
+        db.session.execute(
+            db.select(PlanillaDeduccion).filter_by(planilla_id=planilla_id).order_by(PlanillaDeduccion.prioridad)
+        )
+        .scalars()
+        .all()
+    )
+
+    deducciones_disponibles = (
+        db.session.execute(db.select(Deduccion).filter_by(activo=True).order_by(Deduccion.nombre)).scalars().all()
+    )
+
+    return render_template(
+        "modules/planilla/config_deducciones.html",
+        planilla=planilla,
+        deducciones_asignadas=deducciones_asignadas,
+        deducciones_disponibles=deducciones_disponibles,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config/prestaciones")
+@require_write_access()
+def config_prestaciones(planilla_id: str):
+    """Manage benefits associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    prestaciones_asignadas = (
+        db.session.execute(db.select(PlanillaPrestacion).filter_by(planilla_id=planilla_id)).scalars().all()
+    )
+
+    prestaciones_disponibles = (
+        db.session.execute(db.select(Prestacion).filter_by(activo=True).order_by(Prestacion.nombre)).scalars().all()
+    )
+
+    return render_template(
+        "modules/planilla/config_prestaciones.html",
+        planilla=planilla,
+        prestaciones_asignadas=prestaciones_asignadas,
+        prestaciones_disponibles=prestaciones_disponibles,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/config/reglas")
+@require_read_access()
+def config_reglas(planilla_id: str):
+    """View calculation rules associated with a planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+
+    reglas_asignadas = (
+        db.session.execute(
+            db.select(PlanillaReglaCalculo).filter_by(planilla_id=planilla_id).order_by(PlanillaReglaCalculo.orden)
+        )
+        .scalars()
+        .all()
+    )
+
+    reglas_disponibles = (
+        db.session.execute(db.select(ReglaCalculo).filter_by(activo=True).order_by(ReglaCalculo.nombre)).scalars().all()
+    )
+
+    return render_template(
+        "modules/planilla/config_reglas.html",
+        planilla=planilla,
+        reglas_asignadas=reglas_asignadas,
+        reglas_disponibles=reglas_disponibles,
+    )

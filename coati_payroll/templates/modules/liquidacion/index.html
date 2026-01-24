@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import render_messages %}
+
+{% block content %}
+<div class="container">
+    {{ render_messages() }}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-file-earmark-text me-2"></i>{{ _('Liquidaciones') }}</h2>
+        <a href="{{ url_for('liquidacion.nueva') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>{{ _('Nueva') }}
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if liquidaciones %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ _('Empleado') }}</th>
+                                <th>{{ _('Fecha Cálculo') }}</th>
+                                <th>{{ _('Días por Pagar') }}</th>
+                                <th>{{ _('Total Neto') }}</th>
+                                <th>{{ _('Estado') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for l in liquidaciones %}
+                                <tr>
+                                    <td>
+                                        {% if l.empleado %}
+                                            {{ l.empleado.primer_nombre }} {{ l.empleado.primer_apellido }}
+                                        {% else %}
+                                            {{ l.empleado_id }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ l.fecha_calculo }}</td>
+                                    <td>{{ l.dias_por_pagar }}</td>
+                                    <td>{{ l.total_neto }}</td>
+                                    <td>{{ l.estado }}</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('liquidacion.ver', liquidacion_id=l.id) }}">{{ _('Ver') }}</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">{{ _('No hay liquidaciones registradas.') }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

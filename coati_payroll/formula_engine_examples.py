@@ -11,7 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Formula calculation engine examples for payroll processing."""
+"""Formula calculation engine examples for payroll processing.
+
+IMPORTANT: EXAMPLE DATA ONLY - NOT PART OF THE ENGINE
+=========================================================
+The examples in this module are provided SOLELY for demonstration and testing
+purposes. They do NOT represent legal rules, tax rates, or compliance requirements
+for any specific jurisdiction.
+
+Per the project's Social Contract:
+- The engine is jurisdiction-agnostic and does not incorporate hardcoded legal rules.
+- These examples use fictional/placeholder values that may not reflect any real legislation.
+- Implementers must define their own rules based on their specific legal requirements.
+- The project makes no guarantees about the correctness of these examples for any use case.
+
+These examples demonstrate the STRUCTURE and CAPABILITIES of the formula engine,
+not actual legal calculations.
+"""
 
 from __future__ import annotations
 
@@ -29,16 +45,21 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 
 
-# Example Nicaragua IR schema for reference
-EXAMPLE_IR_NICARAGUA_SCHEMA = {
+# ===========================================================================
+# EXAMPLE: Progressive Income Tax Calculation Schema
+# ===========================================================================
+# This is a DEMONSTRATION of how to structure a progressive tax calculation.
+# The values, rates, and brackets shown are FICTIONAL and for illustration only.
+# Implementers must create their own schemas based on applicable laws.
+# ===========================================================================
+EXAMPLE_PROGRESSIVE_TAX_SCHEMA = {
     "meta": {
-        "name": "IR Laboral Nicaragua",
-        "jurisdiction": "Nicaragua",
-        "reference_currency": "NIO",
+        "name": "Example Progressive Income Tax",
+        "jurisdiction": "Example Jurisdiction",
+        "reference_currency": "XXX",
         "version": "1.0.0",
-        "description": "Cálculo del Impuesto sobre la Renta para salarios en Nicaragua. "
-        "La moneda de referencia es NIO. El tipo de cambio se aplica si la planilla "
-        "está en una moneda diferente.",
+        "description": "EXAMPLE ONLY: Demonstrates progressive income tax calculation. "
+        "Values are fictional. Implementers must define their own rules.",
     },
     "inputs": [
         {
@@ -48,10 +69,10 @@ EXAMPLE_IR_NICARAGUA_SCHEMA = {
             "description": "Salario mensual bruto",
         },
         {
-            "name": "inss_laboral",
+            "name": "social_security_deduction",
             "type": "decimal",
             "source": "calculated",
-            "description": "Deducción INSS laboral",
+            "description": "Pre-tax social security deduction (example)",
         },
         {
             "name": "meses_restantes",
@@ -76,8 +97,8 @@ EXAMPLE_IR_NICARAGUA_SCHEMA = {
         {
             "name": "salario_neto_mensual",
             "type": "calculation",
-            "formula": "salario_mensual - inss_laboral",
-            "description": "Salario después de INSS",
+            "formula": "salario_mensual - social_security_deduction",
+            "description": "Net salary after pre-tax deductions",
         },
         {
             "name": "expectativa_anual",
@@ -92,51 +113,41 @@ EXAMPLE_IR_NICARAGUA_SCHEMA = {
             "description": "Base imponible anual total",
         },
         {
-            "name": "ir_anual",
+            "name": "annual_tax",
             "type": "tax_lookup",
-            "table": "tabla_ir_nicaragua",
+            "table": "example_tax_brackets",
             "input": "base_imponible_anual",
-            "description": "Cálculo IR anual según tabla",
+            "description": "Annual tax calculation using example brackets",
         },
         {
-            "name": "ir_pendiente",
+            "name": "pending_tax",
             "type": "calculation",
-            "formula": "ir_anual - ir_retenido_acumulado",
-            "description": "IR pendiente de retener",
+            "formula": "annual_tax - ir_retenido_acumulado",
+            "description": "Pending tax to withhold",
         },
         {
-            "name": "ir_mensual",
+            "name": "monthly_tax",
             "type": "calculation",
-            "formula": "ir_pendiente / meses_restantes",
-            "description": "IR a retener este mes",
+            "formula": "pending_tax / meses_restantes",
+            "description": "Tax to withhold this month",
         },
     ],
+    # EXAMPLE TAX BRACKETS - FICTIONAL VALUES FOR DEMONSTRATION ONLY
+    # These do NOT represent any real tax legislation.
+    # Implementers must define their own brackets based on applicable laws.
     "tax_tables": {
-        "tabla_ir_nicaragua": [
+        "example_tax_brackets": [
             {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
-            {"min": 100000.01, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
-            {
-                "min": 200000.01,
-                "max": 350000,
-                "rate": 0.20,
-                "fixed": 15000,
-                "over": 200000,
-            },
-            {
-                "min": 350000.01,
-                "max": 500000,
-                "rate": 0.25,
-                "fixed": 45000,
-                "over": 350000,
-            },
-            {
-                "min": 500000.01,
-                "max": None,
-                "rate": 0.30,
-                "fixed": 82500,
-                "over": 500000,
-            },
+            {"min": 100000.01, "max": 200000, "rate": 0.10, "fixed": 0, "over": 100000},
+            {"min": 200000.01, "max": 350000, "rate": 0.15, "fixed": 10000, "over": 200000},
+            {"min": 350000.01, "max": 500000, "rate": 0.20, "fixed": 32500, "over": 350000},
+            {"min": 500000.01, "max": None, "rate": 0.25, "fixed": 62500, "over": 500000},
         ]
     },
-    "output": "ir_mensual",
+    "output": "monthly_tax",
 }
+
+# Backward compatibility alias - DEPRECATED, will be removed in future versions
+# This alias exists only to prevent breaking existing code that references the old name.
+# New code should use EXAMPLE_PROGRESSIVE_TAX_SCHEMA instead.
+EXAMPLE_IR_NICARAGUA_SCHEMA = EXAMPLE_PROGRESSIVE_TAX_SCHEMA

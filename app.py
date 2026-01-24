@@ -39,7 +39,7 @@ default_db_uri = f"sqlite:///{default_db_path}"
 # Only set the default database URL if DATABASE_URL is not already provided.
 # This allows Docker containers and production environments to provide their
 # own database URL via environment variables.
-if not environ.get("DATABASE_URL"):
+if not environ.get("DATABASE_URL", None):
     environ["DATABASE_URL"] = default_db_uri
 
 # Crear aplicación.

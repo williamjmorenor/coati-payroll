@@ -2,10 +2,13 @@ argon2-cffi
 babel
 configobj
 cryptography
-email-validator
+dramatiq[redis]
+email_validator
+huey
 flask
 flask-babel
 flask-caching
+flask-limiter
 flask-login
 flask-mail
 flask-reuploaded
@@ -24,5 +27,3 @@ redis
 waitress
 weasyprint
 wtforms
-dramatiq[redis]
-huey

@@ -34,6 +34,9 @@ from coati_payroll.formula_engine import (
 
 calculation_rule_bp = Blueprint("calculation_rule", __name__, url_prefix="/calculation-rule")
 
+# Constants
+ERROR_RULE_NOT_FOUND = "Regla no encontrada"
+
 
 @calculation_rule_bp.route("/")
 @require_read_access()
@@ -116,7 +119,7 @@ def edit(id: str):
     """Edit an existing calculation rule metadata."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        flash(_("Regla de cálculo no encontrada."), "error")
+        flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
 
     form = ReglaCalculoForm(obj=rule)
@@ -152,7 +155,7 @@ def edit_schema(id: str):
     """Edit the JSON schema of a calculation rule."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        flash(_("Regla de cálculo no encontrada."), "error")
+        flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
 
     # Get available data sources for the UI
@@ -173,7 +176,7 @@ def save_schema(id: str):
     """API endpoint to save the JSON schema."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        return jsonify({"success": False, "error": "Regla no encontrada"}), 404
+        return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
 
     try:
         data = request.get_json()
@@ -196,13 +199,46 @@ def save_schema(id: str):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@calculation_rule_bp.route("/api/validate-schema/<string:id>", methods=["POST"])
+@require_write_access()
+def validate_schema_api(id: str):
+    """API endpoint to validate a JSON schema without saving it."""
+    rule = db.session.get(ReglaCalculo, id)
+    if not rule:
+        return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
+
+    try:
+        data = request.get_json()
+        schema = data.get("schema", {})
+
+        # Validate schema structure and formula safety
+        from coati_payroll.schema_validator import validate_schema_deep
+
+        try:
+            validate_schema_deep(schema)
+        except Exception as e:
+            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
+
+        # Also validate by trying to create a FormulaEngine instance
+        try:
+            FormulaEngine(schema)
+        except FormulaEngineError as e:
+            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
+
+        return jsonify({"success": True, "message": "Esquema válido"})
+    except json.JSONDecodeError as e:
+        return jsonify({"success": False, "error": f"JSON inválido: {e}"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @calculation_rule_bp.route("/api/test-schema/<string:id>", methods=["POST"])
 @require_write_access()
 def test_schema(id: str):
     """API endpoint to test the calculation schema with sample data."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        return jsonify({"success": False, "error": "Regla no encontrada"}), 404
+        return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
 
     try:
         data = request.get_json()
@@ -225,7 +261,7 @@ def delete(id: str):
     """Delete a calculation rule."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        flash(_("Regla de cálculo no encontrada."), "error")
+        flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
 
     db.session.delete(rule)
@@ -240,7 +276,7 @@ def duplicate(id: str):
     """Duplicate a calculation rule with a new version."""
     rule = db.session.get(ReglaCalculo, id)
     if not rule:
-        flash(_("Regla de cálculo no encontrada."), "error")
+        flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
 
     # Create a new rule with incremented version
@@ -249,7 +285,7 @@ def duplicate(id: str):
     new_rule.nombre = rule.nombre
     new_rule.descripcion = rule.descripcion
     new_rule.jurisdiccion = rule.jurisdiccion
-    new_rule.moneda_codigo = rule.moneda_codigo
+    new_rule.moneda_referencia = rule.moneda_referencia
     new_rule.tipo_regla = rule.tipo_regla
     new_rule.vigente_desde = rule.vigente_desde
     new_rule.vigente_hasta = rule.vigente_hasta

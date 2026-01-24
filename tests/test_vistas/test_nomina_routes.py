@@ -1,0 +1,1027 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Comprehensive tests for nomina routes (coati_payroll/vistas/planilla/nomina_routes.py)."""
+
+import pytest
+from datetime import date
+from decimal import Decimal
+from unittest.mock import patch, MagicMock
+
+from coati_payroll.enums import NominaEstado
+from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle
+from tests.helpers.auth import login_user
+
+
+# ============================================================================
+# FIXTURES
+# ============================================================================
+
+
+@pytest.fixture
+def tipo_planilla(app, db_session):
+    """Create a TipoPlanilla for testing."""
+    with app.app_context():
+        from coati_payroll.model import TipoPlanilla
+
+        tipo = TipoPlanilla(
+            codigo="MENSUAL",
+            descripcion="Planilla Mensual",
+            periodicidad="mensual",
+            dias=30,
+            periodos_por_anio=12,
+            mes_inicio_fiscal=1,
+            dia_inicio_fiscal=1,
+            activo=True,
+        )
+        db_session.add(tipo)
+        db_session.commit()
+        db_session.refresh(tipo)
+        return tipo
+
+
+@pytest.fixture
+def moneda(app, db_session):
+    """Create a Moneda for testing."""
+    with app.app_context():
+        from coati_payroll.model import Moneda
+
+        moneda = Moneda(codigo="USD", nombre="Dolar", simbolo="$", activo=True)
+        db_session.add(moneda)
+        db_session.commit()
+        db_session.refresh(moneda)
+        return moneda
+
+
+@pytest.fixture
+def empresa(app, db_session):
+    """Create an Empresa for testing."""
+    with app.app_context():
+        from coati_payroll.model import Empresa
+
+        empresa = Empresa(
+            codigo="TEST",
+            razon_social="Test Company S.A.",
+            ruc="123456789",
+            activo=True,
+        )
+        db_session.add(empresa)
+        db_session.commit()
+        db_session.refresh(empresa)
+        return empresa
+
+
+@pytest.fixture
+def planilla(app, db_session, tipo_planilla, moneda, empresa, admin_user):
+    """Create a Planilla for testing."""
+    with app.app_context():
+        from coati_payroll.model import Planilla
+
+        planilla = Planilla(
+            nombre="Test Planilla",
+            descripcion="Planilla de prueba",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            empresa_id=empresa.id,
+            periodo_fiscal_inicio=date(2024, 1, 1),
+            periodo_fiscal_fin=date(2024, 12, 31),
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(planilla)
+        db_session.commit()
+        db_session.refresh(planilla)
+        return planilla
+
+
+@pytest.fixture
+def empleado(app, db_session, empresa, moneda):
+    """Create an Empleado for testing."""
+    with app.app_context():
+        from coati_payroll.model import Empleado
+
+        empleado = Empleado(
+            empresa_id=empresa.id,
+            codigo_empleado="EMP001",
+            primer_nombre="Juan",
+            primer_apellido="Perez",
+            identificacion_personal="001-010101-0001A",
+            salario_base=Decimal("1000.00"),
+            moneda_id=moneda.id,
+            fecha_alta=date.today(),
+            activo=True,
+        )
+        db_session.add(empleado)
+        db_session.commit()
+        db_session.refresh(empleado)
+        return empleado
+
+
+@pytest.fixture
+def nomina(app, db_session, planilla, admin_user):
+    """Create a Nomina for testing."""
+    with app.app_context():
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date(2025, 1, 1),
+            periodo_fin=date(2025, 1, 31),
+            generado_por=admin_user.usuario,
+            estado="generado",
+        )
+        db_session.add(nomina)
+        db_session.commit()
+        db_session.refresh(nomina)
+        return nomina
+
+
+@pytest.fixture
+def nomina_empleado(app, db_session, nomina, empleado):
+    """Create a NominaEmpleado for testing."""
+    with app.app_context():
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            salario_bruto=Decimal("1000.00"),
+            total_ingresos=Decimal("1000.00"),
+            total_deducciones=Decimal("100.00"),
+            salario_neto=Decimal("900.00"),
+            sueldo_base_historico=Decimal("1000.00"),
+        )
+        db_session.add(nomina_empleado)
+        db_session.commit()
+        db_session.refresh(nomina_empleado)
+        return nomina_empleado
+
+
+@pytest.fixture
+def nomina_detalle(app, db_session, nomina_empleado):
+    """Create a NominaDetalle for testing."""
+    with app.app_context():
+        detalle = NominaDetalle(
+            nomina_empleado_id=nomina_empleado.id,
+            tipo="ingreso",
+            codigo="SALARIO",
+            descripcion="Salario Base",
+            monto=Decimal("1000.00"),
+            orden=1,
+        )
+        db_session.add(detalle)
+        db_session.commit()
+        db_session.refresh(detalle)
+        return detalle
+
+
+# ============================================================================
+# TESTS FOR ejecutar_nomina
+# ============================================================================
+
+
+def test_ejecutar_nomina_get_requires_write_access(app, client, db_session, planilla):
+    """Test that ejecutar_nomina GET requires write access."""
+    with app.app_context():
+        response = client.get(f"/planilla/{planilla.id}/ejecutar", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_ejecutar_nomina_get_accessible_to_authenticated_users(app, client, admin_user, db_session, planilla):
+    """Test that authenticated users can access ejecutar_nomina form."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/ejecutar")
+        assert response.status_code == 200
+
+
+def test_ejecutar_nomina_post_requires_write_access(app, client, db_session, planilla):
+    """Test that ejecutar_nomina POST requires write access."""
+    with app.app_context():
+        response = client.post(
+            f"/planilla/{planilla.id}/ejecutar",
+            data={
+                "periodo_inicio": "2025-01-01",
+                "periodo_fin": "2025-01-31",
+                "fecha_calculo": "2025-01-31",
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+
+def test_ejecutar_nomina_post_missing_period(app, client, admin_user, db_session, planilla):
+    """Test that ejecutar_nomina POST validates required period fields."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.post(
+            f"/planilla/{planilla.id}/ejecutar",
+            data={},
+            follow_redirects=False,
+        )
+        assert response.status_code == 302  # Redirects back with error
+
+
+def test_ejecutar_nomina_post_invalid_date_format(app, client, admin_user, db_session, planilla):
+    """Test that ejecutar_nomina POST validates date format."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.post(
+            f"/planilla/{planilla.id}/ejecutar",
+            data={
+                "periodo_inicio": "invalid-date",
+                "periodo_fin": "2025-01-31",
+                "fecha_calculo": "2025-01-31",
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code == 302  # Redirects back with error
+
+
+@patch("coati_payroll.vistas.planilla.nomina_routes.NominaService.ejecutar_nomina")
+def test_ejecutar_nomina_post_success(mock_ejecutar, app, client, admin_user, db_session, planilla):
+    """Test successful nomina execution."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Mock successful execution
+        mock_nomina = MagicMock()
+        mock_nomina.id = "test-nomina-id"
+        mock_nomina.procesamiento_en_background = False
+        mock_ejecutar.return_value = (mock_nomina, [], [])
+
+        response = client.post(
+            f"/planilla/{planilla.id}/ejecutar",
+            data={
+                "periodo_inicio": "2025-01-01",
+                "periodo_fin": "2025-01-31",
+                "fecha_calculo": "2025-01-31",
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert f"/planilla/{planilla.id}/nomina/{mock_nomina.id}" in response.location
+
+
+@patch("coati_payroll.vistas.planilla.nomina_routes.NominaService.ejecutar_nomina")
+def test_ejecutar_nomina_post_background_processing(mock_ejecutar, app, client, admin_user, db_session, planilla):
+    """Test nomina execution with background processing."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Mock background processing
+        mock_nomina = MagicMock()
+        mock_nomina.id = "test-nomina-id"
+        mock_nomina.procesamiento_en_background = True
+        mock_nomina.total_empleados = 10
+        mock_ejecutar.return_value = (mock_nomina, [], [])
+
+        response = client.post(
+            f"/planilla/{planilla.id}/ejecutar",
+            data={
+                "periodo_inicio": "2025-01-01",
+                "periodo_fin": "2025-01-31",
+                "fecha_calculo": "2025-01-31",
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+
+# ============================================================================
+# TESTS FOR listar_nominas
+# ============================================================================
+
+
+def test_listar_nominas_requires_read_access(app, client, db_session, planilla):
+    """Test that listar_nominas requires read access."""
+    with app.app_context():
+        response = client.get(f"/planilla/{planilla.id}/nominas", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_listar_nominas_accessible_to_authenticated_users(app, client, admin_user, db_session, planilla, nomina):
+    """Test that authenticated users can list nominas."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nominas")
+        assert response.status_code == 200
+
+
+def test_listar_nominas_shows_nominas(app, client, admin_user, db_session, planilla, nomina):
+    """Test that listar_nominas displays nominas."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nominas")
+        assert response.status_code == 200
+        # Check that nomina is in the response
+        assert nomina.id.encode() in response.data or str(nomina.id) in response.get_data(as_text=True)
+
+
+# ============================================================================
+# TESTS FOR ver_nomina
+# ============================================================================
+
+
+def test_ver_nomina_requires_read_access(app, client, db_session, planilla, nomina):
+    """Test that ver_nomina requires read access."""
+    with app.app_context():
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_ver_nomina_accessible_to_authenticated_users(app, client, admin_user, db_session, planilla, nomina):
+    """Test that authenticated users can view nomina."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}")
+        assert response.status_code == 200
+
+
+def test_ver_nomina_wrong_planilla_redirects(app, client, admin_user, db_session, planilla, nomina):
+    """Test that ver_nomina redirects if nomina doesn't belong to planilla."""
+    with app.app_context():
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda
+
+        from coati_payroll.model import db
+
+        # Create another planilla
+        tipo_planilla = db_session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one()
+        moneda = db_session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+
+        other_planilla = Planilla(
+            nombre="Other Planilla",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            activo=True,
+        )
+        db_session.add(other_planilla)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{other_planilla.id}/nomina/{nomina.id}", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_ver_nomina_with_errors(app, client, admin_user, db_session, planilla, nomina):
+    """Test that ver_nomina displays errors from log."""
+    with app.app_context():
+        # Add error log entry
+        nomina.log_procesamiento = [{"status": "error", "message": "Test error"}]
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}")
+        assert response.status_code == 200
+
+
+def test_ver_nomina_with_warnings(app, client, admin_user, db_session, planilla, nomina):
+    """Test that ver_nomina displays warnings from log."""
+    with app.app_context():
+        # Add warning log entry
+        nomina.log_procesamiento = [{"status": "warning", "message": "Test warning"}]
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}")
+        assert response.status_code == 200
+
+
+# ============================================================================
+# TESTS FOR ver_nomina_empleado
+# ============================================================================
+
+
+def test_ver_nomina_empleado_requires_read_access(app, client, db_session, planilla, nomina, nomina_empleado):
+    """Test that ver_nomina_empleado requires read access."""
+    with app.app_context():
+        response = client.get(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+
+def test_ver_nomina_empleado_accessible_to_authenticated_users(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """Test that authenticated users can view nomina empleado."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}")
+        assert response.status_code == 200
+
+
+def test_ver_nomina_empleado_wrong_nomina_redirects(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """Test that ver_nomina_empleado redirects if empleado doesn't belong to nomina."""
+    with app.app_context():
+        from coati_payroll.model import Nomina
+
+        # Create another nomina
+        other_nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date(2025, 2, 1),
+            periodo_fin=date(2025, 2, 28),
+            estado="generado",
+        )
+        db_session.add(other_nomina)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(
+            f"/planilla/{planilla.id}/nomina/{other_nomina.id}/empleado/{nomina_empleado.id}",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+
+def test_ver_nomina_empleado_shows_detalles(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, nomina_detalle
+):
+    """Test that ver_nomina_empleado displays detalles."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}")
+        assert response.status_code == 200
+
+
+# ============================================================================
+# TESTS FOR progreso_nomina
+# ============================================================================
+
+
+def test_progreso_nomina_requires_read_access(app, client, db_session, planilla, nomina):
+    """Test that progreso_nomina requires read access."""
+    with app.app_context():
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/progreso", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_progreso_nomina_returns_json(app, client, admin_user, db_session, planilla, nomina):
+    """Test that progreso_nomina returns JSON with progress data."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set progress data
+        from coati_payroll.model import db
+
+        nomina = db.session.merge(nomina)
+        nomina.total_empleados = 10
+        nomina.empleados_procesados = 5
+        nomina.empleados_con_error = 1
+        nomina.procesamiento_en_background = True
+        nomina.estado = "calculando"
+        db.session.commit()
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/progreso")
+        assert response.status_code == 200
+        assert response.is_json
+
+        data = response.get_json()
+        assert data["estado"] == "calculando"
+        assert data["total_empleados"] == 10
+        assert data["empleados_procesados"] == 5
+        assert data["empleados_con_error"] == 1
+        assert data["progreso_porcentaje"] == 50
+        assert data["procesamiento_en_background"] is True
+
+
+def test_progreso_nomina_wrong_planilla_returns_404(app, client, admin_user, db_session, planilla, nomina):
+    """Test that progreso_nomina returns 404 if nomina doesn't belong to planilla."""
+    with app.app_context():
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda
+
+        from coati_payroll.model import db
+
+        # Create another planilla
+        tipo_planilla = db_session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one()
+        moneda = db_session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+
+        other_planilla = Planilla(
+            nombre="Other Planilla",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            activo=True,
+        )
+        db_session.add(other_planilla)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{other_planilla.id}/nomina/{nomina.id}/progreso")
+        assert response.status_code == 404
+
+
+# ============================================================================
+# TESTS FOR aprobar_nomina
+# ============================================================================
+
+
+def test_aprobar_nomina_requires_write_access(app, client, db_session, planilla, nomina):
+    """Test that aprobar_nomina requires write access."""
+    with app.app_context():
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aprobar", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_aprobar_nomina_success(app, client, admin_user, db_session, planilla, nomina):
+    """Test successful nomina approval."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Ensure nomina is in correct state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "generado"
+        db.session.commit()
+        db.session.refresh(nomina)
+        assert nomina.estado == "generado"
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aprobar", follow_redirects=False)
+        assert response.status_code == 302
+
+        # Verify nomina was approved
+        updated_nomina = db.session.get(Nomina, nomina.id)
+        assert updated_nomina.estado == "aprobado"
+
+
+def test_aprobar_nomina_wrong_state(app, client, admin_user, db_session, planilla, nomina):
+    """Test that aprobar_nomina only works for 'generado' state."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Change state to something other than 'generado'
+        nomina.estado = "aprobado"
+        db_session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aprobar", follow_redirects=False)
+        assert response.status_code == 302  # Redirects with error
+
+
+def test_aprobar_nomina_with_errors_fails(app, client, admin_user, db_session, planilla, nomina):
+    """Test that aprobar_nomina fails if nomina has errors."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Add error log entry
+        nomina = db.session.merge(nomina)
+        nomina.estado = "generado"
+        nomina.log_procesamiento = [{"status": "error", "message": "Test error"}]
+        db.session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aprobar", follow_redirects=False)
+        assert response.status_code == 302  # Redirects with error
+
+        # Verify nomina was NOT approved
+        updated_nomina = db.session.get(Nomina, nomina.id)
+        assert updated_nomina.estado == "generado"
+
+
+# ============================================================================
+# TESTS FOR aplicar_nomina
+# ============================================================================
+
+
+def test_aplicar_nomina_requires_write_access(app, client, db_session, planilla, nomina):
+    """Test that aplicar_nomina requires write access."""
+    with app.app_context():
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aplicar", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_aplicar_nomina_success(app, client, admin_user, db_session, planilla, nomina):
+    """Test successful nomina application."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # First approve the nomina
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aprobado"
+        db.session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aplicar", follow_redirects=False)
+        assert response.status_code == 302
+
+        # Verify nomina was applied
+        updated_nomina = db.session.get(Nomina, nomina.id)
+        assert updated_nomina.estado == "aplicado"
+
+
+def test_aplicar_nomina_wrong_state(app, client, admin_user, db_session, planilla, nomina):
+    """Test that aplicar_nomina only works for 'aprobado' state."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Ensure state is 'generado'
+        nomina = db.session.merge(nomina)
+        nomina.estado = "generado"
+        db.session.commit()
+        db.session.refresh(nomina)
+        assert nomina.estado == "generado"
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aplicar", follow_redirects=False)
+        assert response.status_code == 302  # Redirects with error
+
+        # Verify nomina was NOT applied
+        updated_nomina = db.session.get(Nomina, nomina.id)
+        assert updated_nomina.estado == "generado"
+
+
+# ============================================================================
+# TESTS FOR reintentar_nomina
+# ============================================================================
+
+
+def test_reintentar_nomina_requires_write_access(app, client, db_session, planilla, nomina):
+    """Test that reintentar_nomina requires write access."""
+    with app.app_context():
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/reintentar", follow_redirects=False)
+        assert response.status_code == 302
+
+
+@patch("coati_payroll.vistas.planilla.nomina_routes.retry_failed_nomina")
+def test_reintentar_nomina_success(mock_retry, app, client, admin_user, db_session, planilla, nomina):
+    """Test successful nomina retry."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to error state
+        nomina.estado = NominaEstado.ERROR
+        db_session.commit()
+
+        # Mock successful retry
+        mock_retry.return_value = {"success": True}
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/reintentar", follow_redirects=False)
+        assert response.status_code == 302
+
+
+@patch("coati_payroll.vistas.planilla.nomina_routes.retry_failed_nomina")
+def test_reintentar_nomina_failure(mock_retry, app, client, admin_user, db_session, planilla, nomina):
+    """Test failed nomina retry."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to error state
+        nomina.estado = NominaEstado.ERROR
+        db_session.commit()
+
+        # Mock failed retry
+        mock_retry.return_value = {"success": False, "error": "Test error"}
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/reintentar", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_reintentar_nomina_wrong_state(app, client, admin_user, db_session, planilla, nomina):
+    """Test that reintentar_nomina only works for 'error' state."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Keep state as 'generado'
+        assert nomina.estado == "generado"
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/reintentar", follow_redirects=False)
+        assert response.status_code == 302  # Redirects with error
+
+
+# ============================================================================
+# TESTS FOR recalcular_nomina
+# ============================================================================
+
+
+def test_recalcular_nomina_requires_write_access(app, client, db_session, planilla, nomina):
+    """Test that recalcular_nomina requires write access."""
+    with app.app_context():
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/recalcular", follow_redirects=False)
+        assert response.status_code == 302
+
+
+@patch("coati_payroll.vistas.planilla.nomina_routes.NominaService.recalcular_nomina")
+def test_recalcular_nomina_success(mock_recalcular, app, client, admin_user, db_session, planilla, nomina):
+    """Test successful nomina recalculation."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Mock successful recalculation
+        mock_new_nomina = MagicMock()
+        mock_new_nomina.id = "new-nomina-id"
+        mock_recalcular.return_value = (mock_new_nomina, [], [])
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/recalcular", follow_redirects=False)
+        assert response.status_code == 302
+        assert f"/planilla/{planilla.id}/nomina/{mock_new_nomina.id}" in response.location
+
+
+def test_recalcular_nomina_aplicado_state_fails(app, client, admin_user, db_session, planilla, nomina):
+    """Test that recalcular_nomina fails for 'aplicado' state."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to aplicado state
+        nomina.estado = "aplicado"
+        db_session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/recalcular", follow_redirects=False)
+        assert response.status_code == 302  # Redirects with error
+
+
+# ============================================================================
+# TESTS FOR ver_log_nomina
+# ============================================================================
+
+
+def test_ver_log_nomina_requires_read_access(app, client, db_session, planilla, nomina):
+    """Test that ver_log_nomina requires read access."""
+    with app.app_context():
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/log", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_ver_log_nomina_accessible_to_authenticated_users(app, client, admin_user, db_session, planilla, nomina):
+    """Test that authenticated users can view nomina log."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Add log entries
+        nomina.log_procesamiento = [
+            {"status": "info", "message": "Test info"},
+            {"status": "error", "message": "Test error"},
+        ]
+        db_session.commit()
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/log")
+        assert response.status_code == 200
+
+
+def test_ver_log_nomina_wrong_planilla_redirects(app, client, admin_user, db_session, planilla, nomina):
+    """Test that ver_log_nomina redirects if nomina doesn't belong to planilla."""
+    with app.app_context():
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda
+
+        from coati_payroll.model import db
+
+        # Create another planilla
+        tipo_planilla = db_session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one()
+        moneda = db_session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+
+        other_planilla = Planilla(
+            nombre="Other Planilla",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            activo=True,
+        )
+        db_session.add(other_planilla)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{other_planilla.id}/nomina/{nomina.id}/log", follow_redirects=False)
+        assert response.status_code == 302
+
+
+# ============================================================================
+# TESTS FOR regenerar_comprobante_contable
+# ============================================================================
+
+
+def test_regenerar_comprobante_contable_requires_write_access(app, client, db_session, planilla, nomina):
+    """Test that regenerar_comprobante_contable requires write access."""
+    with app.app_context():
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+        )
+        assert response.status_code == 302
+
+
+def test_regenerar_comprobante_contable_wrong_planilla_redirects(app, client, admin_user, db_session, planilla, nomina):
+    """Test that regenerar_comprobante_contable redirects if nomina doesn't belong to planilla."""
+    with app.app_context():
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda
+        from coati_payroll.model import db
+
+        # Create another planilla
+        tipo_planilla = db_session.execute(db.select(TipoPlanilla).filter_by(codigo="MENSUAL")).scalar_one()
+        moneda = db_session.execute(db.select(Moneda).filter_by(codigo="USD")).scalar_one()
+
+        other_planilla = Planilla(
+            nombre="Other Planilla",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            activo=True,
+        )
+        db_session.add(other_planilla)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.post(
+            f"/planilla/{other_planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+        )
+        assert response.status_code == 302
+
+
+def test_regenerar_comprobante_contable_invalid_state(app, client, admin_user, db_session, planilla, nomina):
+    """Test that regenerar_comprobante_contable only works for APLICADO or PAGADO state."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'generado' state (invalid for regenerar_comprobante)
+        nomina = db.session.merge(nomina)
+        nomina.estado = "generado"
+        db_session.commit()
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+        )
+        assert response.status_code == 302
+        # Should redirect to ver_nomina with error message
+
+
+def test_regenerar_comprobante_contable_aplicado_state_success(app, client, admin_user, db_session, planilla, nomina):
+    """Test successful comprobante regeneration for APLICADO state."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'aplicado' state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aplicado"
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService
+        mock_comprobante = MagicMock()
+        mock_comprobante.advertencias = []
+
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.return_value = mock_comprobante
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            assert f"/planilla/{planilla.id}/nomina/{nomina.id}/log" in response.location
+
+
+def test_regenerar_comprobante_contable_pagado_state_success(app, client, admin_user, db_session, planilla, nomina):
+    """Test successful comprobante regeneration for PAGADO state."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'pagado' state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "pagado"
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService
+        mock_comprobante = MagicMock()
+        mock_comprobante.advertencias = []
+
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.return_value = mock_comprobante
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            assert f"/planilla/{planilla.id}/nomina/{nomina.id}/log" in response.location
+
+
+def test_regenerar_comprobante_contable_with_warnings(app, client, admin_user, db_session, planilla, nomina):
+    """Test comprobante regeneration displays warnings if configuration incomplete."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'aplicado' state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aplicado"
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService with warnings
+        mock_comprobante = MagicMock()
+        mock_comprobante.advertencias = ["Warning 1: Configuration incomplete", "Warning 2: Missing account"]
+
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.return_value = mock_comprobante
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            # Warnings should be flashed to the user
+
+
+def test_regenerar_comprobante_contable_handles_exception(app, client, admin_user, db_session, planilla, nomina):
+    """Test that regenerar_comprobante_contable handles exceptions gracefully."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'aplicado' state
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aplicado"
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService to raise an exception
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.side_effect = Exception("Database error")
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            # Should redirect to ver_log_nomina with error message
+
+
+def test_regenerar_comprobante_contable_uses_fecha_calculo_original(
+    app, client, admin_user, db_session, planilla, nomina
+):
+    """Test that regenerar_comprobante_contable uses fecha_calculo_original if available."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from unittest.mock import MagicMock, patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Set nomina to 'aplicado' state with fecha_calculo_original
+        nomina = db.session.merge(nomina)
+        nomina.estado = "aplicado"
+        nomina.fecha_calculo_original = date(2025, 1, 15)
+        nomina.periodo_fin = date(2025, 1, 31)
+        db_session.commit()
+
+        # Mock the AccountingVoucherService
+        mock_comprobante = MagicMock()
+        mock_comprobante.advertencias = []
+
+        with patch(
+            "coati_payroll.nomina_engine.services.accounting_voucher_service.AccountingVoucherService"
+        ) as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.generate_accounting_voucher.return_value = mock_comprobante
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/regenerar-comprobante", follow_redirects=False
+            )
+            assert response.status_code == 302
+            assert f"/planilla/{planilla.id}/nomina/{nomina.id}/log" in response.location

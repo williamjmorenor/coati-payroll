@@ -1,23 +1,23 @@
-site_name: Coati Payroll - Documentación
-site_description: Sistema de administración de nóminas y planillas
+site_name: Coati Payroll - Docs
+site_description: Motor para el calculo de nóminas y planillas
 site_author: BMO Soluciones, S.A.
-site_url: https://williamjmorenor.github.io/coati/
+site_url: https://bmosoluciones.github.io/coati-payroll/
 
-repo_name: williamjmorenor/coati
-repo_url: https://github.com/williamjmorenor/coati
+repo_name: bmosoluciones/coati-payroll
+repo_url: https://github.com/bmosoluciones/coati-payroll
 
 theme:
   name: material
   language: es
   palette:
     - scheme: default
-      primary: teal
+      primary: brown
       accent: amber
       toggle:
         icon: material/brightness-7
         name: Cambiar a modo oscuro
     - scheme: slate
-      primary: teal
+      primary: brown
       accent: amber
       toggle:
         icon: material/brightness-4
@@ -76,35 +76,30 @@ markdown_extensions:
 
 nav:
   - Inicio: index.md
-  - Guía de Inicio Rápido: guia/inicio-rapido.md
   - Instalación:
     - Requisitos del Sistema: instalacion/requisitos.md
     - Instalación: instalacion/instalacion.md
-    - Configuración Inicial: instalacion/configuracion.md
-  - Guía de Uso:
+  - Tutorial Completo:
+    - Guía de Inicio Rápido: guia/inicio-rapido.md
     - Primeros Pasos: guia/primeros-pasos.md
+    - Configuración Inicial: instalacion/configuracion.md
+    - Paso a Paso - Nómina Completa: tutorial/nomina-completa.md
+  - Guía de Uso:
     - Gestión de Usuarios: guia/usuarios.md
     - Gestión de Empresas: guia/empresas.md
     - Monedas y Tipos de Cambio: guia/monedas.md
     - Gestión de Empleados: guia/empleados.md
-    - Campos Personalizados: guia/campos-personalizados.md
     - Percepciones (Ingresos): guia/percepciones.md
     - Deducciones: guia/deducciones.md
     - Prestaciones (Aportes Patronales): guia/prestaciones.md
     - Reglas de Cálculo: guia/reglas-calculo.md
     - Préstamos y Adelantos: guia/prestamos.md
+    - Campos Personalizados: guia/campos-personalizados.md
     - Configuración de Planillas: guia/planillas.md
     - Ejecución de Nómina: guia/nomina.md
+    - Sistema de Plugins: guia/plugins.md
     - Gestión de Vacaciones: guia/vacaciones.md
     - Configuración Contable: guia/configuracion-contable.md
-  - Tutorial Completo:
-    - Paso a Paso - Nómina Completa: tutorial/nomina-completa.md
-  - Guías Locales:
-    - Introducción: local_guides/README.md
-    - Nicaragua:
-      - Guía de Implementación: local_guides/nicaragua.md
-      - Guía Técnica para Implementadores: local_guides/nicaragua-implementacion-tecnica.md
-      - Cálculo del IR - Paso a Paso: local_guides/nicaragua-ir-paso-a-paso.md
   - Características Avanzadas:
     - Sistema de Colas: queue_system.md
     - Procesamiento en Segundo Plano: background-payroll-processing.md
@@ -125,6 +120,6 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/williamjmorenor/coati
+      link: https://github.com/bmosoluciones/coati-payroll
 
 copyright: Copyright &copy; 2025 BMO Soluciones, S.A.

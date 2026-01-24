@@ -1,0 +1,161 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Helper functions for managing planilla associations."""
+
+from sqlalchemy import func, select
+from coati_payroll.model import (
+    db,
+    PlanillaEmpleado,
+    PlanillaIngreso,
+    PlanillaDeduccion,
+    PlanillaPrestacion,
+    PlanillaReglaCalculo,
+)
+
+
+def get_planilla_component_counts(planilla_id: str) -> dict:
+    """Get counts of all components associated with a planilla.
+
+    Returns a dictionary with counts for empleados, percepciones, deducciones,
+    prestaciones, and reglas.
+    """
+    return {
+        "empleados_count": db.session.execute(
+            select(func.count()).select_from(PlanillaEmpleado).filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "percepciones_count": db.session.execute(
+            select(func.count()).select_from(PlanillaIngreso).filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "deducciones_count": db.session.execute(
+            select(func.count()).select_from(PlanillaDeduccion).filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "prestaciones_count": db.session.execute(
+            select(func.count()).select_from(PlanillaPrestacion).filter_by(planilla_id=planilla_id)
+        ).scalar(),
+        "reglas_count": db.session.execute(
+            select(func.count()).select_from(PlanillaReglaCalculo).filter_by(planilla_id=planilla_id)
+        ).scalar(),
+    }
+
+
+def agregar_asociacion(
+    planilla_id: str,
+    tipo_componente: str,
+    componente_id: str,
+    datos_extra: dict | None = None,
+    usuario: str | None = None,
+) -> tuple[bool, str | None, str | None]:
+    """Generic function to add any component association to a planilla.
+
+    Args:
+        planilla_id: ID of the planilla
+        tipo_componente: Type of component ('percepcion', 'deduccion', 'prestacion', 'regla')
+        componente_id: ID of the component to associate
+        datos_extra: Additional data for the association (orden, prioridad, etc.)
+        usuario: Username of the user creating the association
+
+    Returns:
+        Tuple of (success, error_message, association_id). If success is False, error_message is set.
+    """
+    from coati_payroll.model import (
+        Planilla,
+        PlanillaIngreso,
+        PlanillaDeduccion,
+        PlanillaPrestacion,
+        PlanillaReglaCalculo,
+    )
+
+    datos_extra = datos_extra or {}
+    usuario = usuario or "system"
+
+    # Verify planilla exists
+    planilla = db.session.get(Planilla, planilla_id)
+    if not planilla:
+        return False, "Planilla no encontrada", None
+
+    if not componente_id:
+        return False, f"Debe seleccionar una {tipo_componente}.", None
+
+    # Check for existing association based on type
+    existing = None
+    association_class = None
+    filter_params = {"planilla_id": planilla_id}
+
+    if tipo_componente == "percepcion":
+        association_class = PlanillaIngreso
+        filter_params["percepcion_id"] = componente_id
+    elif tipo_componente == "deduccion":
+        association_class = PlanillaDeduccion
+        filter_params["deduccion_id"] = componente_id
+    elif tipo_componente == "prestacion":
+        association_class = PlanillaPrestacion
+        filter_params["prestacion_id"] = componente_id
+    elif tipo_componente == "regla":
+        association_class = PlanillaReglaCalculo
+        filter_params["regla_calculo_id"] = componente_id
+    else:
+        return False, f"Tipo de componente desconocido: {tipo_componente}", None
+
+    existing = db.session.execute(db.select(association_class).filter_by(**filter_params)).scalar_one_or_none()
+
+    if existing:
+        return False, f"La {tipo_componente} ya está asignada a esta planilla.", None
+
+    # Create association based on type
+    if tipo_componente == "percepcion":
+        orden = datos_extra.get("orden", 0)
+        association = PlanillaIngreso(
+            planilla_id=planilla_id,
+            percepcion_id=componente_id,
+            orden=orden,
+            editable=True,
+            activo=True,
+            creado_por=usuario,
+        )
+    elif tipo_componente == "deduccion":
+        prioridad = datos_extra.get("prioridad", 100)
+        es_obligatoria = datos_extra.get("es_obligatoria", False)
+        association = PlanillaDeduccion(
+            planilla_id=planilla_id,
+            deduccion_id=componente_id,
+            prioridad=prioridad,
+            es_obligatoria=es_obligatoria,
+            editable=True,
+            activo=True,
+            creado_por=usuario,
+        )
+    elif tipo_componente == "prestacion":
+        orden = datos_extra.get("orden", 0)
+        association = PlanillaPrestacion(
+            planilla_id=planilla_id,
+            prestacion_id=componente_id,
+            orden=orden,
+            editable=True,
+            activo=True,
+            creado_por=usuario,
+        )
+    elif tipo_componente == "regla":
+        orden = datos_extra.get("orden", 0)
+        association = PlanillaReglaCalculo(
+            planilla_id=planilla_id,
+            regla_calculo_id=componente_id,
+            orden=orden,
+            activo=True,
+            creado_por=usuario,
+        )
+
+    db.session.add(association)
+    db.session.commit()
+
+    return True, None, association.id

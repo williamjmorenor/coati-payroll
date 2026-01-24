@@ -11,6 +11,35 @@
     </div>
 </div>
 
+{% if has_errors %}
+<div class="alert alert-danger mb-4">
+    <h5><i class="fas fa-times-circle"></i> Esta Nómina Tiene Errores de Procesamiento</h5>
+    <p class="mb-2">No se puede aprobar ni aplicar esta nómina hasta que se corrijan los siguientes errores:</p>
+    <ul class="mb-2">
+        {% for error in error_messages %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    <p class="mb-0">
+        <strong>Acción requerida:</strong> Corrija los datos (tipo de cambio, configuración, etc.) y recalcule la nómina.
+        <a href="{{ url_for('planilla.ver_log_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="alert-link">Ver log completo</a>
+    </p>
+</div>
+{% elif has_warnings %}
+<div class="alert alert-warning mb-4">
+    <h5><i class="fas fa-exclamation-triangle"></i> Esta Nómina Tiene Advertencias</h5>
+    <p class="mb-2">La nómina se procesó pero hay situaciones que requieren su atención:</p>
+    <ul class="mb-2">
+        {% for warning in warning_messages %}
+        <li>{{ warning }}</li>
+        {% endfor %}
+    </ul>
+    <p class="mb-0">
+        <a href="{{ url_for('planilla.ver_log_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="alert-link">Ver log completo</a>
+    </p>
+</div>
+{% endif %}
+
 {% if nomina.estado == 'calculando' %}
 <div class="card mb-4 border-primary">
     <div class="card-header bg-primary text-white">
@@ -79,12 +108,12 @@
             <div class="card-body" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.9em; background-color: #f8f9fa;" id="activity-log">
                 {% if nomina.log_procesamiento %}
                     {% for entry in nomina.log_procesamiento %}
-                    <div class="log-entry {% if entry.status == 'success' %}text-success{% elif entry.status == 'error' %}text-danger{% else %}text-muted{% endif %}">
-                        {{ entry.message }}
+                    <div class="log-entry {% if entry.status == 'success' %}text-success{% elif entry.status == 'error' %}text-danger{% elif entry.status == 'warning' %}text-warning{% else %}text-muted{% endif %}">
+                        {% if entry.status == 'error' %}<i class="fas fa-times-circle"></i> {% elif entry.status == 'warning' %}<i class="fas fa-exclamation-triangle"></i> {% endif %}{{ entry.message }}
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div class="text-muted">Iniciando procesamiento...</div>
+                    <div class="text-muted">{{ _('No hay mensajes en el log de procesamiento para esta nómina.') }}</div>
                 {% endif %}
             </div>
         </div>
@@ -103,15 +132,37 @@
     <p>Ocurrió un error durante el cálculo de la nómina. Detalles:</p>
     {% if nomina.errores_calculo %}
     <ul>
-        {% for empleado_id, error in nomina.errores_calculo.items() %}
-        <li><strong>{{ empleado_id }}:</strong> {{ error }}</li>
+        {% for key, error in nomina.errores_calculo.items() %}
+        <li>
+            <strong>{{ key }}:</strong> 
+            {% if error is mapping %}
+                {{ error.critical_error or error.error or error }}
+            {% else %}
+                {{ error }}
+            {% endif %}
+        </li>
         {% endfor %}
     </ul>
     {% endif %}
-    <p class="mb-0">
+    <p class="mb-3">
         <strong>Empleados procesados:</strong> {{ nomina.empleados_procesados or 0 }} / {{ nomina.total_empleados or 0 }}<br>
         <strong>Empleados con error:</strong> {{ nomina.empleados_con_error or 0 }}
     </p>
+    <div>
+        <form action="{{ url_for('planilla.reintentar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
+              method="post" style="display: inline;">
+            <button type="submit" class="btn btn-warning" 
+                    onclick="return confirm('¿Reintentar el procesamiento de esta nómina? Se limpiarán los datos parciales y se intentará procesar nuevamente.')">
+                <i class="fas fa-redo"></i> Reintentar Procesamiento
+            </button>
+        </form>
+        {% if nomina.errores_calculo and nomina.errores_calculo.get('is_recoverable') == False %}
+        <small class="text-muted d-block mt-2">
+            <i class="fas fa-info-circle"></i> 
+            Este error no es recuperable automáticamente. Revise la configuración o los datos antes de reintentar.
+        </small>
+        {% endif %}
+    </div>
 </div>
 {% endif %}
 
@@ -140,9 +191,15 @@
                 {% if nomina.estado == 'generado' %}
                 <form action="{{ url_for('planilla.aprobar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                       method="post" style="display: inline;">
+                    {% if has_errors %}
+                    <button type="button" class="btn btn-success" disabled title="No se puede aprobar una nómina con errores de procesamiento">
+                        <i class="fas fa-check"></i> Aprobar
+                    </button>
+                    {% else %}
                     <button type="submit" class="btn btn-success" onclick="return confirm('¿Aprobar esta nómina?')">
                         <i class="fas fa-check"></i> Aprobar
                     </button>
+                    {% endif %}
                 </form>
                 {% elif nomina.estado == 'aprobado' %}
                 <form action="{{ url_for('planilla.aplicar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"

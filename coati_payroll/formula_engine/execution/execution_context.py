@@ -1,0 +1,52 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Execution context for formula engine."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from decimal import Decimal
+from typing import Any, Callable
+
+from ..ast.safe_operators import SAFE_FUNCTIONS, SAFE_OPERATORS
+
+
+@dataclass
+class ExecutionContext:
+    """Context for formula execution."""
+
+    variables: dict[str, Decimal]
+    tax_tables: dict[str, Any]
+    trace_callback: Callable[[str], None] | None = None
+    safe_operators: dict[type, Any] = field(default_factory=lambda: SAFE_OPERATORS)
+    safe_functions: dict[str, Any] = field(default_factory=lambda: SAFE_FUNCTIONS)
+
+    def with_variable(self, name: str, value: Decimal) -> "ExecutionContext":
+        """Create a new context with an additional variable.
+
+        Args:
+            name: Variable name
+            value: Variable value
+
+        Returns:
+            New context with updated variables
+        """
+        new_vars = {**self.variables, name: value}
+        return ExecutionContext(
+            variables=new_vars,
+            tax_tables=self.tax_tables,
+            trace_callback=self.trace_callback,
+            safe_operators=self.safe_operators,
+            safe_functions=self.safe_functions,
+        )

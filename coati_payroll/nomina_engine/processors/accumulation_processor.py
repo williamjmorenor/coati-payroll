@@ -1,0 +1,90 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Accumulation processor for annual accumulated values."""
+
+from __future__ import annotations
+
+from datetime import date
+
+from coati_payroll.model import db, Deduccion
+from coati_payroll.i18n import _
+from ..domain.employee_calculation import EmpleadoCalculo
+from ..repositories.acumulado_repository import AcumuladoRepository
+from ..validators import ValidationError
+
+
+class AccumulationProcessor:
+    """Processor for updating accumulated annual values."""
+
+    def __init__(self, acumulado_repository: AcumuladoRepository):
+        self.acumulado_repo = acumulado_repository
+
+    def update_accumulations(
+        self,
+        emp_calculo: EmpleadoCalculo,
+        planilla,
+        periodo_fin: date,
+        fecha_calculo: date,
+    ) -> None:
+        """Update accumulated annual values for the employee."""
+        if not planilla.tipo_planilla:
+            return
+
+        tipo_planilla = planilla.tipo_planilla
+        empleado = emp_calculo.empleado
+
+        # Calculate fiscal period
+        anio = fecha_calculo.year
+        mes_inicio = tipo_planilla.mes_inicio_fiscal
+        dia_inicio = tipo_planilla.dia_inicio_fiscal
+
+        if fecha_calculo.month < mes_inicio:
+            anio -= 1
+
+        periodo_fiscal_inicio = date(anio, mes_inicio, dia_inicio)
+
+        # Determine empresa_id
+        empresa_id = planilla.empresa_id or empleado.empresa_id
+        if not empresa_id:
+            raise ValidationError(
+                _("No se puede crear acumulado anual: ni la planilla ni el empleado tienen empresa_id asignado")
+            )
+
+        # Get or create accumulated record
+        acumulado = self.acumulado_repo.get_or_create(empleado, tipo_planilla.id, empresa_id, periodo_fiscal_inicio)
+
+        # Reset monthly accumulation if entering a new month
+        acumulado.reset_mes_acumulado_if_needed(periodo_fin)
+
+        # Update accumulated values
+        acumulado.salario_bruto_acumulado += emp_calculo.salario_bruto
+        acumulado.salario_acumulado_mes += emp_calculo.salario_bruto
+        acumulado.periodos_procesados += 1
+        acumulado.ultimo_periodo_procesado = periodo_fin
+
+        # Calculate gravable income (perceptions that are gravable)
+        salario_gravable = emp_calculo.salario_base
+        for percepcion in emp_calculo.percepciones:
+            if percepcion.gravable:
+                salario_gravable += percepcion.monto
+        acumulado.salario_gravable_acumulado += salario_gravable
+
+        # Sum up before-tax deductions and taxes
+        for deduccion in emp_calculo.deducciones:
+            deduccion_obj = db.session.get(Deduccion, deduccion.deduccion_id) if deduccion.deduccion_id else None
+            if deduccion_obj:
+                if deduccion_obj.es_impuesto:
+                    acumulado.impuesto_retenido_acumulado += deduccion.monto
+                elif deduccion_obj.antes_impuesto:
+                    acumulado.deducciones_antes_impuesto_acumulado += deduccion.monto

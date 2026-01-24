@@ -19,7 +19,7 @@ import os
 
 from coati_payroll.log import log
 from coati_payroll.queue.driver import QueueDriver
-from coati_payroll.queue.drivers import DramatiqDriver, HueyDriver
+from coati_payroll.queue.drivers import DramatiqDriver, HueyDriver, NoopQueueDriver
 
 
 _cached_driver: QueueDriver | None = None
@@ -71,6 +71,12 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
         RuntimeError: If no driver is available
     """
     global _cached_driver
+
+    # In test environments, always use Noop driver to avoid optional dependencies
+    if force_backend is None and (os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("TESTING") == "True"):
+        driver = NoopQueueDriver()
+        _cached_driver = driver
+        return driver
 
     # Return cached driver if available
     if _cached_driver is not None and force_backend is None:

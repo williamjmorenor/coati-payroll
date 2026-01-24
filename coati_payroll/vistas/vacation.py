@@ -25,6 +25,7 @@ from decimal import Decimal
 from flask import Blueprint, flash, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 
 from coati_payroll.enums import TipoUsuario, VacationLedgerType
 from coati_payroll.i18n import _
@@ -76,7 +77,12 @@ def policy_new():
 
     # Populate planilla choices
     planillas = (
-        db.session.execute(db.select(Planilla).filter(Planilla.activo.is_(True)).order_by(Planilla.nombre))
+        db.session.execute(
+            db.select(Planilla)
+            .options(selectinload(Planilla.empresa))
+            .filter(Planilla.activo.is_(True))
+            .order_by(Planilla.nombre)
+        )
         .scalars()
         .all()
     )
@@ -129,7 +135,12 @@ def policy_edit(policy_id):
 
     # Populate planilla choices
     planillas = (
-        db.session.execute(db.select(Planilla).filter(Planilla.activo.is_(True)).order_by(Planilla.nombre))
+        db.session.execute(
+            db.select(Planilla)
+            .options(selectinload(Planilla.empresa))
+            .filter(Planilla.activo.is_(True))
+            .order_by(Planilla.nombre)
+        )
         .scalars()
         .all()
     )

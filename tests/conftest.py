@@ -110,6 +110,27 @@ def db_session(app):
         # Replace the default session with our transactional session
         _db.session = session
 
+        # Disable Flask-SQLAlchemy's automatic session removal on teardown.
+        # The default teardown handler calls db.session.remove(), which discards
+        # the scoped session after each request. That detaches model instances
+        # created in the test before the test can refresh them, triggering
+        # "Instance ... is not persistent within this Session" errors. For the
+        # isolated in-memory DB used in tests we keep the session alive for the
+        # whole test and let the fixture clean it up explicitly.
+        try:
+            app.teardown_appcontext_funcs = [
+                func for func in app.teardown_appcontext_funcs if getattr(func, "__name__", "") != "shutdown_session"
+            ]
+            # Also neutralize any remaining teardown calls to session.remove()
+            session.remove = lambda: None
+        except Exception:
+            pass
+
+        # IMPORTANT: For SQLite in-memory databases, schema is per-connection.
+        # Ensure tables exist on this connection, otherwise tests will see
+        # "no such table" errors.
+        _db.metadata.create_all(bind=connection)
+
         yield session
 
         # Rollback the transaction after the test
