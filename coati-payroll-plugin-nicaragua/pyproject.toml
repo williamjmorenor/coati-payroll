@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coati-payroll-plugin-nicaragua"
+version = "1.0.0"
+description = "Plugin de Coati Payroll para Nicaragua - Cálculos de IR e INSS"
+readme = "README.md"
+authors = [
+    {name = "BMO Soluciones, S.A.", email = "info@bmosoluciones.com"}
+]
+license = {text = "Apache-2.0"}
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Framework :: Flask",
+]
+
+dependencies = [
+    # Coati Payroll debe estar instalado
+]
+
+[project.urls]
+"Homepage" = "https://github.com/williamjmorenor/coati-payroll"
+"Bug Tracker" = "https://github.com/williamjmorenor/coati-payroll/issues"
+"Documentation" = "https://github.com/williamjmorenor/coati-payroll"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["coati_payroll_plugin_nicaragua*"]
+
+[tool.setuptools.package-data]
+coati_payroll_plugin_nicaragua = ["templates/**/*", "static/**/*", "docs/**/*"]
