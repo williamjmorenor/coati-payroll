@@ -131,19 +131,28 @@ La CLI incluye el grupo:
 
 - `payrollctl plugins`
 
-Y por cada plugin instalado expone:
+Y por cada plugin instalado expone los siguientes subcomandos:
 
 - `payrollctl plugins XXXXXXXX init`
 - `payrollctl plugins XXXXXXXX update`
+- `payrollctl plugins XXXXXXXX enable`
+- `payrollctl plugins XXXXXXXX disable`
+- `payrollctl plugins XXXXXXXX status`
+- `payrollctl plugins XXXXXXXX version`
+- `payrollctl plugins XXXXXXXX info`
+- `payrollctl plugins XXXXXXXX maintainer`
+    Nota: por compatibilidad, también existe el alias `mantainer` (con n mal colocada).
+- `payrollctl plugins XXXXXXXX contact`
+- `payrollctl plugins XXXXXXXX demo_data`
 
-Importante: `init` y `update` no aparecen directamente bajo `payrollctl plugins`, sino bajo el subcomando del plugin.
+Importante: `init`, `update` y demás subcomandos no aparecen directamente bajo `payrollctl plugins`, sino bajo el subcomando del plugin.
 
 La jerarquía real es:
 
 - `payrollctl plugins`
 - `payrollctl plugins XXXXXXXX`
-  - `init`
-  - `update`
+    - `init`, `update`, `enable`, `disable`, `status`, `version`, `info`, `maintainer`, `contact`
+    - `demo_data`
 
 ### Ejemplos de `--help`
 
@@ -170,7 +179,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  gt
+    gt
 ```
 
 Y el `--help` del plugin muestra `init` y `update`:
@@ -183,8 +192,16 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  init
-  update
+    init
+    update
+    enable
+    disable
+    status
+    version
+    info
+    maintainer
+    contact
+    demo_data
 ```
 
 ### init (función crítica)
@@ -324,6 +341,75 @@ def update():
     if p is not None:
         p.descripcion = "Sueldo ordinario (actualizado)"
         db.session.commit()
+
+### enable / disable
+
+Marcan el plugin como activo o inactivo en la tabla `plugin_registry`.
+
+- `enable` establece `active = true`. Requiere que el plugin esté instalado.
+- `disable` establece `active = false`.
+
+Tras `enable`, se recomienda reiniciar la aplicación para registrar los blueprints del plugin.
+
+### status
+
+Muestra el estado del plugin, incluyendo:
+
+- `installed`: si el paquete está presente en el entorno
+- `active`: si está habilitado en la base de datos
+- `version`: versión detectada
+
+Ejemplo:
+
+```text
+$ payrollctl plugins gt status
+Estado del plugin 'gt':
+    Installed: True
+    Active: False
+    Version: 1.0.0
+```
+
+### version
+
+Imprime la versión del plugin (detectada via distribución o metadatos del módulo).
+
+### info / mantainer / contact
+
+Muestran metadatos del plugin si están disponibles en el módulo:
+
+- `PLUGIN_INFO` (dict) o `INFO` (dict) con `description`, `maintainer`, `contact`, `version`
+- o atributos sueltos: `MAINTAINER`, `CONTACT`, `__version__`
+
+Si no hay descripción explícita, se usará el docstring del módulo.
+
+### demo_data
+
+Permite que el plugin cargue datos de demostración pensados para pruebas automáticas y ambientes de desarrollo.
+
+- El módulo del plugin debe exponer una función `demo_data()` (o alternativamente `load_demo_data()`).
+- La CLI invoca esta función y luego ejecuta `db.create_all()` para asegurar la existencia de tablas recientes.
+
+Ejemplo de contrato en el plugin:
+
+```python
+def demo_data():
+    from coati_payroll.model import db, Empleado
+
+    # Crear empleados de prueba idempotentemente
+    if not db.session.execute(db.select(Empleado).limit(1)).first():
+        e = Empleado()
+        e.codigo = "EMP-DEMO-001"
+        e.nombre = "Demo"
+        e.apellido = "User"
+        db.session.add(e)
+        db.session.commit()
+```
+
+Uso:
+
+```bash
+payrollctl plugins XXXXXXXX demo_data
+```
 ```
 
 ## Responsabilidad del implementador
@@ -450,7 +536,7 @@ def reportes():
 def register_blueprints(app):
     """
     Función obligatoria que registra los blueprints del plugin.
-    
+
     Args:
         app: Instancia de Flask
     """
@@ -464,7 +550,7 @@ def register_blueprints(app):
 def get_menu_entry():
     """
     Devuelve la entrada del menú para este plugin.
-    
+
     Returns:
         dict: Diccionario con 'label', 'icon' y 'url'
     """
@@ -491,10 +577,10 @@ def get_menu_entry():
 def init():
     """
     Inicializa el plugin: carga catálogos base, crea tablas, etc.
-    
+
     Esta función se ejecuta cuando el administrador ejecuta:
         payrollctl plugins sv init
-    
+
     Debe ser idempotente: ejecutarla varias veces no debe duplicar datos.
     """
     from coati_payroll.model import (
@@ -505,24 +591,24 @@ def init():
         TipoPlanilla,
     )
     from coati_payroll.log import log
-    
+
     # Función auxiliar para upsert (asume que los modelos tienen campo 'codigo')
     # Adaptar según la estructura de tu modelo si usa otro campo como clave
     def _upsert_by_codigo(Model, codigo: str, **kwargs):
         existing = db.session.execute(
             db.select(Model).filter_by(codigo=codigo)
         ).scalar_one_or_none()
-        
+
         if existing is None:
             existing = Model()
             existing.codigo = codigo
             db.session.add(existing)
-        
+
         for k, v in kwargs.items():
             setattr(existing, k, v)
-        
+
         return existing
-    
+
     # 1) Percepciones (ingresos)
     _upsert_by_codigo(
         Percepcion,
@@ -532,7 +618,7 @@ def init():
         formula_tipo="monto_fijo",
         activo=True,
     )
-    
+
     _upsert_by_codigo(
         Percepcion,
         "BONO_INCENTIVO",
@@ -541,7 +627,7 @@ def init():
         formula_tipo="monto_fijo",
         activo=True,
     )
-    
+
     # 2) Deducciones
     _upsert_by_codigo(
         Deduccion,
@@ -552,7 +638,7 @@ def init():
         prioridad=1,
         activo=True,
     )
-    
+
     _upsert_by_codigo(
         Deduccion,
         "AFP",
@@ -562,7 +648,7 @@ def init():
         prioridad=2,
         activo=True,
     )
-    
+
     _upsert_by_codigo(
         Deduccion,
         "ISR",
@@ -572,7 +658,7 @@ def init():
         prioridad=3,
         activo=True,
     )
-    
+
     # 3) Prestaciones (aportes patronales)
     _upsert_by_codigo(
         Prestacion,
@@ -582,7 +668,7 @@ def init():
         formula_tipo="porcentaje",
         activo=True,
     )
-    
+
     _upsert_by_codigo(
         Prestacion,
         "AFP_PATRONAL",
@@ -591,7 +677,7 @@ def init():
         formula_tipo="porcentaje",
         activo=True,
     )
-    
+
     # 4) Tipos de planilla
     _upsert_by_codigo(
         TipoPlanilla,
@@ -601,9 +687,9 @@ def init():
         periodicidad_dias=30,
         activo=True,
     )
-    
+
     db.session.commit()
-    
+
     log.info("Plugin 'sv' inicializado correctamente")
     log.info("  - Percepciones: 2")
     log.info("  - Deducciones: 3")
@@ -618,20 +704,20 @@ def init():
 def update():
     """
     Actualiza el plugin: aplica cambios a catálogos, añade nuevos conceptos, etc.
-    
+
     Esta función se ejecuta cuando el administrador ejecuta:
         payrollctl plugins sv update
-    
+
     Debe ser idempotente.
     """
     from coati_payroll.model import db, Percepcion
     from coati_payroll.log import log
-    
+
     # Ejemplo: actualizar descripción de una percepción
     p = db.session.execute(
         db.select(Percepcion).filter_by(codigo="SALARIO")
     ).scalar_one_or_none()
-    
+
     if p is not None:
         p.descripcion = "Salario ordinario mensual (actualizado)"
         db.session.commit()
@@ -657,12 +743,12 @@ mkdir -p coati_payroll_plugin_sv/templates/sv
 {% block content %}
 <div class="container mt-4">
     <h1><i class="bi bi-geo-alt-fill"></i> Plugin de El Salvador</h1>
-    
+
     <div class="alert alert-info">
         <strong>Plugin activo:</strong> Este plugin implementa las reglas de nómina
         específicas para El Salvador.
     </div>
-    
+
     <div class="row">
         <div class="col-md-6">
             <div class="card">
@@ -679,7 +765,7 @@ mkdir -p coati_payroll_plugin_sv/templates/sv
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
@@ -715,11 +801,11 @@ class ParametrosSV(db.Model, BaseTabla):
     Tabla para almacenar parámetros específicos de El Salvador.
     """
     __tablename__ = "sv_parametros"
-    
+
     clave = db.Column(db.String(50), unique=True, nullable=False, index=True)
     valor = db.Column(db.String(200), nullable=False)
     descripcion = db.Column(db.Text)
-    
+
     def __repr__(self):
         return f"<ParametroSV {self.clave}={self.valor}>"
 
@@ -729,12 +815,12 @@ class TablasISR(db.Model, BaseTabla):
     Tabla para almacenar tramos del ISR salvadoreño.
     """
     __tablename__ = "sv_tablas_isr"
-    
+
     desde_monto = db.Column(db.Numeric(15, 2), nullable=False)
     hasta_monto = db.Column(db.Numeric(15, 2), nullable=True)
     porcentaje = db.Column(db.Numeric(5, 2), nullable=False)
     cuota_fija = db.Column(db.Numeric(15, 2), default=0)
-    
+
     def __repr__(self):
         return f"<TablasISR {self.desde_monto}-{self.hasta_monto}>"
 ```
@@ -901,7 +987,7 @@ import pytest
 def test_plugin_has_register_blueprints():
     """Verifica que el plugin expone register_blueprints."""
     import coati_payroll_plugin_sv as plugin
-    
+
     assert hasattr(plugin, "register_blueprints")
     assert callable(plugin.register_blueprints)
 
@@ -909,10 +995,10 @@ def test_plugin_has_register_blueprints():
 def test_plugin_has_get_menu_entry():
     """Verifica que el plugin expone get_menu_entry."""
     import coati_payroll_plugin_sv as plugin
-    
+
     assert hasattr(plugin, "get_menu_entry")
     assert callable(plugin.get_menu_entry)
-    
+
     entry = plugin.get_menu_entry()
     assert "label" in entry
     assert "url" in entry
@@ -922,7 +1008,7 @@ def test_plugin_has_get_menu_entry():
 def test_plugin_has_init():
     """Verifica que el plugin expone init."""
     import coati_payroll_plugin_sv as plugin
-    
+
     assert hasattr(plugin, "init")
     assert callable(plugin.init)
 
@@ -930,7 +1016,7 @@ def test_plugin_has_init():
 def test_plugin_has_update():
     """Verifica que el plugin expone update."""
     import coati_payroll_plugin_sv as plugin
-    
+
     assert hasattr(plugin, "update")
     assert callable(plugin.update)
 ```
@@ -1072,14 +1158,14 @@ Para compartir el plugin con la comunidad:
    username = __token__
    password = pypi-tu-token-aqui  # Token API de PyPI
    ```
-   
+
    **Alternativa más segura**: Usar variables de entorno o keyring:
-   
+
    ```bash
    # Usar variables de entorno
    export TWINE_USERNAME=__token__
    export TWINE_PASSWORD=pypi-tu-token-aqui
-   
+
    # O usar keyring (recomendado)
    pip install keyring
    keyring set https://upload.pypi.org/legacy/ __token__
