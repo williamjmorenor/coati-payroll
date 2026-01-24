@@ -41,6 +41,33 @@ The engine does not incorporate hardcoded legal rules. All earnings, deductions,
 - **Role-Based Access Control (RBAC)**: Permission system with Admin, HR, and Audit roles
 - **Reporting System**: Custom reports with role-based permissions and execution audit
 - **Internationalization**: Multi-language support with interface and content translation
+- **Plugin System**: Extensible architecture for jurisdiction-specific implementations
+
+## Plugins
+
+Coati Payroll supports a plugin system for jurisdiction-specific implementations. Plugins are separate pip-installable packages that extend the core engine with country-specific calculations, documentation, and tools.
+
+### Available Plugins
+
+- **[coati-payroll-plugin-nicaragua](coati-payroll-plugin-nicaragua/)**: Nicaragua-specific implementation including INSS (7%) and progressive IR (Income Tax) calculations with accumulated method.
+
+### Installing and Using Plugins
+
+```bash
+# Install a plugin
+pip install ./coati-payroll-plugin-nicaragua
+
+# Restart the application
+# The plugin will appear in the plugins management interface at /plugins/
+
+# Initialize the plugin (loads catalogs and configuration)
+payrollctl plugins nicaragua init
+
+# Activate from CLI or web interface
+# The plugin menu item will appear after activation
+```
+
+For more information on creating plugins, see the [Plugin Development Guide](docs/guia/plugins.md).
 
 ## Quick Installation
 
