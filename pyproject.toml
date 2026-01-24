@@ -18,7 +18,7 @@ include = ["coati_payroll*"]
 exclude = ["dev*", "tests*", "docs*"]
 
 [tool.setuptools.package-data]
-coati_payroll = ["static/*", "templates/**/*", "translations/**/*"]
+coati_payroll = ["static/**/*", "templates/**/*", "translations/**/*"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
