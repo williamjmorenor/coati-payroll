@@ -60,7 +60,12 @@ class StepType(StrEnum):
 
 
 class NominaEstado(StrEnum):
-    """States of a payroll run (Nomina)."""
+    """States of a payroll run (Nomina).
+
+    All states are valid and permanent. Once a nomina reaches a state, it remains
+    in that state unless explicitly changed (e.g., ERROR can be retried, which
+    changes it to CALCULANDO).
+    """
 
     CALCULANDO = "calculando"  # Calculating in background
     GENERADO = "generado"  # Generated but not approved
@@ -68,7 +73,7 @@ class NominaEstado(StrEnum):
     APLICADO = "aplicado"  # Applied/executed
     PAGADO = "pagado"  # Paid out (synonym for APLICADO, for compatibility)
     ANULADO = "anulado"  # Cancelled/voided
-    ERROR = "error"  # Error during calculation
+    ERROR = "error"  # Error during calculation (valid permanent state, can be retried)
 
 
 class AdelantoEstado(StrEnum):
@@ -120,6 +125,13 @@ class TipoUsuario(StrEnum):
     ADMIN = "admin"  # Administrator
     HHRR = "hhrr"  # Human Resources
     AUDIT = "audit"  # Auditor
+
+
+class EstadoAprobacion(StrEnum):
+    """Approval states for payroll concepts (percepciones, deducciones, prestaciones)."""
+
+    BORRADOR = "borrador"  # Draft - not yet approved
+    APROBADO = "aprobado"  # Approved and ready for use
 
 
 class TipoDetalle(StrEnum):

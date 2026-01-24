@@ -1,7 +1,27 @@
-# Proyecto: Sistema de Nómina Coati (Nicaragua)
+# Proyecto: Coati Payroll - Sistema de Nómina Agnóstico a Jurisdicción
 
 ## Estado Actual
-Validación de IR implementada exitosamente - **COMPLETADO**
+Social Contract Compliance - **COMPLETADO** (28 dic 2025)
+
+## Cambios Recientes - Compliance del Contrato Social
+
+### Refactorización para Cumplimiento del SOCIAL_CONTRACT.md
+
+1. **formula_engine_examples.py**: Renombrado `EXAMPLE_IR_NICARAGUA_SCHEMA` → `EXAMPLE_PROGRESSIVE_TAX_SCHEMA`
+   - Alias de compatibilidad hacia atrás preservado
+   - Disclaimers claros indicando datos ficticios
+
+2. **Variables en ConceptCalculator**: Agregados aliases genéricos
+   - `inss_periodo` (legacy, deprecado pero mantenido)
+   - `pre_tax_deductions` (nuevo, recomendado)
+   - `social_security_deduction` (nuevo, recomendado)
+
+3. **Comentarios y ejemplos**: Cambiados de específicos a genéricos
+   - `IR_NICARAGUA` → `INCOME_TAX_001`
+   - `INSS_LABORAL` → `SOCIAL_SEC_001`
+   - `Nicaragua` → `Country A`
+
+4. **Documentación de valores por defecto**: Agregados disclaimers en config_repository.py
 
 ## Validación del Cálculo de IR
 
@@ -56,6 +76,25 @@ Períodos parciales:
 - Divisor: 30 días estándar (TipoPlanilla.dias)
 - Ejemplo: 15 días = (salario_base / 30) × 15 × porcentaje
 ```
+
+## Control Interno: Validación Empresa-Empleado-Planilla
+
+### Requisito de Control ✅ IMPLEMENTADO
+Para que el sistema calcule correctamente una nómina, tanto el empleado como la planilla **DEBEN estar vinculados a la misma empresa**.
+
+### Validaciones Implementadas
+1. **Motor de Nómina (`nomina_engine.py`)**: Valida que `empleado.empresa_id == planilla.empresa_id` antes de procesar
+2. **Formulario de Planilla**: `empresa_id` es **obligatorio** al crear/editar planilla
+3. **Asignación de Empleados**: Solo se pueden asignar empleados de la misma empresa
+4. **Filtro en UI**: `/planilla/<id>/config/empleados` solo muestra empleados de la misma empresa
+
+### Tests de Validación - ✅ 7 TESTS PASANDO
+- `tests/test_validation/test_empresa_employee_planilla_validation.py`
+- Cubre: Validación en motor de nómina, asignación de empleados, filtrado en UI
+
+### Mensajes de Error
+- Si empleado no tiene empresa: "Empleado X no está asignado a ninguna empresa"
+- Si empresas no coinciden: "Empleado X pertenece a empresa diferente a la planilla"
 
 ## Configuración Clave del Sistema
 

@@ -114,8 +114,8 @@ def test_main_module_files_exist():
     essential_files = [
         "__init__.py",
         "model.py",
-        "nomina_engine.py",
-        "formula_engine.py",
+        "nomina_engine/__init__.py",
+        "formula_engine/__init__.py",
         "auth.py",
         "forms.py",
         "config.py",

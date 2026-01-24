@@ -415,7 +415,10 @@ def detail(report_id: str):
     # Get recent executions
     executions = (
         db.session.execute(
-            db.select(ReportExecution).filter_by(report_id=report.id).order_by(ReportExecution.created.desc()).limit(10)
+            db.select(ReportExecution)
+            .filter_by(report_id=report.id)
+            .order_by(ReportExecution.timestamp.desc())
+            .limit(10)
         )
         .scalars()
         .all()

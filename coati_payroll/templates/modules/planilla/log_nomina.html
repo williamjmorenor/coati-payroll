@@ -93,23 +93,24 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if entry.tipo == 'advertencia_contabilidad' %}
+                            {% set entry_status = entry.status or entry.tipo %}
+                            {% if entry_status == 'advertencia_contabilidad' or entry_status == 'warning' %}
                                 <span class="badge bg-warning text-dark">
                                     <i class="fas fa-exclamation-triangle"></i> Advertencia
                                 </span>
-                            {% elif entry.tipo == 'error' %}
+                            {% elif entry_status == 'error' %}
                                 <span class="badge bg-danger">
                                     <i class="fas fa-times-circle"></i> Error
                                 </span>
-                            {% elif entry.tipo == 'info' %}
-                                <span class="badge bg-info">
-                                    <i class="fas fa-info-circle"></i> Info
+                            {% elif entry_status == 'info' or entry_status == 'success' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> OK
                                 </span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ entry.tipo }}</span>
+                                <span class="badge bg-secondary">{{ entry_status }}</span>
                             {% endif %}
                         </td>
-                        <td>{{ entry.mensaje }}</td>
+                        <td>{{ entry.message or entry.mensaje }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -1119,3 +1119,91 @@ def test_eliminar_novedad_blocked_for_applied_nomina(
         )
         assert response.status_code == 200
         assert "No se pueden eliminar novedades".encode() in response.data or "aplicada".encode() in response.data
+
+
+def test_reintentar_nomina_success(app, client, admin_user, db_session, planilla):
+    """Test that POST /planilla/<id>/nomina/<nomina_id>/reintentar retries a failed nomina."""
+    with app.app_context():
+        from coati_payroll.model import Nomina
+        from coati_payroll.enums import NominaEstado
+        from unittest.mock import patch
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create a failed nomina
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date.today(),
+            periodo_fin=date.today() + timedelta(days=14),
+            generado_por=admin_user.usuario,
+            estado=NominaEstado.ERROR,
+            errores_calculo={"critical_error": "Test error"},
+        )
+        db_session.add(nomina)
+        db_session.commit()
+        db_session.refresh(nomina)
+
+        # Mock the retry function where it's used (in the routes module)
+        with patch("coati_payroll.vistas.planilla.nomina_routes.retry_failed_nomina") as mock_retry:
+            mock_retry.return_value = {
+                "success": True,
+                "message": "Nomina re-enviada para procesamiento.",
+            }
+
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina.id}/reintentar",
+                follow_redirects=True,
+            )
+
+            assert response.status_code == 200
+            mock_retry.assert_called_once_with(nomina.id, admin_user.usuario)
+
+
+def test_reintentar_nomina_wrong_state(app, client, admin_user, db_session, planilla):
+    """Test that retry fails if nomina is not in ERROR state."""
+    with app.app_context():
+        from coati_payroll.model import Nomina
+        from coati_payroll.enums import NominaEstado
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Create a nomina in GENERADO state (not ERROR)
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date.today(),
+            periodo_fin=date.today() + timedelta(days=14),
+            generado_por=admin_user.usuario,
+            estado=NominaEstado.GENERADO,
+        )
+        db_session.add(nomina)
+        db_session.commit()
+        db_session.refresh(nomina)
+
+        original_estado = nomina.estado
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/reintentar",
+            follow_redirects=True,
+        )
+
+        assert response.status_code == 200
+
+        # Verify nomina state did not change (should still be GENERADO)
+        db_session.refresh(nomina)
+        assert nomina.estado == original_estado
+        assert nomina.estado == NominaEstado.GENERADO
+
+        # Verify we were redirected to the nomina view page
+        # The response should contain the nomina view (check for common elements)
+        assert (
+            response.request.path.endswith(f"/nomina/{nomina.id}")
+            or f"/planilla/{planilla.id}/nomina/{nomina.id}" in response.request.url
+        )
+
+
+def test_reintentar_nomina_requires_authentication(app, client, db_session):
+    """Test that retry nomina route requires authentication."""
+    with app.app_context():
+        response = client.post("/planilla/999/nomina/888/reintentar", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location

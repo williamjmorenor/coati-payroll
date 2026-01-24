@@ -1,2 +1,4 @@
 -r test.txt
 -r docs.txt
+pytest-xdist
+

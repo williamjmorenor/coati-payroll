@@ -105,6 +105,17 @@ class BaseTabla:
     modificado_por = database.Column(database.String(150), nullable=True)
 
 
+class PluginRegistry(database.Model, BaseTabla):
+    __tablename__ = "plugin_registry"
+    __table_args__ = (database.UniqueConstraint("distribution_name", name="uq_plugin_distribution_name"),)
+
+    distribution_name = database.Column(database.String(200), nullable=False, unique=True, index=True)
+    plugin_id = database.Column(database.String(200), nullable=False, index=True)
+    version = database.Column(database.String(50), nullable=True)
+    active = database.Column(database.Boolean(), default=False, nullable=False)
+    installed = database.Column(database.Boolean(), default=True, nullable=False)
+
+
 # Gestión de usuarios con acceso a la aplicación
 class Usuario(database.Model, BaseTabla, UserMixin):
     __tablename__ = "usuario"
@@ -148,7 +159,7 @@ class Empresa(database.Model, BaseTabla):
     # Commercial/trade name
     nombre_comercial = database.Column(database.String(200), nullable=True)
 
-    # Tax identification number (RUC in Nicaragua)
+    # Tax identification number (jurisdiction-specific format)
     ruc = database.Column(database.String(50), unique=True, nullable=False)
 
     # Contact information
@@ -439,10 +450,22 @@ class Planilla(database.Model, BaseTabla):
         back_populates="planilla",
     )
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     # ejecuciones históricas (nominas)
     nominas = database.relationship(
         "Nomina",
         back_populates="planilla",
+    )
+    audit_logs = database.relationship(
+        "PlanillaAuditLog",
+        back_populates="planilla",
+        cascade="all, delete-orphan",
     )
 
 
@@ -496,11 +519,24 @@ class Percepcion(database.Model, BaseTabla):
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     planillas = database.relationship(
         "PlanillaIngreso",
         back_populates="percepcion",
     )
     nomina_detalles = database.relationship("NominaDetalle", back_populates="percepcion")
+    audit_logs = database.relationship(
+        "ConceptoAuditLog",
+        back_populates="percepcion",
+        foreign_keys="ConceptoAuditLog.percepcion_id",
+        cascade="all, delete-orphan",
+    )
 
 
 class Deduccion(database.Model, BaseTabla):
@@ -540,6 +576,13 @@ class Deduccion(database.Model, BaseTabla):
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     planillas = database.relationship(
         "PlanillaDeduccion",
         back_populates="deduccion",
@@ -547,6 +590,12 @@ class Deduccion(database.Model, BaseTabla):
     nomina_detalles = database.relationship("NominaDetalle", back_populates="deduccion")
     tablas_impuesto = database.relationship("TablaImpuesto", back_populates="deduccion")
     adelantos = database.relationship("Adelanto", back_populates="deduccion")
+    audit_logs = database.relationship(
+        "ConceptoAuditLog",
+        back_populates="deduccion",
+        foreign_keys="ConceptoAuditLog.deduccion_id",
+        cascade="all, delete-orphan",
+    )
 
 
 # Prestaciones (aportes del empleador: seguridad social, etc.)
@@ -604,6 +653,13 @@ class Prestacion(database.Model, BaseTabla):
         database.String(20), nullable=False, default="mensual"
     )  # mensual | anual | vida_laboral
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     planillas = database.relationship(
         "PlanillaPrestacion",
         back_populates="prestacion",
@@ -614,6 +670,12 @@ class Prestacion(database.Model, BaseTabla):
     )
     cargas_iniciales = database.relationship(
         "CargaInicialPrestacion", back_populates="prestacion", cascade="all,delete-orphan"
+    )
+    audit_logs = database.relationship(
+        "ConceptoAuditLog",
+        back_populates="prestacion",
+        foreign_keys="ConceptoAuditLog.prestacion_id",
+        cascade="all, delete-orphan",
     )
 
 
@@ -748,7 +810,7 @@ class Nomina(database.Model, BaseTabla):
     generado_por = database.Column(database.String(150), nullable=True)
     estado = database.Column(
         database.String(30), nullable=False, default="generado"
-    )  # calculando, generado, aprobado, aplicado, error
+    )  # calculando, generado, aprobado, aplicado, pagado, anulado, error (all are valid permanent states)
 
     total_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     total_deducciones = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
@@ -763,6 +825,24 @@ class Nomina(database.Model, BaseTabla):
     log_procesamiento = database.Column(JSON, nullable=True)  # Stores list of log entries as JSON
     empleado_actual = database.Column(database.String(255), nullable=True)
 
+    # Audit fields for state changes
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    aplicado_por = database.Column(database.String(150), nullable=True)
+    aplicado_en = database.Column(database.DateTime, nullable=True)
+    anulado_por = database.Column(database.String(150), nullable=True)
+    anulado_en = database.Column(database.DateTime, nullable=True)
+    razon_anulacion = database.Column(database.String(500), nullable=True)
+
+    # Recalculation consistency: Snapshot of calculation context
+    # Stores immutable copy of all data needed to reproduce exact same calculation
+    fecha_calculo_original = database.Column(database.Date, nullable=True)  # Original calculation date
+    configuracion_snapshot = database.Column(JSON, nullable=True)  # Company config at calculation time
+    tipos_cambio_snapshot = database.Column(JSON, nullable=True)  # Exchange rates used
+    catalogos_snapshot = database.Column(JSON, nullable=True)  # Percepciones/Deducciones/Prestaciones formulas
+    es_recalculo = database.Column(database.Boolean, nullable=False, default=False)  # Flag if this is a recalculation
+    nomina_original_id = database.Column(database.String(26), nullable=True)  # Reference to original if recalculated
+
     planilla = database.relationship("Planilla", back_populates="nominas")
     nomina_empleados = database.relationship(
         "NominaEmpleado",
@@ -776,6 +856,11 @@ class Nomina(database.Model, BaseTabla):
         "ComprobanteContable",
         back_populates="nomina",
         uselist=False,
+    )
+    audit_logs = database.relationship(
+        "NominaAuditLog",
+        back_populates="nomina",
+        cascade="all, delete-orphan",
     )
 
 
@@ -830,6 +915,64 @@ class NominaDetalle(database.Model, BaseTabla):
     prestacion = database.relationship("Prestacion", back_populates="nomina_detalles", foreign_keys=[prestacion_id])
 
 
+# Liquidaciones (terminaciones laborales)
+class LiquidacionConcepto(database.Model, BaseTabla):
+    __tablename__ = "liquidacion_concepto"
+
+    codigo = database.Column(database.String(50), unique=True, nullable=False, index=True)
+    nombre = database.Column(database.String(150), nullable=False)
+    descripcion = database.Column(database.String(255), nullable=True)
+    activo = database.Column(database.Boolean(), default=True, nullable=False)
+
+
+class Liquidacion(database.Model, BaseTabla):
+    __tablename__ = "liquidacion"
+
+    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    concepto_id = database.Column(
+        database.String(26), database.ForeignKey("liquidacion_concepto.id"), nullable=True, index=True
+    )
+
+    fecha_calculo = database.Column(database.Date, nullable=False, default=date.today)
+    ultimo_dia_pagado = database.Column(database.Date, nullable=True)
+    dias_por_pagar = database.Column(database.Integer, nullable=False, default=0)
+
+    estado = database.Column(database.String(30), nullable=False, default="borrador")  # borrador, aplicada, pagada
+
+    total_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
+    total_deducciones = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
+    total_neto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
+
+    errores_calculo = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+    advertencias_calculo = database.Column(JSON, nullable=True, default=list)
+
+    empleado = database.relationship("Empleado")
+    concepto = database.relationship("LiquidacionConcepto")
+    detalles = database.relationship("LiquidacionDetalle", back_populates="liquidacion", cascade="all,delete-orphan")
+
+
+class LiquidacionDetalle(database.Model, BaseTabla):
+    __tablename__ = "liquidacion_detalle"
+
+    liquidacion_id = database.Column(
+        database.String(26), database.ForeignKey("liquidacion.id"), nullable=False, index=True
+    )
+    tipo = database.Column(database.String(15), nullable=False)  # 'ingreso' | 'deduccion' | 'prestacion'
+    codigo = database.Column(database.String(50), nullable=False)
+    descripcion = database.Column(database.String(255), nullable=True)
+    monto = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    orden = database.Column(database.Integer, nullable=True, default=0)
+
+    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
+
+    liquidacion = database.relationship("Liquidacion", back_populates="detalles")
+    percepcion = database.relationship("Percepcion", foreign_keys=[percepcion_id])
+    deduccion = database.relationship("Deduccion", foreign_keys=[deduccion_id])
+    prestacion = database.relationship("Prestacion", foreign_keys=[prestacion_id])
+
+
 class NominaNovedad(database.Model, BaseTabla):
     __tablename__ = "nomina_novedad"
 
@@ -877,21 +1020,29 @@ class NominaNovedad(database.Model, BaseTabla):
 
 # Comprobante Contable (Accounting Voucher)
 class ComprobanteContable(database.Model, BaseTabla):
-    """Stores the accounting voucher for audit purposes.
+    """Stores the accounting voucher header for audit purposes.
 
-    This model preserves the accounting entries generated at the time of payroll
+    This model preserves the accounting voucher header generated at the time of payroll
     calculation, preventing configuration changes from affecting historical records.
+    Detail lines are stored in ComprobanteContableLinea.
+
+    Audit Trail:
+    - aplicado_por: User who applied the nomina (immutable)
+    - fecha_aplicacion: Date when nomina was applied (immutable)
+    - modificado_por: User who last regenerated the voucher
+    - fecha_modificacion: Date when voucher was last regenerated
     """
 
     __tablename__ = "comprobante_contable"
 
     nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False, unique=True)
 
-    # Store the complete voucher as JSON for historical preservation
-    # Structure: [{"codigo_cuenta": "...", "descripcion": "...", "debito": 0.0, "credito": 0.0}, ...]
-    asientos_contables = database.Column(JSON, nullable=False)
+    # Header information
+    fecha_calculo = database.Column(database.Date, nullable=False, default=date.today)
+    concepto = database.Column(database.String(255), nullable=True)  # Description/concept of the voucher
+    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=True)
 
-    # Summary totals
+    # Summary totals (calculated from lines)
     total_debitos = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     total_creditos = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     balance = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -899,7 +1050,82 @@ class ComprobanteContable(database.Model, BaseTabla):
     # Warnings about incomplete configurations
     advertencias = database.Column(JSON, nullable=True, default=list)
 
+    # Audit trail - immutable fields (set once when nomina is applied)
+    aplicado_por = database.Column(database.String(150), nullable=True)
+    fecha_aplicacion = database.Column(database.DateTime, nullable=True)
+
+    # Audit trail - modification tracking (updated each time voucher is regenerated)
+    modificado_por = database.Column(database.String(150), nullable=True)
+    fecha_modificacion = database.Column(database.DateTime, nullable=True)
+    veces_modificado = database.Column(database.Integer, nullable=False, default=0)
+
     nomina = database.relationship("Nomina", back_populates="comprobante_contable")
+    moneda = database.relationship("Moneda")
+    lineas = database.relationship(
+        "ComprobanteContableLinea",
+        back_populates="comprobante",
+        cascade="all, delete-orphan",
+        order_by="ComprobanteContableLinea.orden",
+    )
+
+
+class ComprobanteContableLinea(database.Model, BaseTabla):
+    """Stores individual accounting entry lines for each employee's payroll calculation.
+
+    Each line represents a single accounting entry (debit or credit) for a specific
+    employee, concept, account, and cost center. Provides complete audit trail.
+
+    Audit Fields:
+    - Empleado: empleado_id, empleado_codigo, empleado_nombre
+    - Cuenta: codigo_cuenta, descripcion_cuenta
+    - Centro de costos: centro_costos
+    - Concepto origen: concepto_codigo (código de percepción/deducción/prestación)
+    - Tipo: tipo_debito_credito ('debito' o 'credito')
+    - Monto: debito o credito (solo uno tiene valor, el otro es 0)
+    """
+
+    __tablename__ = "comprobante_contable_linea"
+
+    comprobante_id = database.Column(
+        database.String(26), database.ForeignKey("comprobante_contable.id"), nullable=False, index=True
+    )
+    nomina_empleado_id = database.Column(
+        database.String(26), database.ForeignKey("nomina_empleado.id"), nullable=False, index=True
+    )
+
+    # Employee information for audit trail (denormalized for easier reporting)
+    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    empleado_codigo = database.Column(database.String(20), nullable=False, index=True)
+    empleado_nombre = database.Column(database.String(255), nullable=False)
+
+    # Accounting account information (nullable to support incomplete configuration)
+    codigo_cuenta = database.Column(database.String(64), nullable=True, index=True)
+    descripcion_cuenta = database.Column(database.String(255), nullable=True)
+
+    # Cost center for cost allocation
+    centro_costos = database.Column(database.String(150), nullable=True, index=True)
+
+    # Amount (only one should be non-zero: debito OR credito)
+    tipo_debito_credito = database.Column(database.String(10), nullable=False, index=True)  # 'debito' or 'credito'
+    debito = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    credito = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+
+    # Calculated amount (the actual value, duplicated for convenience)
+    monto_calculado = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+
+    # Source concept information for complete audit trail
+    concepto = database.Column(database.String(255), nullable=False)  # Description of the concept
+    tipo_concepto = database.Column(
+        database.String(20), nullable=False, index=True
+    )  # 'salario_base', 'percepcion', 'deduccion', 'prestacion', 'prestamo'
+    concepto_codigo = database.Column(database.String(50), nullable=False, index=True)  # Code from source concept
+
+    # Order for consistent display
+    orden = database.Column(database.Integer, nullable=False, default=0, index=True)
+
+    comprobante = database.relationship("ComprobanteContable", back_populates="lineas")
+    nomina_empleado = database.relationship("NominaEmpleado")
+    empleado = database.relationship("Empleado")
 
 
 # Historial de cambios de salario
@@ -1110,6 +1336,7 @@ class AdelantoAbono(database.Model, BaseTabla):
         index=True,
     )
     nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=True)
+    liquidacion_id = database.Column(database.String(26), database.ForeignKey("liquidacion.id"), nullable=True)
     fecha_abono = database.Column(database.Date, nullable=False, default=date.today)
     monto_abonado = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     saldo_anterior = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -1145,6 +1372,7 @@ class AdelantoAbono(database.Model, BaseTabla):
 
     adelanto = database.relationship("Adelanto", back_populates="abonos")
     nomina = database.relationship("Nomina")
+    liquidacion = database.relationship("Liquidacion")
 
 
 # Interest journal for loans
@@ -1241,19 +1469,21 @@ class ReglaCalculo(database.Model, BaseTabla):
     __tablename__ = "regla_calculo"
     __table_args__ = (database.UniqueConstraint("codigo", "version", name="uq_regla_codigo_version"),)
 
-    codigo = database.Column(database.String(50), nullable=False, index=True)  # e.g., 'IR_NICARAGUA', 'INSS_LABORAL'
+    codigo = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # e.g., 'INCOME_TAX_001', 'SOCIAL_SEC_001'
     nombre = database.Column(database.String(150), nullable=False)
     descripcion = database.Column(database.Text, nullable=True)
-    jurisdiccion = database.Column(database.String(100), nullable=True)  # e.g., 'Nicaragua', 'Costa Rica'
+    jurisdiccion = database.Column(database.String(100), nullable=True)  # e.g., 'Country A', 'Region B'
 
     # Reference currency for the tax rule calculations.
     # The rule is currency-agnostic - the actual payroll currency is defined
     # in TipoPlanilla. When the payroll currency differs from the reference
     # currency, exchange rates are applied during calculation.
-    # Example: IR Nicaragua uses NIO as reference, but payroll can be in USD.
+    # Example: A tax rule may use local currency as reference, but payroll can be in another currency.
     moneda_referencia = database.Column(
         database.String(10), nullable=True
-    )  # e.g., 'NIO', 'USD' - reference currency for rule calculations
+    )  # e.g., 'USD', 'EUR' - reference currency for rule calculations
 
     version = database.Column(database.String(20), nullable=False, default="1.0.0")  # Semantic versioning
 
@@ -1275,20 +1505,32 @@ class ReglaCalculo(database.Model, BaseTabla):
     percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
     prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
 
+    # Audit and governance fields
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    aprobado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
+    plugin_source = database.Column(database.String(200), nullable=True)
+
     # Relationship to planillas that use this rule
     planillas = database.relationship(
         "PlanillaReglaCalculo",
         back_populates="regla_calculo",
     )
+    audit_logs = database.relationship(
+        "ReglaCalculoAuditLog",
+        back_populates="regla_calculo",
+        cascade="all, delete-orphan",
+    )
 
 
-# Acumulados anuales por empleado (para cálculos como IR en Nicaragua)
+# Acumulados anuales por empleado (para cálculos de impuestos progresivos)
 class AcumuladoAnual(database.Model, BaseTabla):
     """Annual accumulated values per employee per payroll type per company.
 
     Stores running totals of salary, deductions, and taxes for each employee
     per fiscal year, payroll type, and company. This is essential for progressive tax
-    calculations like Nicaragua's IR which requires annual accumulated values.
+    calculations which require annual accumulated values.
 
     IMPORTANT: Accumulated values are tracked per company (empresa_id) to support
     employees who change companies mid-year. Each company maintains separate
@@ -1400,6 +1642,55 @@ class ConfiguracionGlobal(database.Model, BaseTabla):
 
     # Additional global settings can be stored as JSON
     configuracion_adicional = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+
+# Configuration for calculation parameters
+class ConfiguracionCalculos(database.Model, BaseTabla):
+    """Configuration table for calculation parameters.
+
+    Stores configurable values for payroll calculations that were previously hardcoded.
+    Supports company-specific and country-specific configurations.
+    """
+
+    __tablename__ = "config_calculos"
+    __table_args__ = (database.UniqueConstraint("empresa_id", "pais_id", name="uq_config_empresa_pais"),)
+
+    # Optional relationships - can be None for global defaults
+    empresa_id = database.Column(database.String(26), database.ForeignKey("empresa.id"), nullable=True, index=True)
+    pais_id = database.Column(database.String(26), nullable=True, index=True)  # Future: ForeignKey("pais.id")
+
+    # Días base para nómina
+    dias_mes_nomina = database.Column(database.Integer, nullable=False, default=30)  # 28, 29, 30, 31
+    dias_anio_nomina = database.Column(database.Integer, nullable=False, default=365)  # 360, 365, 366
+    horas_jornada_diaria = database.Column(database.Numeric(4, 2), nullable=False, default=Decimal("8.00"))
+
+    # Vacaciones
+    dias_mes_vacaciones = database.Column(database.Integer, nullable=False, default=30)
+    dias_anio_vacaciones = database.Column(database.Integer, nullable=False, default=365)
+    considerar_bisiesto_vacaciones = database.Column(database.Boolean, nullable=False, default=True)
+
+    # Intereses
+    dias_anio_financiero = database.Column(
+        database.Integer, nullable=False, default=365
+    )  # 360 o 365 (default 365 for compatibility)
+    meses_anio_financiero = database.Column(database.Integer, nullable=False, default=12)
+
+    # Quincenas
+    dias_quincena = database.Column(database.Integer, nullable=False, default=15)  # 14 o 15
+
+    # Liquidaciones
+    liquidacion_modo_dias = database.Column(database.String(20), nullable=False, default="calendario")
+    liquidacion_factor_calendario = database.Column(database.Integer, nullable=False, default=30)
+    liquidacion_factor_laboral = database.Column(database.Integer, nullable=False, default=28)
+
+    # Antigüedad
+    dias_mes_antiguedad = database.Column(database.Integer, nullable=False, default=30)
+    dias_anio_antiguedad = database.Column(database.Integer, nullable=False, default=365)
+
+    activo = database.Column(database.Boolean, nullable=False, default=True)
+
+    # Relationships
+    empresa = database.relationship("Empresa", backref="configuraciones_calculos")
 
 
 # Prestaciones Acumuladas - Accumulated Benefits Tracking (Transactional)
@@ -1972,3 +2263,148 @@ class ReportAudit(database.Model, BaseTabla):
     changes = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
 
     # Timestamp is inherited from BaseTabla
+
+
+class ConceptoAuditLog(database.Model, BaseTabla):
+    """Audit trail for payroll concept changes (percepciones, deducciones, prestaciones).
+
+    Records all changes to payroll concepts including creation, modification, and approval.
+    Tracks who made changes, when, and what was changed for governance and compliance.
+    """
+
+    __tablename__ = "concepto_audit_log"
+
+    # Foreign keys to the concepts (only one will be set)
+    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
+
+    # Type of concept (for easier filtering)
+    tipo_concepto = database.Column(
+        database.String(20), nullable=False, index=True
+    )  # percepcion | deduccion | prestacion
+
+    # Action performed
+    accion = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # created | updated | approved | rejected | status_changed
+
+    # User who performed the action
+    usuario = database.Column(database.String(150), nullable=False, index=True)
+
+    # Description of the change (human-readable)
+    descripcion = database.Column(database.String(1000), nullable=True)
+
+    # Detailed changes (JSON storing field-level before/after values)
+    cambios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+    # Previous and new approval status (if applicable)
+    estado_anterior = database.Column(database.String(20), nullable=True)
+    estado_nuevo = database.Column(database.String(20), nullable=True)
+
+    # Relationships
+    percepcion = database.relationship("Percepcion", back_populates="audit_logs")
+    deduccion = database.relationship("Deduccion", back_populates="audit_logs")
+    prestacion = database.relationship("Prestacion", back_populates="audit_logs")
+
+
+class PlanillaAuditLog(database.Model, BaseTabla):
+    """Audit trail for Planilla changes.
+
+    Records all changes to planillas including creation, modification, approval,
+    and configuration changes (adding/removing employees, concepts, etc.).
+    """
+
+    __tablename__ = "planilla_audit_log"
+
+    # Foreign key to planilla
+    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
+
+    # Action performed
+    accion = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # created | updated | approved | rejected | employee_added | employee_removed | concept_added | concept_removed
+
+    # User who performed the action
+    usuario = database.Column(database.String(150), nullable=False, index=True)
+
+    # Description of the change (human-readable)
+    descripcion = database.Column(database.String(1000), nullable=True)
+
+    # Detailed changes (JSON storing field-level before/after values)
+    cambios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+    # Previous and new approval status (if applicable)
+    estado_anterior = database.Column(database.String(20), nullable=True)
+    estado_nuevo = database.Column(database.String(20), nullable=True)
+
+    # Relationship
+    planilla = database.relationship("Planilla", back_populates="audit_logs")
+
+
+class NominaAuditLog(database.Model, BaseTabla):
+    """Audit trail for Nomina state changes.
+
+    Records all state transitions of nominas: generation, approval, application,
+    cancellation, and any modifications.
+    """
+
+    __tablename__ = "nomina_audit_log"
+
+    # Foreign key to nomina
+    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False)
+
+    # Action performed
+    accion = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # generated | approved | applied | cancelled | recalculated | modified
+
+    # User who performed the action
+    usuario = database.Column(database.String(150), nullable=False, index=True)
+
+    # Description of the change (human-readable)
+    descripcion = database.Column(database.String(1000), nullable=True)
+
+    # Detailed changes (JSON storing field-level before/after values)
+    cambios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+    # Previous and new state (for state transitions)
+    estado_anterior = database.Column(database.String(30), nullable=True)
+    estado_nuevo = database.Column(database.String(30), nullable=True)
+
+    # Relationship
+    nomina = database.relationship("Nomina", back_populates="audit_logs")
+
+
+class ReglaCalculoAuditLog(database.Model, BaseTabla):
+    """Audit trail for ReglaCalculo changes.
+
+    Records all changes to calculation rules including creation, modification,
+    approval, schema changes, and versioning for SOX/COSO compliance.
+    """
+
+    __tablename__ = "regla_calculo_audit_log"
+
+    # Foreign key to regla_calculo
+    regla_calculo_id = database.Column(database.String(26), database.ForeignKey("regla_calculo.id"), nullable=False)
+
+    # Action performed
+    accion = database.Column(
+        database.String(50), nullable=False, index=True
+    )  # created | updated | approved | rejected | schema_changed | version_changed | status_changed
+
+    # User who performed the action
+    usuario = database.Column(database.String(150), nullable=False, index=True)
+
+    # Description of the change (human-readable)
+    descripcion = database.Column(database.String(1000), nullable=True)
+
+    # Detailed changes (JSON storing field-level before/after values)
+    cambios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+
+    # Previous and new approval status (if applicable)
+    estado_anterior = database.Column(database.String(20), nullable=True)
+    estado_nuevo = database.Column(database.String(20), nullable=True)
+
+    # Relationship
+    regla_calculo = database.relationship("ReglaCalculo", back_populates="audit_logs")

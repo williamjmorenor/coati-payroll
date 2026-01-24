@@ -98,6 +98,39 @@ class UserForm(FlaskForm):
     submit = SubmitField(_("Guardar"))
 
 
+class ConfiguracionCalculosForm(FlaskForm):
+    """Form for editing global calculation configuration parameters."""
+
+    liquidacion_modo_dias = SelectField(
+        _("Modo de Días (Liquidación)"),
+        choices=[
+            ("calendario", _("Calendario")),
+            ("laboral", _("Laboral")),
+        ],
+        validators=[DataRequired()],
+        description=_(
+            "Define qué factor se usará como base de días para prorrateos en liquidaciones. "
+            "Calendario usa el factor calendario; Laboral usa el factor laboral."
+        ),
+    )
+
+    liquidacion_factor_calendario = IntegerField(
+        _("Factor Días Calendario (Liquidación)"),
+        validators=[DataRequired(), NumberRange(min=1, max=366)],
+        default=30,
+        description=_("Factor base cuando el modo es Calendario (por defecto 30)."),
+    )
+
+    liquidacion_factor_laboral = IntegerField(
+        _("Factor Días Laborales (Liquidación)"),
+        validators=[DataRequired(), NumberRange(min=1, max=366)],
+        default=28,
+        description=_("Factor base cuando el modo es Laboral (por defecto 28)."),
+    )
+
+    submit = SubmitField(_("Guardar"))
+
+
 class ProfileForm(FlaskForm):
     """Form for editing user profile and password."""
 
@@ -330,7 +363,7 @@ class ReglaCalculoForm(FlaskForm):
     codigo = StringField(
         _("Código"),
         validators=[DataRequired(), Length(max=50)],
-        description=_("Código único de la regla (ej: IR_NICARAGUA)"),
+        description=_("Código único de la regla (ej: INCOME_TAX_001)"),
     )
     nombre = StringField(
         _("Nombre"),
@@ -344,7 +377,7 @@ class ReglaCalculoForm(FlaskForm):
     jurisdiccion = StringField(
         _("Jurisdicción"),
         validators=[Optional(), Length(max=100)],
-        description=_("País o región donde aplica (ej: Nicaragua)"),
+        description=_("País o región donde aplica (ej: Country A)"),
     )
     moneda_referencia = StringField(
         _("Moneda de Referencia"),
@@ -510,7 +543,7 @@ class DeduccionForm(FlaskForm):
     codigo = StringField(
         _("Código"),
         validators=[DataRequired(), Length(max=50)],
-        description=_("Código único de la deducción (ej: INSS_LABORAL)"),
+        description=_("Código único de la deducción (ej: SOCIAL_SEC_001)"),
     )
     nombre = StringField(
         _("Nombre"),
@@ -665,9 +698,9 @@ class PlanillaForm(FlaskForm):
     )
     empresa_id = SelectField(
         _("Empresa"),
-        validators=[Optional()],
+        validators=[DataRequired(message=_("La empresa es obligatoria para crear una planilla"))],
         coerce=str,
-        description=_("Empresa a la que pertenece esta planilla"),
+        description=_("Empresa a la que pertenece esta planilla. Solo empleados de esta empresa podrán ser asignados."),
     )
     periodo_fiscal_inicio = DateField(
         _("Inicio Período Fiscal"),

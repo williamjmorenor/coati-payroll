@@ -1,0 +1,259 @@
+# Copyright 2025 BMO Soluciones, S.A.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""AST Visitor pattern for safe expression evaluation.
+
+This module implements a secure AST visitor that evaluates mathematical expressions
+without using dynamic method dispatch (getattr). All node types are explicitly
+handled to prevent any possibility of code injection or unexpected behavior.
+
+Security Features:
+- Explicit visitor methods for each allowed node type
+- No dynamic method resolution (no getattr/setattr)
+- Whitelist-based approach - unknown nodes are rejected
+- All operations maintain Decimal precision
+- Division by zero is handled safely
+
+The visitor pattern ensures that only pre-approved AST node types can be processed,
+and each type has an explicit, auditable handler method.
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from decimal import Decimal
+
+import ast
+
+from ..exceptions import CalculationError
+from .safe_operators import SAFE_FUNCTIONS, SAFE_OPERATORS
+from .type_converter import to_decimal
+
+
+class ASTVisitor(ABC):
+    """Visitor pattern base class for AST traversal.
+
+    This abstract base class defines the interface for AST visitors.
+    Implementations must provide a visit() method that safely evaluates
+    AST nodes and returns Decimal results.
+    """
+
+    @abstractmethod
+    def visit(self, node: ast.AST) -> Decimal:
+        """Visit and evaluate an AST node.
+
+        Args:
+            node: The AST node to visit and evaluate
+
+        Returns:
+            The evaluated result as a Decimal
+
+        Raises:
+            CalculationError: If the node cannot be safely evaluated
+        """
+        pass
+
+
+class SafeASTVisitor(ASTVisitor):
+    """Safe visitor for evaluating mathematical expressions.
+
+    This visitor implements a secure evaluation strategy:
+    1. Explicit dispatch - no dynamic method resolution
+    2. Whitelist approach - only known node types are processed
+    3. Immutable context - variables are read-only during evaluation
+    4. Decimal precision - all numeric operations maintain precision
+    5. Safe error handling - division by zero returns 0
+
+    Security Note:
+    This class does NOT use getattr() or any dynamic dispatch mechanism.
+    All node types are handled by explicit if/elif chains to prevent
+    any possibility of method injection or unexpected behavior.
+    """
+
+    def __init__(self, variables: dict[str, Decimal]):
+        """Initialize visitor with variable context.
+
+        Args:
+            variables: Dictionary of variable names to Decimal values.
+                      This dictionary is not modified during evaluation.
+        """
+        self.variables = variables
+
+    def visit(self, node: ast.AST) -> Decimal:
+        """Visit and evaluate an AST node using explicit dispatch.
+
+        This method uses explicit type checking with match/case instead of
+        dynamic method resolution (getattr) for security and maintainability.
+        Each node type is explicitly handled, making the code easier to audit
+        and preventing any possibility of method injection.
+
+        Args:
+            node: AST node to evaluate
+
+        Returns:
+            Decimal result of evaluation
+
+        Raises:
+            CalculationError: If the node type is not supported or evaluation fails
+        """
+        match node:
+            case ast.Constant():
+                return self.visit_constant(node)
+            case ast.Name():
+                return self.visit_name(node)
+            case ast.BinOp():
+                return self.visit_binop(node)
+            case ast.UnaryOp():
+                return self.visit_unaryop(node)
+            case ast.Call():
+                return self.visit_call(node)
+            case _:
+                raise CalculationError(
+                    f"Unsupported AST node type: {type(node).__name__}. "
+                    "Only Constant, Name, BinOp, UnaryOp, and Call nodes are allowed."
+                )
+
+    def visit_constant(self, node: ast.Constant) -> Decimal:
+        """Visit a constant node (numeric literal).
+
+        Args:
+            node: AST Constant node containing a numeric value
+
+        Returns:
+            The constant value as a Decimal
+
+        Raises:
+            CalculationError: If the constant cannot be converted to Decimal
+        """
+        return to_decimal(node.value)
+
+    def visit_name(self, node: ast.Name) -> Decimal:
+        """Visit a variable name node.
+
+        Args:
+            node: AST Name node representing a variable reference
+
+        Returns:
+            The value of the variable from the context
+
+        Raises:
+            CalculationError: If the variable is not defined in the context
+        """
+        if node.id not in self.variables:
+            raise CalculationError(
+                f"Undefined variable: '{node.id}'. " f"Available variables: {', '.join(sorted(self.variables.keys()))}"
+            )
+        return self.variables[node.id]
+
+    def visit_binop(self, node: ast.BinOp) -> Decimal:
+        """Visit a binary operation node (e.g., a + b, x * y).
+
+        Args:
+            node: AST BinOp node representing a binary operation
+
+        Returns:
+            The result of the binary operation as a Decimal
+
+        Raises:
+            CalculationError: If the operator is not whitelisted or operation fails
+        """
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+
+        op_type = type(node.op)
+        op_func = SAFE_OPERATORS.get(op_type)
+        if not op_func:
+            raise CalculationError(
+                f"Operator '{op_type.__name__}' is not allowed. " f"Allowed operators: +, -, *, /, //, %, **"
+            )
+
+        if op_type in (ast.Div, ast.FloorDiv, ast.Mod) and right == 0:
+            return Decimal("0")
+
+        try:
+            result = op_func(left, right)
+            return to_decimal(result)
+        except (OverflowError, ValueError) as e:
+            raise CalculationError(f"Arithmetic error in operation '{left} {op_type.__name__} {right}': {e}") from e
+        except Exception as e:
+            raise CalculationError(f"Unexpected error in binary operation: {e}") from e
+
+    def visit_unaryop(self, node: ast.UnaryOp) -> Decimal:
+        """Visit a unary operation node (e.g., -x, +y).
+
+        Args:
+            node: AST UnaryOp node representing a unary operation
+
+        Returns:
+            The result of the unary operation as a Decimal
+
+        Raises:
+            CalculationError: If the unary operator is not allowed
+        """
+        operand = self.visit(node.operand)
+
+        op_type = type(node.op)
+        if op_type == ast.UAdd:
+            return to_decimal(+operand)
+        elif op_type == ast.USub:
+            return to_decimal(-operand)
+        else:
+            raise CalculationError(
+                f"Unary operator '{op_type.__name__}' is not allowed. " "Only unary + and - are permitted."
+            )
+
+    def visit_call(self, node: ast.Call) -> Decimal:
+        """Visit a function call node (e.g., max(a, b), round(x, 2)).
+
+        Args:
+            node: AST Call node representing a function call
+
+        Returns:
+            The result of the function call as a Decimal
+
+        Raises:
+            CalculationError: If the function is not whitelisted or call fails
+        """
+        if not isinstance(node.func, ast.Name):
+            raise CalculationError(
+                "Only direct named function calls are allowed. " "Attribute access and lambda functions are prohibited."
+            )
+
+        func_name = node.func.id
+        if func_name not in SAFE_FUNCTIONS:
+            raise CalculationError(
+                f"Function '{func_name}' is not in the whitelist. "
+                f"Allowed functions: {', '.join(sorted(SAFE_FUNCTIONS.keys()))}"
+            )
+
+        if node.keywords:
+            raise CalculationError(
+                f"Keyword arguments are not allowed in function '{func_name}'. " "Use positional arguments only."
+            )
+
+        args = [self.visit(arg) for arg in node.args]
+
+        try:
+            if func_name == "round" and len(args) > 1:
+                if args[1] < 0 or args[1] > 10:
+                    raise CalculationError(f"round() precision must be between 0 and 10, got {args[1]}")
+                result = SAFE_FUNCTIONS[func_name](args[0], int(args[1]))
+            else:
+                result = SAFE_FUNCTIONS[func_name](*args)
+            return to_decimal(result)
+        except TypeError as e:
+            raise CalculationError(f"Invalid arguments for function '{func_name}': {e}") from e
+        except ValueError as e:
+            raise CalculationError(f"Invalid value in function '{func_name}': {e}") from e
+        except Exception as e:
+            raise CalculationError(f"Error calling function '{func_name}': {e}") from e

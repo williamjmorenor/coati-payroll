@@ -76,6 +76,21 @@ CURRENCIES = [
 ]
 
 
+# Liquidation concepts (LiquidacionConcepto)
+LIQUIDATION_CONCEPTS = [
+    {
+        "codigo": "DESPIDO",
+        "nombre": _("Dismissal"),
+        "descripcion": _("Termination initiated by employer"),
+    },
+    {
+        "codigo": "RENUNCIA",
+        "nombre": _("Resignation"),
+        "descripcion": _("Termination initiated by employee"),
+    },
+]
+
+
 # Income concepts (Percepciones / Ingresos)
 # These add to employee salary
 # All names and descriptions are marked for translation
@@ -371,8 +386,10 @@ def load_income_concepts() -> None:
 
     Concept names and descriptions are translated based on the configured
     language in the database. This function is idempotent.
+    Default concepts are created with approved status.
     """
-    from coati_payroll.model import Percepcion, db
+    from coati_payroll.model import Percepcion, db, utc_now
+    from coati_payroll.enums import EstadoAprobacion
     from coati_payroll.log import log
 
     concepts_loaded = 0
@@ -394,6 +411,11 @@ def load_income_concepts() -> None:
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True
+            # Default concepts are pre-approved
+            concept.estado_aprobacion = EstadoAprobacion.APROBADO
+            concept.aprobado_por = "system"
+            concept.aprobado_en = utc_now()
+            concept.creado_por = "system"
 
             db.session.add(concept)
             concepts_loaded += 1
@@ -410,8 +432,10 @@ def load_deduction_concepts() -> None:
 
     Concept names and descriptions are translated based on the configured
     language in the database. This function is idempotent.
+    Default concepts are created with approved status.
     """
-    from coati_payroll.model import Deduccion, db
+    from coati_payroll.model import Deduccion, db, utc_now
+    from coati_payroll.enums import EstadoAprobacion
     from coati_payroll.log import log
 
     concepts_loaded = 0
@@ -435,6 +459,11 @@ def load_deduction_concepts() -> None:
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True
+            # Default concepts are pre-approved
+            concept.estado_aprobacion = EstadoAprobacion.APROBADO
+            concept.aprobado_por = "system"
+            concept.aprobado_en = utc_now()
+            concept.creado_por = "system"
 
             db.session.add(concept)
             concepts_loaded += 1
@@ -451,8 +480,10 @@ def load_benefit_concepts() -> None:
 
     Concept names and descriptions are translated based on the configured
     language in the database. This function is idempotent.
+    Default concepts are created with approved status.
     """
-    from coati_payroll.model import Prestacion, db
+    from coati_payroll.model import Prestacion, db, utc_now
+    from coati_payroll.enums import EstadoAprobacion
     from coati_payroll.log import log
 
     concepts_loaded = 0
@@ -474,6 +505,11 @@ def load_benefit_concepts() -> None:
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True
+            # Default concepts are pre-approved
+            concept.estado_aprobacion = EstadoAprobacion.APROBADO
+            concept.aprobado_por = "system"
+            concept.aprobado_en = utc_now()
+            concept.creado_por = "system"
 
             db.session.add(concept)
             concepts_loaded += 1
@@ -525,6 +561,36 @@ def load_payroll_types() -> None:
         log.trace("No new payroll types to load")
 
 
+def load_liquidation_concepts() -> None:
+    """Load liquidation concepts into the database.
+
+    This function is idempotent.
+    """
+    from coati_payroll.model import LiquidacionConcepto, db
+    from coati_payroll.log import log
+
+    concepts_loaded = 0
+    for concept_data in LIQUIDATION_CONCEPTS:
+        existing = db.session.execute(
+            db.select(LiquidacionConcepto).filter_by(codigo=concept_data["codigo"])
+        ).scalar_one_or_none()
+
+        if existing is None:
+            concept = LiquidacionConcepto()
+            concept.codigo = concept_data["codigo"]
+            concept.nombre = str(concept_data["nombre"])
+            concept.descripcion = str(concept_data["descripcion"])
+            concept.activo = True
+            db.session.add(concept)
+            concepts_loaded += 1
+
+    if concepts_loaded > 0:
+        db.session.commit()
+        log.trace(f"Loaded {concepts_loaded} liquidation concepts")
+    else:
+        log.trace("No new liquidation concepts to load")
+
+
 def load_initial_data() -> None:
     """Load all initial data into the database.
 
@@ -542,5 +608,6 @@ def load_initial_data() -> None:
     load_deduction_concepts()
     load_benefit_concepts()
     load_payroll_types()
+    load_liquidation_concepts()
 
     log.trace("Initial data loading completed")

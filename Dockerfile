@@ -15,7 +15,7 @@
 # =============================================================================
 # Stage 1: Build stage
 # =============================================================================
-FROM python:3.11-slim-bookworm AS builder
+FROM python:3.14-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -41,7 +41,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # =============================================================================
 # Stage 2: Runtime stage
 # =============================================================================
-FROM python:3.11-slim-bookworm AS runtime
+FROM python:3.14-slim AS runtime
 
 # Install only runtime dependencies required by weasyprint and other libraries
 # Also install tini as a minimal init system for proper signal handling

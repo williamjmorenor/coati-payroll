@@ -284,3 +284,403 @@ def test_calculation_rule_can_be_inactive(app, client, admin_user, db_session):
             rule = db_session.execute(select(ReglaCalculo).filter_by(codigo="INACTIVE_RULE")).scalar_one_or_none()
             assert rule is not None
             assert rule.activo is False
+
+
+def test_validate_schema_api_with_valid_schema(app, client, admin_user, db_session):
+    """Test validating a valid JSON schema."""
+    with app.app_context():
+        # Create test calculation rule
+        rule = ReglaCalculo(
+            codigo="TEST_VALIDATE",
+            nombre="Test Validation",
+            descripcion="Test schema validation",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        valid_schema = {
+            "meta": {"name": "Test Schema", "reference_currency": "USD"},
+            "inputs": [{"name": "salary", "type": "decimal", "default": 1000}],
+            "steps": [
+                {"name": "annual_salary", "type": "calculation", "formula": "salary * 12"}
+            ],
+            "output": "annual_salary",
+        }
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": valid_schema},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert "válido" in data["message"].lower()
+
+
+def test_validate_schema_api_with_missing_steps(app, client, admin_user, db_session):
+    """Test validating a schema without steps section."""
+    with app.app_context():
+        rule = ReglaCalculo(
+            codigo="TEST_VALIDATE_2",
+            nombre="Test Validation 2",
+            descripcion="Test schema validation",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        invalid_schema = {
+            "meta": {"name": "Test Schema"},
+            "inputs": [],
+            # Missing steps section
+        }
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": invalid_schema},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "steps" in data["error"].lower()
+
+
+def test_validate_schema_api_with_invalid_step_type(app, client, admin_user, db_session):
+    """Test validating a schema with invalid step type."""
+    with app.app_context():
+        rule = ReglaCalculo(
+            codigo="TEST_VALIDATE_3",
+            nombre="Test Validation 3",
+            descripcion="Test schema validation",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        invalid_schema = {
+            "meta": {"name": "Test Schema"},
+            "inputs": [],
+            "steps": [
+                {"name": "invalid_step", "type": "invalid_type", "formula": "1 + 1"}
+            ],
+        }
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": invalid_schema},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+
+
+def test_validate_schema_api_with_missing_step_name(app, client, admin_user, db_session):
+    """Test validating a schema with step missing name field."""
+    with app.app_context():
+        rule = ReglaCalculo(
+            codigo="TEST_VALIDATE_4",
+            nombre="Test Validation 4",
+            descripcion="Test schema validation",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        invalid_schema = {
+            "meta": {"name": "Test Schema"},
+            "inputs": [],
+            "steps": [
+                {"type": "calculation", "formula": "1 + 1"}  # Missing name
+            ],
+        }
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": invalid_schema},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "name" in data["error"].lower()
+
+
+def test_validate_schema_api_with_unsafe_formula(app, client, admin_user, db_session):
+    """Test validating a schema with unsafe operations in formula."""
+    with app.app_context():
+        rule = ReglaCalculo(
+            codigo="TEST_VALIDATE_5",
+            nombre="Test Validation 5",
+            descripcion="Test schema validation",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Schema with unsafe operation (import statement)
+        unsafe_schema = {
+            "meta": {"name": "Unsafe Schema"},
+            "inputs": [{"name": "x", "type": "decimal", "default": 10}],
+            "steps": [
+                {"name": "unsafe_step", "type": "calculation", "formula": "__import__('os').system('ls')"}
+            ],
+            "output": "unsafe_step",
+        }
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": unsafe_schema},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+
+
+def test_validate_schema_api_with_conditional_step(app, client, admin_user, db_session):
+    """Test validating a schema with conditional step."""
+    with app.app_context():
+        rule = ReglaCalculo(
+            codigo="TEST_VALIDATE_6",
+            nombre="Test Validation 6",
+            descripcion="Test schema validation",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        valid_schema = {
+            "meta": {"name": "Conditional Schema"},
+            "inputs": [{"name": "salary", "type": "decimal", "default": 1000}],
+            "steps": [
+                {
+                    "name": "bonus",
+                    "type": "conditional",
+                    "condition": {"left": "salary", "operator": ">", "right": 5000},
+                    "if_true": "salary * 0.1",
+                    "if_false": "0",
+                }
+            ],
+            "output": "bonus",
+        }
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": valid_schema},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+
+def test_validate_schema_api_with_tax_lookup_step(app, client, admin_user, db_session):
+    """Test validating a schema with tax lookup step."""
+    with app.app_context():
+        rule = ReglaCalculo(
+            codigo="TEST_VALIDATE_7",
+            nombre="Test Validation 7",
+            descripcion="Test schema validation",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        valid_schema = {
+            "meta": {"name": "Tax Lookup Schema"},
+            "inputs": [{"name": "income", "type": "decimal", "default": 10000}],
+            "steps": [
+                {
+                    "name": "tax",
+                    "type": "tax_lookup",
+                    "table": "income_tax",
+                    "input": "income",
+                }
+            ],
+            "tax_tables": {
+                "income_tax": [
+                    {"min": 0, "max": 5000, "rate": 0.1, "fixed": 0, "over": 0},
+                    {"min": 5000, "max": None, "rate": 0.2, "fixed": 500, "over": 5000},
+                ]
+            },
+            "output": "tax",
+        }
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": valid_schema},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+
+def test_validate_schema_api_with_assignment_step(app, client, admin_user, db_session):
+    """Test validating a schema with assignment step."""
+    with app.app_context():
+        rule = ReglaCalculo(
+            codigo="TEST_VALIDATE_8",
+            nombre="Test Validation 8",
+            descripcion="Test schema validation",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        valid_schema = {
+            "meta": {"name": "Assignment Schema"},
+            "inputs": [{"name": "base_salary", "type": "decimal", "default": 1000}],
+            "steps": [
+                {"name": "salary", "type": "assignment", "value": "base_salary"}
+            ],
+            "output": "salary",
+        }
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": valid_schema},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+
+def test_validate_schema_api_requires_authentication(app, client, db_session):
+    """Test that validate_schema_api requires authentication."""
+    with app.app_context():
+        rule = ReglaCalculo(
+            codigo="TEST_AUTH",
+            nombre="Test Auth",
+            descripcion="Test authentication",
+            jurisdiccion="Test",
+            moneda_referencia="USD",
+            version=1,
+            tipo_regla="otro",
+            vigente_desde=date(2025, 1, 1),
+            activo=True,
+            esquema_json={},
+            creado_por="admin-test",
+        )
+        db_session.add(rule)
+        db_session.commit()
+        rule_id = rule.id
+
+        response = client.post(
+            f"/calculation-rule/api/validate-schema/{rule_id}",
+            json={"schema": {"steps": []}},
+            content_type="application/json",
+            follow_redirects=False,
+        )
+
+        assert response.status_code == 302
+
+
+def test_validate_schema_api_with_nonexistent_rule(app, client, admin_user, db_session):
+    """Test validating schema for non-existent rule."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.post(
+            "/calculation-rule/api/validate-schema/nonexistent-id",
+            json={"schema": {"steps": []}},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
+        assert "no encontrada" in data["error"].lower()

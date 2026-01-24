@@ -27,7 +27,7 @@ from decimal import Decimal
 
 import pytest
 
-from coati_payroll.nomina_engine import NominaEngine, DeduccionItem, HORAS_TRABAJO_DIA
+from coati_payroll.nomina_engine import DeduccionItem
 from coati_payroll.model import (
     Empresa,
     Moneda,
@@ -150,9 +150,15 @@ class TestSalaryCalculations:
             db_session.commit()
 
             # Test: Monthly salary 30,000 over 30-day period
-            engine = NominaEngine(planilla, periodo_inicio=date(2024, 1, 1), periodo_fin=date(2024, 1, 31))
+            from coati_payroll.nomina_engine.calculators.salary_calculator import SalaryCalculator
+            from coati_payroll.nomina_engine.repositories.config_repository import ConfigRepository
+
             salario_mensual = Decimal("30000.00")
-            salario_periodo = engine._calcular_salario_periodo(salario_mensual)
+            config_repo = ConfigRepository(db_session)
+            calculator = SalaryCalculator(config_repo)
+            salario_periodo = calculator.calculate_period_salary(
+                salario_mensual, planilla, date(2024, 1, 1), date(2024, 1, 31), date(2024, 1, 31)
+            )
 
             # The engine uses actual period length which includes both dates
             # From Jan 1 to Jan 31 is 31 days, not 30
@@ -165,13 +171,23 @@ class TestSalaryCalculations:
 
     def test_hourly_rate_calculation(self, app, db_session):
         """Test calculation of hourly rate from daily rate."""
+        from coati_payroll.model import ConfiguracionCalculos
+
         with app.app_context():
+            # Get default configuration
+            config = ConfiguracionCalculos(
+                empresa_id=None,
+                pais_id=None,
+                horas_jornada_diaria=Decimal("8.00"),
+            )
+            horas_jornada = Decimal(str(config.horas_jornada_diaria))
+
             # Daily rate of 800 / 8 hours = 100 per hour
             salario_diario = Decimal("800.00")
-            salario_hora = salario_diario / HORAS_TRABAJO_DIA
+            salario_hora = salario_diario / horas_jornada
 
             assert salario_hora == Decimal("100.00")
-            assert HORAS_TRABAJO_DIA == Decimal("8.00")
+            assert horas_jornada == Decimal("8.00")
 
     def test_zero_salary_handling(self, app, db_session):
         """Test handling of zero base salary (commission-only employee)."""
@@ -206,8 +222,14 @@ class TestSalaryCalculations:
             db_session.commit()
 
             # Zero salary should be handled gracefully
-            engine = NominaEngine(planilla, periodo_inicio=date(2024, 1, 1), periodo_fin=date(2024, 1, 31))
-            salario_periodo = engine._calcular_salario_periodo(Decimal("0.00"))
+            from coati_payroll.nomina_engine.calculators.salary_calculator import SalaryCalculator
+            from coati_payroll.nomina_engine.repositories.config_repository import ConfigRepository
+
+            config_repo = ConfigRepository(db_session)
+            calculator = SalaryCalculator(config_repo)
+            salario_periodo = calculator.calculate_period_salary(
+                Decimal("0.00"), planilla, date(2024, 1, 1), date(2024, 1, 31), date(2024, 1, 31)
+            )
 
             assert salario_periodo == Decimal("0.00")
 
@@ -421,13 +443,16 @@ class TestErrorHandlingAndEdgeCases:
             db_session.add(planilla)
             db_session.commit()
 
-            # Employee not active in period - engine will calculate zero
-            engine = NominaEngine(planilla, periodo_inicio=date(2024, 1, 1), periodo_fin=date(2024, 1, 31))
-
             # When there are no worked days, salary period would be for 0 days
-            # This is handled by the engine's logic for inactive employees
             # Testing that zero salary is handled gracefully
-            salario_periodo = engine._calcular_salario_periodo(Decimal("0.00"))
+            from coati_payroll.nomina_engine.calculators.salary_calculator import SalaryCalculator
+            from coati_payroll.nomina_engine.repositories.config_repository import ConfigRepository
+
+            config_repo = ConfigRepository(db_session)
+            calculator = SalaryCalculator(config_repo)
+            salario_periodo = calculator.calculate_period_salary(
+                Decimal("0.00"), planilla, date(2024, 1, 1), date(2024, 1, 31), date(2024, 1, 31)
+            )
             assert salario_periodo == Decimal("0.00")
 
     def test_very_large_salary_amount(self, app, db_session):

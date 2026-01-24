@@ -1,0 +1,295 @@
+"""Snapshot Service for Payroll Recalculation Consistency.
+
+This service captures immutable snapshots of all configuration data needed
+to ensure payroll calculations can be recalculated consistently.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+from typing import Any
+
+from coati_payroll.model import (
+    ConfiguracionCalculos,
+    Percepcion,
+    Deduccion,
+    Prestacion,
+    Planilla,
+    TipoCambio,
+    db,
+)
+
+
+class SnapshotService:
+    """Service for capturing configuration snapshots for payroll consistency."""
+
+    def __init__(self, session):
+        self.session = session
+
+    def capture_configuration_snapshot(self, empresa_id: str) -> dict[str, Any]:
+        """Capture complete company configuration snapshot.
+
+        Args:
+            empresa_id: Company ID
+
+        Returns:
+            Dictionary with all configuration values
+        """
+        config = self.session.execute(
+            db.select(ConfiguracionCalculos).filter(
+                ConfiguracionCalculos.empresa_id == empresa_id,
+                ConfiguracionCalculos.activo.is_(True),
+            )
+        ).scalar_one_or_none()
+
+        if not config:
+            return {}
+
+        return {
+            "empresa_id": config.empresa_id,
+            "pais_id": config.pais_id,
+            "dias_mes_nomina": config.dias_mes_nomina,
+            "dias_anio_nomina": config.dias_anio_nomina,
+            "horas_jornada_diaria": str(config.horas_jornada_diaria),
+            "dias_mes_vacaciones": config.dias_mes_vacaciones,
+            "dias_anio_vacaciones": config.dias_anio_vacaciones,
+            "considerar_bisiesto_vacaciones": config.considerar_bisiesto_vacaciones,
+            "dias_anio_financiero": config.dias_anio_financiero,
+            "meses_anio_financiero": config.meses_anio_financiero,
+            "dias_quincena": config.dias_quincena,
+            "liquidacion_modo_dias": config.liquidacion_modo_dias,
+            "liquidacion_factor_calendario": config.liquidacion_factor_calendario,
+            "liquidacion_factor_laboral": config.liquidacion_factor_laboral,
+            "dias_mes_antiguedad": config.dias_mes_antiguedad,
+            "dias_anio_antiguedad": config.dias_anio_antiguedad,
+            "activo": config.activo,
+        }
+
+    def capture_exchange_rates_snapshot(self, planilla: Planilla, fecha_calculo: date) -> dict[str, Any]:
+        """Capture exchange rates snapshot for all currencies used.
+
+        Args:
+            planilla: Planilla being processed
+            fecha_calculo: Calculation date
+
+        Returns:
+            Dictionary with exchange rates by currency
+        """
+        rates = {}
+
+        # Get all unique currencies from employees in this planilla
+        from coati_payroll.model import Empleado, PlanillaEmpleado
+
+        empleados = (
+            self.session.execute(
+                db.select(Empleado)
+                .join(PlanillaEmpleado)
+                .filter(
+                    PlanillaEmpleado.planilla_id == planilla.id,
+                    PlanillaEmpleado.activo.is_(True),
+                    Empleado.activo.is_(True),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        monedas_usadas = {emp.moneda_id for emp in empleados if emp.moneda_id}
+        monedas_usadas.add(planilla.moneda_id)
+
+        # Get exchange rates for each currency
+        for moneda_id in monedas_usadas:
+            if moneda_id == planilla.moneda_id:
+                rates[moneda_id] = {"tasa": "1.00", "fecha": fecha_calculo.isoformat()}
+            else:
+                tipo_cambio = (
+                    self.session.execute(
+                        db.select(TipoCambio)
+                        .filter(
+                            TipoCambio.moneda_origen_id == moneda_id,
+                            TipoCambio.moneda_destino_id == planilla.moneda_id,
+                            TipoCambio.fecha_vigencia <= fecha_calculo,
+                        )
+                        .order_by(TipoCambio.fecha_vigencia.desc())
+                    )
+                    .scalars()
+                    .first()
+                )
+
+                if tipo_cambio:
+                    rates[moneda_id] = {
+                        "tasa": str(tipo_cambio.tasa),
+                        "fecha": tipo_cambio.fecha_vigencia.isoformat(),
+                        "moneda_destino_id": tipo_cambio.moneda_destino_id,
+                    }
+
+        return rates
+
+    def capture_catalogs_snapshot(self, planilla: Planilla) -> dict[str, Any]:
+        """Capture complete catalogs snapshot (percepciones, deducciones, prestaciones).
+
+        Args:
+            planilla: Planilla being processed
+
+        Returns:
+            Dictionary with all catalog items and their formulas
+        """
+        snapshot = {
+            "percepciones": [],
+            "deducciones": [],
+            "prestaciones": [],
+        }
+
+        # Capture Percepciones linked to this planilla
+        from coati_payroll.model import PlanillaIngreso
+
+        percepciones_ids = (
+            self.session.execute(
+                db.select(PlanillaIngreso.percepcion_id).filter(
+                    PlanillaIngreso.planilla_id == planilla.id,
+                    PlanillaIngreso.activo.is_(True),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        if percepciones_ids:
+            percepciones = (
+                self.session.execute(
+                    db.select(Percepcion).filter(
+                        Percepcion.id.in_(percepciones_ids),
+                        Percepcion.activo.is_(True),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        else:
+            percepciones = []
+
+        for p in percepciones:
+            snapshot["percepciones"].append(
+                {
+                    "id": p.id,
+                    "codigo": p.codigo,
+                    "nombre": p.nombre,
+                    "descripcion": p.descripcion,
+                    "formula_tipo": p.formula_tipo,
+                    "formula": p.formula,
+                    "monto_default": str(p.monto_default) if p.monto_default else None,
+                    "porcentaje": str(p.porcentaje) if p.porcentaje else None,
+                    "gravable": p.gravable,
+                    "base_calculo": p.base_calculo,
+                    "estado_aprobacion": p.estado_aprobacion,
+                }
+            )
+
+        # Capture Deducciones linked to this planilla
+        from coati_payroll.model import PlanillaDeduccion
+
+        deducciones_ids = (
+            self.session.execute(
+                db.select(PlanillaDeduccion.deduccion_id).filter(
+                    PlanillaDeduccion.planilla_id == planilla.id,
+                    PlanillaDeduccion.activo.is_(True),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        if deducciones_ids:
+            deducciones = (
+                self.session.execute(
+                    db.select(Deduccion).filter(
+                        Deduccion.id.in_(deducciones_ids),
+                        Deduccion.activo.is_(True),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        else:
+            deducciones = []
+
+        for d in deducciones:
+            snapshot["deducciones"].append(
+                {
+                    "id": d.id,
+                    "codigo": d.codigo,
+                    "nombre": d.nombre,
+                    "descripcion": d.descripcion,
+                    "formula_tipo": d.formula_tipo,
+                    "formula": d.formula,
+                    "monto_default": str(d.monto_default) if d.monto_default else None,
+                    "porcentaje": str(d.porcentaje) if d.porcentaje else None,
+                    "antes_impuesto": d.antes_impuesto,
+                    "base_calculo": d.base_calculo,
+                    "estado_aprobacion": d.estado_aprobacion,
+                }
+            )
+
+        # Capture Prestaciones linked to this planilla
+        from coati_payroll.model import PlanillaPrestacion
+
+        prestaciones_ids = (
+            self.session.execute(
+                db.select(PlanillaPrestacion.prestacion_id).filter(
+                    PlanillaPrestacion.planilla_id == planilla.id,
+                    PlanillaPrestacion.activo.is_(True),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        if prestaciones_ids:
+            prestaciones = (
+                self.session.execute(
+                    db.select(Prestacion).filter(
+                        Prestacion.id.in_(prestaciones_ids),
+                        Prestacion.activo.is_(True),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        else:
+            prestaciones = []
+
+        for pr in prestaciones:
+            snapshot["prestaciones"].append(
+                {
+                    "id": pr.id,
+                    "codigo": pr.codigo,
+                    "nombre": pr.nombre,
+                    "descripcion": pr.descripcion,
+                    "formula_tipo": pr.formula_tipo,
+                    "formula": pr.formula,
+                    "monto_default": str(pr.monto_default) if pr.monto_default else None,
+                    "porcentaje": str(pr.porcentaje) if pr.porcentaje else None,
+                    "base_calculo": pr.base_calculo,
+                    "tipo_acumulacion": pr.tipo_acumulacion,
+                    "estado_aprobacion": pr.estado_aprobacion,
+                }
+            )
+
+        return snapshot
+
+    def capture_complete_snapshot(self, planilla: Planilla, fecha_calculo: date) -> dict[str, Any]:
+        """Capture complete snapshot of all configuration data.
+
+        Args:
+            planilla: Planilla being processed
+            fecha_calculo: Calculation date
+
+        Returns:
+            Complete snapshot dictionary
+        """
+        return {
+            "configuracion": self.capture_configuration_snapshot(planilla.empresa_id),
+            "tipos_cambio": self.capture_exchange_rates_snapshot(planilla, fecha_calculo),
+            "catalogos": self.capture_catalogs_snapshot(planilla),
+            "fecha_captura": fecha_calculo.isoformat(),
+        }

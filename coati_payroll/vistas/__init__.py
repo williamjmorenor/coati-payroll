@@ -34,6 +34,9 @@ from coati_payroll.vistas.vacation import vacation_bp
 from coati_payroll.vistas.prestacion import prestacion_management_bp
 from coati_payroll.vistas.report import report_bp
 from coati_payroll.vistas.settings import settings_bp
+from coati_payroll.vistas.config_calculos import config_calculos_bp
+from coati_payroll.vistas.liquidacion import liquidacion_bp
+from coati_payroll.vistas.plugins import plugins_bp
 
 __all__ = [
     "user_bp",
@@ -55,4 +58,7 @@ __all__ = [
     "prestacion_management_bp",
     "report_bp",
     "settings_bp",
+    "plugins_bp",
+    "config_calculos_bp",
+    "liquidacion_bp",
 ]
