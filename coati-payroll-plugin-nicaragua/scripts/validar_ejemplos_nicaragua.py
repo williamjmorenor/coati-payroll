@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from coati_payroll import create_app
 from coati_payroll.model import db
-from coati_payroll.utils.locales.validate_nicaragua_examples import ejecutar_validaciones
+from coati_payroll_plugin_nicaragua.validate_nicaragua_examples import ejecutar_validaciones
 
 
 def main():

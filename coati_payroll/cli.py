@@ -39,7 +39,7 @@ from flask.cli import with_appcontext
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
-from coati_payroll.model import db, Usuario
+from coati_payroll.model import db, Usuario, PluginRegistry
 from coati_payroll.auth import proteger_passwd
 from coati_payroll.log import log
 from coati_payroll.plugin_manager import discover_installed_plugins, load_plugin_module
@@ -126,6 +126,78 @@ class PluginsCommand(click.MultiCommand):
             except Exception as exc:
                 log.exception("Plugin update failed")
                 output_result(ctx, f"Plugin '{name}' update failed: {exc}", None, False)
+                raise click.ClickException(str(exc))
+
+        @plugin_group.command("activate")
+        @with_appcontext
+        @pass_context
+        def plugin_activate(ctx):
+            """Activate the plugin."""
+            from coati_payroll.plugin_manager import sync_plugin_registry
+            
+            try:
+                # Ensure plugin registry is synced
+                sync_plugin_registry()
+                
+                # Find the plugin in the registry
+                plugin_record = db.session.execute(
+                    db.select(PluginRegistry).filter_by(plugin_id=name)
+                ).scalar_one_or_none()
+
+                if plugin_record is None:
+                    output_result(ctx, f"Plugin '{name}' not found in registry", None, False)
+                    raise click.ClickException(f"Plugin '{name}' not found. Make sure it is installed.")
+
+                if not plugin_record.installed:
+                    output_result(ctx, f"Plugin '{name}' is not installed", None, False)
+                    raise click.ClickException(f"Plugin '{name}' is not installed.")
+
+                if plugin_record.active:
+                    output_result(ctx, f"Plugin '{name}' is already active")
+                    return
+
+                # Activate the plugin
+                plugin_record.active = True
+                db.session.commit()
+                output_result(ctx, f"Plugin '{name}' activated successfully. Restart the application to load the plugin.")
+            except Exception as exc:
+                db.session.rollback()
+                log.exception("Plugin activation failed")
+                output_result(ctx, f"Plugin '{name}' activation failed: {exc}", None, False)
+                raise click.ClickException(str(exc))
+
+        @plugin_group.command("deactivate")
+        @with_appcontext
+        @pass_context
+        def plugin_deactivate(ctx):
+            """Deactivate the plugin."""
+            from coati_payroll.plugin_manager import sync_plugin_registry
+            
+            try:
+                # Ensure plugin registry is synced
+                sync_plugin_registry()
+                
+                # Find the plugin in the registry
+                plugin_record = db.session.execute(
+                    db.select(PluginRegistry).filter_by(plugin_id=name)
+                ).scalar_one_or_none()
+
+                if plugin_record is None:
+                    output_result(ctx, f"Plugin '{name}' not found in registry", None, False)
+                    raise click.ClickException(f"Plugin '{name}' not found.")
+
+                if not plugin_record.active:
+                    output_result(ctx, f"Plugin '{name}' is already inactive")
+                    return
+
+                # Deactivate the plugin
+                plugin_record.active = False
+                db.session.commit()
+                output_result(ctx, f"Plugin '{name}' deactivated successfully. Restart the application to unload the plugin.")
+            except Exception as exc:
+                db.session.rollback()
+                log.exception("Plugin deactivation failed")
+                output_result(ctx, f"Plugin '{name}' deactivation failed: {exc}", None, False)
                 raise click.ClickException(str(exc))
 
         return plugin_group

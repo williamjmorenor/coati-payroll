@@ -27,7 +27,7 @@ Target: Annual IR = C$ 34,799.00 for variable income over 12 months.
 import pytest
 from decimal import Decimal
 
-from coati_payroll.utils.locales.nicaragua import ejecutar_test_nomina_nicaragua
+from coati_payroll_plugin_nicaragua.nicaragua import ejecutar_test_nomina_nicaragua
 
 
 # ============================================================================

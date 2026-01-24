@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Nicaragua - Coati Payroll{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1><i class="bi bi-flag-fill"></i> Plugin de Nicaragua</h1>
+                <p class="lead">Funcionalidades específicas para cálculo de nómina en Nicaragua</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-calculator"></i> Cálculos de Nómina</h5>
+                </div>
+                <div class="card-body">
+                    <h6>INSS (Instituto Nicaragüense de Seguridad Social)</h6>
+                    <p>Deducción del 7% sobre el salario bruto.</p>
+                    
+                    <h6 class="mt-3">IR (Impuesto sobre la Renta)</h6>
+                    <p>Cálculo progresivo con método acumulado según tabla de tramos fiscales.</p>
+                    
+                    <p class="text-muted mt-3">
+                        <small>Los cálculos se realizan según la legislación nicaragüense vigente y deben ser configurados por el implementador.</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-book"></i> Documentación</h5>
+                </div>
+                <div class="card-body">
+                    <p>Accede a la documentación técnica completa para implementación en Nicaragua:</p>
+                    <ul>
+                        <li><a href="{{ url_for('plugin_nicaragua.documentacion') }}">Guía de Implementación Técnica</a></li>
+                        <li>Guía paso a paso para configurar IR</li>
+                        <li>Ejemplos de configuración</li>
+                        <li>Scripts de validación</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-tools"></i> Utilidades</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Scripts de Validación</h6>
+                    <p>El plugin incluye scripts para validar los cálculos:</p>
+                    <pre class="bg-light p-3"><code>python scripts/validar_ejemplos_nicaragua.py
+python scripts/reporte_validacion_nicaragua.py</code></pre>
+
+                    <h6 class="mt-3">Tests Automatizados</h6>
+                    <p>Suite completa de tests para validar cálculos de IR e INSS:</p>
+                    <pre class="bg-light p-3"><code>pytest tests/test_nicaragua_ir_calculation.py
+pytest tests/test_nicaragua_json_validation.py</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning" role="alert">
+                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Importante</h5>
+                <p>Este plugin sigue el Contrato Social de Coati Payroll:</p>
+                <ul>
+                    <li>No incluye interpretaciones legales vinculantes</li>
+                    <li>No reemplaza conocimiento profesional</li>
+                    <li>No garantiza cumplimiento regulatorio</li>
+                </ul>
+                <p class="mb-0">El implementador es responsable de configurar correctamente los cálculos según la legislación nicaragüense vigente y validar los resultados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

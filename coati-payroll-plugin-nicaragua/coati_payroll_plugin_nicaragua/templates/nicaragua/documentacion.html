@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Documentación Nicaragua - Coati Payroll{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1><i class="bi bi-book"></i> Documentación Técnica - Nicaragua</h1>
+                <p class="lead">Guías de implementación para nómina nicaragüense</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Documentación Disponible</h5>
+                </div>
+                <div class="card-body">
+                    <p>La documentación completa del plugin está disponible en el directorio <code>docs/</code> del plugin:</p>
+                    
+                    <h6 class="mt-3">1. Guía General de Implementación</h6>
+                    <p><code>docs/nicaragua.md</code></p>
+                    <p class="text-muted">Introducción general a la implementación de nómina para Nicaragua usando Coati Payroll.</p>
+                    
+                    <h6 class="mt-3">2. Implementación Técnica</h6>
+                    <p><code>docs/nicaragua-implementacion-tecnica.md</code></p>
+                    <p class="text-muted">Detalles técnicos sobre la configuración de deducciones, percepciones y reglas de cálculo.</p>
+                    
+                    <h6 class="mt-3">3. Configuración del IR Paso a Paso</h6>
+                    <p><code>docs/nicaragua-ir-paso-a-paso.md</code></p>
+                    <p class="text-muted">Guía detallada para configurar el cálculo del Impuesto sobre la Renta progresivo con método acumulado.</p>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Conceptos Principales</h5>
+                </div>
+                <div class="card-body">
+                    <h6>INSS (Instituto Nicaragüense de Seguridad Social)</h6>
+                    <ul>
+                        <li>Deducción del trabajador: 7% del salario bruto</li>
+                        <li>Se aplica antes del cálculo del IR</li>
+                        <li>Base de cálculo: salario bruto mensual</li>
+                    </ul>
+
+                    <h6 class="mt-3">IR (Impuesto sobre la Renta)</h6>
+                    <ul>
+                        <li>Sistema progresivo por tramos</li>
+                        <li>Método acumulado (considera ingresos del año fiscal)</li>
+                        <li>5 tramos fiscales: 0%, 15%, 20%, 25%, 30%</li>
+                        <li>Base de cálculo: salario bruto menos INSS</li>
+                    </ul>
+
+                    <h6 class="mt-3">Cálculo Paso a Paso</h6>
+                    <ol>
+                        <li>Calcular salario bruto (salario base + percepciones)</li>
+                        <li>Aplicar INSS (7% del bruto)</li>
+                        <li>Calcular base para IR (bruto - INSS)</li>
+                        <li>Acumular ingresos del año fiscal</li>
+                        <li>Calcular IR anual acumulado según tabla progresiva</li>
+                        <li>Restar IR pagado en meses anteriores</li>
+                        <li>Resultado: IR del mes actual</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Configuración</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Inicializar Plugin</h6>
+                    <pre class="bg-light p-2"><code>payrollctl plugins nicaragua init</code></pre>
+                    <p class="text-muted small">Carga los catálogos base (deducciones, tipos de planilla, etc.)</p>
+
+                    <h6 class="mt-3">Actualizar Plugin</h6>
+                    <pre class="bg-light p-2"><code>payrollctl plugins nicaragua update</code></pre>
+                    <p class="text-muted small">Aplica actualizaciones al catálogo</p>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Recursos Adicionales</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Utilidades de Validación</h6>
+                    <p class="small">El plugin incluye utilidades para validar cálculos:</p>
+                    <ul class="small">
+                        <li><code>nicaragua.py</code> - Función de test de nómina</li>
+                        <li><code>validate_nicaragua_ir.py</code> - Validación de IR</li>
+                        <li><code>validate_nicaragua_examples.py</code> - Validación de ejemplos</li>
+                    </ul>
+
+                    <h6 class="mt-3">Tests</h6>
+                    <p class="small">Suite completa de tests en el directorio <code>tests/</code></p>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">Responsabilidad</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small">El implementador debe:</p>
+                    <ul class="small">
+                        <li>Conocer la legislación nicaragüense</li>
+                        <li>Configurar valores según ley vigente</li>
+                        <li>Validar resultados manualmente</li>
+                        <li>Mantener actualizado el sistema</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('plugin_nicaragua.index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

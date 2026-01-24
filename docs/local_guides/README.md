@@ -1,49 +1,63 @@
 # Guías Locales de Implementación
 
-Este directorio contiene guías detalladas para implementar Coati Payroll según las legislaciones laborales y tributarias de diferentes países.
+**IMPORTANTE**: Las guías de implementación específicas de cada país han sido movidas a sus respectivos plugins para mantener el motor de nómina agnóstico a cualquier jurisdicción.
 
-## Guías Disponibles
+## Sistema de Plugins
+
+Coati Payroll sigue un principio fundamental: **el motor de nómina debe ser agnóstico a cualquier jurisdicción**. Todo código, documentación y herramientas específicas de un país deben residir en plugins instalables separados.
+
+## Plugins Disponibles
 
 ### 🇳🇮 Nicaragua
 
-- **[Guía de Implementación para Nicaragua](nicaragua.md)** - Configuración completa del sistema según la legislación nicaragüense
-  - Tipos de ingresos (ordinarios y extraordinarios)
-  - INSS Laboral (7%)
-  - IR (Impuesto sobre la Renta) con tarifa progresiva
-  - Prestaciones patronales
-  - Casos especiales (bonos, aumentos salariales, vacaciones)
-  - Ejemplos de configuración con ReglaCalculo
+La implementación específica para Nicaragua (cálculos de INSS e IR, documentación técnica, scripts de validación) está disponible en el plugin:
 
-- **[Cálculo del IR Nicaragua - Paso a Paso](nicaragua-ir-paso-a-paso.md)** - Guía educativa para entender el cálculo del IR
-  - Explicación detallada en 5 pasos simples
-  - Múltiples ejemplos prácticos con diferentes salarios
-  - Tablas de tramos progresivos
-  - Casos especiales (bonos, aumentos)
-  - Herramientas de validación
+**[coati-payroll-plugin-nicaragua](../../coati-payroll-plugin-nicaragua/)**
 
-## Cómo usar estas guías
+El plugin incluye:
+- Cálculos de INSS (7%) e IR (progresivo con método acumulado)
+- Documentación técnica completa:
+  - `nicaragua.md` - Guía de implementación completa
+  - `nicaragua-ir-paso-a-paso.md` - Guía educativa del cálculo de IR
+  - `nicaragua-implementacion-tecnica.md` - Detalles técnicos
+- Scripts de validación y pruebas
+- Tests de integración
 
-1. **Seleccione su país**: Encuentre la guía correspondiente a su jurisdicción
-2. **Lea la guía de implementación**: Siga los pasos para configurar el sistema
-3. **Consulte la guía educativa**: Si necesita entender los cálculos en detalle
-4. **Configure el sistema**: Use los ejemplos de configuración proporcionados
-5. **Pruebe y valide**: Ejecute las pruebas recomendadas antes de usar en producción
+Para más información, ver:
+- [README del plugin Nicaragua](../../coati-payroll-plugin-nicaragua/README.md)
+- Documentación en `coati-payroll-plugin-nicaragua/docs/`
 
-## Contribuir
+## Instalación de Plugins
 
-Si desea agregar una guía para otro país o mejorar las existentes:
+Para instalar y usar un plugin:
 
-1. Cree un archivo nuevo en este directorio (ej: `costa-rica.md`)
-2. Siga la estructura de las guías existentes
-3. Incluya:
-   - Marco legal del país
-   - Tipos de ingresos y deducciones
-   - Cálculos detallados con ejemplos
-   - Configuración paso a paso
-   - Casos especiales
-   - Herramientas de validación
-4. Actualice este README con la nueva guía
-5. Actualice `mkdocs.yml` para incluir la guía en la navegación
+```bash
+# Instalar el plugin
+pip install ./coati-payroll-plugin-nicaragua
+
+# Reiniciar la aplicación
+# El plugin aparecerá en /plugins/
+
+# Inicializar el plugin (carga catálogos)
+payrollctl plugins nicaragua init
+
+# Activar desde CLI o interfaz web
+# El elemento del menú aparecerá después de la activación
+```
+
+## Crear tu Propio Plugin
+
+Si necesitas implementar Coati Payroll para otra jurisdicción, **crea un plugin** en lugar de modificar el motor principal.
+
+Consulta la guía completa de desarrollo de plugins:
+- **[Guía de Desarrollo de Plugins](../guia/plugins.md)**
+
+Esta guía explica:
+1. Estructura del plugin
+2. Funciones requeridas (`register_blueprints`, `init`, `update`)
+3. Cómo empaquetar para pip
+4. Cómo registrar el plugin en el sistema
+5. Ejemplos completos paso a paso
 
 ## Estructura recomendada
 
