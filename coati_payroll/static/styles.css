@@ -749,7 +749,6 @@ label{ color: var(--text-primary); font-size: 12px; font-weight: 500; }
   .sidebar:hover { width: 240px; }
   .sidebar .nav-link > span { 
     width: auto; 
-    opacity: 1; 
   }
   .sidebar .nav-link span span { opacity: 1; }
   .sidebar .sidebar-header { 
