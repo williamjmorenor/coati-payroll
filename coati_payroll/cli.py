@@ -903,16 +903,24 @@ def database_restore(ctx, backup_file, yes):
         sys.exit(1)
 
 
+def _database_migrate_upgrade():
+    """Apply database migrations to latest version.
+    
+    Helper function used by both migrate and upgrade commands.
+    """
+    from coati_payroll import alembic
+    
+    click.echo("Applying database migrations...")
+    alembic.upgrade()
+
+
 @database.command("migrate")
 @with_appcontext
 @pass_context
 def database_migrate(ctx):
     """Apply database migrations to latest version."""
     try:
-        from coati_payroll import alembic
-        
-        click.echo("Applying database migrations...")
-        alembic.upgrade()
+        _database_migrate_upgrade()
         output_result(ctx, "Database migrated successfully to latest version")
 
     except Exception as e:
@@ -927,10 +935,7 @@ def database_migrate(ctx):
 def database_upgrade(ctx):
     """Apply database migrations (alias for migrate)."""
     try:
-        from coati_payroll import alembic
-        
-        click.echo("Applying database migrations...")
-        alembic.upgrade()
+        _database_migrate_upgrade()
         output_result(ctx, "Database migrated successfully to latest version")
 
     except Exception as e:
@@ -969,6 +974,7 @@ def database_current(ctx):
     """Show current migration revision."""
     try:
         from coati_payroll import alembic
+        from coati_payroll.model import db
         
         # Get current revision
         revision = None
