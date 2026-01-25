@@ -21,7 +21,6 @@ from coati_payroll.log import log
 from coati_payroll.queue.driver import QueueDriver
 from coati_payroll.queue.drivers import DramatiqDriver, HueyDriver, NoopQueueDriver
 
-
 _cached_driver: QueueDriver | None = None
 
 
