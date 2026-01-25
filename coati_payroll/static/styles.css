@@ -747,7 +747,9 @@ label{ color: var(--text-primary); font-size: 12px; font-weight: 500; }
   /* Sidebar opens fully expanded on mobile (no collapse behavior) */
   .sidebar.open{ left: 0; width: 240px; }
   .sidebar:hover { width: 240px; }
-  .sidebar .nav-link span { opacity: 1; }
+  .sidebar .nav-link > span { 
+    width: auto; 
+  }
   .sidebar .nav-link span span { opacity: 1; }
   .sidebar .sidebar-header { 
     opacity: 1; 
