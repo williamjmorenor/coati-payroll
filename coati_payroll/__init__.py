@@ -177,7 +177,7 @@ def create_app(config) -> Flask:
     except Exception:
         log.trace("create_app: could not read SQLALCHEMY_DATABASE_URI from app.config")
 
-    # Asegurar la creación de las tablas básicas al iniciar la app.
+    # Garantizar que las tablas básicas, el usuario admin y la configuración inicial existan
     try:
         log.trace("create_app: calling ensure_database_initialized")
         ensure_database_initialized(app)
@@ -188,7 +188,7 @@ def create_app(config) -> Flask:
             log.exception("create_app: ensure_database_initialized exception")
         except Exception:
             pass
-        # No interrumpir el arranque si la inicialización automática falla.
+        # No detener el arranque si la inicialización automática falla
         pass
 
     try:
@@ -242,30 +242,6 @@ def create_app(config) -> Flask:
     from coati_payroll.rate_limiting import configure_rate_limiting
 
     limiter = configure_rate_limiting(app)
-
-    # Load initial data and demo data after Babel is initialized
-    # This allows translations to work properly
-    # Skip loading in test environments to keep test databases clean
-    if not app.config.get("TESTING"):
-        with app.app_context():
-            # Load initial data (currencies, income concepts, deduction concepts)
-            # Strings are translated automatically based on the configured language
-            try:
-                from coati_payroll.initial_data import load_initial_data
-
-                load_initial_data()
-            except Exception as exc:
-                log.trace(f"Could not load initial data: {exc}")
-
-            # Load demo data if COATI_LOAD_DEMO_DATA environment variable is set
-            # This provides comprehensive sample data for manual testing
-            if environ.get("COATI_LOAD_DEMO_DATA"):
-                try:
-                    from coati_payroll.demo_data import load_demo_data
-
-                    load_demo_data()
-                except Exception as exc:
-                    log.trace(f"Could not load demo data: {exc}")
 
     app.register_blueprint(auth, url_prefix="/auth")
     app.register_blueprint(app_blueprint, url_prefix="/")
@@ -390,13 +366,17 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
             _db.create_all()
             log.trace("ensure_database_initialized: create_all() completed")
         except Exception as exc:
-            # Registrar excepción completa para diagnóstico
-            log.trace(f"ensure_database_initialized: create_all() raised: {exc}")
-            try:
-                log.exception("ensure_database_initialized: create_all() exception")
-            except Exception:
-                pass
-            # Re-raise? No — dejar que el llamador decida; aquí se registra la traza.
+            from sqlalchemy.exc import OperationalError
+
+            msg = str(exc).lower()
+            if isinstance(exc, OperationalError) and "already exists" in msg:
+                log.trace("ensure_database_initialized: create_all skipped existing objects")
+            else:
+                log.trace(f"ensure_database_initialized: create_all() raised: {exc}")
+                try:
+                    log.exception("ensure_database_initialized: create_all() exception")
+                except Exception:
+                    pass
 
         # Comprobar existencia de al menos un admin.
         registro_admin = _db.session.execute(_db.select(Usuario).filter_by(tipo="admin")).scalar_one_or_none()

@@ -62,7 +62,7 @@ custom_levels = {
 numeric_level = custom_levels.get(log_level_str, logging.INFO)
 
 # Configurar logger raíz
-root_logger = logging.getLogger("now_lms")
+root_logger = logging.getLogger("coati_payroll")
 root_logger.setLevel(numeric_level)
 
 # Handler solo para stdout
