@@ -45,7 +45,6 @@ from coati_payroll.model import (
 )
 from coati_payroll.enums import TipoDetalle
 
-
 # ============================================================================
 # System Report Registry
 # ============================================================================

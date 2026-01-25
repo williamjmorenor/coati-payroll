@@ -46,7 +46,6 @@ from coati_payroll.model import (
 from coati_payroll.nomina_engine import NominaEngine
 from coati_payroll.queue import get_queue_driver
 
-
 # Get the queue driver
 queue = get_queue_driver()
 

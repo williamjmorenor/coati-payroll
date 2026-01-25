@@ -903,26 +903,29 @@ def database_restore(ctx, backup_file, yes):
         sys.exit(1)
 
 
+def _database_migrate_upgrade():
+    """Apply database migrations to latest version.
+
+    Helper function used by both migrate and upgrade commands.
+    """
+    from coati_payroll import alembic
+
+    click.echo("Applying database migrations...")
+    alembic.upgrade()
+
+
 @database.command("migrate")
 @with_appcontext
 @pass_context
 def database_migrate(ctx):
-    """Generate database migration."""
+    """Apply database migrations to latest version."""
     try:
-        # Try to use flask-migrate
-        try:
-            from flask_migrate import Migrate, init, migrate  # noqa: F401
-
-            click.echo("Generating database migration...")
-            # This would need proper setup
-            output_result(ctx, "Migration support requires flask-migrate setup")
-
-        except ImportError:
-            output_result(ctx, "flask-migrate not installed. Run: pip install flask-migrate", None, False)
-            sys.exit(1)
+        _database_migrate_upgrade()
+        output_result(ctx, "Database migrated successfully to latest version")
 
     except Exception as e:
-        output_result(ctx, f"Failed to generate migration: {e}", None, False)
+        output_result(ctx, f"Failed to apply migrations: {e}", None, False)
+        log.exception("Failed to apply migrations")
         sys.exit(1)
 
 
@@ -930,20 +933,86 @@ def database_migrate(ctx):
 @with_appcontext
 @pass_context
 def database_upgrade(ctx):
-    """Apply database migrations."""
+    """Apply database migrations (alias for migrate)."""
     try:
-        try:
-            from flask_migrate import upgrade  # noqa: F401
-
-            click.echo("Applying database migrations...")
-            output_result(ctx, "Migration support requires flask-migrate setup")
-
-        except ImportError:
-            output_result(ctx, "flask-migrate not installed. Run: pip install flask-migrate", None, False)
-            sys.exit(1)
+        _database_migrate_upgrade()
+        output_result(ctx, "Database migrated successfully to latest version")
 
     except Exception as e:
         output_result(ctx, f"Failed to apply migrations: {e}", None, False)
+        log.exception("Failed to apply migrations")
+        sys.exit(1)
+
+
+@database.command("downgrade")
+@click.argument("revision", default="-1")
+@with_appcontext
+@pass_context
+def database_downgrade(ctx, revision):
+    """Downgrade database to a previous migration.
+
+    Args:
+        revision: Target revision (default: -1 for one step back, or 'base' for all the way back)
+    """
+    try:
+        from coati_payroll import alembic
+
+        click.echo(f"Downgrading database to revision: {revision}...")
+        alembic.downgrade(revision)
+        output_result(ctx, f"Database downgraded successfully to revision: {revision}")
+
+    except Exception as e:
+        output_result(ctx, f"Failed to downgrade database: {e}", None, False)
+        log.exception("Failed to downgrade database")
+        sys.exit(1)
+
+
+@database.command("current")
+@with_appcontext
+@pass_context
+def database_current(ctx):
+    """Show current migration revision."""
+    try:
+        from coati_payroll.model import db
+
+        # Get current revision
+        revision = None
+        try:
+            revision = db.session.execute(db.text("SELECT version_num FROM alembic_version")).scalar()
+        except Exception:
+            pass
+
+        if revision:
+            output_result(ctx, f"Current database revision: {revision}", {"revision": revision})
+        else:
+            output_result(ctx, "No migration version found (database not stamped)", None, False)
+
+    except Exception as e:
+        output_result(ctx, f"Failed to get current revision: {e}", None, False)
+        log.exception("Failed to get current revision")
+        sys.exit(1)
+
+
+@database.command("stamp")
+@click.argument("revision", default="head")
+@with_appcontext
+@pass_context
+def database_stamp(ctx, revision):
+    """Stamp the database with a specific revision without running migrations.
+
+    Args:
+        revision: Target revision to stamp (default: 'head' for latest)
+    """
+    try:
+        from coati_payroll import alembic
+
+        click.echo(f"Stamping database with revision: {revision}...")
+        alembic.stamp(revision)
+        output_result(ctx, f"Database stamped successfully with revision: {revision}")
+
+    except Exception as e:
+        output_result(ctx, f"Failed to stamp database: {e}", None, False)
+        log.exception("Failed to stamp database")
         sys.exit(1)
 
 

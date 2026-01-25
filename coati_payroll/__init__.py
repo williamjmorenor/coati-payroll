@@ -30,6 +30,7 @@ from datetime import datetime
 # Third party packages
 # <-------------------------------------------------------------------------> #
 from flask import Flask, flash, redirect, url_for
+from flask_alembic import Alembic
 from flask_babel import Babel
 from flask_login import LoginManager
 from flask_session import Session
@@ -87,6 +88,7 @@ def _patched_create_session_model(db, table_name, schema=None, bind_key=None, se
 fs_sqlalchemy.create_session_model = _patched_create_session_model
 
 # Third party libraries
+alembic = Alembic()
 session_manager = Session()
 login_manager = LoginManager()
 babel = Babel()
@@ -156,7 +158,17 @@ def create_app(config) -> Flask:
         log.warning("Using default SECRET_KEY in production! This can cause issues.")
 
     log.trace("create_app: initializing app")
+
+    # Configure Alembic migrations directory
+    from os.path import abspath, dirname, join
+
+    migrations_dir = abspath(join(dirname(__file__), "migrations"))
+    app.config.setdefault("ALEMBIC", {})
+    app.config["ALEMBIC"]["script_location"] = migrations_dir
+
+    # Initialize database and alembic
     db.init_app(app)
+    alembic.init_app(app)
 
     # Mostrar la URI de la base de datos para diagnóstico
     try:
@@ -165,7 +177,7 @@ def create_app(config) -> Flask:
     except Exception:
         log.trace("create_app: could not read SQLALCHEMY_DATABASE_URI from app.config")
 
-    # Asegurar la creación de las tablas básicas al iniciar la app.
+    # Garantizar que las tablas básicas, el usuario admin y la configuración inicial existan
     try:
         log.trace("create_app: calling ensure_database_initialized")
         ensure_database_initialized(app)
@@ -176,7 +188,7 @@ def create_app(config) -> Flask:
             log.exception("create_app: ensure_database_initialized exception")
         except Exception:
             pass
-        # No interrumpir el arranque si la inicialización automática falla.
+        # No detener el arranque si la inicialización automática falla
         pass
 
     try:
@@ -230,30 +242,6 @@ def create_app(config) -> Flask:
     from coati_payroll.rate_limiting import configure_rate_limiting
 
     limiter = configure_rate_limiting(app)
-
-    # Load initial data and demo data after Babel is initialized
-    # This allows translations to work properly
-    # Skip loading in test environments to keep test databases clean
-    if not app.config.get("TESTING"):
-        with app.app_context():
-            # Load initial data (currencies, income concepts, deduction concepts)
-            # Strings are translated automatically based on the configured language
-            try:
-                from coati_payroll.initial_data import load_initial_data
-
-                load_initial_data()
-            except Exception as exc:
-                log.trace(f"Could not load initial data: {exc}")
-
-            # Load demo data if COATI_LOAD_DEMO_DATA environment variable is set
-            # This provides comprehensive sample data for manual testing
-            if environ.get("COATI_LOAD_DEMO_DATA"):
-                try:
-                    from coati_payroll.demo_data import load_demo_data
-
-                    load_demo_data()
-                except Exception as exc:
-                    log.trace(f"Could not load demo data: {exc}")
 
     app.register_blueprint(auth, url_prefix="/auth")
     app.register_blueprint(app_blueprint, url_prefix="/")
@@ -378,13 +366,17 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
             _db.create_all()
             log.trace("ensure_database_initialized: create_all() completed")
         except Exception as exc:
-            # Registrar excepción completa para diagnóstico
-            log.trace(f"ensure_database_initialized: create_all() raised: {exc}")
-            try:
-                log.exception("ensure_database_initialized: create_all() exception")
-            except Exception:
-                pass
-            # Re-raise? No — dejar que el llamador decida; aquí se registra la traza.
+            from sqlalchemy.exc import OperationalError
+
+            msg = str(exc).lower()
+            if isinstance(exc, OperationalError) and "already exists" in msg:
+                log.trace("ensure_database_initialized: create_all skipped existing objects")
+            else:
+                log.trace(f"ensure_database_initialized: create_all() raised: {exc}")
+                try:
+                    log.exception("ensure_database_initialized: create_all() exception")
+                except Exception:
+                    pass
 
         # Comprobar existencia de al menos un admin.
         registro_admin = _db.session.execute(_db.select(Usuario).filter_by(tipo="admin")).scalar_one_or_none()
@@ -405,6 +397,20 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
 
             _db.session.add(nuevo)
             _db.session.commit()
+
+        # Handle database migrations with Alembic
+        # Check if AUTO_MIGRATE is enabled and run migrations if database is already initialized
+        from coati_payroll.config import AUTO_MIGRATE
+
+        if AUTO_MIGRATE:
+            try:
+                log.trace("ensure_database_initialized: AUTO_MIGRATE enabled, running alembic.upgrade()")
+                alembic.upgrade()
+                log.info("Database migrated successfully with alembic.upgrade()")
+            except Exception as exc:
+                log.warning(f"Error during automatic database migration: {exc}")
+                # Don't fail initialization if migration fails
+                pass
 
         # Initialize language from environment variable if provided
         try:

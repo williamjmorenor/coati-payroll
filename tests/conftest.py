@@ -28,7 +28,7 @@ import pytest
 from cachelib.file import FileSystemCache
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from coati_payroll import create_app
+from coati_payroll import create_app, ensure_database_initialized
 from coati_payroll.model import db as _db
 
 
@@ -65,8 +65,6 @@ def app():
     }
 
     app = create_app(config)
-
-    # Tables are created by create_app -> ensure_database_initialized
 
     yield app
 

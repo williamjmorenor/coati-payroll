@@ -29,7 +29,6 @@ from coati_payroll.liquidacion_engine import ejecutar_liquidacion, recalcular_li
 from coati_payroll.vistas.planilla.helpers import check_openpyxl_available
 from coati_payroll.vistas.planilla.services import ExportService
 
-
 liquidacion_bp = Blueprint("liquidacion", __name__, url_prefix="/liquidaciones")
 
 # Constants

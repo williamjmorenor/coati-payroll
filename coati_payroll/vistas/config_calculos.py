@@ -23,7 +23,6 @@ from coati_payroll.i18n import _
 from coati_payroll.model import ConfiguracionCalculos, db
 from coati_payroll.rbac import require_write_access
 
-
 config_calculos_bp = Blueprint("config_calculos", __name__, url_prefix="/config-calculos")
 
 
