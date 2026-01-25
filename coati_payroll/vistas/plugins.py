@@ -6,7 +6,6 @@ from coati_payroll.i18n import _
 from coati_payroll.model import PluginRegistry, db
 from coati_payroll.rbac import require_write_access
 
-
 plugins_bp = Blueprint("plugins", __name__, url_prefix="/plugins")
 
 # Constants

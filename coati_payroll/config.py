@@ -99,6 +99,9 @@ DESARROLLO = any(
     str(environ.get(var, "")).strip().lower() in VALORES_TRUE for var in [*DEBUG_VARS, *FRAMEWORK_VARS, *GENERIC_VARS]
 )
 
+# Auto-migrate configuration - enables automatic database migrations on startup
+AUTO_MIGRATE = environ.get("COATI_AUTO_MIGRATE", "0").strip().lower() in VALORES_TRUE
+
 # < --------------------------------------------------------------------------------------------- >
 # Directorios base de la aplicacion
 DIRECTORIO_ACTUAL: Path = Path(path.abspath(path.dirname(__file__)))

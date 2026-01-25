@@ -51,7 +51,6 @@ from coati_payroll.model import (
 )
 from coati_payroll.log import log
 
-
 # ============================================================================
 # Whitelisted entities and fields for custom reports
 # ============================================================================

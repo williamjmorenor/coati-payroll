@@ -34,7 +34,6 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 from coati_payroll.i18n import _l as _
 
-
 # American currencies (North, Central, South America, and Caribbean)
 # Currency names are marked for translation
 CURRENCIES = [

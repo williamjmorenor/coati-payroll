@@ -9,7 +9,6 @@ from flask import Flask
 from coati_payroll.log import log
 from coati_payroll.model import PluginRegistry, db
 
-
 PLUGIN_DISTRIBUTION_PREFIX = "coati-payroll-plugin-"
 
 
