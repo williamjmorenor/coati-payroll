@@ -30,6 +30,7 @@ from datetime import datetime
 # Third party packages
 # <-------------------------------------------------------------------------> #
 from flask import Flask, flash, redirect, url_for
+from flask_alembic import Alembic
 from flask_babel import Babel
 from flask_login import LoginManager
 from flask_session import Session
@@ -87,6 +88,7 @@ def _patched_create_session_model(db, table_name, schema=None, bind_key=None, se
 fs_sqlalchemy.create_session_model = _patched_create_session_model
 
 # Third party libraries
+alembic = Alembic()
 session_manager = Session()
 login_manager = LoginManager()
 babel = Babel()
@@ -156,7 +158,16 @@ def create_app(config) -> Flask:
         log.warning("Using default SECRET_KEY in production! This can cause issues.")
 
     log.trace("create_app: initializing app")
+    
+    # Configure Alembic migrations directory
+    from os.path import abspath, dirname, join
+    migrations_dir = abspath(join(dirname(__file__), "migrations"))
+    app.config.setdefault("ALEMBIC", {})
+    app.config["ALEMBIC"]["script_location"] = migrations_dir
+    
+    # Initialize database and alembic
     db.init_app(app)
+    alembic.init_app(app)
 
     # Mostrar la URI de la base de datos para diagnóstico
     try:
@@ -405,6 +416,20 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
 
             _db.session.add(nuevo)
             _db.session.commit()
+
+        # Handle database migrations with Alembic
+        # Check if AUTO_MIGRATE is enabled and run migrations if database is already initialized
+        from coati_payroll.config import AUTO_MIGRATE
+        
+        if AUTO_MIGRATE:
+            try:
+                log.trace("ensure_database_initialized: AUTO_MIGRATE enabled, running alembic.upgrade()")
+                alembic.upgrade()
+                log.info("Database migrated successfully with alembic.upgrade()")
+            except Exception as exc:
+                log.warning(f"Error during automatic database migration: {exc}")
+                # Don't fail initialization if migration fails
+                pass
 
         # Initialize language from environment variable if provided
         try:
