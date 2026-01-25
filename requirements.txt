@@ -1,11 +1,12 @@
+alembic==1.18.1
 argon2-cffi
 babel
 configobj
 cryptography
 dramatiq[redis]
 email_validator
-huey
 flask
+flask-alembic==3.2.0
 flask-babel
 flask-caching
 flask-limiter
@@ -16,6 +17,7 @@ flask-session
 flask-sqlalchemy
 flask_weasyprint
 flask-wtf
+huey
 mysql-connector-python
 openpyxl
 orjson
