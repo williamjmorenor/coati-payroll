@@ -161,12 +161,21 @@ def edit_schema(id: str):
     # Get available data sources for the UI
     available_sources = get_available_sources_for_ui()
 
+    default_schema = {
+        "meta": {},
+        "inputs": [],
+        "steps": [],
+        "tax_tables": {},
+        "output": ""
+    }
+    current_schema = rule.esquema_json if rule.esquema_json else default_schema
+    
     return render_template(
         "modules/calculation_rule/schema_editor.html",
         rule=rule,
-        schema_json=json.dumps(rule.esquema_json or {}, indent=2),
-        example_schema=json.dumps(EXAMPLE_IR_NICARAGUA_SCHEMA, indent=2),
-        available_sources=json.dumps(available_sources),
+        schema_json=current_schema,
+        example_schema=EXAMPLE_IR_NICARAGUA_SCHEMA,
+        available_sources=available_sources,
     )
 
 

@@ -366,10 +366,10 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
             _db.create_all()
             log.trace("ensure_database_initialized: create_all() completed")
         except Exception as exc:
-            from sqlalchemy.exc import OperationalError
+            from sqlalchemy.exc import OperationalError, ProgrammingError
 
             msg = str(exc).lower()
-            if isinstance(exc, OperationalError) and "already exists" in msg:
+            if isinstance(exc, (OperationalError, ProgrammingError)) and "already exists" in msg:
                 log.trace("ensure_database_initialized: create_all skipped existing objects")
             else:
                 log.trace(f"ensure_database_initialized: create_all() raised: {exc}")

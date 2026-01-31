@@ -1,4 +1,4 @@
-alembic==1.18.1
+alembic
 argon2-cffi
 babel
 configobj
@@ -6,7 +6,7 @@ cryptography
 dramatiq[redis]
 email_validator
 flask
-flask-alembic==3.2.0
+flask-alembic
 flask-babel
 flask-caching
 flask-limiter

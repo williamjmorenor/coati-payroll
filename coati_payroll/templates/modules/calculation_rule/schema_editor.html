@@ -303,19 +303,13 @@
 </style>
 
 <script>
-// Initialize with existing schema
-let schema = {{ schema_json|safe }} || {
-    meta: {},
-    inputs: [],
-    steps: [],
-    tax_tables: {},
-    output: ''
-};
+// Initialize with existing schema (always valid JSON from backend)
+let schema = {{ schema_json|tojson|safe }};
 
-const exampleSchema = {{ example_schema|safe }};
+const exampleSchema = {{ example_schema|tojson|safe }};
 
 // Available data sources from the database
-const availableSources = {{ available_sources|safe }};
+const availableSources = {{ available_sources|tojson|safe }};
 
 // Counter for unique IDs
 let inputCounter = 0;
