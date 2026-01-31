@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,19 @@
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+# <-------------------------------------------------------------------------> #
+# Third party packages
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from ..tables.table_lookup import TableLookup
 from .base_step import Step
 

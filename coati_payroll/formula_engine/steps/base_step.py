@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,19 @@
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from abc import ABC, abstractmethod
 from typing import Any, TYPE_CHECKING
+
+# <-------------------------------------------------------------------------> #
+# Third party packages
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 
 if TYPE_CHECKING:
     from ..execution.execution_context import ExecutionContext

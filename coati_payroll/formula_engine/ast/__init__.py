@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,6 +70,19 @@ Security Notes:
 - Regular security audits are recommended
 """
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
+
+
+# <-------------------------------------------------------------------------> #
+# Third party packages
+# <-------------------------------------------------------------------------> #
+
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from .ast_visitor import ASTVisitor, SafeASTVisitor
 from .expression_evaluator import ExpressionEvaluator
 from .safe_operators import (
@@ -90,6 +103,7 @@ from .type_converter import (
     MIN_DECIMAL_VALUE,
 )
 
+# <==================[ Expose all varaibles and constants ]===================>
 __all__ = [
     "ASTVisitor",
     "SafeASTVisitor",

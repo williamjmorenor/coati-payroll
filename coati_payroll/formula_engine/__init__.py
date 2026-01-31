@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,17 @@ This package contains the refactored formula engine with modular architecture:
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 # Import from formula_engine_examples
 # EXAMPLE_PROGRESSIVE_TAX_SCHEMA is the new generic name
 # EXAMPLE_IR_NICARAGUA_SCHEMA is kept for backward compatibility (deprecated)
@@ -51,6 +62,7 @@ from .ast import (
 from .data_sources import AVAILABLE_DATA_SOURCES
 from .novelty_codes import NOVELTY_CODES
 
+# <==================[ Expose all varaibles and constants ]===================>
 __all__ = [
     # Main engine
     "FormulaEngine",

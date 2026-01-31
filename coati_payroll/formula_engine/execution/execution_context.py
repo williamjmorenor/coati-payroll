@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,20 @@
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Callable
 
+# <-------------------------------------------------------------------------> #
+# Third party packages
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from ..ast.safe_operators import SAFE_FUNCTIONS, SAFE_OPERATORS
 
 

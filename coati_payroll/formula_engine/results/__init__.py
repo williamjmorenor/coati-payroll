@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,20 @@
 # limitations under the License.
 """Result DTOs for formula engine execution."""
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Third party packages
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from .execution_result import ExecutionResult
 
+# <==================[ Expose all varaibles and constants ]===================>
 __all__ = [
     "ExecutionResult",
 ]

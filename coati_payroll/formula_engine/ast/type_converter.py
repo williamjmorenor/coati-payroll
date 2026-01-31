@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,12 +36,24 @@ Security Considerations:
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
+import math
 from decimal import Decimal, InvalidOperation
 from typing import Any
-import math
 
+# <-------------------------------------------------------------------------> #
+# Third party packages
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from ..exceptions import ValidationError
 
+
+# <-------------------- Constantes Locales --------------------> #
 MAX_DECIMAL_DIGITS = 28
 MAX_DECIMAL_VALUE = Decimal("9" * MAX_DECIMAL_DIGITS)
 MIN_DECIMAL_VALUE = -MAX_DECIMAL_VALUE

@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,13 +40,22 @@ Example Unsafe Expression (rejected):
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 import ast
 from decimal import Decimal
 from typing import Callable
 
+# <-------------------------------------------------------------------------> #
+# Third party packages
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from coati_payroll.i18n import _
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
-
 from ..exceptions import CalculationError
 from .ast_visitor import SafeASTVisitor
 from .safe_operators import ALLOWED_AST_TYPES, MAX_EXPRESSION_LENGTH, MAX_AST_DEPTH

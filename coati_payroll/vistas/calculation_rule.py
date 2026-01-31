@@ -161,15 +161,9 @@ def edit_schema(id: str):
     # Get available data sources for the UI
     available_sources = get_available_sources_for_ui()
 
-    default_schema = {
-        "meta": {},
-        "inputs": [],
-        "steps": [],
-        "tax_tables": {},
-        "output": ""
-    }
+    default_schema = {"meta": {}, "inputs": [], "steps": [], "tax_tables": {}, "output": ""}
     current_schema = rule.esquema_json if rule.esquema_json else default_schema
-    
+
     return render_template(
         "modules/calculation_rule/schema_editor.html",
         rule=rule,

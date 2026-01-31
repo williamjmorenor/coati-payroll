@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ This module defines the mapping between novelty codes and their
 calculation behavior (perception/deduction, gravable, etc.).
 """
 
+# ................................ CONTANTES ................................ #
 NOVELTY_CODES = {
     "HORAS_EXTRA": {
         "tipo": "percepcion",

@@ -1,4 +1,4 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,23 @@
 # limitations under the License.
 """Execution context and step execution modules."""
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
+
+
+# <-------------------------------------------------------------------------> #
+# Third party packages
+# <-------------------------------------------------------------------------> #
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from .execution_context import ExecutionContext
 from .step_executor import StepExecutor
 from .variable_store import VariableStore
 
+# <==================[ Expose all varaibles and constants ]===================>
 __all__ = [
     "ExecutionContext",
     "StepExecutor",
