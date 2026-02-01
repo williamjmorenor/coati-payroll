@@ -224,8 +224,9 @@ def create_app(config) -> Flask:
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)  # Session timeout
 
     # Configure Flask-Babel
-    app.config["BABEL_DEFAULT_LOCALE"] = "en"
-    app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
+    app.config["BABEL_DEFAULT_LOCALE"] = "es"
+    app.config["BABEL_TRANSLATION_DIRECTORIES"] = join(dirname(__file__), "translations")
+    app.config["BABEL_SUPPORTED_LOCALES"] = ["es", "en"]
     babel.init_app(app, locale_selector=get_locale)
 
     session_manager.init_app(app)
