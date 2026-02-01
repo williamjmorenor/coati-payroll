@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-01 16:50+0000\n"
+"POT-Creation-Date: 2026-02-01 16:56+0000\n"
 "PO-Revision-Date: 2025-12-04 02:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -4602,36 +4602,35 @@ msgstr "Generated"
 #: coati_payroll/templates/modules/payroll_concepts/audit_log.html:111
 #: coati_payroll/templates/modules/report/admin_index.html:95
 msgid "Ver detalles"
-msgstr ""
+msgstr "View details"
 
 #: coati_payroll/templates/modules/payroll_concepts/audit_log.html:116
-#, fuzzy
 msgid "Cambios detallados"
-msgstr "Custom Fields"
+msgstr "Detailed changes"
 
 #: coati_payroll/templates/modules/payroll_concepts/audit_log.html:131
 msgid "No hay registros de auditoría para este concepto."
-msgstr ""
+msgstr "No audit records for this concept."
 
 #: coati_payroll/templates/modules/planilla/config.html:8
 msgid "Configuración de Planilla"
-msgstr ""
+msgstr "Payroll Configuration"
 
 #: coati_payroll/templates/modules/planilla/config.html:15
 msgid "Volver a Planillas"
-msgstr ""
+msgstr "Back to Payrolls"
 
 #: coati_payroll/templates/modules/planilla/config.html:34
 msgid "Resumen de la Planilla"
-msgstr ""
+msgstr "Payroll Summary"
 
 #: coati_payroll/templates/modules/planilla/config.html:68
 msgid "Editar Configuración General"
-msgstr ""
+msgstr "Edit General Configuration"
 
 #: coati_payroll/templates/modules/planilla/config.html:86
 msgid "empleados asignados"
-msgstr ""
+msgstr "employees assigned"
 
 #: coati_payroll/templates/modules/planilla/config.html:89
 #: coati_payroll/templates/modules/planilla/config.html:108
@@ -4639,7 +4638,7 @@ msgstr ""
 #: coati_payroll/templates/modules/planilla/config.html:146
 #: coati_payroll/templates/modules/planilla/config.html:165
 msgid "Gestionar"
-msgstr ""
+msgstr "Manage"
 
 #: coati_payroll/templates/modules/planilla/config.html:102
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:8
@@ -4648,11 +4647,11 @@ msgstr ""
 #: coati_payroll/templates/modules/settings/index.html:101
 #: coati_payroll/vistas/payroll_concepts.py:75
 msgid "Percepciones"
-msgstr "Perceptions"
+msgstr "Earnings"
 
 #: coati_payroll/templates/modules/planilla/config.html:105
 msgid "percepciones asignadas"
-msgstr ""
+msgstr "earnings assigned"
 
 #: coati_payroll/templates/modules/planilla/config.html:121
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:8
@@ -4665,27 +4664,27 @@ msgstr "Deductions"
 
 #: coati_payroll/templates/modules/planilla/config.html:124
 msgid "deducciones asignadas"
-msgstr ""
+msgstr "deductions assigned"
 
 #: coati_payroll/templates/modules/planilla/config.html:143
 msgid "prestaciones asignadas"
-msgstr ""
+msgstr "benefits assigned"
 
 #: coati_payroll/templates/modules/planilla/config.html:162
 msgid "reglas asignadas"
-msgstr ""
+msgstr "rules assigned"
 
 #: coati_payroll/templates/modules/planilla/config.html:178
 msgid "Historial de Nóminas"
-msgstr ""
+msgstr "Payroll History"
 
 #: coati_payroll/templates/modules/planilla/config.html:180
 msgid "Ver nóminas generadas"
-msgstr ""
+msgstr "View generated payrolls"
 
 #: coati_payroll/templates/modules/planilla/config.html:183
 msgid "Ver Historial"
-msgstr ""
+msgstr "View History"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:11
 #: coati_payroll/templates/modules/planilla/config_empleados.html:11
@@ -4693,18 +4692,18 @@ msgstr ""
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:11
 #: coati_payroll/templates/modules/planilla/config_reglas.html:11
 msgid "Volver a Configuración"
-msgstr ""
+msgstr "Back to Configuration"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:31
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:57
 msgid "Agregar Deducción"
-msgstr ""
+msgstr "Add Deduction"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:38
 #: coati_payroll/vistas/planilla/helpers/form_helpers.py:75
 #: coati_payroll/vistas/vacation.py:542
 msgid "-- Seleccionar Deducción --"
-msgstr ""
+msgstr "-- Select Deduction --"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:48
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:79
@@ -4715,19 +4714,19 @@ msgstr "Priority"
 msgid ""
 "Menor número = se aplica primero (1-100 impuestos, 101-200 embargos, "
 "201-300 préstamos)"
-msgstr ""
+msgstr "Lower number = applied first (1-100 taxes, 101-200 garnishments, 201-300 loans)"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:54
 msgid "Es obligatoria"
-msgstr ""
+msgstr "Is mandatory"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:69
 msgid "Deducciones Asignadas"
-msgstr ""
+msgstr "Assigned Deductions"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:83
 msgid "Obligatoria"
-msgstr ""
+msgstr "Mandatory"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:100
 #: coati_payroll/templates/modules/planilla/config_empleados.html:87
@@ -4773,189 +4772,189 @@ msgstr "No"
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:96
 #: coati_payroll/templates/modules/planilla/config_reglas.html:98
 msgid "Remover"
-msgstr ""
+msgstr "Remove"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:107
 msgid "¿Remover esta deducción de la planilla?"
-msgstr ""
+msgstr "Remove this deduction from the payroll?"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:120
 msgid "No hay deducciones asignadas a esta planilla"
-msgstr ""
+msgstr "No deductions assigned to this payroll"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:121
 msgid "Seleccione deducciones del formulario para agregarlas."
-msgstr ""
+msgstr "Select deductions from the form to add them."
 
 #: coati_payroll/templates/modules/planilla/config_empleados.html:31
 #: coati_payroll/templates/modules/planilla/config_empleados.html:48
 msgid "Agregar Empleado"
-msgstr ""
+msgstr "Add Employee"
 
 #: coati_payroll/templates/modules/planilla/config_empleados.html:38
 #: coati_payroll/vistas/planilla/helpers/form_helpers.py:55
 #: coati_payroll/vistas/vacation.py:522 coati_payroll/vistas/vacation.py:800
 msgid "-- Seleccionar Empleado --"
-msgstr ""
+msgstr "-- Select Employee --"
 
 #: coati_payroll/templates/modules/planilla/config_empleados.html:60
 msgid "Empleados Asignados"
-msgstr ""
+msgstr "Assigned Employees"
 
 #: coati_payroll/templates/modules/planilla/config_empleados.html:94
 msgid "¿Remover este empleado de la planilla?"
-msgstr ""
+msgstr "Remove this employee from the payroll?"
 
 #: coati_payroll/templates/modules/planilla/config_empleados.html:107
 msgid "No hay empleados asignados a esta planilla"
-msgstr ""
+msgstr "No employees assigned to this payroll"
 
 #: coati_payroll/templates/modules/planilla/config_empleados.html:108
 msgid "Seleccione empleados del formulario para agregarlos."
-msgstr ""
+msgstr "Select employees from the form to add them."
 
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:31
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:53
 msgid "Agregar Percepción"
-msgstr ""
+msgstr "Add Earning"
 
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:38
 #: coati_payroll/vistas/planilla/helpers/form_helpers.py:67
 #: coati_payroll/vistas/vacation.py:532
 msgid "-- Seleccionar Percepción --"
-msgstr ""
+msgstr "-- Select Earning --"
 
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:50
 msgid "Orden de aplicación de la percepción"
-msgstr ""
+msgstr "Earning application order"
 
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:65
 msgid "Percepciones Asignadas"
-msgstr ""
+msgstr "Assigned Earnings"
 
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:91
 msgid "¿Remover esta percepción de la planilla?"
-msgstr ""
+msgstr "Remove this earning from the payroll?"
 
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:104
 msgid "No hay percepciones asignadas a esta planilla"
-msgstr ""
+msgstr "No earnings assigned to this payroll"
 
 #: coati_payroll/templates/modules/planilla/config_percepciones.html:105
 msgid "Seleccione percepciones del formulario para agregarlas."
-msgstr ""
+msgstr "Select earnings from the form to add them."
 
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:28
 msgid ""
 "Las prestaciones son costos patronales que NO afectan el salario neto del"
 " empleado."
-msgstr ""
+msgstr "Benefits are employer costs that do NOT affect the employee's net salary."
 
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:36
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:58
 msgid "Agregar Prestación"
-msgstr ""
+msgstr "Add Benefit"
 
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:43
 msgid "-- Seleccionar Prestación --"
-msgstr ""
+msgstr "-- Select Benefit --"
 
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:55
 msgid "Orden de aplicación de la prestación"
-msgstr ""
+msgstr "Benefit application order"
 
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:70
 msgid "Prestaciones Asignadas"
-msgstr ""
+msgstr "Assigned Benefits"
 
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:96
 msgid "¿Remover esta prestación de la planilla?"
-msgstr ""
+msgstr "Remove this benefit from the payroll?"
 
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:109
 msgid "No hay prestaciones asignadas a esta planilla"
-msgstr ""
+msgstr "No benefits assigned to this payroll"
 
 #: coati_payroll/templates/modules/planilla/config_prestaciones.html:110
 msgid "Seleccione prestaciones del formulario para agregarlas."
-msgstr ""
+msgstr "Select benefits from the form to add them."
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:28
 msgid "Las reglas de cálculo definen fórmulas complejas como IR, INSS, etc."
-msgstr ""
+msgstr "Calculation rules define complex formulas like IR, INSS, etc."
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:36
 #: coati_payroll/templates/modules/planilla/config_reglas.html:58
 msgid "Agregar Regla"
-msgstr ""
+msgstr "Add Rule"
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:41
 msgid "Regla de Cálculo"
-msgstr ""
+msgstr "Calculation Rule"
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:43
 msgid "-- Seleccionar Regla de Cálculo --"
-msgstr ""
+msgstr "-- Select Calculation Rule --"
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:55
 msgid "Orden de ejecución de la regla"
-msgstr ""
+msgstr "Rule execution order"
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:70
 msgid "Reglas Asignadas"
-msgstr ""
+msgstr "Assigned Rules"
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:98
 msgid "¿Remover esta regla de la planilla?"
-msgstr ""
+msgstr "Remove this rule from the payroll?"
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:111
 msgid "No hay reglas de cálculo asignadas a esta planilla"
-msgstr ""
+msgstr "No calculation rules assigned to this payroll"
 
 #: coati_payroll/templates/modules/planilla/config_reglas.html:112
 msgid "Seleccione reglas del formulario para agregarlas."
-msgstr ""
+msgstr "Select rules from the form to add them."
 
 #: coati_payroll/templates/modules/planilla/form.html:8
 msgid "Editar Planilla"
-msgstr ""
+msgstr "Edit Payroll"
 
 #: coati_payroll/templates/modules/planilla/form.html:13
 msgid "Ver Configuración"
-msgstr ""
+msgstr "View Configuration"
 
 #: coati_payroll/templates/modules/planilla/form.html:38
 msgid "Configuración General"
-msgstr ""
+msgstr "General Configuration"
 
 #: coati_payroll/templates/modules/planilla/form.html:120
 msgid "Deducciones Automáticas"
-msgstr ""
+msgstr "Automatic Deductions"
 
 #: coati_payroll/templates/modules/planilla/form.html:161
 msgid "Componentes Asignados"
-msgstr ""
+msgstr "Assigned Components"
 
 #: coati_payroll/templates/modules/planilla/form.html:182
 msgid "Reglas"
-msgstr ""
+msgstr "Rules"
 
 #: coati_payroll/templates/modules/planilla/form.html:188
 msgid "Gestionar Componentes"
-msgstr ""
+msgstr "Manage Components"
 
 #: coati_payroll/templates/modules/planilla/index.html:90
 msgid "Ver Nóminas"
-msgstr ""
+msgstr "View Payrolls"
 
 #: coati_payroll/templates/modules/planilla/index.html:110
 msgid "Confirmar eliminación"
-msgstr ""
+msgstr "Confirm deletion"
 
 #: coati_payroll/templates/modules/planilla/index.html:114
 msgid "¿Está seguro que desea eliminar la planilla"
-msgstr ""
+msgstr "Are you sure you want to delete the payroll"
 
 #: coati_payroll/templates/modules/planilla/index.html:115
 msgid "Esta acción no se puede deshacer."
@@ -4963,40 +4962,40 @@ msgstr "This action cannot be undone."
 
 #: coati_payroll/templates/modules/planilla/index.html:135
 msgid "No hay planillas registradas"
-msgstr ""
+msgstr "No payrolls registered"
 
 #: coati_payroll/templates/modules/planilla/index.html:137
 msgid "Crear Primera Planilla"
-msgstr ""
+msgstr "Create First Payroll"
 
 #: coati_payroll/templates/modules/planilla/ver_nomina.html:116
 msgid "No hay mensajes en el log de procesamiento para esta nómina."
-msgstr ""
+msgstr "No messages in the processing log for this payroll."
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:12
 msgid "Editar Novedad"
-msgstr ""
+msgstr "Edit Novelty"
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:14
 #: coati_payroll/templates/modules/planilla/novedades/index.html:18
 msgid "Nueva Novedad"
-msgstr ""
+msgstr "New Novelty"
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:26
 #: coati_payroll/templates/modules/planilla/novedades/index.html:28
 msgid "Planilla:"
-msgstr ""
+msgstr "Payroll:"
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:29
 #: coati_payroll/templates/modules/planilla/novedades/index.html:31
 msgid "Período:"
-msgstr ""
+msgstr "Period:"
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:32
 #: coati_payroll/templates/modules/planilla/novedades/index.html:34
 #: coati_payroll/templates/modules/prestamo/detail.html:27
 msgid "Estado:"
-msgstr ""
+msgstr "Status:"
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:34
 #: coati_payroll/templates/modules/planilla/novedades/index.html:36
@@ -5005,49 +5004,49 @@ msgstr "Generated"
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:45
 msgid "Datos de la Novedad"
-msgstr ""
+msgstr "Novelty Data"
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:80
 msgid ""
 "Este código identifica el concepto en el sistema. Se actualizará "
 "automáticamente al seleccionar una percepción o deducción."
-msgstr ""
+msgstr "This code identifies the concept in the system. It will update automatically when selecting an earning or deduction."
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:95
 msgid ""
 "Ingrese el valor según el tipo seleccionado (ej: 5 para 5 horas, 1500 "
 "para un monto fijo)."
-msgstr ""
+msgstr "Enter the value according to the selected type (e.g., 5 for 5 hours, 1500 for a fixed amount)."
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:10
 msgid "Novedades de la Nómina"
-msgstr ""
+msgstr "Payroll Novelties"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:14
 msgid "Volver a la Nómina"
-msgstr ""
+msgstr "Back to Payroll"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:50
 msgid ""
 "Esta nómina ya ha sido aplicada. No se pueden agregar, editar o eliminar "
 "novedades."
-msgstr ""
+msgstr "This payroll has already been applied. Novelties cannot be added, edited, or deleted."
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:56
 msgid "Lista de Novedades"
-msgstr ""
+msgstr "Novelties List"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:64
 msgid "Código Concepto"
-msgstr ""
+msgstr "Concept Code"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:66
 msgid "Tipo Valor"
-msgstr ""
+msgstr "Value Type"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:110
 msgid "Ejecutada"
-msgstr ""
+msgstr "Executed"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:112
 #: coati_payroll/templates/modules/prestamo/detail.html:32
@@ -5061,41 +5060,41 @@ msgstr "Pending"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:125
 msgid "¿Está seguro de eliminar esta novedad?"
-msgstr ""
+msgstr "Are you sure you want to delete this novelty?"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:140
 msgid "No hay novedades registradas para esta nómina."
-msgstr ""
+msgstr "No novelties registered for this payroll."
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:143
 msgid "Agregar Primera Novedad"
-msgstr ""
+msgstr "Add First Novelty"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:153
 msgid "¿Qué son las Novedades?"
-msgstr ""
+msgstr "What are Novelties?"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:157
 msgid ""
 "Las novedades son eventos o ajustes que afectan la nómina de un empleado "
 "en un período específico. Pueden incluir:"
-msgstr ""
+msgstr "Novelties are events or adjustments affecting an employee's payroll in a specific period. They can include:"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:160
 msgid "Percepciones (Ingresos):"
-msgstr ""
+msgstr "Earnings (Income):"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:160
 msgid "Horas extras, bonos, comisiones, etc."
-msgstr ""
+msgstr "Overtime, bonuses, commissions, etc."
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:161
 msgid "Deducciones (Egresos):"
-msgstr ""
+msgstr "Deductions (Expenses):"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:161
 msgid "Ausencias, descuentos, préstamos, etc."
-msgstr ""
+msgstr "Absences, discounts, loans, etc."
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:165
 msgid ""
@@ -5103,311 +5102,287 @@ msgid ""
 "período incluya la fecha de la novedad. Después de agregar novedades, use"
 " el botón \"Recalcular\" en la vista de la nómina para aplicar los "
 "cambios."
-msgstr ""
+msgstr "Note: Novelties are automatically applied to any payroll whose period includes the novelty date. After adding novelties, use the \"Recalculate\" button in the payroll view to apply the changes."
 
 #: coati_payroll/templates/modules/plugins/index.html:9
 #: coati_payroll/templates/modules/settings/index.html:261
 msgid "Plugins"
-msgstr ""
+msgstr "Plugins"
 
 #: coati_payroll/templates/modules/plugins/index.html:18
 msgid "Paquete"
-msgstr ""
+msgstr "Package"
 
 #: coati_payroll/templates/modules/plugins/index.html:20
-#, fuzzy
 msgid "Instalado"
-msgstr "Status"
+msgstr "Installed"
 
 #: coati_payroll/templates/modules/plugins/index.html:51
-#, fuzzy
 msgid "Desactivar"
-msgstr "Current password"
+msgstr "Deactivate"
 
 #: coati_payroll/templates/modules/plugins/index.html:57
-#, fuzzy
 msgid "Activar"
-msgstr "Active"
+msgstr "Activate"
 
 #: coati_payroll/templates/modules/plugins/index.html:65
 msgid "No se encontraron plugins."
-msgstr ""
+msgstr "No plugins found."
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:9
-#, fuzzy
 msgid "Gestión de Prestaciones"
-msgstr "Benefits"
+msgstr "Benefits Management"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:10
 msgid "Sistema robusto y flexible para el control de prestaciones laborales"
-msgstr ""
+msgstr "Robust and flexible system for labor benefits control"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:18
-#, fuzzy
 msgid "Prestaciones Activas"
-msgstr "Benefits"
+msgstr "Active Benefits"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:21
-#, fuzzy
 msgid "Ver Prestaciones"
-msgstr "Benefits"
+msgstr "View Benefits"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:29
-#, fuzzy
 msgid "Empleados con Saldo"
-msgstr "Employees"
+msgstr "Employees with Balance"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:32
 msgid "Ver Reporte"
-msgstr ""
+msgstr "View Report"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:40
-#, fuzzy
 msgid "Cargas Pendientes"
-msgstr "Pending"
+msgstr "Pending Loads"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:43
-#, fuzzy
 msgid "Ver Pendientes"
-msgstr "Pending"
+msgstr "View Pending"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:56
-#, fuzzy
 msgid "Nueva Prestación"
-msgstr "Benefit"
+msgstr "New Benefit"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:59
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:84
 #: coati_payroll/templates/modules/vacation/dashboard.html:87
 msgid "Carga Individual"
-msgstr ""
+msgstr "Individual Load"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:62
 msgid "Ver Reporte de Acumulados"
-msgstr ""
+msgstr "View Accumulated Report"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:74
 #: coati_payroll/templates/modules/vacation/dashboard.html:77
 msgid "Carga de Saldos Iniciales"
-msgstr ""
+msgstr "Initial Balances Load"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:75
 #: coati_payroll/templates/modules/vacation/dashboard.html:78
-#, fuzzy
 msgid "Implementación"
-msgstr "Benefit"
+msgstr "Implementation"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:80
 msgid ""
 "Durante la implementación del sistema, cargue los saldos iniciales de "
 "prestaciones de sus empleados:"
-msgstr ""
+msgstr "During system implementation, load the initial benefit balances of your employees:"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:87
 #: coati_payroll/templates/modules/vacation/dashboard.html:90
 msgid "Carga Masiva (Excel)"
-msgstr ""
+msgstr "Bulk Load (Excel)"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:92
 msgid ""
 "Use la carga masiva para empresas con muchos empleados. Los registros se "
 "crean en estado borrador y deben aplicarse individualmente."
-msgstr ""
+msgstr "Use bulk load for companies with many employees. Records are created in draft status and must be applied individually."
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:102
 #: coati_payroll/templates/modules/vacation/dashboard.html:105
 msgid "Actividad Reciente"
-msgstr ""
+msgstr "Recent Activity"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:112
-#, fuzzy
 msgid "Tipo Transacción"
-msgstr "Benefit"
+msgstr "Transaction Type"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:114
 #: coati_payroll/templates/modules/prestamo/detail.html:247
 msgid "Saldo"
-msgstr ""
+msgstr "Balance"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:127
 #: coati_payroll/templates/modules/vacation/account_detail.html:114
-#, fuzzy
 msgid "Acumulación"
-msgstr "Male"
+msgstr "Accumulation"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:129
 #: coati_payroll/templates/modules/vacation/account_detail.html:122
-#, fuzzy
 msgid "Pago"
-msgstr "Position"
+msgstr "Payment"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:141
 #: coati_payroll/templates/modules/vacation/dashboard.html:147
 msgid "No hay actividad reciente."
-msgstr ""
+msgstr "No recent activity."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:4
 msgid "Carga Masiva de Saldos Iniciales de Prestaciones"
-msgstr ""
+msgstr "Bulk Load of Initial Benefit Balances"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:15
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:11
 msgid "Carga Masiva de Saldos Iniciales desde Excel"
-msgstr ""
+msgstr "Bulk Load of Initial Balances from Excel"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:21
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:17
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:17
 msgid "Uso:"
-msgstr ""
+msgstr "Use:"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:22
 msgid ""
 "Use esta función para cargar los saldos iniciales de prestaciones de "
 "múltiples empleados desde un archivo Excel durante la implementación del "
 "sistema."
-msgstr ""
+msgstr "Use this function to load initial benefit balances for multiple employees from an Excel file during system implementation."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:27
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:23
 msgid "Formato del Archivo Excel"
-msgstr ""
+msgstr "Excel File Format"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:30
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:26
 msgid "El archivo Excel debe tener las siguientes columnas (sin encabezados):"
-msgstr ""
+msgstr "The Excel file must have the following columns (without headers):"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:34
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:30
 msgid "Columna"
-msgstr ""
+msgstr "Column"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:35
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:31
-#, fuzzy
 msgid "Campo"
-msgstr "Position"
+msgstr "Field"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:37
 #: coati_payroll/templates/modules/report/detail.html:115
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:33
 msgid "Requerido"
-msgstr ""
+msgstr "Required"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:38
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:34
-#, fuzzy
 msgid "Ejemplo"
-msgstr "Employee"
+msgstr "Example"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:44
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:40
-#, fuzzy
 msgid "Código de Empleado"
-msgstr "Employee code"
+msgstr "Employee Code"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:51
-#, fuzzy
 msgid "Código de Prestación"
-msgstr "Benefit"
+msgstr "Benefit Code"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:59
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:80
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:87
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:48
-#, fuzzy
 msgid "Número"
-msgstr "January"
+msgstr "Number"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:66
 msgid "Número (1-12)"
-msgstr ""
+msgstr "Number (1-12)"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:72
-#, fuzzy
 msgid "Código de Moneda"
-msgstr "Employee code"
+msgstr "Currency Code"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:96
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:64
-#, fuzzy
 msgid "Saldo al inicio del sistema"
-msgstr "System Language"
+msgstr "Balance at system start"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:102
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:70
-#, fuzzy
 msgid "Requisitos:"
-msgstr "records"
+msgstr "Requirements:"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:104
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:72
 msgid "Los empleados deben existir en el sistema y estar activos."
-msgstr ""
+msgstr "Employees must exist in the system and be active."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:105
 msgid "Las prestaciones deben existir en el sistema y estar activas."
-msgstr ""
+msgstr "Benefits must exist in the system and be active."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:106
 msgid "Las monedas deben existir en el sistema y estar activas."
-msgstr ""
+msgstr "Currencies must exist in the system and be active."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:107
 msgid ""
 "Los registros se crean en estado \"borrador\" y deben aplicarse "
 "individualmente desde la lista de cargas."
-msgstr ""
+msgstr "Records are created in \"draft\" status and must be applied individually from the loads list."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:108
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:75
 msgid ""
 "IMPORTANTE: El archivo Excel NO debe tener encabezados. Los datos "
 "comienzan en la fila 1."
-msgstr ""
+msgstr "IMPORTANT: The Excel file should NOT have headers. Data begins on row 1."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:113
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:80
 msgid "Ejemplo de archivo Excel:"
-msgstr ""
+msgstr "Excel file example:"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:124
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:87
 msgid "Saldo inicial 2024"
-msgstr ""
+msgstr "Initial balance 2024"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:134
-#, fuzzy
 msgid "Prestaciones acumuladas"
-msgstr "Benefits"
+msgstr "Accumulated benefits"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:154
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:109
-#, fuzzy
 msgid "Subir Archivo"
-msgstr "User"
+msgstr "Upload File"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:167
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:122
 msgid "Formatos aceptados: .xlsx, .xls"
-msgstr ""
+msgstr "Accepted formats: .xlsx, .xls"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:173
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:128
 msgid "Cargar Saldos Iniciales"
-msgstr ""
+msgstr "Load Initial Balances"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:185
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:140
 msgid "Consejo:"
-msgstr ""
+msgstr "Tip:"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:186
 msgid ""
 "Después de cargar el archivo, los registros estarán en estado "
 "\"borrador\". Revise la"
-msgstr ""
+msgstr "After uploading the file, records will be in \"draft\" status. Review the"
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:187
 #, fuzzy
@@ -5418,222 +5393,222 @@ msgstr "User List"
 msgid ""
 "y aplique cada registro individualmente para crear las transacciones en "
 "el sistema."
-msgstr ""
+msgstr "and apply each record individually to create the transactions in the system."
 
 #: coati_payroll/templates/modules/prestamo/approve.html:11
 msgid "Aprobar/Rechazar Préstamo"
-msgstr ""
+msgstr "Approve/Reject Loan"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:21
 #: coati_payroll/templates/modules/prestamo/condonacion.html:27
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:21
 msgid "Información del Préstamo"
-msgstr ""
+msgstr "Loan Information"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:26
 #: coati_payroll/templates/modules/prestamo/condonacion.html:32
 #: coati_payroll/templates/modules/prestamo/detail.html:57
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:26
 msgid "Empleado:"
-msgstr ""
+msgstr "Employee:"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:27
 #: coati_payroll/templates/modules/prestamo/condonacion.html:33
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:27
 msgid "Código:"
-msgstr ""
+msgstr "Code:"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:28
 #: coati_payroll/templates/modules/prestamo/condonacion.html:34
 #: coati_payroll/templates/modules/prestamo/detail.html:47
 msgid "Tipo:"
-msgstr ""
+msgstr "Type:"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:37
 #: coati_payroll/templates/modules/prestamo/detail.html:97
 msgid "Monto Solicitado:"
-msgstr ""
+msgstr "Requested Amount:"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:43
 msgid "Cuotas:"
-msgstr ""
+msgstr "Installments:"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:44
 #: coati_payroll/templates/modules/prestamo/detail.html:64
 msgid "Fecha de Solicitud:"
-msgstr ""
+msgstr "Request Date:"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:50
 #: coati_payroll/templates/modules/prestamo/detail.html:81
 msgid "Motivo:"
-msgstr ""
+msgstr "Reason:"
 
 #: coati_payroll/templates/modules/prestamo/approve.html:136
 msgid "¿Está seguro de rechazar este préstamo?"
-msgstr ""
+msgstr "Are you sure you want to reject this loan?"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:11
 msgid "Condonación de Deuda"
-msgstr ""
+msgstr "Debt Forgiveness"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:21
 msgid "Advertencia:"
-msgstr ""
+msgstr "Warning:"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:21
 msgid ""
 "La condonación de deuda es una operación irreversible que reduce el saldo"
 " pendiente del préstamo sin que el empleado realice un pago. Esta acción "
 "requiere autorización gerencial y documentación completa para auditoría."
-msgstr ""
+msgstr "Debt forgiveness is an irreversible operation that reduces the pending loan balance without the employee making a payment. This action requires managerial authorization and complete documentation for audit."
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:43
 msgid "Monto Original:"
-msgstr ""
+msgstr "Original Amount:"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:49
 msgid "Saldo Pendiente Actual:"
-msgstr ""
+msgstr "Current Pending Balance:"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:59
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:46
 msgid "Cuotas Pactadas:"
-msgstr ""
+msgstr "Agreed Installments:"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:60
 #: coati_payroll/templates/modules/prestamo/detail.html:130
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:40
 msgid "Monto por Cuota:"
-msgstr ""
+msgstr "Amount per Installment:"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:74
 msgid "Registro de Condonación"
-msgstr ""
+msgstr "Forgiveness Record"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:80
 msgid "Datos de la Condonación"
-msgstr ""
+msgstr "Forgiveness Data"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:129
 msgid "Autorización y Documentación"
-msgstr ""
+msgstr "Authorization and Documentation"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:191
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:171
 msgid "Información Contable (Opcional)"
-msgstr ""
+msgstr "Accounting Information (Optional)"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:223
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:20
 msgid "Importante:"
-msgstr ""
+msgstr "Important:"
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:223
 msgid ""
 "Esta información quedará registrada permanentemente en el sistema para "
 "fines de auditoría. Asegúrese de que toda la documentación esté completa "
 "y correcta."
-msgstr ""
+msgstr "This information will be permanently recorded in the system for audit purposes. Ensure all documentation is complete and correct."
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:230
 msgid "¿Está seguro de condonar esta deuda? Esta acción no se puede deshacer."
-msgstr ""
+msgstr "Are you sure you want to forgive this debt? This action cannot be undone."
 
 #: coati_payroll/templates/modules/prestamo/detail.html:11
 msgid "Detalle de Préstamo/Adelanto"
-msgstr ""
+msgstr "Loan/Advance Detail"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:23
 #: coati_payroll/templates/modules/vacation/policy_detail.html:24
 #: coati_payroll/templates/modules/vacation/policy_form.html:21
 msgid "Información General"
-msgstr ""
+msgstr "General Information"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:38
 #: coati_payroll/templates/modules/prestamo/index.html:46
 #: coati_payroll/templates/modules/prestamo/index.html:115
 msgid "Pagado"
-msgstr ""
+msgstr "Paid"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:42
 #: coati_payroll/templates/modules/prestamo/index.html:48
 #: coati_payroll/templates/modules/prestamo/index.html:119
 msgid "Cancelado"
-msgstr "Canceled"
+msgstr "Cancelled"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:69
 msgid "Fecha de Aprobación:"
-msgstr ""
+msgstr "Approval Date:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:75
 msgid "Fecha de Desembolso:"
-msgstr ""
+msgstr "Disbursement Date:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:93
 msgid "Información Financiera"
-msgstr ""
+msgstr "Financial Information"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:107
 msgid "Monto Aprobado:"
-msgstr ""
+msgstr "Approved Amount:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:117
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:30
 msgid "Saldo Pendiente:"
-msgstr ""
+msgstr "Pending Balance:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:126
 msgid "Número de Cuotas:"
-msgstr ""
+msgstr "Number of Installments:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:140
 msgid "Tasa de Interés:"
-msgstr ""
+msgstr "Interest Rate:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:144
 msgid "Tipo de Interés:"
-msgstr ""
+msgstr "Interest Type:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:148
 msgid "Método de Amortización:"
-msgstr ""
+msgstr "Amortization Method:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:160
 msgid "Interés Acumulado:"
-msgstr ""
+msgstr "Accumulated Interest:"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:186
 msgid "Enviar para Aprobación"
-msgstr ""
+msgstr "Send for Approval"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:193
 msgid "Aprobar/Rechazar"
-msgstr ""
+msgstr "Approve/Reject"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:199
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:11
 msgid "Registrar Pago Extraordinario"
-msgstr ""
+msgstr "Record Extraordinary Payment"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:208
 msgid "¿Está seguro de cancelar este préstamo?"
-msgstr ""
+msgstr "Are you sure you want to cancel this loan?"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:210
 msgid "Cancelar Préstamo"
-msgstr ""
+msgstr "Cancel Loan"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:220
 msgid "Exportar PDF"
-msgstr ""
+msgstr "Export PDF"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:235
 msgid "Tabla de Pagos"
-msgstr ""
+msgstr "Payment Table"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:243
 msgid "Fecha Estimada"
-msgstr ""
+msgstr "Estimated Date"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:244
 msgid "Cuota"
@@ -5641,50 +5616,48 @@ msgstr "Installment"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:245
 msgid "Interés"
-msgstr ""
+msgstr "Interest"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:246
 msgid "Capital"
-msgstr ""
+msgstr "Principal"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:302
 msgid "Diario de Intereses"
-msgstr ""
+msgstr "Interest Journal"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:312
-#, fuzzy
 msgid "Saldo Base"
-msgstr "Base salary"
+msgstr "Base Balance"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:313
-#, fuzzy
 msgid "Tasa (%)"
-msgstr "Rate"
+msgstr "Rate (%)"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:314
 msgid "Interés Calculado"
-msgstr ""
+msgstr "Calculated Interest"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:315
 #: coati_payroll/templates/modules/prestamo/detail.html:384
 msgid "Saldo Posterior"
-msgstr ""
+msgstr "Subsequent Balance"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:359
 msgid "No se han calculado intereses aún."
-msgstr ""
+msgstr "No interest has been calculated yet."
 
 #: coati_payroll/templates/modules/prestamo/detail.html:372
 msgid "Historial de Pagos"
-msgstr ""
+msgstr "Payment History"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:382
 msgid "Monto Abonado"
-msgstr ""
+msgstr "Amount Paid"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:385
 msgid "Comprobante"
-msgstr ""
+msgstr "Receipt"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:395
 msgid "Manual"
@@ -5692,29 +5665,29 @@ msgstr "Manual"
 
 #: coati_payroll/templates/modules/prestamo/detail.html:436
 msgid "No hay pagos registrados."
-msgstr ""
+msgstr "No payments registered."
 
 #: coati_payroll/templates/modules/prestamo/form.html:12
 msgid "Editar Préstamo/Adelanto"
-msgstr ""
+msgstr "Edit Loan/Advance"
 
 #: coati_payroll/templates/modules/prestamo/form.html:14
 #: coati_payroll/templates/modules/prestamo/index.html:11
 msgid "Nuevo Préstamo/Adelanto"
-msgstr ""
+msgstr "New Loan/Advance"
 
 #: coati_payroll/templates/modules/prestamo/index.html:9
 msgid "Préstamos y Adelantos"
-msgstr ""
+msgstr "Loans and Advances"
 
 #: coati_payroll/templates/modules/prestamo/index.html:22
 msgid "-- Todos los empleados --"
-msgstr ""
+msgstr "-- All employees --"
 
 #: coati_payroll/templates/modules/prestamo/index.html:69
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:55
 msgid "Fecha Solicitud"
-msgstr ""
+msgstr "Request Date"
 
 #: coati_payroll/templates/modules/prestamo/index.html:71
 msgid "Cuotas"
@@ -5722,59 +5695,57 @@ msgstr "Installments"
 
 #: coati_payroll/templates/modules/prestamo/index.html:72
 msgid "Saldo Pendiente"
-msgstr ""
+msgstr "Pending Balance"
 
 #: coati_payroll/templates/modules/prestamo/index.html:125
 msgid "Ver Detalle"
-msgstr ""
+msgstr "View Detail"
 
 #: coati_payroll/templates/modules/prestamo/index.html:140
 msgid "No hay préstamos o adelantos registrados."
-msgstr ""
+msgstr "No loans or advances registered."
 
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:55
 msgid "Datos del Pago Extraordinario"
-msgstr ""
+msgstr "Extraordinary Payment Data"
 
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:63
 msgid "Nota:"
-msgstr ""
+msgstr "Note:"
 
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:63
 msgid ""
 "Los pagos extraordinarios permiten al empleado adelantar el pago de su "
 "préstamo. Debe indicar cómo desea aplicar este pago según la legislación "
 "laboral."
-msgstr ""
+msgstr "Extraordinary payments allow the employee to advance their loan payment. You must indicate how to apply this payment according to labor legislation."
 
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:112
 msgid "Documentación de Auditoría"
-msgstr ""
+msgstr "Audit Documentation"
 
 #: coati_payroll/templates/modules/report/admin_index.html:4
 #: coati_payroll/templates/modules/report/admin_index.html:9
-#, fuzzy
 msgid "Administración de Reportes"
-msgstr "Administrator"
+msgstr "Report Administration"
 
 #: coati_payroll/templates/modules/report/admin_index.html:11
 msgid "Volver a Reportes"
-msgstr ""
+msgstr "Back to Reports"
 
 #: coati_payroll/templates/modules/report/admin_index.html:20
 #: coati_payroll/templates/modules/report/admin_index.html:67
 #: coati_payroll/templates/modules/report/detail.html:41
 #: coati_payroll/templates/modules/report/execute.html:34
 #: coati_payroll/templates/modules/report/index.html:22
-#, fuzzy
 msgid "Categoría"
-msgstr "Audit"
+msgstr "Category"
 
 #: coati_payroll/templates/modules/report/admin_index.html:33
 #: coati_payroll/templates/modules/report/admin_index.html:41
 #: coati_payroll/templates/modules/report/index.html:35
 msgid "Todos"
-msgstr ""
+msgstr "All"
 
 #: coati_payroll/templates/modules/report/admin_index.html:34
 #: coati_payroll/templates/modules/report/admin_index.html:83
@@ -5783,7 +5754,7 @@ msgstr ""
 #: coati_payroll/templates/modules/report/index.html:36
 #: coati_payroll/templates/modules/report/index.html:61
 msgid "Sistema"
-msgstr ""
+msgstr "System"
 
 #: coati_payroll/templates/modules/report/admin_index.html:35
 #: coati_payroll/templates/modules/report/admin_index.html:83
@@ -5791,199 +5762,177 @@ msgstr ""
 #: coati_payroll/templates/modules/report/execute.html:28
 #: coati_payroll/templates/modules/report/index.html:37
 #: coati_payroll/templates/modules/report/index.html:61
-#, fuzzy
 msgid "Personalizado"
-msgstr "Custom Fields"
+msgstr "Custom"
 
 #: coati_payroll/templates/modules/report/admin_index.html:42
 #: coati_payroll/templates/modules/report/admin_index.html:90
 #: coati_payroll/templates/modules/report/detail.html:50
-#, fuzzy
 msgid "Habilitado"
-msgstr "Applied"
+msgstr "Enabled"
 
 #: coati_payroll/templates/modules/report/admin_index.html:43
 #: coati_payroll/templates/modules/report/admin_index.html:90
 #: coati_payroll/templates/modules/report/detail.html:50
-#, fuzzy
 msgid "Deshabilitado"
-msgstr "Status"
+msgstr "Disabled"
 
 #: coati_payroll/templates/modules/report/admin_index.html:68
 #: coati_payroll/templates/modules/vacation/policy_detail.html:78
 msgid "Base"
-msgstr ""
+msgstr "Base"
 
 #: coati_payroll/templates/modules/report/admin_index.html:79
 #: coati_payroll/templates/modules/report/detail.html:32
 #: coati_payroll/templates/modules/report/execute.html:22
 #: coati_payroll/templates/modules/report/index.html:69
-#, fuzzy
 msgid "Sin descripción"
-msgstr "Description"
+msgstr "No description"
 
 #: coati_payroll/templates/modules/report/admin_index.html:98
 #: coati_payroll/templates/modules/report/permissions.html:3
-#, fuzzy
 msgid "Permisos"
-msgstr "Perceptions"
+msgstr "Permissions"
 
 #: coati_payroll/templates/modules/report/admin_index.html:102
-#, fuzzy
 msgid "Cambiar estado"
-msgstr "Status"
+msgstr "Change status"
 
 #: coati_payroll/templates/modules/report/admin_index.html:112
 #: coati_payroll/templates/modules/report/index.html:86
-#, fuzzy
 msgid "No hay reportes disponibles."
-msgstr "Available Languages"
+msgstr "No reports available."
 
 #: coati_payroll/templates/modules/report/detail.html:11
 #: coati_payroll/templates/modules/report/index.html:74
 #: coati_payroll/templates/modules/report/permissions.html:24
-#, fuzzy
 msgid "Ejecutar"
-msgstr "Installment"
+msgstr "Execute"
 
 #: coati_payroll/templates/modules/report/detail.html:24
-#, fuzzy
 msgid "Información del Reporte"
-msgstr "Information"
+msgstr "Report Information"
 
 #: coati_payroll/templates/modules/report/detail.html:44
 msgid "Entidad Base"
-msgstr ""
+msgstr "Base Entity"
 
 #: coati_payroll/templates/modules/report/detail.html:60
 msgid "Ejecuciones Recientes"
-msgstr ""
+msgstr "Recent Executions"
 
 #: coati_payroll/templates/modules/report/detail.html:71
-#, fuzzy
 msgid "Registros"
-msgstr "records"
+msgstr "Records"
 
 #: coati_payroll/templates/modules/report/detail.html:72
-#, fuzzy
 msgid "Tiempo"
-msgstr "Type"
+msgstr "Time"
 
 #: coati_payroll/templates/modules/report/detail.html:93
 msgid "No hay ejecuciones registradas."
-msgstr ""
+msgstr "No executions registered."
 
 #: coati_payroll/templates/modules/report/detail.html:104
-#, fuzzy
 msgid "Parámetros"
-msgstr "records"
+msgstr "Parameters"
 
 #: coati_payroll/templates/modules/report/detail.html:121
 msgid "Sin parámetros"
-msgstr ""
+msgstr "No parameters"
 
 #: coati_payroll/templates/modules/report/execute.html:3
 #: coati_payroll/templates/modules/report/execute.html:9
 #: coati_payroll/templates/modules/report/execute.html:74
-#, fuzzy
 msgid "Ejecutar Reporte"
-msgstr "Recurring"
+msgstr "Execute Report"
 
 #: coati_payroll/templates/modules/report/execute.html:44
 msgid "Parámetros del Reporte"
-msgstr ""
+msgstr "Report Parameters"
 
 #: coati_payroll/templates/modules/report/execute.html:69
 msgid "Este reporte no requiere parámetros."
-msgstr ""
+msgstr "This report does not require parameters."
 
 #: coati_payroll/templates/modules/report/execute.html:88
-#, fuzzy
 msgid "Resultados"
-msgstr "Status"
+msgstr "Results"
 
 #: coati_payroll/templates/modules/report/execute.html:95
-#, fuzzy
 msgid "Tiempo de ejecución"
-msgstr "Identification type"
+msgstr "Execution time"
 
 #: coati_payroll/templates/modules/report/execute.html:111
-#, fuzzy
 msgid "Cargando..."
-msgstr "Position"
+msgstr "Loading..."
 
 #: coati_payroll/templates/modules/report/execute.html:113
 msgid "Ejecutando reporte..."
-msgstr ""
+msgstr "Executing report..."
 
 #: coati_payroll/templates/modules/report/execute.html:127
 msgid "Ayuda"
-msgstr ""
+msgstr "Help"
 
 #: coati_payroll/templates/modules/report/execute.html:131
 msgid ""
 "Complete los parámetros requeridos y haga clic en \"Ejecutar Reporte\" "
 "para ver los resultados."
-msgstr ""
+msgstr "Complete the required parameters and click \"Execute Report\" to see the results."
 
 #: coati_payroll/templates/modules/report/execute.html:134
 msgid "Una vez generado el reporte, podrá exportar los resultados a Excel."
-msgstr ""
+msgstr "Once the report is generated, you can export the results to Excel."
 
 #: coati_payroll/templates/modules/report/execute.html:194
 msgid "Error al ejecutar el reporte"
-msgstr ""
+msgstr "Error executing the report"
 
 #: coati_payroll/templates/modules/report/execute.html:199
-#, fuzzy
 msgid "Error de conexión"
-msgstr "Log Out"
+msgstr "Connection error"
 
 #: coati_payroll/templates/modules/report/execute.html:205
 msgid "El reporte no generó resultados."
-msgstr ""
+msgstr "The report did not generate results."
 
 #: coati_payroll/templates/modules/report/execute.html:261
 msgid "Error al exportar"
-msgstr ""
+msgstr "Error exporting"
 
 #: coati_payroll/templates/modules/report/index.html:4
 #: coati_payroll/templates/modules/report/index.html:9
-#, fuzzy
 msgid "Reportes"
-msgstr "Perceptions"
+msgstr "Reports"
 
 #: coati_payroll/templates/modules/report/index.html:12
-#, fuzzy
 msgid "Administración"
-msgstr "Administrator"
+msgstr "Administration"
 
 #: coati_payroll/templates/modules/report/index.html:77
 msgid "Detalles"
-msgstr ""
+msgstr "Details"
 
 #: coati_payroll/templates/modules/report/permissions.html:9
 msgid "Permisos del Reporte"
-msgstr ""
+msgstr "Report Permissions"
 
 #: coati_payroll/templates/modules/report/permissions.html:22
 msgid "Rol"
-msgstr ""
+msgstr "Role"
 
 #: coati_payroll/templates/modules/report/permissions.html:25
-#, fuzzy
 msgid "Exportar"
-msgstr "Temporary"
+msgstr "Export"
 
 #: coati_payroll/templates/modules/report/permissions.html:54
-#, fuzzy
 msgid "Guardar Permisos"
-msgstr "Save Changes"
+msgstr "Save Permissions"
 
 #: coati_payroll/templates/modules/settings/index.html:23
-#, fuzzy
 msgid "Gestionar empresas del sistema"
-msgstr "System Language"
+msgstr "Manage system companies"
 
 #: coati_payroll/templates/modules/settings/index.html:26
 #: coati_payroll/templates/modules/settings/index.html:46
@@ -5999,134 +5948,126 @@ msgstr "System Language"
 #: coati_payroll/templates/modules/settings/index.html:246
 #: coati_payroll/templates/modules/settings/index.html:266
 msgid "Acceder"
-msgstr ""
+msgstr "Access"
 
 #: coati_payroll/templates/modules/settings/index.html:43
-#, fuzzy
 msgid "Configurar monedas del sistema"
-msgstr "Configure general system options"
+msgstr "Configure system currencies"
 
 #: coati_payroll/templates/modules/settings/index.html:63
-#, fuzzy
 msgid "Administrar tipos de cambio"
-msgstr "Exchange Rates"
+msgstr "Manage exchange rates"
 
 #: coati_payroll/templates/modules/settings/index.html:83
-#, fuzzy
 msgid "Configurar tipos de planilla"
-msgstr "Payroll Type"
+msgstr "Configure payroll types"
 
 #: coati_payroll/templates/modules/settings/index.html:103
 msgid "Administrar percepciones de nómina"
-msgstr ""
+msgstr "Manage payroll earnings"
 
 #: coati_payroll/templates/modules/settings/index.html:123
 msgid "Administrar deducciones de nómina"
-msgstr ""
+msgstr "Manage payroll deductions"
 
 #: coati_payroll/templates/modules/settings/index.html:143
-#, fuzzy
 msgid "Configurar prestaciones patronales"
-msgstr "Confirm new password"
+msgstr "Configure employer benefits"
 
 #: coati_payroll/templates/modules/settings/index.html:163
-#, fuzzy
 msgid "Definir reglas de cálculo"
-msgstr "Calculation Rules"
+msgstr "Define calculation rules"
 
 #: coati_payroll/templates/modules/settings/index.html:183
-#, fuzzy
 msgid "Gestionar campos personalizados"
-msgstr "Custom Fields"
+msgstr "Manage custom fields"
 
 #: coati_payroll/templates/modules/settings/index.html:203
 msgid "Cargar prestaciones iniciales"
-msgstr ""
+msgstr "Load initial benefits"
 
 #: coati_payroll/templates/modules/settings/index.html:223
 msgid "Configurar factores base para prorrateos y cálculos"
-msgstr ""
+msgstr "Configure base factors for prorations and calculations"
 
 #: coati_payroll/templates/modules/settings/index.html:243
-#, fuzzy
 msgid "Configuración general del sistema"
-msgstr "Configure general system options"
+msgstr "General system configuration"
 
 #: coati_payroll/templates/modules/settings/index.html:263
-#, fuzzy
 msgid "Administrar plugins instalados"
-msgstr "System Language"
+msgstr "Manage installed plugins"
 
 #: coati_payroll/templates/modules/shared/concept_form.html:34
 msgid "Información Básica"
-msgstr ""
+msgstr "Basic Information"
 
 #: coati_payroll/templates/modules/shared/concept_form.html:70
 msgid "Configuración de Cálculo"
-msgstr ""
+msgstr "Calculation Configuration"
 
 #: coati_payroll/templates/modules/shared/concept_form.html:106
 msgid "Opciones"
-msgstr ""
+msgstr "Options"
 
 #: coati_payroll/templates/modules/shared/concept_form.html:166
 msgid "Configuración Contable"
-msgstr ""
+msgstr "Accounting Configuration"
 
 #: coati_payroll/templates/modules/shared/concept_index.html:14
 #: coati_payroll/templates/modules/shared/concept_index.html:136
 #: coati_payroll/vistas/payroll_concepts.py:162
 #, python-format
 msgid "Nueva %(type)s"
-msgstr ""
+msgstr "New %(type)s"
 
 #: coati_payroll/templates/modules/shared/concept_index.html:31
 msgid "Tipo Cálculo"
-msgstr ""
+msgstr "Calculation Type"
 
 #: coati_payroll/templates/modules/shared/concept_index.html:79
 #, python-format
 msgid "¿Está seguro de eliminar esta %(type)s?"
-msgstr ""
+msgstr "Are you sure you want to delete this %(type)s?"
 
 #: coati_payroll/templates/modules/shared/concept_index.html:133
 #, python-format
 msgid "No hay %(type)s registradas"
-msgstr ""
+msgstr "No %(type)s registered"
 
 #: coati_payroll/templates/modules/shared/concept_index.html:134
 #, python-format
 msgid "Comience creando una nueva %(type)s"
-msgstr ""
+msgstr "Start by creating a new %(type)s"
 
 #: coati_payroll/templates/modules/tipo_planilla/form.html:42
 msgid "Configuración Fiscal"
-msgstr ""
+msgstr "Tax Configuration"
 
 #: coati_payroll/templates/modules/tipo_planilla/index.html:9
 msgid "Tipos de Planilla"
-msgstr ""
+msgstr "Payroll Types"
 
 #: coati_payroll/templates/modules/tipo_planilla/index.html:11
 #: coati_payroll/vistas/tipo_planilla.py:75
 msgid "Nuevo Tipo de Planilla"
-msgstr ""
+msgstr "New Payroll Type"
 
 #: coati_payroll/templates/modules/tipo_planilla/index.html:25
 msgid "Períodos/Año"
-msgstr ""
+msgstr "Periods/Year"
 
 #: coati_payroll/templates/modules/tipo_planilla/index.html:49
 msgid "¿Está seguro de eliminar este tipo de planilla?"
-msgstr ""
+msgstr "Are you sure you want to delete this payroll type?"
 
 #: coati_payroll/templates/modules/tipo_planilla/index.html:58
 msgid "No hay tipos de planilla registrados."
-msgstr ""
+msgstr "No payroll types registered."
 
 #: coati_payroll/templates/modules/user/form.html:28
 msgid "Dejar en blanco para mantener la contraseña actual."
-msgstr ""
+msgstr "Leave blank to keep current password."
 
 #: coati_payroll/templates/modules/user/index.html:11
 #: coati_payroll/vistas/user.py:59 coati_payroll/vistas/user.py:73
@@ -6139,273 +6080,260 @@ msgstr "Email"
 
 #: coati_payroll/templates/modules/user/index.html:57
 msgid "¿Está seguro de eliminar este usuario?"
-msgstr ""
+msgstr "Are you sure you want to delete this user?"
 
 #: coati_payroll/templates/modules/user/index.html:66
 msgid "No hay usuarios registrados."
-msgstr ""
+msgstr "No users registered."
 
 #: coati_payroll/templates/modules/user/profile.html:55
 msgid "Cambiar Contraseña"
-msgstr ""
+msgstr "Change Password"
 
 #: coati_payroll/templates/modules/user/profile.html:56
 msgid "Deja estos campos en blanco si no deseas cambiar tu contraseña."
-msgstr ""
+msgstr "Leave these fields blank if you do not wish to change your password."
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:9
-#, fuzzy
 msgid "Cuenta de Vacaciones"
-msgstr "Cost center"
+msgstr "Vacation Account"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:19
 #: coati_payroll/templates/modules/vacation/account_index.html:24
 msgid "Balance Actual"
-msgstr ""
+msgstr "Current Balance"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:29
-#, fuzzy
 msgid "Información de la Cuenta"
-msgstr "Information"
+msgstr "Account Information"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:39
 #: coati_payroll/templates/modules/vacation/account_index.html:23
-#, fuzzy
 msgid "Política"
-msgstr "Applied"
+msgstr "Policy"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:46
 #: coati_payroll/templates/modules/vacation/account_index.html:26
 msgid "Última Acumulación"
-msgstr ""
+msgstr "Last Accumulation"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:64
 #: coati_payroll/templates/modules/vacation/dashboard.html:40
 msgid "Solicitudes Pendientes"
-msgstr ""
+msgstr "Pending Requests"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:93
-#, fuzzy
 msgid "Historial de Movimientos"
-msgstr "Date of birth"
+msgstr "Movement History"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:103
 msgid "Balance Después"
-msgstr ""
+msgstr "Balance After"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:104
-#, fuzzy
 msgid "Origen"
-msgstr "Order"
+msgstr "Origin"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:116
-#, fuzzy
 msgid "Uso"
-msgstr "User"
+msgstr "Use"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:120
-#, fuzzy
 msgid "Vencimiento"
-msgstr "Date of birth"
+msgstr "Expiration"
 
 #: coati_payroll/templates/modules/vacation/account_detail.html:138
 msgid "No hay movimientos registrados."
-msgstr ""
+msgstr "No movements registered."
 
 #: coati_payroll/templates/modules/vacation/account_form.html:41
 msgid ""
 "El balance inicial será registrado como una entrada en el libro mayor de "
 "vacaciones."
-msgstr ""
+msgstr "The initial balance will be recorded as an entry in the vacation ledger."
 
 #: coati_payroll/templates/modules/vacation/account_index.html:9
-#, fuzzy
 msgid "Cuentas de Vacaciones"
-msgstr "Exchange rate"
+msgstr "Vacation Accounts"
 
 #: coati_payroll/templates/modules/vacation/account_index.html:11
 #: coati_payroll/templates/modules/vacation/dashboard.html:59
-#, fuzzy
 msgid "Nueva Cuenta"
-msgstr "New password"
+msgstr "New Account"
 
 #: coati_payroll/templates/modules/vacation/account_index.html:25
 #: coati_payroll/templates/modules/vacation/policy_index.html:26
 msgid "Unidad"
-msgstr ""
+msgstr "Unit"
 
 #: coati_payroll/templates/modules/vacation/account_index.html:51
 #: coati_payroll/templates/modules/vacation/dashboard.html:140
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:81
 msgid "Ver Detalles"
-msgstr ""
+msgstr "View Details"
 
 #: coati_payroll/templates/modules/vacation/account_index.html:58
 msgid "No hay cuentas registradas."
-msgstr ""
+msgstr "No accounts registered."
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:9
-#, fuzzy
 msgid "Gestión de Vacaciones"
-msgstr "Benefits"
+msgstr "Vacation Management"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:10
 msgid "Sistema robusto y flexible para el control de vacaciones"
-msgstr ""
+msgstr "Robust and flexible system for vacation control"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:18
 msgid "Políticas Activas"
-msgstr ""
+msgstr "Active Policies"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:21
 msgid "Ver Políticas"
-msgstr ""
+msgstr "View Policies"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:29
 #: coati_payroll/templates/modules/vacation/policy_detail.html:170
-#, fuzzy
 msgid "Cuentas Activas"
-msgstr "Current password"
+msgstr "Active Accounts"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:32
 msgid "Ver Cuentas"
-msgstr ""
+msgstr "View Accounts"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:43
 msgid "Ver Solicitudes"
-msgstr ""
+msgstr "View Requests"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:56
 #: coati_payroll/templates/modules/vacation/policy_index.html:11
 msgid "Nueva Política"
-msgstr ""
+msgstr "New Policy"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:62
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:11
 msgid "Nueva Solicitud"
-msgstr ""
+msgstr "New Request"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:65
 #: coati_payroll/vistas/vacation.py:555 coati_payroll/vistas/vacation.py:568
 #: coati_payroll/vistas/vacation.py:576 coati_payroll/vistas/vacation.py:599
 #: coati_payroll/vistas/vacation.py:613 coati_payroll/vistas/vacation.py:692
 msgid "Registrar Vacaciones Descansadas"
-msgstr ""
+msgstr "Record Vacation Taken"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:83
 msgid ""
 "Durante la implementación del sistema, cargue los saldos iniciales de "
 "vacaciones de sus empleados:"
-msgstr ""
+msgstr "During system implementation, load the initial vacation balances of your employees:"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:95
 msgid ""
 "Solo para cuentas sin movimientos previos. Use la carga masiva para "
 "empresas con muchos empleados."
-msgstr ""
+msgstr "Only for accounts without previous movements. Use bulk load for companies with many employees."
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:114
-#, fuzzy
 msgid "Fechas"
-msgstr "Date"
+msgstr "Dates"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:115
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:35
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:53
 msgid "Unidades"
-msgstr ""
+msgstr "Units"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:124
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:9
 msgid "Solicitud de Vacaciones"
-msgstr ""
+msgstr "Vacation Request"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:135
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:47
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:75
-#, fuzzy
 msgid "Disfrutado"
-msgstr "Status"
+msgstr "Taken"
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:2
 msgid "Carga Masiva de Saldos Iniciales de Vacaciones"
-msgstr ""
+msgstr "Bulk Load of Initial Vacation Balances"
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:18
 msgid ""
 "Use esta función para cargar los saldos iniciales de vacaciones de "
 "múltiples empleados desde un archivo Excel durante la implementación del "
 "sistema."
-msgstr ""
+msgstr "Use this function to load initial vacation balances for multiple employees from an Excel file during system implementation."
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:55
 msgid "Fecha (DD/MM/YYYY)"
-msgstr ""
+msgstr "Date (DD/MM/YYYY)"
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:73
 msgid ""
 "Cada empleado debe tener una cuenta de vacaciones activa creada "
 "previamente."
-msgstr ""
+msgstr "Each employee must have an active vacation account created previously."
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:74
 msgid "Las cuentas de vacaciones no deben tener movimientos previos."
-msgstr ""
+msgstr "Vacation accounts must not have previous movements."
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:93
 msgid "Vacaciones acumuladas"
-msgstr ""
+msgstr "Accumulated vacations"
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:141
 msgid "Para cargar un solo empleado o hacer correcciones, use el"
-msgstr ""
+msgstr "To load a single employee or make corrections, use the"
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:142
 msgid "formulario individual"
-msgstr ""
+msgstr "individual form"
 
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:2
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:11
 msgid "Cargar Saldo Inicial de Vacaciones"
-msgstr ""
+msgstr "Load Initial Vacation Balance"
 
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:18
 msgid ""
 "Use este formulario para cargar el saldo inicial de vacaciones de un "
 "empleado al momento de implementar el sistema."
-msgstr ""
+msgstr "Use this form to load the initial vacation balance of an employee when implementing the system."
 
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:22
 msgid "El empleado debe tener una cuenta de vacaciones activa."
-msgstr ""
+msgstr "The employee must have an active vacation account."
 
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:23
 msgid "Solo puede cargar saldo inicial en cuentas sin movimientos previos."
-msgstr ""
+msgstr "You can only load initial balance in accounts without previous movements."
 
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:24
 msgid "Para cargar múltiples empleados, use la opción de"
-msgstr ""
+msgstr "To load multiple employees, use the option of"
 
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:24
 msgid "carga masiva desde Excel"
-msgstr ""
+msgstr "bulk load from Excel"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:19
 msgid "Detalles de la Solicitud"
-msgstr ""
+msgstr "Request Details"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:54
 msgid "Solicitado por"
-msgstr ""
+msgstr "Requested by"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:90
 msgid "¿Está seguro de aprobar esta solicitud?"
-msgstr ""
+msgstr "Are you sure you want to approve this request?"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:106
 msgid "Balance de Cuenta"
-msgstr ""
+msgstr "Account Balance"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:110
 #, fuzzy
