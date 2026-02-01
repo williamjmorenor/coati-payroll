@@ -4,11 +4,26 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["cargo", "fontconfig", "gh", "ghostscript", "glib", "gti", "harfbuzz", "libiconv", "libxcrypt", "openssl", "pango", "pkg-config", "rustc"]
+packages = [
+    "cargo",
+    "fontconfig",
+    "gh",
+    "ghostscript",
+    "glib",
+    "gti",
+    "harfbuzz",
+    "libiconv",
+    "libxcrypt",
+    "openssl",
+    "pango",
+    "pkg-config",
+    "rustc",
+]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+exposeLocalhost = true
 
 [workflows]
 runButton = "Project"
@@ -26,14 +41,14 @@ args = "Coati Payroll"
 name = "Coati Payroll"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python app.py"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
 
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "flask --debug run"
+waitForPort = 5000
+
 [deployment]
 deploymentTarget = "autoscale"
-run = ["python", "app.py"]
+run = ["flask", "--debug", "run"]

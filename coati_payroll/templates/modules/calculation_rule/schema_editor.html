@@ -1,10 +1,8 @@
-{% extends 'base.html' %}
-{% from 'macros.html' import render_messages %}
-
-{% block content %}
+{% extends 'base.html' %} {% from 'macros.html' import render_messages %} {%
+block content %}
 <div class="container-fluid">
     {{ render_messages() }}
-    
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2>
@@ -12,14 +10,21 @@
                 {{ _('Editor de Esquema') }}: {{ rule.nombre }}
             </h2>
             <small class="text-muted">
-                {{ rule.codigo }} v{{ rule.version }} | {{ rule.jurisdiccion or _('Sin jurisdicción') }}
+                {{ rule.codigo }} v{{ rule.version }} | {{ rule.jurisdiccion or
+                _('Sin jurisdicción') }}
             </small>
         </div>
         <div>
-            <a href="{{ url_for('calculation_rule.edit', id=rule.id) }}" class="btn btn-secondary">
+            <a
+                href="{{ url_for('calculation_rule.edit', id=rule.id) }}"
+                class="btn btn-secondary"
+            >
                 <i class="bi bi-pencil me-1"></i>{{ _('Editar Metadatos') }}
             </a>
-            <a href="{{ url_for('calculation_rule.index') }}" class="btn btn-outline-secondary">
+            <a
+                href="{{ url_for('calculation_rule.index') }}"
+                class="btn btn-outline-secondary"
+            >
                 <i class="bi bi-arrow-left me-1"></i>{{ _('Volver') }}
             </a>
         </div>
@@ -36,42 +41,71 @@
                     <!-- Meta Section -->
                     <div class="schema-section mb-4">
                         <h5 class="section-title">
-                            <i class="bi bi-info-circle me-2"></i>{{ _('Configuración') }}
+                            <i class="bi bi-info-circle me-2"></i>{{
+                            _('Configuración') }}
                         </h5>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{{ _('Nombre de la regla') }}</label>
-                                    <input type="text" class="form-control" id="meta-name" 
-                                           placeholder="{{ _('Ej: Income Tax Rule') }}">
+                                    <label class="form-label"
+                                        >{{ _('Nombre de la regla') }}</label
+                                    >
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="meta-name"
+                                        placeholder="{{ _('Ej: Income Tax Rule') }}"
+                                    />
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{{ _('Moneda de Referencia') }}</label>
-                                    <input type="text" class="form-control" id="meta-reference-currency" 
-                                           placeholder="{{ _('Ej: NIO, USD') }}">
+                                    <label class="form-label"
+                                        >{{ _('Moneda de Referencia') }}</label
+                                    >
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="meta-reference-currency"
+                                        placeholder="{{ _('Ej: NIO, USD') }}"
+                                    />
                                     <div class="form-text">
-                                        {{ _('Moneda base para los cálculos. La moneda de la planilla se define en el Tipo de Planilla.') }}
+                                        {{ _('Moneda base para los cálculos. La
+                                        moneda de la planilla se define en el
+                                        Tipo de Planilla.') }}
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">{{ _('Descripción') }}</label>
-                            <textarea class="form-control" id="meta-description" rows="2" 
-                                      placeholder="{{ _('Descripción de lo que calcula esta regla') }}"></textarea>
+                            <label class="form-label"
+                                >{{ _('Descripción') }}</label
+                            >
+                            <textarea
+                                class="form-control"
+                                id="meta-description"
+                                rows="2"
+                                placeholder="{{ _('Descripción de lo que calcula esta regla') }}"
+                            ></textarea>
                         </div>
                     </div>
 
                     <!-- Inputs Section -->
                     <div class="schema-section mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-3"
+                        >
                             <h5 class="section-title mb-0">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>{{ _('Variables de Entrada') }}
+                                <i class="bi bi-box-arrow-in-right me-2"></i>{{
+                                _('Variables de Entrada') }}
                             </h5>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="addInput()">
-                                <i class="bi bi-plus-lg me-1"></i>{{ _('Agregar') }}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-primary"
+                                onclick="addInput()"
+                            >
+                                <i class="bi bi-plus-lg me-1"></i>{{
+                                _('Agregar') }}
                             </button>
                         </div>
                         <div id="inputs-container">
@@ -79,33 +113,75 @@
                         </div>
                         <div class="text-muted small mt-2">
                             <i class="bi bi-info-circle me-1"></i>
-                            {{ _('Las variables de entrada pueden venir de la base de datos (empleado.salario_base) o ser valores estáticos.') }}
+                            {{ _('Las variables de entrada pueden venir de la
+                            base de datos (empleado.salario_base) o ser valores
+                            estáticos.') }}
                         </div>
                     </div>
 
                     <!-- Steps Section -->
                     <div class="schema-section mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-3"
+                        >
                             <h5 class="section-title mb-0">
-                                <i class="bi bi-list-ol me-2"></i>{{ _('Pasos de Cálculo') }}
+                                <i class="bi bi-list-ol me-2"></i>{{ _('Pasos de
+                                Cálculo') }}
                             </h5>
                             <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                    <i class="bi bi-plus-lg me-1"></i>{{ _('Agregar Paso') }}
+                                <button
+                                    type="button"
+                                    class="btn btn-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                >
+                                    <i class="bi bi-plus-lg me-1"></i>{{
+                                    _('Agregar Paso') }}
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" onclick="addStep('calculation')">
-                                        <i class="bi bi-calculator me-2"></i>{{ _('Cálculo') }}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="addStep('conditional')">
-                                        <i class="bi bi-signpost-split me-2"></i>{{ _('Condicional') }}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="addStep('tax_lookup')">
-                                        <i class="bi bi-table me-2"></i>{{ _('Búsqueda en Tabla') }}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="addStep('assignment')">
-                                        <i class="bi bi-arrow-right-circle me-2"></i>{{ _('Asignación') }}
-                                    </a></li>
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="#"
+                                            onclick="addStep('calculation')"
+                                        >
+                                            <i class="bi bi-calculator me-2"></i
+                                            >{{ _('Cálculo') }}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="#"
+                                            onclick="addStep('conditional')"
+                                        >
+                                            <i
+                                                class="bi bi-signpost-split me-2"
+                                            ></i
+                                            >{{ _('Condicional') }}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="#"
+                                            onclick="addStep('tax_lookup')"
+                                        >
+                                            <i class="bi bi-table me-2"></i>{{
+                                            _('Búsqueda en Tabla') }}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="#"
+                                            onclick="addStep('assignment')"
+                                        >
+                                            <i
+                                                class="bi bi-arrow-right-circle me-2"
+                                            ></i
+                                            >{{ _('Asignación') }}
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -116,12 +192,20 @@
 
                     <!-- Tax Tables Section -->
                     <div class="schema-section mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-3"
+                        >
                             <h5 class="section-title mb-0">
-                                <i class="bi bi-table me-2"></i>{{ _('Tablas de Impuestos') }}
+                                <i class="bi bi-table me-2"></i>{{ _('Tablas de
+                                Impuestos') }}
                             </h5>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="addTaxTable()">
-                                <i class="bi bi-plus-lg me-1"></i>{{ _('Agregar Tabla') }}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-primary"
+                                onclick="addTaxTable()"
+                            >
+                                <i class="bi bi-plus-lg me-1"></i>{{ _('Agregar
+                                Tabla') }}
                             </button>
                         </div>
                         <div id="tax-tables-container">
@@ -132,15 +216,22 @@
                     <!-- Output Section -->
                     <div class="schema-section">
                         <h5 class="section-title">
-                            <i class="bi bi-box-arrow-right me-2"></i>{{ _('Resultado Final') }}
+                            <i class="bi bi-box-arrow-right me-2"></i>{{
+                            _('Resultado Final') }}
                         </h5>
                         <div class="mb-3">
-                            <label class="form-label">{{ _('Variable de salida') }}</label>
+                            <label class="form-label"
+                                >{{ _('Variable de salida') }}</label
+                            >
                             <select class="form-select" id="output-variable">
-                                <option value="">{{ _('Seleccionar variable de resultado...') }}</option>
+                                <option value="">
+                                    {{ _('Seleccionar variable de resultado...')
+                                    }}
+                                </option>
                             </select>
                             <div class="form-text">
-                                {{ _('Seleccione la variable que contiene el resultado final del cálculo.') }}
+                                {{ _('Seleccione la variable que contiene el
+                                resultado final del cálculo.') }}
                             </div>
                         </div>
                     </div>
@@ -152,38 +243,64 @@
         <div class="col-lg-5">
             <!-- JSON Preview -->
             <div class="card mb-4">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-code-slash me-2"></i>{{ _('Vista Previa JSON') }}</span>
+                <div
+                    class="card-header bg-dark text-white d-flex justify-content-between align-items-center"
+                >
+                    <span
+                        ><i class="bi bi-code-slash me-2"></i>{{ _('Vista Previa
+                        JSON') }}</span
+                    >
                     <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-light" onclick="copyJson()">
+                        <button
+                            type="button"
+                            class="btn btn-outline-light"
+                            onclick="copyJson()"
+                        >
                             <i class="bi bi-clipboard"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-light" onclick="formatJson()">
+                        <button
+                            type="button"
+                            class="btn btn-outline-light"
+                            onclick="formatJson()"
+                        >
                             <i class="bi bi-magic"></i>
                         </button>
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    <textarea id="json-preview" class="form-control font-monospace" rows="15" 
-                              style="border: none; border-radius: 0; resize: vertical;"></textarea>
+                    <textarea
+                        id="json-preview"
+                        class="form-control font-monospace"
+                        rows="15"
+                        style="border: none; border-radius: 0; resize: vertical"
+                    ></textarea>
                 </div>
             </div>
 
             <!-- Test Panel -->
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
-                    <i class="bi bi-play-circle me-2"></i>{{ _('Probar Cálculo') }}
+                    <i class="bi bi-play-circle me-2"></i>{{ _('Probar Cálculo')
+                    }}
                 </div>
                 <div class="card-body">
                     <div id="test-inputs-container">
                         <!-- Dynamic test inputs will be generated -->
                     </div>
-                    <button type="button" class="btn btn-info w-100 mt-3" onclick="testCalculation()">
-                        <i class="bi bi-play-fill me-1"></i>{{ _('Ejecutar Prueba') }}
+                    <button
+                        type="button"
+                        class="btn btn-info w-100 mt-3"
+                        onclick="testCalculation()"
+                    >
+                        <i class="bi bi-play-fill me-1"></i>{{ _('Ejecutar
+                        Prueba') }}
                     </button>
-                    <div id="test-result" class="mt-3" style="display: none;">
+                    <div id="test-result" class="mt-3" style="display: none">
                         <h6>{{ _('Resultado:') }}</h6>
-                        <pre class="bg-light p-3 rounded" id="test-result-content"></pre>
+                        <pre
+                            class="bg-light p-3 rounded"
+                            id="test-result-content"
+                        ></pre>
                     </div>
                 </div>
             </div>
@@ -192,15 +309,36 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-success btn-lg" onclick="saveSchema()">
-                            <i class="bi bi-check-lg me-2"></i>{{ _('Guardar Esquema') }}
+                        <button
+                            type="button"
+                            class="btn btn-success btn-lg"
+                            onclick="saveSchema()"
+                        >
+                            <i class="bi bi-check-lg me-2"></i>{{ _('Guardar
+                            Esquema') }}
                         </button>
-                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('json-file-input').click()">
-                            <i class="bi bi-upload me-2"></i>{{ _('Cargar desde Archivo JSON') }}
+                        <button
+                            type="button"
+                            class="btn btn-outline-primary"
+                            onclick="document.getElementById('json-file-input').click()"
+                        >
+                            <i class="bi bi-upload me-2"></i>{{ _('Cargar desde
+                            Archivo JSON') }}
                         </button>
-                        <input type="file" id="json-file-input" accept=".json" style="display: none;" onchange="loadJsonFile(event)">
-                        <button type="button" class="btn btn-outline-secondary" onclick="loadExample()">
-                            <i class="bi bi-file-earmark-code me-2"></i>{{ _('Cargar Ejemplo de Impuesto Progresivo') }}
+                        <input
+                            type="file"
+                            id="json-file-input"
+                            accept=".json"
+                            style="display: none"
+                            onchange="loadJsonFile(event)"
+                        />
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            onclick="loadExample()"
+                        >
+                            <i class="bi bi-file-earmark-code me-2"></i>{{
+                            _('Cargar Ejemplo de Impuesto Progresivo') }}
                         </button>
                     </div>
                 </div>
@@ -210,942 +348,949 @@
 </div>
 
 <style>
-.schema-section {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1.25rem;
-    border: 1px solid #e9ecef;
-}
+    .schema-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.25rem;
+        border: 1px solid #e9ecef;
+    }
 
-.section-title {
-    color: #495057;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
+    .section-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
 
-.input-item, .step-item, .tax-table-item {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    position: relative;
-    cursor: move;
-}
+    .input-item,
+    .step-item,
+    .tax-table-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        position: relative;
+        cursor: move;
+    }
 
-.input-item .drag-handle, .step-item .drag-handle {
-    position: absolute;
-    left: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-    cursor: grab;
-    font-size: 1.2rem;
-}
+    .input-item .drag-handle,
+    .step-item .drag-handle {
+        position: absolute;
+        left: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        cursor: grab;
+        font-size: 1.2rem;
+    }
 
-.input-item .drag-handle:active, .step-item .drag-handle:active {
-    cursor: grabbing;
-}
+    .input-item .drag-handle:active,
+    .step-item .drag-handle:active {
+        cursor: grabbing;
+    }
 
-.reorder-buttons {
-    position: absolute;
-    right: 3rem;
-    top: 0.5rem;
-    display: flex;
-    gap: 0.25rem;
-}
+    .reorder-buttons {
+        position: absolute;
+        right: 3rem;
+        top: 0.5rem;
+        display: flex;
+        gap: 0.25rem;
+    }
 
-.reorder-buttons .btn {
-    padding: 0.125rem 0.375rem;
-    font-size: 0.75rem;
-}
+    .reorder-buttons .btn {
+        padding: 0.125rem 0.375rem;
+        font-size: 0.75rem;
+    }
 
-.input-item:hover, .step-item:hover, .tax-table-item:hover {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
-}
+    .input-item:hover,
+    .step-item:hover,
+    .tax-table-item:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
+    }
 
-.remove-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
+    .remove-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
 
-.step-type-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
+    .step-type-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
 
-.bracket-row {
-    background: #f8f9fa;
-    border-radius: 4px;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-}
+    .bracket-row {
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
 
-#json-preview {
-    font-size: 0.85rem;
-    background: #1e1e1e;
-    color: #d4d4d4;
-}
+    #json-preview {
+        font-size: 0.85rem;
+        background: #1e1e1e;
+        color: #d4d4d4;
+    }
 
-.sortable-ghost {
-    opacity: 0.4;
-}
+    .sortable-ghost {
+        opacity: 0.4;
+    }
 
-.sortable-drag {
-    opacity: 0.8;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
+    .sortable-drag {
+        opacity: 0.8;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
 </style>
 
 <script>
-// Initialize with existing schema (always valid JSON from backend)
-let schema = {{ schema_json|tojson|safe }};
+    // Schema data from backend - using tojson filter for proper escaping
+    let schema = {{ schema_data|tojson }};
+    console.log("Initial schema:", schema);
 
-const exampleSchema = {{ example_schema|tojson|safe }};
+    const exampleSchema = {{ example_schema_data|tojson }};
 
-// Available data sources from the database
-const availableSources = {{ available_sources|tojson|safe }};
+    // Available data sources from the database
+    const availableSources = {{ available_sources_data|tojson }};
 
-// Counter for unique IDs
-let inputCounter = 0;
-let stepCounter = 0;
-let tableCounter = 0;
+    // Counter for unique IDs
+    let inputCounter = 0;
+    let stepCounter = 0;
+    let tableCounter = 0;
 
-// Sortable instances
-let inputsSortable = null;
-let stepsSortable = null;
+    // Sortable instances
+    let inputsSortable = null;
+    let stepsSortable = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadSchemaToEditor();
-    updateJsonPreview();
-    initializeSortable();
-});
-
-function initializeSortable() {
-    // Initialize sortable for inputs
-    const inputsContainer = document.getElementById('inputs-container');
-    if (inputsContainer && typeof Sortable !== 'undefined') {
-        inputsSortable = Sortable.create(inputsContainer, {
-            animation: 150,
-            handle: '.drag-handle',
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
-            onEnd: function() {
-                updateJsonPreview();
-            }
-        });
-    }
-    
-    // Initialize sortable for steps
-    const stepsContainer = document.getElementById('steps-container');
-    if (stepsContainer && typeof Sortable !== 'undefined') {
-        stepsSortable = Sortable.create(stepsContainer, {
-            animation: 150,
-            handle: '.drag-handle',
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
-            onEnd: function() {
-                updateJsonPreview();
-            }
-        });
-    }
-}
-
-function loadSchemaToEditor() {
-    // Load meta
-    if (schema.meta) {
-        document.getElementById('meta-name').value = schema.meta.name || '';
-        document.getElementById('meta-reference-currency').value = schema.meta.reference_currency || schema.meta.currency || '';
-        document.getElementById('meta-description').value = schema.meta.description || '';
-    }
-
-    // Load inputs
-    const inputsContainer = document.getElementById('inputs-container');
-    inputsContainer.innerHTML = '';
-    if (schema.inputs && schema.inputs.length > 0) {
-        schema.inputs.forEach(input => addInput(input));
-    }
-
-    // Load steps
-    const stepsContainer = document.getElementById('steps-container');
-    stepsContainer.innerHTML = '';
-    if (schema.steps && schema.steps.length > 0) {
-        schema.steps.forEach(step => addStep(step.type, step));
-    }
-
-    // Load tax tables
-    const tablesContainer = document.getElementById('tax-tables-container');
-    tablesContainer.innerHTML = '';
-    if (schema.tax_tables) {
-        Object.entries(schema.tax_tables).forEach(([name, brackets]) => {
-            addTaxTable(name, brackets);
-        });
-    }
-
-    // Load output
-    updateOutputSelect();
-    document.getElementById('output-variable').value = schema.output || '';
-}
-
-function addInput(data = null) {
-    const container = document.getElementById('inputs-container');
-    const id = inputCounter++;
-    
-    // Build source options grouped by category
-    let sourceOptionsHtml = '<option value="">{{ _("Seleccionar origen o escribir valor...") }}</option>';
-    let currentCategory = '';
-    availableSources.forEach(source => {
-        if (source.category !== currentCategory) {
-            if (currentCategory !== '') {
-                sourceOptionsHtml += '</optgroup>';
-            }
-            sourceOptionsHtml += `<optgroup label="${source.category}">`;
-            currentCategory = source.category;
-        }
-        sourceOptionsHtml += `<option value="${source.value}" title="${source.description}">${source.label}</option>`;
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSchemaToEditor();
+        updateJsonPreview();
+        initializeSortable();
     });
-    if (currentCategory !== '') {
-        sourceOptionsHtml += '</optgroup>';
-    }
-    
-    const currentSourceValue = data?.source || data?.default || '';
-    
-    const html = `
-        <div class="input-item" id="input-${id}">
-            <div class="drag-handle">
-                <i class="bi bi-grip-vertical"></i>
-            </div>
-            <div class="reorder-buttons">
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="moveInputUp(${id})" title="{{ _('Subir') }}">
-                    <i class="bi bi-arrow-up"></i>
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="moveInputDown(${id})" title="{{ _('Bajar') }}">
-                    <i class="bi bi-arrow-down"></i>
-                </button>
-            </div>
-            <button type="button" class="btn btn-danger btn-sm remove-btn" onclick="removeInput(${id})">
-                <i class="bi bi-x"></i>
-            </button>
-            <div class="row">
-                <div class="col-md-4">
-                    <label class="form-label small">{{ _('Nombre') }}</label>
-                    <input type="text" class="form-control form-control-sm input-name" 
-                           value="${data?.name || ''}" placeholder="{{ _('Ej: salario_mensual') }}"
-                           onchange="updateJsonPreview()">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small">{{ _('Tipo') }}</label>
-                    <select class="form-select form-select-sm input-type" onchange="updateJsonPreview()">
-                        <option value="decimal" ${data?.type === 'decimal' ? 'selected' : ''}>{{ _('Decimal') }}</option>
-                        <option value="integer" ${data?.type === 'integer' ? 'selected' : ''}>{{ _('Entero') }}</option>
-                        <option value="string" ${data?.type === 'string' ? 'selected' : ''}>{{ _('Texto') }}</option>
-                        <option value="boolean" ${data?.type === 'boolean' ? 'selected' : ''}>{{ _('Booleano') }}</option>
-                        <option value="date" ${data?.type === 'date' ? 'selected' : ''}>{{ _('Fecha') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label small">{{ _('Origen de Datos') }}</label>
-                    <select class="form-select form-select-sm input-source-select" 
-                            onchange="handleSourceChange(this, ${id}); updateJsonPreview()">
-                        ${sourceOptionsHtml}
-                        <option value="__custom__">{{ _('Valor personalizado...') }}</option>
-                    </select>
-                </div>
-            </div>
-            <div class="row mt-2">
-                <div class="col-md-6">
-                    <input type="text" class="form-control form-control-sm input-source-custom" 
-                           value="${currentSourceValue}" 
-                           placeholder="{{ _('Origen (empleado.campo) o valor default') }}"
-                           onchange="updateJsonPreview()"
-                           style="${currentSourceValue && !availableSources.find(s => s.value === currentSourceValue) ? '' : 'display:none'}">
-                </div>
-                <div class="col-md-6">
-                    <input type="text" class="form-control form-control-sm input-description" 
-                           value="${data?.description || ''}" 
-                           placeholder="{{ _('Descripción (opcional)') }}"
-                           onchange="updateJsonPreview()">
-                </div>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    
-    // Set the select value if it matches an available source
-    const selectEl = document.querySelector(`#input-${id} .input-source-select`);
-    if (currentSourceValue) {
-        const matchingSource = availableSources.find(s => s.value === currentSourceValue);
-        if (matchingSource) {
-            selectEl.value = currentSourceValue;
-        } else {
-            selectEl.value = '__custom__';
-            document.querySelector(`#input-${id} .input-source-custom`).style.display = '';
+
+    function initializeSortable() {
+        // Initialize sortable for inputs
+        const inputsContainer = document.getElementById('inputs-container');
+        if (inputsContainer && typeof Sortable !== 'undefined') {
+            inputsSortable = Sortable.create(inputsContainer, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onEnd: function() {
+                    updateJsonPreview();
+                }
+            });
+        }
+
+        // Initialize sortable for steps
+        const stepsContainer = document.getElementById('steps-container');
+        if (stepsContainer && typeof Sortable !== 'undefined') {
+            stepsSortable = Sortable.create(stepsContainer, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onEnd: function() {
+                    updateJsonPreview();
+                }
+            });
         }
     }
-    
-    updateJsonPreview();
-}
 
-function handleSourceChange(selectEl, inputId) {
-    const customInput = document.querySelector(`#input-${inputId} .input-source-custom`);
-    if (selectEl.value === '__custom__') {
-        customInput.style.display = '';
-        customInput.focus();
-    } else if (selectEl.value === '') {
-        customInput.style.display = 'none';
-        customInput.value = '';
-    } else {
-        customInput.style.display = 'none';
-        customInput.value = selectEl.value;
+    function loadSchemaToEditor() {
+        // Load meta
+        if (schema.meta) {
+            document.getElementById('meta-name').value = schema.meta.name || '';
+            document.getElementById('meta-reference-currency').value = schema.meta.reference_currency || schema.meta.currency || '';
+            document.getElementById('meta-description').value = schema.meta.description || '';
+        }
+
+        // Load inputs
+        const inputsContainer = document.getElementById('inputs-container');
+        inputsContainer.innerHTML = '';
+        if (schema.inputs && schema.inputs.length > 0) {
+            schema.inputs.forEach(input => addInput(input));
+        }
+
+        // Load steps
+        const stepsContainer = document.getElementById('steps-container');
+        stepsContainer.innerHTML = '';
+        if (schema.steps && schema.steps.length > 0) {
+            schema.steps.forEach(step => addStep(step.type, step));
+        }
+
+        // Load tax tables
+        const tablesContainer = document.getElementById('tax-tables-container');
+        tablesContainer.innerHTML = '';
+        if (schema.tax_tables) {
+            Object.entries(schema.tax_tables).forEach(([name, brackets]) => {
+                addTaxTable(name, brackets);
+            });
+        }
+
+        // Load output
+        updateOutputSelect();
+        document.getElementById('output-variable').value = schema.output || '';
     }
-}
 
-function removeInput(id) {
-    document.getElementById(`input-${id}`).remove();
-    updateJsonPreview();
-}
+    function addInput(data = null) {
+        const container = document.getElementById('inputs-container');
+        const id = inputCounter++;
 
-function moveInputUp(id) {
-    const element = document.getElementById(`input-${id}`);
-    const prev = element.previousElementSibling;
-    if (prev) {
-        element.parentNode.insertBefore(element, prev);
-        updateJsonPreview();
-    }
-}
+        // Build source options grouped by category
+        let sourceOptionsHtml = '<option value="">{{ _("Seleccionar origen o escribir valor...") }}</option>';
+        let currentCategory = '';
+        availableSources.forEach(source => {
+            if (source.category !== currentCategory) {
+                if (currentCategory !== '') {
+                    sourceOptionsHtml += '</optgroup>';
+                }
+                sourceOptionsHtml += `<optgroup label="${source.category}">`;
+                currentCategory = source.category;
+            }
+            sourceOptionsHtml += `<option value="${source.value}" title="${source.description}">${source.label}</option>`;
+        });
+        if (currentCategory !== '') {
+            sourceOptionsHtml += '</optgroup>';
+        }
 
-function moveInputDown(id) {
-    const element = document.getElementById(`input-${id}`);
-    const next = element.nextElementSibling;
-    if (next) {
-        element.parentNode.insertBefore(next, element);
-        updateJsonPreview();
-    }
-}
+        const currentSourceValue = data?.source || data?.default || '';
 
-function addStep(type, data = null) {
-    const container = document.getElementById('steps-container');
-    const id = stepCounter++;
-    
-    let typeHtml = '';
-    let typeBadgeClass = '';
-    
-    switch(type) {
-        case 'calculation':
-            typeBadgeClass = 'bg-primary';
-            typeHtml = `
-                <div class="mb-2">
-                    <label class="form-label small">{{ _('Fórmula') }}</label>
-                    <input type="text" class="form-control form-control-sm step-formula" 
-                           value="${data?.formula || ''}" 
-                           placeholder="{{ _('Ej: salario_mensual * 12') }}"
-                           onchange="updateJsonPreview()">
+        const html = `
+            <div class="input-item" id="input-${id}">
+                <div class="drag-handle">
+                    <i class="bi bi-grip-vertical"></i>
                 </div>
-            `;
-            break;
-        case 'conditional':
-            typeBadgeClass = 'bg-warning text-dark';
-            typeHtml = `
-                <div class="mb-2">
-                    <label class="form-label small">{{ _('Condición') }}</label>
-                    <div class="row g-2">
-                        <div class="col-4">
-                            <input type="text" class="form-control form-control-sm step-cond-left" 
-                                   value="${data?.condition?.left || ''}" placeholder="{{ _('Variable') }}"
-                                   onchange="updateJsonPreview()">
-                        </div>
-                        <div class="col-2">
-                            <select class="form-select form-select-sm step-cond-op" onchange="updateJsonPreview()">
-                                <option value=">" ${ data?.condition?.operator === '>' ? 'selected' : '' }>&gt;</option>
-                                <option value=">=" ${ data?.condition?.operator === '>=' ? 'selected' : '' }>&gt;=</option>
-                                <option value="<" ${ data?.condition?.operator === '<' ? 'selected' : '' }>&lt;</option>
-                                <option value="<=" ${ data?.condition?.operator === '<=' ? 'selected' : '' }>&lt;=</option>
-                                <option value="==" ${ data?.condition?.operator === '==' ? 'selected' : '' }>==</option>
-                                <option value="!=" ${ data?.condition?.operator === '!=' ? 'selected' : '' }>!=</option>
-                            </select>
-                        </div>
-                        <div class="col-4">
-                            <input type="text" class="form-control form-control-sm step-cond-right" 
-                                   value="${data?.condition?.right || ''}" placeholder="{{ _('Valor') }}"
-                                   onchange="updateJsonPreview()">
-                        </div>
-                    </div>
-                </div>
-                <div class="row g-2">
-                    <div class="col-6">
-                        <label class="form-label small">{{ _('Si verdadero') }}</label>
-                        <input type="text" class="form-control form-control-sm step-if-true" 
-                               value="${data?.if_true || ''}" placeholder="{{ _('Fórmula si cumple') }}"
-                               onchange="updateJsonPreview()">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label small">{{ _('Si falso') }}</label>
-                        <input type="text" class="form-control form-control-sm step-if-false" 
-                               value="${data?.if_false || ''}" placeholder="{{ _('Fórmula si no cumple') }}"
-                               onchange="updateJsonPreview()">
-                    </div>
-                </div>
-            `;
-            break;
-        case 'tax_lookup':
-            typeBadgeClass = 'bg-danger';
-            typeHtml = `
-                <div class="row g-2">
-                    <div class="col-6">
-                        <label class="form-label small">{{ _('Tabla de impuestos') }}</label>
-                        <input type="text" class="form-control form-control-sm step-table" 
-                               value="${data?.table || ''}" placeholder="{{ _('Nombre de la tabla') }}"
-                               onchange="updateJsonPreview()">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label small">{{ _('Variable de entrada') }}</label>
-                        <input type="text" class="form-control form-control-sm step-input" 
-                               value="${data?.input || ''}" placeholder="{{ _('Variable a buscar') }}"
-                               onchange="updateJsonPreview()">
-                    </div>
-                </div>
-            `;
-            break;
-        case 'assignment':
-            typeBadgeClass = 'bg-info';
-            typeHtml = `
-                <div class="mb-2">
-                    <label class="form-label small">{{ _('Valor') }}</label>
-                    <input type="text" class="form-control form-control-sm step-value" 
-                           value="${data?.value || ''}" placeholder="{{ _('Variable o valor a asignar') }}"
-                           onchange="updateJsonPreview()">
-                </div>
-            `;
-            break;
-    }
-    
-    const html = `
-        <div class="step-item" id="step-${id}" data-type="${type}">
-            <div class="drag-handle">
-                <i class="bi bi-grip-vertical"></i>
-            </div>
-            <div class="reorder-buttons">
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="moveStepUp(${id})" title="{{ _('Subir') }}">
-                    <i class="bi bi-arrow-up"></i>
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="moveStepDown(${id})" title="{{ _('Bajar') }}">
-                    <i class="bi bi-arrow-down"></i>
-                </button>
-            </div>
-            <button type="button" class="btn btn-danger btn-sm remove-btn" onclick="removeStep(${id})">
-                <i class="bi bi-x"></i>
-            </button>
-            <div class="d-flex align-items-center mb-2">
-                <span class="badge ${typeBadgeClass} step-type-badge me-2">${type}</span>
-                <input type="text" class="form-control form-control-sm step-name" 
-                       value="${data?.name || ''}" placeholder="{{ _('Nombre del paso') }}"
-                       style="max-width: 200px;" onchange="updateJsonPreview()">
-            </div>
-            ${typeHtml}
-            <div class="mt-2">
-                <input type="text" class="form-control form-control-sm step-description" 
-                       value="${data?.description || ''}" placeholder="{{ _('Descripción (opcional)') }}"
-                       onchange="updateJsonPreview()">
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    updateJsonPreview();
-}
-
-function removeStep(id) {
-    document.getElementById(`step-${id}`).remove();
-    updateJsonPreview();
-}
-
-function moveStepUp(id) {
-    const element = document.getElementById(`step-${id}`);
-    const prev = element.previousElementSibling;
-    if (prev) {
-        element.parentNode.insertBefore(element, prev);
-        updateJsonPreview();
-    }
-}
-
-function moveStepDown(id) {
-    const element = document.getElementById(`step-${id}`);
-    const next = element.nextElementSibling;
-    if (next) {
-        element.parentNode.insertBefore(next, element);
-        updateJsonPreview();
-    }
-}
-
-function addTaxTable(name = null, brackets = null) {
-    const container = document.getElementById('tax-tables-container');
-    const id = tableCounter++;
-    
-    const html = `
-        <div class="tax-table-item" id="table-${id}">
-            <button type="button" class="btn btn-danger btn-sm remove-btn" onclick="removeTaxTable(${id})">
-                <i class="bi bi-x"></i>
-            </button>
-            <div class="mb-3">
-                <label class="form-label small">{{ _('Nombre de la tabla') }}</label>
-                <input type="text" class="form-control form-control-sm table-name" 
-                       value="${name || ''}" placeholder="{{ _('Ej: income_tax_brackets') }}"
-                       onchange="updateJsonPreview()">
-            </div>
-            <div class="brackets-container" id="brackets-${id}">
-                <!-- Brackets will be added here -->
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addBracket(${id})">
-                <i class="bi bi-plus-lg me-1"></i>{{ _('Agregar Tramo') }}
-            </button>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    
-    // Add existing brackets
-    if (brackets && brackets.length > 0) {
-        brackets.forEach(bracket => addBracket(id, bracket));
-    }
-    
-    updateJsonPreview();
-}
-
-function removeTaxTable(id) {
-    document.getElementById(`table-${id}`).remove();
-    updateJsonPreview();
-}
-
-function addBracket(tableId, data = null) {
-    const container = document.getElementById(`brackets-${tableId}`);
-    const html = `
-        <div class="bracket-row">
-            <div class="row g-2 align-items-center">
-                <div class="col">
-                    <input type="number" class="form-control form-control-sm bracket-min" 
-                           value="${data?.min ?? ''}" placeholder="{{ _('Mín') }}"
-                           onchange="updateJsonPreview()">
-                </div>
-                <div class="col">
-                    <input type="number" class="form-control form-control-sm bracket-max" 
-                           value="${data?.max ?? ''}" placeholder="{{ _('Máx') }}"
-                           onchange="updateJsonPreview()">
-                </div>
-                <div class="col">
-                    <input type="number" class="form-control form-control-sm bracket-rate" 
-                           value="${data?.rate ?? ''}" placeholder="{{ _('Tasa') }}" step="0.01"
-                           onchange="updateJsonPreview()">
-                </div>
-                <div class="col">
-                    <input type="number" class="form-control form-control-sm bracket-fixed" 
-                           value="${data?.fixed ?? ''}" placeholder="{{ _('Fijo') }}"
-                           onchange="updateJsonPreview()">
-                </div>
-                <div class="col">
-                    <input type="number" class="form-control form-control-sm bracket-over" 
-                           value="${data?.over ?? ''}" placeholder="{{ _('Sobre') }}"
-                           onchange="updateJsonPreview()">
-                </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.bracket-row').remove(); updateJsonPreview();">
-                        <i class="bi bi-x"></i>
+                <div class="reorder-buttons">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="moveInputUp(${id})" title="{{ _('Subir') }}">
+                        <i class="bi bi-arrow-up"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="moveInputDown(${id})" title="{{ _('Bajar') }}">
+                        <i class="bi bi-arrow-down"></i>
                     </button>
                 </div>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    updateJsonPreview();
-}
-
-function updateOutputSelect() {
-    const select = document.getElementById('output-variable');
-    const currentValue = select.value;
-    select.innerHTML = '<option value="">{{ _("Seleccionar variable de resultado...") }}</option>';
-    
-    // Add all input names
-    document.querySelectorAll('.input-name').forEach(input => {
-        if (input.value) {
-            select.innerHTML += `<option value="${input.value}">${input.value} (input)</option>`;
-        }
-    });
-    
-    // Add all step names
-    document.querySelectorAll('.step-name').forEach(input => {
-        if (input.value) {
-            select.innerHTML += `<option value="${input.value}">${input.value} (step)</option>`;
-        }
-    });
-    
-    select.value = currentValue;
-}
-
-function collectSchemaFromEditor() {
-    const newSchema = {
-        meta: {
-            name: document.getElementById('meta-name').value,
-            reference_currency: document.getElementById('meta-reference-currency').value,
-            description: document.getElementById('meta-description').value
-        },
-        inputs: [],
-        steps: [],
-        tax_tables: {},
-        output: document.getElementById('output-variable').value
-    };
-    
-    // Collect inputs
-    document.querySelectorAll('.input-item').forEach(item => {
-        const input = {
-            name: item.querySelector('.input-name').value,
-            type: item.querySelector('.input-type').value
-        };
-        // Get source from either the select dropdown or the custom input field
-        const selectEl = item.querySelector('.input-source-select');
-        const customEl = item.querySelector('.input-source-custom');
-        let source = '';
-        if (selectEl && selectEl.value && selectEl.value !== '__custom__' && selectEl.value !== '') {
-            source = selectEl.value;
-        } else if (customEl) {
-            source = customEl.value;
-        }
-        if (source) {
-            if (source.includes('.')) {
-                input.source = source;
-            } else if (!isNaN(source)) {
-                input.default = parseFloat(source);
-            } else {
-                input.default = source;
-            }
-        }
-        const desc = item.querySelector('.input-description').value;
-        if (desc) input.description = desc;
-        
-        if (input.name) newSchema.inputs.push(input);
-    });
-    
-    // Collect steps
-    document.querySelectorAll('.step-item').forEach(item => {
-        const type = item.dataset.type;
-        const step = {
-            name: item.querySelector('.step-name').value,
-            type: type
-        };
-        
-        switch(type) {
-            case 'calculation':
-                step.formula = item.querySelector('.step-formula').value;
-                break;
-            case 'conditional':
-                step.condition = {
-                    left: item.querySelector('.step-cond-left').value,
-                    operator: item.querySelector('.step-cond-op').value,
-                    right: item.querySelector('.step-cond-right').value
-                };
-                // Try to parse right value as number
-                if (!isNaN(step.condition.right)) {
-                    step.condition.right = parseFloat(step.condition.right);
-                }
-                step.if_true = item.querySelector('.step-if-true').value;
-                step.if_false = item.querySelector('.step-if-false').value;
-                break;
-            case 'tax_lookup':
-                step.table = item.querySelector('.step-table').value;
-                step.input = item.querySelector('.step-input').value;
-                break;
-            case 'assignment':
-                step.value = item.querySelector('.step-value').value;
-                break;
-        }
-        
-        const desc = item.querySelector('.step-description').value;
-        if (desc) step.description = desc;
-        
-        if (step.name) newSchema.steps.push(step);
-    });
-    
-    // Collect tax tables
-    document.querySelectorAll('.tax-table-item').forEach(item => {
-        const tableName = item.querySelector('.table-name').value;
-        if (!tableName) return;
-        
-        const brackets = [];
-        item.querySelectorAll('.bracket-row').forEach(row => {
-            const bracket = {};
-            const min = row.querySelector('.bracket-min').value;
-            const max = row.querySelector('.bracket-max').value;
-            const rate = row.querySelector('.bracket-rate').value;
-            const fixed = row.querySelector('.bracket-fixed').value;
-            const over = row.querySelector('.bracket-over').value;
-            
-            if (min !== '') bracket.min = parseFloat(min);
-            if (max !== '') bracket.max = parseFloat(max);
-            else bracket.max = null;
-            if (rate !== '') bracket.rate = parseFloat(rate);
-            if (fixed !== '') bracket.fixed = parseFloat(fixed);
-            if (over !== '') bracket.over = parseFloat(over);
-            
-            if (Object.keys(bracket).length > 0) brackets.push(bracket);
-        });
-        
-        if (brackets.length > 0) {
-            newSchema.tax_tables[tableName] = brackets;
-        }
-    });
-    
-    return newSchema;
-}
-
-function updateJsonPreview() {
-    schema = collectSchemaFromEditor();
-    document.getElementById('json-preview').value = JSON.stringify(schema, null, 2);
-    updateOutputSelect();
-    generateTestInputs();
-}
-
-function generateTestInputs() {
-    const container = document.getElementById('test-inputs-container');
-    container.innerHTML = '';
-    
-    schema.inputs.forEach(input => {
-        const html = `
-            <div class="mb-2">
-                <label class="form-label small">${input.name}</label>
-                <input type="number" class="form-control form-control-sm test-input" 
-                       data-name="${input.name}" 
-                       value="${input.default || 0}" step="0.01">
+                <button type="button" class="btn btn-danger btn-sm remove-btn" onclick="removeInput(${id})">
+                    <i class="bi bi-x"></i>
+                </button>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label small">{{ _('Nombre') }}</label>
+                        <input type="text" class="form-control form-control-sm input-name"
+                               value="${data?.name || ''}" placeholder="{{ _('Ej: salario_mensual') }}"
+                               onchange="updateJsonPreview()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">{{ _('Tipo') }}</label>
+                        <select class="form-select form-select-sm input-type" onchange="updateJsonPreview()">
+                            <option value="decimal" ${data?.type === 'decimal' ? 'selected' : ''}>{{ _('Decimal') }}</option>
+                            <option value="integer" ${data?.type === 'integer' ? 'selected' : ''}>{{ _('Entero') }}</option>
+                            <option value="string" ${data?.type === 'string' ? 'selected' : ''}>{{ _('Texto') }}</option>
+                            <option value="boolean" ${data?.type === 'boolean' ? 'selected' : ''}>{{ _('Booleano') }}</option>
+                            <option value="date" ${data?.type === 'date' ? 'selected' : ''}>{{ _('Fecha') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small">{{ _('Origen de Datos') }}</label>
+                        <select class="form-select form-select-sm input-source-select"
+                                onchange="handleSourceChange(this, ${id}); updateJsonPreview()">
+                            ${sourceOptionsHtml}
+                            <option value="__custom__">{{ _('Valor personalizado...') }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control form-control-sm input-source-custom"
+                               value="${currentSourceValue}"
+                               placeholder="{{ _('Origen (empleado.campo) o valor default') }}"
+                               onchange="updateJsonPreview()"
+                               style="${currentSourceValue && !availableSources.find(s => s.value === currentSourceValue) ? '' : 'display:none'}">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control form-control-sm input-description"
+                               value="${data?.description || ''}"
+                               placeholder="{{ _('Descripción (opcional)') }}"
+                               onchange="updateJsonPreview()">
+                    </div>
+                </div>
             </div>
         `;
         container.insertAdjacentHTML('beforeend', html);
-    });
-}
 
-function copyJson() {
-    const textarea = document.getElementById('json-preview');
-    textarea.select();
-    document.execCommand('copy');
-    alert('{{ _("JSON copiado al portapapeles") }}');
-}
-
-function formatJson() {
-    const textarea = document.getElementById('json-preview');
-    try {
-        const json = JSON.parse(textarea.value);
-        textarea.value = JSON.stringify(json, null, 2);
-    } catch (e) {
-        alert('{{ _("JSON inválido") }}');
-    }
-}
-
-function loadExample() {
-    if (confirm('{{ _("¿Cargar el ejemplo de impuesto progresivo? Esto reemplazará el esquema actual.") }}')) {
-        schema = JSON.parse(JSON.stringify(exampleSchema));
-        loadSchemaToEditor();
-        updateJsonPreview();
-        alert('{{ _("Ejemplo cargado exitosamente") }}');
-    }
-}
-
-async function saveSchema() {
-    try {
-        const schemaToSave = collectSchemaFromEditor();
-        
-        const response = await fetch('{{ url_for("calculation_rule.save_schema", id=rule.id) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ schema: schemaToSave })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            alert('{{ _("Esquema guardado exitosamente") }}');
-        } else {
-            alert('{{ _("Error: ") }}' + result.error);
-        }
-    } catch (e) {
-        alert('{{ _("Error al guardar: ") }}' + e.message);
-    }
-}
-
-async function testCalculation() {
-    try {
-        const testInputs = {};
-        document.querySelectorAll('.test-input').forEach(input => {
-            testInputs[input.dataset.name] = parseFloat(input.value) || 0;
-        });
-        
-        const response = await fetch('{{ url_for("calculation_rule.test_schema", id=rule.id) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                schema: collectSchemaFromEditor(),
-                inputs: testInputs 
-            })
-        });
-        
-        const result = await response.json();
-        
-        const resultDiv = document.getElementById('test-result');
-        const resultContent = document.getElementById('test-result-content');
-        
-        resultDiv.style.display = 'block';
-        
-        if (result.success) {
-            // Format result with 2 decimal places
-            const formattedResult = formatResultWithDecimals(result.result);
-            resultContent.innerHTML = JSON.stringify(formattedResult, null, 2);
-            resultContent.classList.remove('text-danger');
-            resultContent.classList.add('text-success');
-        } else {
-            resultContent.innerHTML = '{{ _("Error: ") }}' + result.error;
-            resultContent.classList.remove('text-success');
-            resultContent.classList.add('text-danger');
-        }
-    } catch (e) {
-        alert('{{ _("Error al probar: ") }}' + e.message);
-    }
-}
-
-function formatResultWithDecimals(obj) {
-    if (typeof obj === 'number') {
-        return parseFloat(obj.toFixed(2));
-    } else if (typeof obj === 'object' && obj !== null) {
-        if (Array.isArray(obj)) {
-            return obj.map(item => formatResultWithDecimals(item));
-        } else {
-            const formatted = {};
-            for (const key in obj) {
-                formatted[key] = formatResultWithDecimals(obj[key]);
+        // Set the select value if it matches an available source
+        const selectEl = document.querySelector(`#input-${id} .input-source-select`);
+        if (currentSourceValue) {
+            const matchingSource = availableSources.find(s => s.value === currentSourceValue);
+            if (matchingSource) {
+                selectEl.value = currentSourceValue;
+            } else {
+                selectEl.value = '__custom__';
+                document.querySelector(`#input-${id} .input-source-custom`).style.display = '';
             }
-            return formatted;
         }
-    }
-    return obj;
-}
 
-async function loadJsonFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // Check file type
-    if (!file.name.endsWith('.json')) {
-        alert('{{ _("Por favor seleccione un archivo JSON válido") }}');
-        event.target.value = '';
-        return;
+        updateJsonPreview();
     }
-    
-    try {
-        const text = await file.text();
-        let jsonData;
-        
-        // Parse JSON
+
+    function handleSourceChange(selectEl, inputId) {
+        const customInput = document.querySelector(`#input-${inputId} .input-source-custom`);
+        if (selectEl.value === '__custom__') {
+            customInput.style.display = '';
+            customInput.focus();
+        } else if (selectEl.value === '') {
+            customInput.style.display = 'none';
+            customInput.value = '';
+        } else {
+            customInput.style.display = 'none';
+            customInput.value = selectEl.value;
+        }
+    }
+
+    function removeInput(id) {
+        document.getElementById(`input-${id}`).remove();
+        updateJsonPreview();
+    }
+
+    function moveInputUp(id) {
+        const element = document.getElementById(`input-${id}`);
+        const prev = element.previousElementSibling;
+        if (prev) {
+            element.parentNode.insertBefore(element, prev);
+            updateJsonPreview();
+        }
+    }
+
+    function moveInputDown(id) {
+        const element = document.getElementById(`input-${id}`);
+        const next = element.nextElementSibling;
+        if (next) {
+            element.parentNode.insertBefore(next, element);
+            updateJsonPreview();
+        }
+    }
+
+    function addStep(type, data = null) {
+        const container = document.getElementById('steps-container');
+        const id = stepCounter++;
+
+        let typeHtml = '';
+        let typeBadgeClass = '';
+
+        switch(type) {
+            case 'calculation':
+                typeBadgeClass = 'bg-primary';
+                typeHtml = `
+                    <div class="mb-2">
+                        <label class="form-label small">{{ _('Fórmula') }}</label>
+                        <input type="text" class="form-control form-control-sm step-formula"
+                               value="${data?.formula || ''}"
+                               placeholder="{{ _('Ej: salario_mensual * 12') }}"
+                               onchange="updateJsonPreview()">
+                    </div>
+                `;
+                break;
+            case 'conditional':
+                typeBadgeClass = 'bg-warning text-dark';
+                typeHtml = `
+                    <div class="mb-2">
+                        <label class="form-label small">{{ _('Condición') }}</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <input type="text" class="form-control form-control-sm step-cond-left"
+                                       value="${data?.condition?.left || ''}" placeholder="{{ _('Variable') }}"
+                                       onchange="updateJsonPreview()">
+                            </div>
+                            <div class="col-2">
+                                <select class="form-select form-select-sm step-cond-op" onchange="updateJsonPreview()">
+                                    <option value=">" ${ data?.condition?.operator === '>' ? 'selected' : '' }>&gt;</option>
+                                    <option value=">=" ${ data?.condition?.operator === '>=' ? 'selected' : '' }>&gt;=</option>
+                                    <option value="<" ${ data?.condition?.operator === '<' ? 'selected' : '' }>&lt;</option>
+                                    <option value="<=" ${ data?.condition?.operator === '<=' ? 'selected' : '' }>&lt;=</option>
+                                    <option value="==" ${ data?.condition?.operator === '==' ? 'selected' : '' }>==</option>
+                                    <option value="!=" ${ data?.condition?.operator === '!=' ? 'selected' : '' }>!=</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <input type="text" class="form-control form-control-sm step-cond-right"
+                                       value="${data?.condition?.right || ''}" placeholder="{{ _('Valor') }}"
+                                       onchange="updateJsonPreview()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small">{{ _('Si verdadero') }}</label>
+                            <input type="text" class="form-control form-control-sm step-if-true"
+                                   value="${data?.if_true || ''}" placeholder="{{ _('Fórmula si cumple') }}"
+                                   onchange="updateJsonPreview()">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">{{ _('Si falso') }}</label>
+                            <input type="text" class="form-control form-control-sm step-if-false"
+                                   value="${data?.if_false || ''}" placeholder="{{ _('Fórmula si no cumple') }}"
+                                   onchange="updateJsonPreview()">
+                        </div>
+                    </div>
+                `;
+                break;
+            case 'tax_lookup':
+                typeBadgeClass = 'bg-danger';
+                typeHtml = `
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small">{{ _('Tabla de impuestos') }}</label>
+                            <input type="text" class="form-control form-control-sm step-table"
+                                   value="${data?.table || ''}" placeholder="{{ _('Nombre de la tabla') }}"
+                                   onchange="updateJsonPreview()">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">{{ _('Variable de entrada') }}</label>
+                            <input type="text" class="form-control form-control-sm step-input"
+                                   value="${data?.input || ''}" placeholder="{{ _('Variable a buscar') }}"
+                                   onchange="updateJsonPreview()">
+                        </div>
+                    </div>
+                `;
+                break;
+            case 'assignment':
+                typeBadgeClass = 'bg-info';
+                typeHtml = `
+                    <div class="mb-2">
+                        <label class="form-label small">{{ _('Valor') }}</label>
+                        <input type="text" class="form-control form-control-sm step-value"
+                               value="${data?.value || ''}" placeholder="{{ _('Variable o valor a asignar') }}"
+                               onchange="updateJsonPreview()">
+                    </div>
+                `;
+                break;
+        }
+
+        const html = `
+            <div class="step-item" id="step-${id}" data-type="${type}">
+                <div class="drag-handle">
+                    <i class="bi bi-grip-vertical"></i>
+                </div>
+                <div class="reorder-buttons">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="moveStepUp(${id})" title="{{ _('Subir') }}">
+                        <i class="bi bi-arrow-up"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="moveStepDown(${id})" title="{{ _('Bajar') }}">
+                        <i class="bi bi-arrow-down"></i>
+                    </button>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm remove-btn" onclick="removeStep(${id})">
+                    <i class="bi bi-x"></i>
+                </button>
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge ${typeBadgeClass} step-type-badge me-2">${type}</span>
+                    <input type="text" class="form-control form-control-sm step-name"
+                           value="${data?.name || ''}" placeholder="{{ _('Nombre del paso') }}"
+                           style="max-width: 200px;" onchange="updateJsonPreview()">
+                </div>
+                ${typeHtml}
+                <div class="mt-2">
+                    <input type="text" class="form-control form-control-sm step-description"
+                           value="${data?.description || ''}" placeholder="{{ _('Descripción (opcional)') }}"
+                           onchange="updateJsonPreview()">
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        updateJsonPreview();
+    }
+
+    function removeStep(id) {
+        document.getElementById(`step-${id}`).remove();
+        updateJsonPreview();
+    }
+
+    function moveStepUp(id) {
+        const element = document.getElementById(`step-${id}`);
+        const prev = element.previousElementSibling;
+        if (prev) {
+            element.parentNode.insertBefore(element, prev);
+            updateJsonPreview();
+        }
+    }
+
+    function moveStepDown(id) {
+        const element = document.getElementById(`step-${id}`);
+        const next = element.nextElementSibling;
+        if (next) {
+            element.parentNode.insertBefore(next, element);
+            updateJsonPreview();
+        }
+    }
+
+    function addTaxTable(name = null, brackets = null) {
+        const container = document.getElementById('tax-tables-container');
+        const id = tableCounter++;
+
+        const html = `
+            <div class="tax-table-item" id="table-${id}">
+                <button type="button" class="btn btn-danger btn-sm remove-btn" onclick="removeTaxTable(${id})">
+                    <i class="bi bi-x"></i>
+                </button>
+                <div class="mb-3">
+                    <label class="form-label small">{{ _('Nombre de la tabla') }}</label>
+                    <input type="text" class="form-control form-control-sm table-name"
+                           value="${name || ''}" placeholder="{{ _('Ej: income_tax_brackets') }}"
+                           onchange="updateJsonPreview()">
+                </div>
+                <div class="brackets-container" id="brackets-${id}">
+                    <!-- Brackets will be added here -->
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addBracket(${id})">
+                    <i class="bi bi-plus-lg me-1"></i>{{ _('Agregar Tramo') }}
+                </button>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+
+        // Add existing brackets
+        if (brackets && brackets.length > 0) {
+            brackets.forEach(bracket => addBracket(id, bracket));
+        }
+
+        updateJsonPreview();
+    }
+
+    function removeTaxTable(id) {
+        document.getElementById(`table-${id}`).remove();
+        updateJsonPreview();
+    }
+
+    function addBracket(tableId, data = null) {
+        const container = document.getElementById(`brackets-${tableId}`);
+        const html = `
+            <div class="bracket-row">
+                <div class="row g-2 align-items-center">
+                    <div class="col">
+                        <input type="number" class="form-control form-control-sm bracket-min"
+                               value="${data?.min ?? ''}" placeholder="{{ _('Mín') }}"
+                               onchange="updateJsonPreview()">
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control form-control-sm bracket-max"
+                               value="${data?.max ?? ''}" placeholder="{{ _('Máx') }}"
+                               onchange="updateJsonPreview()">
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control form-control-sm bracket-rate"
+                               value="${data?.rate ?? ''}" placeholder="{{ _('Tasa') }}" step="0.01"
+                               onchange="updateJsonPreview()">
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control form-control-sm bracket-fixed"
+                               value="${data?.fixed ?? ''}" placeholder="{{ _('Fijo') }}"
+                               onchange="updateJsonPreview()">
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control form-control-sm bracket-over"
+                               value="${data?.over ?? ''}" placeholder="{{ _('Sobre') }}"
+                               onchange="updateJsonPreview()">
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.bracket-row').remove(); updateJsonPreview();">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        updateJsonPreview();
+    }
+
+    function updateOutputSelect() {
+        const select = document.getElementById('output-variable');
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">{{ _("Seleccionar variable de resultado...") }}</option>';
+
+        // Add all input names
+        document.querySelectorAll('.input-name').forEach(input => {
+            if (input.value) {
+                select.innerHTML += `<option value="${input.value}">${input.value} (input)</option>`;
+            }
+        });
+
+        // Add all step names
+        document.querySelectorAll('.step-name').forEach(input => {
+            if (input.value) {
+                select.innerHTML += `<option value="${input.value}">${input.value} (step)</option>`;
+            }
+        });
+
+        select.value = currentValue;
+    }
+
+    function collectSchemaFromEditor() {
+        const newSchema = {
+            meta: {
+                name: document.getElementById('meta-name').value,
+                reference_currency: document.getElementById('meta-reference-currency').value,
+                description: document.getElementById('meta-description').value
+            },
+            inputs: [],
+            steps: [],
+            tax_tables: {},
+            output: document.getElementById('output-variable').value
+        };
+
+        // Collect inputs
+        document.querySelectorAll('.input-item').forEach(item => {
+            const input = {
+                name: item.querySelector('.input-name').value,
+                type: item.querySelector('.input-type').value
+            };
+            // Get source from either the select dropdown or the custom input field
+            const selectEl = item.querySelector('.input-source-select');
+            const customEl = item.querySelector('.input-source-custom');
+            let source = '';
+            if (selectEl && selectEl.value && selectEl.value !== '__custom__' && selectEl.value !== '') {
+                source = selectEl.value;
+            } else if (customEl) {
+                source = customEl.value;
+            }
+            if (source) {
+                if (source.includes('.')) {
+                    input.source = source;
+                } else if (!isNaN(source)) {
+                    input.default = parseFloat(source);
+                } else {
+                    input.default = source;
+                }
+            }
+            const desc = item.querySelector('.input-description').value;
+            if (desc) input.description = desc;
+
+            if (input.name) newSchema.inputs.push(input);
+        });
+
+        // Collect steps
+        document.querySelectorAll('.step-item').forEach(item => {
+            const type = item.dataset.type;
+            const step = {
+                name: item.querySelector('.step-name').value,
+                type: type
+            };
+
+            switch(type) {
+                case 'calculation':
+                    step.formula = item.querySelector('.step-formula').value;
+                    break;
+                case 'conditional':
+                    step.condition = {
+                        left: item.querySelector('.step-cond-left').value,
+                        operator: item.querySelector('.step-cond-op').value,
+                        right: item.querySelector('.step-cond-right').value
+                    };
+                    // Try to parse right value as number
+                    if (!isNaN(step.condition.right)) {
+                        step.condition.right = parseFloat(step.condition.right);
+                    }
+                    step.if_true = item.querySelector('.step-if-true').value;
+                    step.if_false = item.querySelector('.step-if-false').value;
+                    break;
+                case 'tax_lookup':
+                    step.table = item.querySelector('.step-table').value;
+                    step.input = item.querySelector('.step-input').value;
+                    break;
+                case 'assignment':
+                    step.value = item.querySelector('.step-value').value;
+                    break;
+            }
+
+            const desc = item.querySelector('.step-description').value;
+            if (desc) step.description = desc;
+
+            if (step.name) newSchema.steps.push(step);
+        });
+
+        // Collect tax tables
+        document.querySelectorAll('.tax-table-item').forEach(item => {
+            const tableName = item.querySelector('.table-name').value;
+            if (!tableName) return;
+
+            const brackets = [];
+            item.querySelectorAll('.bracket-row').forEach(row => {
+                const bracket = {};
+                const min = row.querySelector('.bracket-min').value;
+                const max = row.querySelector('.bracket-max').value;
+                const rate = row.querySelector('.bracket-rate').value;
+                const fixed = row.querySelector('.bracket-fixed').value;
+                const over = row.querySelector('.bracket-over').value;
+
+                if (min !== '') bracket.min = parseFloat(min);
+                if (max !== '') bracket.max = parseFloat(max);
+                else bracket.max = null;
+                if (rate !== '') bracket.rate = parseFloat(rate);
+                if (fixed !== '') bracket.fixed = parseFloat(fixed);
+                if (over !== '') bracket.over = parseFloat(over);
+
+                if (Object.keys(bracket).length > 0) brackets.push(bracket);
+            });
+
+            if (brackets.length > 0) {
+                newSchema.tax_tables[tableName] = brackets;
+            }
+        });
+
+        return newSchema;
+    }
+
+    function updateJsonPreview() {
+        schema = collectSchemaFromEditor();
+        document.getElementById('json-preview').value = JSON.stringify(schema, null, 2);
+        updateOutputSelect();
+        generateTestInputs();
+    }
+
+    function generateTestInputs() {
+        const container = document.getElementById('test-inputs-container');
+        container.innerHTML = '';
+
+        schema.inputs.forEach(input => {
+            const html = `
+                <div class="mb-2">
+                    <label class="form-label small">${input.name}</label>
+                    <input type="number" class="form-control form-control-sm test-input"
+                           data-name="${input.name}"
+                           value="${input.default || 0}" step="0.01">
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    function copyJson() {
+        const textarea = document.getElementById('json-preview');
+        textarea.select();
+        document.execCommand('copy');
+        alert('{{ _("JSON copiado al portapapeles") }}');
+    }
+
+    function formatJson() {
+        const textarea = document.getElementById('json-preview');
         try {
-            jsonData = JSON.parse(text);
+            const json = JSON.parse(textarea.value);
+            textarea.value = JSON.stringify(json, null, 2);
         } catch (e) {
-            alert('{{ _("Error: El archivo no contiene JSON válido") }}\n' + e.message);
-            event.target.value = '';
-            return;
+            alert('{{ _("JSON inválido") }}');
         }
-        
-        // Validate schema structure before loading
-        const validationResult = await validateJsonSchema(jsonData);
-        
-        if (!validationResult.valid) {
-            alert('{{ _("Error de validación") }}:\n\n' + validationResult.error);
-            event.target.value = '';
-            return;
-        }
-        
-        // Show confirmation dialog
-        if (confirm('{{ _("¿Cargar este esquema? Esto reemplazará el esquema actual.") }}')) {
-            schema = jsonData;
+    }
+
+    function loadExample() {
+        if (confirm('{{ _("¿Cargar el ejemplo de impuesto progresivo? Esto reemplazará el esquema actual.") }}')) {
+            schema = JSON.parse(JSON.stringify(exampleSchema));
             loadSchemaToEditor();
             updateJsonPreview();
-            alert('{{ _("Esquema cargado exitosamente") }}');
+            alert('{{ _("Ejemplo cargado exitosamente") }}');
         }
-        
-    } catch (e) {
-        alert('{{ _("Error al leer el archivo") }}: ' + e.message);
-    } finally {
-        event.target.value = '';
     }
-}
 
-async function validateJsonSchema(jsonData) {
-    // Basic structure validation
-    if (!jsonData || typeof jsonData !== 'object') {
-        return { valid: false, error: '{{ _("El esquema debe ser un objeto JSON") }}' };
-    }
-    
-    // Check for required sections
-    if (!jsonData.steps || !Array.isArray(jsonData.steps)) {
-        return { valid: false, error: '{{ _("El esquema debe contener una sección \'steps\' con un array de pasos") }}' };
-    }
-    
-    // Validate steps structure
-    for (let i = 0; i < jsonData.steps.length; i++) {
-        const step = jsonData.steps[i];
-        if (!step.name) {
-            return { valid: false, error: `{{ _("El paso") }} ${i + 1} {{ _("debe tener un campo \'name\'") }}` };
-        }
-        if (!step.type) {
-            return { valid: false, error: `{{ _("El paso") }} ${i + 1} {{ _("debe tener un campo \'type\'") }}` };
-        }
-        
-        // Validate step type
-        const validTypes = ['calculation', 'conditional', 'tax_lookup', 'assignment'];
-        if (!validTypes.includes(step.type)) {
-            return { 
-                valid: false, 
-                error: `{{ _("El paso") }} ${i + 1} {{ _("tiene un tipo inválido") }}: '${step.type}'. {{ _("Tipos permitidos") }}: ${validTypes.join(', ')}` 
-            };
-        }
-        
-        // Validate step-specific fields
-        if (step.type === 'calculation' && !step.formula) {
-            return { valid: false, error: `{{ _("El paso de cálculo") }} '${step.name}' {{ _("debe tener un campo \'formula\'") }}` };
-        }
-        if (step.type === 'conditional' && !step.condition) {
-            return { valid: false, error: `{{ _("El paso condicional") }} '${step.name}' {{ _("debe tener un campo \'condition\'") }}` };
-        }
-        if (step.type === 'tax_lookup' && (!step.table || !step.input)) {
-            return { valid: false, error: `{{ _("El paso de búsqueda en tabla") }} '${step.name}' {{ _("debe tener campos \'table\' e \'input\'") }}` };
-        }
-        if (step.type === 'assignment' && step.value === undefined) {
-            return { valid: false, error: `{{ _("El paso de asignación") }} '${step.name}' {{ _("debe tener un campo \'value\'") }}` };
+    async function saveSchema() {
+        try {
+            const schemaToSave = collectSchemaFromEditor();
+
+            const response = await fetch('{{ url_for("calculation_rule.save_schema", id=rule.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ schema: schemaToSave })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('{{ _("Esquema guardado exitosamente") }}');
+            } else {
+                alert('{{ _("Error: ") }}' + result.error);
+            }
+        } catch (e) {
+            alert('{{ _("Error al guardar: ") }}' + e.message);
         }
     }
-    
-    // Validate with backend FormulaEngine
-    try {
-        const response = await fetch('{{ url_for("calculation_rule.validate_schema_api", id=rule.id) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ schema: jsonData })
-        });
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-            return { valid: false, error: result.error };
+
+    async function testCalculation() {
+        try {
+            const testInputs = {};
+            document.querySelectorAll('.test-input').forEach(input => {
+                testInputs[input.dataset.name] = parseFloat(input.value) || 0;
+            });
+
+            const response = await fetch('{{ url_for("calculation_rule.test_schema", id=rule.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    schema: collectSchemaFromEditor(),
+                    inputs: testInputs
+                })
+            });
+
+            const result = await response.json();
+
+            const resultDiv = document.getElementById('test-result');
+            const resultContent = document.getElementById('test-result-content');
+
+            resultDiv.style.display = 'block';
+
+            if (result.success) {
+                // Format result with 2 decimal places
+                const formattedResult = formatResultWithDecimals(result.result);
+                resultContent.innerHTML = JSON.stringify(formattedResult, null, 2);
+                resultContent.classList.remove('text-danger');
+                resultContent.classList.add('text-success');
+            } else {
+                resultContent.innerHTML = '{{ _("Error: ") }}' + result.error;
+                resultContent.classList.remove('text-success');
+                resultContent.classList.add('text-danger');
+            }
+        } catch (e) {
+            alert('{{ _("Error al probar: ") }}' + e.message);
         }
-        
-        return { valid: true };
-    } catch (e) {
-        // If backend validation fails, still allow if basic validation passed
-        console.warn('Backend validation failed:', e);
-        return { valid: true };
     }
-}
+
+    function formatResultWithDecimals(obj) {
+        if (typeof obj === 'number') {
+            return parseFloat(obj.toFixed(2));
+        } else if (typeof obj === 'object' && obj !== null) {
+            if (Array.isArray(obj)) {
+                return obj.map(item => formatResultWithDecimals(item));
+            } else {
+                const formatted = {};
+                for (const key in obj) {
+                    formatted[key] = formatResultWithDecimals(obj[key]);
+                }
+                return formatted;
+            }
+        }
+        return obj;
+    }
+
+    async function loadJsonFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Check file type
+        if (!file.name.endsWith('.json')) {
+            alert('{{ _("Por favor seleccione un archivo JSON válido") }}');
+            event.target.value = '';
+            return;
+        }
+
+        try {
+            const text = await file.text();
+            let jsonData;
+
+            // Parse JSON
+            try {
+                jsonData = JSON.parse(text);
+            } catch (e) {
+                alert('{{ _("Error: El archivo no contiene JSON válido") }}\n' + e.message);
+                event.target.value = '';
+                return;
+            }
+
+            // Validate schema structure before loading
+            const validationResult = await validateJsonSchema(jsonData);
+
+            if (!validationResult.valid) {
+                alert('{{ _("Error de validación") }}:\n\n' + validationResult.error);
+                event.target.value = '';
+                return;
+            }
+
+            // Show confirmation dialog
+            if (confirm('{{ _("¿Cargar este esquema? Esto reemplazará el esquema actual.") }}')) {
+                schema = jsonData;
+                loadSchemaToEditor();
+                updateJsonPreview();
+                alert('{{ _("Esquema cargado exitosamente") }}');
+            }
+
+        } catch (e) {
+            alert('{{ _("Error al leer el archivo") }}: ' + e.message);
+        } finally {
+            event.target.value = '';
+        }
+    }
+
+    async function validateJsonSchema(jsonData) {
+        // Basic structure validation
+        if (!jsonData || typeof jsonData !== 'object') {
+            return { valid: false, error: '{{ _("El esquema debe ser un objeto JSON") }}' };
+        }
+
+        // Check for required sections
+        if (!jsonData.steps || !Array.isArray(jsonData.steps)) {
+            return { valid: false, error: `{{ _("El esquema debe contener una sección \'steps\' con un array de pasos") }}` };
+        }
+
+        // Validate steps structure
+        for (let i = 0; i < jsonData.steps.length; i++) {
+            const step = jsonData.steps[i];
+            if (!step.name) {
+                return { valid: false, error: `{{ _("El paso") }} ${i + 1} {{ _("debe tener un campo \'name\'") }}` };
+            }
+            if (!step.type) {
+                return { valid: false, error: `{{ _("El paso") }} ${i + 1} {{ _("debe tener un campo \'type\'") }}` };
+            }
+
+            // Validate step type
+            const validTypes = ['calculation', 'conditional', 'tax_lookup', 'assignment'];
+            if (!validTypes.includes(step.type)) {
+                return {
+                    valid: false,
+                    error: `{{ _("El paso") }} ${i + 1} {{ _("tiene un tipo inválido") }}: '${step.type}'. {{ _("Tipos permitidos") }}: ${validTypes.join(', ')}`
+                };
+            }
+
+            // Validate step-specific fields
+            if (step.type === 'calculation' && !step.formula) {
+                return { valid: false, error: `{{ _("El paso de cálculo") }} '${step.name}' {{ _("debe tener un campo \'formula\'") }}` };
+            }
+            if (step.type === 'conditional' && !step.condition) {
+                return { valid: false, error: `{{ _("El paso condicional") }} '${step.name}' {{ _("debe tener un campo \'condition\'") }}` };
+            }
+            if (step.type === 'tax_lookup' && (!step.table || !step.input)) {
+                return { valid: false, error: `{{ _("El paso de búsqueda en tabla") }} '${step.name}' {{ _("debe tener campos \'table\' e \'input\'") }}` };
+            }
+            if (step.type === 'assignment' && step.value === undefined) {
+                return { valid: false, error: `{{ _("El paso de asignación") }} '${step.name}' {{ _("debe tener un campo \'value\'") }}` };
+            }
+        }
+
+        // Validate with backend FormulaEngine
+        try {
+            const response = await fetch('{{ url_for("calculation_rule.validate_schema_api", id=rule.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ schema: jsonData })
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                return { valid: false, error: result.error };
+            }
+
+            return { valid: true };
+        } catch (e) {
+            // If backend validation fails, still allow if basic validation passed
+            console.warn('Backend validation failed:', e);
+            return { valid: true };
+        }
+    }
 </script>
 
 <!-- Include SortableJS library -->

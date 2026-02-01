@@ -32,7 +32,9 @@ from coati_payroll.formula_engine import (
     get_available_sources_for_ui,
 )
 
-calculation_rule_bp = Blueprint("calculation_rule", __name__, url_prefix="/calculation-rule")
+calculation_rule_bp = Blueprint("calculation_rule",
+                                __name__,
+                                url_prefix="/calculation-rule")
 
 # Constants
 ERROR_RULE_NOT_FOUND = "Regla no encontrada"
@@ -44,7 +46,8 @@ def index():
     """List all calculation rules with pagination."""
     page = request.args.get("page", 1, type=int)
     pagination = db.paginate(
-        db.select(ReglaCalculo).order_by(ReglaCalculo.codigo, ReglaCalculo.version.desc()),
+        db.select(ReglaCalculo).order_by(ReglaCalculo.codigo,
+                                         ReglaCalculo.version.desc()),
         page=page,
         per_page=PER_PAGE,
         error_out=False,
@@ -91,14 +94,7 @@ def new():
         # Initialize with default schema structure
         # Note: The rule's reference currency is for calculation purposes.
         # The actual payroll currency is defined in TipoPlanilla.
-        rule.esquema_json = {
-            **DEFAULT_SCHEMA,
-            "meta": {
-                "name": form.nombre.data,
-                "reference_currency": form.moneda_referencia.data or "",
-                "description": form.descripcion.data or "",
-            },
-        }
+        rule.esquema_json = DEFAULT_SCHEMA
         rule.creado_por = current_user.usuario
 
         db.session.add(rule)
@@ -153,7 +149,9 @@ def edit(id: str):
 @require_write_access()
 def edit_schema(id: str):
     """Edit the JSON schema of a calculation rule."""
+
     rule = db.session.get(ReglaCalculo, id)
+
     if not rule:
         flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
@@ -161,15 +159,18 @@ def edit_schema(id: str):
     # Get available data sources for the UI
     available_sources = get_available_sources_for_ui()
 
-    default_schema = {"meta": {}, "inputs": [], "steps": [], "tax_tables": {}, "output": ""}
-    current_schema = rule.esquema_json if rule.esquema_json else default_schema
+    raw_schema = rule.esquema_json
+    if raw_schema:
+        current_schema = json.loads(json.dumps(dict(raw_schema)))
+    else:
+        current_schema = DEFAULT_SCHEMA
 
     return render_template(
         "modules/calculation_rule/schema_editor.html",
         rule=rule,
-        schema_json=current_schema,
-        example_schema=EXAMPLE_IR_NICARAGUA_SCHEMA,
-        available_sources=available_sources,
+        schema_data=current_schema,
+        example_schema_data=EXAMPLE_IR_NICARAGUA_SCHEMA,
+        available_sources_data=available_sources,
     )
 
 
@@ -189,20 +190,27 @@ def save_schema(id: str):
         try:
             FormulaEngine(schema)
         except FormulaEngineError as e:
-            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
+            return jsonify({
+                "success": False,
+                "error": f"Esquema inválido: {e}"
+            }), 400
 
         rule.esquema_json = schema
         rule.modificado_por = current_user.usuario
         db.session.commit()
 
-        return jsonify({"success": True, "message": "Esquema guardado exitosamente"})
+        return jsonify({
+            "success": True,
+            "message": "Esquema guardado exitosamente"
+        })
     except json.JSONDecodeError as e:
         return jsonify({"success": False, "error": f"JSON inválido: {e}"}), 400
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@calculation_rule_bp.route("/api/validate-schema/<string:id>", methods=["POST"])
+@calculation_rule_bp.route("/api/validate-schema/<string:id>",
+                           methods=["POST"])
 @require_write_access()
 def validate_schema_api(id: str):
     """API endpoint to validate a JSON schema without saving it."""
@@ -220,13 +228,19 @@ def validate_schema_api(id: str):
         try:
             validate_schema_deep(schema)
         except Exception as e:
-            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
+            return jsonify({
+                "success": False,
+                "error": f"Esquema inválido: {e}"
+            }), 400
 
         # Also validate by trying to create a FormulaEngine instance
         try:
             FormulaEngine(schema)
         except FormulaEngineError as e:
-            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
+            return jsonify({
+                "success": False,
+                "error": f"Esquema inválido: {e}"
+            }), 400
 
         return jsonify({"success": True, "message": "Esquema válido"})
     except json.JSONDecodeError as e:
@@ -293,7 +307,8 @@ def duplicate(id: str):
     new_rule.vigente_desde = rule.vigente_desde
     new_rule.vigente_hasta = rule.vigente_hasta
     new_rule.activo = False  # New version starts inactive
-    new_rule.esquema_json = rule.esquema_json.copy() if rule.esquema_json else {}
+    new_rule.esquema_json = rule.esquema_json.copy(
+    ) if rule.esquema_json else {}
     new_rule.creado_por = current_user.usuario
 
     # Increment version
