@@ -221,3 +221,5 @@ messages.pot
 
 # JSON
 *.json
+
+coati_payroll/translations/**.mo

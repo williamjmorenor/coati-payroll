@@ -52,7 +52,6 @@ from typing import Any
 # <-------------------------------------------------------------------------> #
 from ..exceptions import ValidationError
 
-
 # <-------------------- Constantes Locales --------------------> #
 MAX_DECIMAL_DIGITS = 28
 MAX_DECIMAL_VALUE = Decimal("9" * MAX_DECIMAL_DIGITS)

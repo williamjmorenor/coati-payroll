@@ -1291,6 +1291,22 @@ block content %}
             return { valid: true };
         }
     }
+
+    // Make functions globally accessible
+    window.copyJson = copyJson;
+    window.formatJson = formatJson;
+    window.moveInputUp = moveInputUp;
+    window.moveInputDown = moveInputDown;
+    window.removeInput = removeInput;
+    window.moveStepUp = moveStepUp;
+    window.moveStepDown = moveStepDown;
+    window.removeStep = removeStep;
+    window.removeTaxTable = removeTaxTable;
+    window.addBracket = addBracket;
+    window.loadExample = loadExample;
+    window.saveSchema = saveSchema;
+    window.testCalculation = testCalculation;
+    window.loadJsonFile = loadJsonFile;
 </script>
 
 <!-- Include SortableJS library -->

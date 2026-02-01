@@ -32,9 +32,7 @@ from coati_payroll.formula_engine import (
     get_available_sources_for_ui,
 )
 
-calculation_rule_bp = Blueprint("calculation_rule",
-                                __name__,
-                                url_prefix="/calculation-rule")
+calculation_rule_bp = Blueprint("calculation_rule", __name__, url_prefix="/calculation-rule")
 
 # Constants
 ERROR_RULE_NOT_FOUND = "Regla no encontrada"
@@ -46,8 +44,7 @@ def index():
     """List all calculation rules with pagination."""
     page = request.args.get("page", 1, type=int)
     pagination = db.paginate(
-        db.select(ReglaCalculo).order_by(ReglaCalculo.codigo,
-                                         ReglaCalculo.version.desc()),
+        db.select(ReglaCalculo).order_by(ReglaCalculo.codigo, ReglaCalculo.version.desc()),
         page=page,
         per_page=PER_PAGE,
         error_out=False,
@@ -190,27 +187,20 @@ def save_schema(id: str):
         try:
             FormulaEngine(schema)
         except FormulaEngineError as e:
-            return jsonify({
-                "success": False,
-                "error": f"Esquema inválido: {e}"
-            }), 400
+            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
 
         rule.esquema_json = schema
         rule.modificado_por = current_user.usuario
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "message": "Esquema guardado exitosamente"
-        })
+        return jsonify({"success": True, "message": "Esquema guardado exitosamente"})
     except json.JSONDecodeError as e:
         return jsonify({"success": False, "error": f"JSON inválido: {e}"}), 400
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@calculation_rule_bp.route("/api/validate-schema/<string:id>",
-                           methods=["POST"])
+@calculation_rule_bp.route("/api/validate-schema/<string:id>", methods=["POST"])
 @require_write_access()
 def validate_schema_api(id: str):
     """API endpoint to validate a JSON schema without saving it."""
@@ -228,19 +218,13 @@ def validate_schema_api(id: str):
         try:
             validate_schema_deep(schema)
         except Exception as e:
-            return jsonify({
-                "success": False,
-                "error": f"Esquema inválido: {e}"
-            }), 400
+            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
 
         # Also validate by trying to create a FormulaEngine instance
         try:
             FormulaEngine(schema)
         except FormulaEngineError as e:
-            return jsonify({
-                "success": False,
-                "error": f"Esquema inválido: {e}"
-            }), 400
+            return jsonify({"success": False, "error": f"Esquema inválido: {e}"}), 400
 
         return jsonify({"success": True, "message": "Esquema válido"})
     except json.JSONDecodeError as e:
@@ -307,8 +291,7 @@ def duplicate(id: str):
     new_rule.vigente_desde = rule.vigente_desde
     new_rule.vigente_hasta = rule.vigente_hasta
     new_rule.activo = False  # New version starts inactive
-    new_rule.esquema_json = rule.esquema_json.copy(
-    ) if rule.esquema_json else {}
+    new_rule.esquema_json = rule.esquema_json.copy() if rule.esquema_json else {}
     new_rule.creado_por = current_user.usuario
 
     # Increment version

@@ -29,7 +29,6 @@ For existing databases, this migration should be stamped as 'head' without runni
 any actual migrations, as the database already contains all the tables.
 """
 
-
 # revision identifiers, used by Alembic.
 revision = "20260125_032900"
 down_revision = None
