@@ -1,15 +1,15 @@
-# English translations for PROJECT.
-# Copyright (C) 2025 ORGANIZATION
-# This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# English translations for Coati Payroll.
+# Copyright (C) 2025 BMO Soluciones
+# This file is distributed under the same license as the Coati Payroll project.
+# MBA William Moreno Reyes <wmoreno@bmogroup.solutions>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-01 16:56+0000\n"
+"POT-Creation-Date: 2026-02-01 16:30-0600\n"
 "PO-Revision-Date: 2025-12-04 02:49+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: MBA William Moreno Reyes <wmoreno@bmogroup.solutions>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -4714,7 +4714,9 @@ msgstr "Priority"
 msgid ""
 "Menor número = se aplica primero (1-100 impuestos, 101-200 embargos, "
 "201-300 préstamos)"
-msgstr "Lower number = applied first (1-100 taxes, 101-200 garnishments, 201-300 loans)"
+msgstr ""
+"Lower number = applied first (1-100 taxes, 101-200 garnishments, 201-300 "
+"loans)"
 
 #: coati_payroll/templates/modules/planilla/config_deducciones.html:54
 msgid "Es obligatoria"
@@ -5010,13 +5012,17 @@ msgstr "Novelty Data"
 msgid ""
 "Este código identifica el concepto en el sistema. Se actualizará "
 "automáticamente al seleccionar una percepción o deducción."
-msgstr "This code identifies the concept in the system. It will update automatically when selecting an earning or deduction."
+msgstr ""
+"This code identifies the concept in the system. It will update "
+"automatically when selecting an earning or deduction."
 
 #: coati_payroll/templates/modules/planilla/novedades/form.html:95
 msgid ""
 "Ingrese el valor según el tipo seleccionado (ej: 5 para 5 horas, 1500 "
 "para un monto fijo)."
-msgstr "Enter the value according to the selected type (e.g., 5 for 5 hours, 1500 for a fixed amount)."
+msgstr ""
+"Enter the value according to the selected type (e.g., 5 for 5 hours, 1500"
+" for a fixed amount)."
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:10
 msgid "Novedades de la Nómina"
@@ -5030,7 +5036,9 @@ msgstr "Back to Payroll"
 msgid ""
 "Esta nómina ya ha sido aplicada. No se pueden agregar, editar o eliminar "
 "novedades."
-msgstr "This payroll has already been applied. Novelties cannot be added, edited, or deleted."
+msgstr ""
+"This payroll has already been applied. Novelties cannot be added, edited,"
+" or deleted."
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:56
 msgid "Lista de Novedades"
@@ -5078,7 +5086,9 @@ msgstr "What are Novelties?"
 msgid ""
 "Las novedades son eventos o ajustes que afectan la nómina de un empleado "
 "en un período específico. Pueden incluir:"
-msgstr "Novelties are events or adjustments affecting an employee's payroll in a specific period. They can include:"
+msgstr ""
+"Novelties are events or adjustments affecting an employee's payroll in a "
+"specific period. They can include:"
 
 #: coati_payroll/templates/modules/planilla/novedades/index.html:160
 msgid "Percepciones (Ingresos):"
@@ -5102,7 +5112,10 @@ msgid ""
 "período incluya la fecha de la novedad. Después de agregar novedades, use"
 " el botón \"Recalcular\" en la vista de la nómina para aplicar los "
 "cambios."
-msgstr "Note: Novelties are automatically applied to any payroll whose period includes the novelty date. After adding novelties, use the \"Recalculate\" button in the payroll view to apply the changes."
+msgstr ""
+"Note: Novelties are automatically applied to any payroll whose period "
+"includes the novelty date. After adding novelties, use the "
+"\"Recalculate\" button in the payroll view to apply the changes."
 
 #: coati_payroll/templates/modules/plugins/index.html:9
 #: coati_payroll/templates/modules/settings/index.html:261
@@ -5189,7 +5202,9 @@ msgstr "Implementation"
 msgid ""
 "Durante la implementación del sistema, cargue los saldos iniciales de "
 "prestaciones de sus empleados:"
-msgstr "During system implementation, load the initial benefit balances of your employees:"
+msgstr ""
+"During system implementation, load the initial benefit balances of your "
+"employees:"
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:87
 #: coati_payroll/templates/modules/vacation/dashboard.html:90
@@ -5200,7 +5215,9 @@ msgstr "Bulk Load (Excel)"
 msgid ""
 "Use la carga masiva para empresas con muchos empleados. Los registros se "
 "crean en estado borrador y deben aplicarse individualmente."
-msgstr "Use bulk load for companies with many employees. Records are created in draft status and must be applied individually."
+msgstr ""
+"Use bulk load for companies with many employees. Records are created in "
+"draft status and must be applied individually."
 
 #: coati_payroll/templates/modules/prestacion_management/dashboard.html:102
 #: coati_payroll/templates/modules/vacation/dashboard.html:105
@@ -5251,7 +5268,9 @@ msgid ""
 "Use esta función para cargar los saldos iniciales de prestaciones de "
 "múltiples empleados desde un archivo Excel durante la implementación del "
 "sistema."
-msgstr "Use this function to load initial benefit balances for multiple employees from an Excel file during system implementation."
+msgstr ""
+"Use this function to load initial benefit balances for multiple employees"
+" from an Excel file during system implementation."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:27
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:23
@@ -5335,7 +5354,9 @@ msgstr "Currencies must exist in the system and be active."
 msgid ""
 "Los registros se crean en estado \"borrador\" y deben aplicarse "
 "individualmente desde la lista de cargas."
-msgstr "Records are created in \"draft\" status and must be applied individually from the loads list."
+msgstr ""
+"Records are created in \"draft\" status and must be applied individually "
+"from the loads list."
 
 #: coati_payroll/templates/modules/prestacion_management/initial_balance_bulk.html:108
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:75
@@ -5393,7 +5414,9 @@ msgstr "User List"
 msgid ""
 "y aplique cada registro individualmente para crear las transacciones en "
 "el sistema."
-msgstr "and apply each record individually to create the transactions in the system."
+msgstr ""
+"and apply each record individually to create the transactions in the "
+"system."
 
 #: coati_payroll/templates/modules/prestamo/approve.html:11
 msgid "Aprobar/Rechazar Préstamo"
@@ -5460,7 +5483,10 @@ msgid ""
 "La condonación de deuda es una operación irreversible que reduce el saldo"
 " pendiente del préstamo sin que el empleado realice un pago. Esta acción "
 "requiere autorización gerencial y documentación completa para auditoría."
-msgstr "Debt forgiveness is an irreversible operation that reduces the pending loan balance without the employee making a payment. This action requires managerial authorization and complete documentation for audit."
+msgstr ""
+"Debt forgiveness is an irreversible operation that reduces the pending "
+"loan balance without the employee making a payment. This action requires "
+"managerial authorization and complete documentation for audit."
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:43
 msgid "Monto Original:"
@@ -5508,7 +5534,9 @@ msgid ""
 "Esta información quedará registrada permanentemente en el sistema para "
 "fines de auditoría. Asegúrese de que toda la documentación esté completa "
 "y correcta."
-msgstr "This information will be permanently recorded in the system for audit purposes. Ensure all documentation is complete and correct."
+msgstr ""
+"This information will be permanently recorded in the system for audit "
+"purposes. Ensure all documentation is complete and correct."
 
 #: coati_payroll/templates/modules/prestamo/condonacion.html:230
 msgid "¿Está seguro de condonar esta deuda? Esta acción no se puede deshacer."
@@ -5718,7 +5746,10 @@ msgid ""
 "Los pagos extraordinarios permiten al empleado adelantar el pago de su "
 "préstamo. Debe indicar cómo desea aplicar este pago según la legislación "
 "laboral."
-msgstr "Extraordinary payments allow the employee to advance their loan payment. You must indicate how to apply this payment according to labor legislation."
+msgstr ""
+"Extraordinary payments allow the employee to advance their loan payment. "
+"You must indicate how to apply this payment according to labor "
+"legislation."
 
 #: coati_payroll/templates/modules/prestamo/pago_extraordinario.html:112
 msgid "Documentación de Auditoría"
@@ -5879,7 +5910,9 @@ msgstr "Help"
 msgid ""
 "Complete los parámetros requeridos y haga clic en \"Ejecutar Reporte\" "
 "para ver los resultados."
-msgstr "Complete the required parameters and click \"Execute Report\" to see the results."
+msgstr ""
+"Complete the required parameters and click \"Execute Report\" to see the "
+"results."
 
 #: coati_payroll/templates/modules/report/execute.html:134
 msgid "Una vez generado el reporte, podrá exportar los resultados a Excel."
@@ -6226,13 +6259,17 @@ msgstr "Record Vacation Taken"
 msgid ""
 "Durante la implementación del sistema, cargue los saldos iniciales de "
 "vacaciones de sus empleados:"
-msgstr "During system implementation, load the initial vacation balances of your employees:"
+msgstr ""
+"During system implementation, load the initial vacation balances of your "
+"employees:"
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:95
 msgid ""
 "Solo para cuentas sin movimientos previos. Use la carga masiva para "
 "empresas con muchos empleados."
-msgstr "Only for accounts without previous movements. Use bulk load for companies with many employees."
+msgstr ""
+"Only for accounts without previous movements. Use bulk load for companies"
+" with many employees."
 
 #: coati_payroll/templates/modules/vacation/dashboard.html:114
 msgid "Fechas"
@@ -6264,7 +6301,9 @@ msgid ""
 "Use esta función para cargar los saldos iniciales de vacaciones de "
 "múltiples empleados desde un archivo Excel durante la implementación del "
 "sistema."
-msgstr "Use this function to load initial vacation balances for multiple employees from an Excel file during system implementation."
+msgstr ""
+"Use this function to load initial vacation balances for multiple "
+"employees from an Excel file during system implementation."
 
 #: coati_payroll/templates/modules/vacation/initial_balance_bulk.html:55
 msgid "Fecha (DD/MM/YYYY)"
@@ -6301,7 +6340,9 @@ msgstr "Load Initial Vacation Balance"
 msgid ""
 "Use este formulario para cargar el saldo inicial de vacaciones de un "
 "empleado al momento de implementar el sistema."
-msgstr "Use this form to load the initial vacation balance of an employee when implementing the system."
+msgstr ""
+"Use this form to load the initial vacation balance of an employee when "
+"implementing the system."
 
 #: coati_payroll/templates/modules/vacation/initial_balance_form.html:22
 msgid "El empleado debe tener una cuenta de vacaciones activa."
@@ -6336,332 +6377,290 @@ msgid "Balance de Cuenta"
 msgstr "Account Balance"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:110
-#, fuzzy
 msgid "disponibles"
-msgstr "Available Languages"
+msgstr "available"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:113
-#, fuzzy
 msgid "Ver Cuenta"
-msgstr "Recurring"
+msgstr "View Account"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:120
 msgid "Política Aplicable"
-msgstr ""
+msgstr "Applicable Policy"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:127
 msgid "Ver Política"
-msgstr ""
+msgstr "View Policy"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:141
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:152
-#, fuzzy
 msgid "Rechazar Solicitud"
-msgstr "Reject"
+msgstr "Reject Request"
 
 #: coati_payroll/templates/modules/vacation/leave_request_detail.html:146
-#, fuzzy
 msgid "Motivo del Rechazo"
-msgstr "Exchange Rates"
+msgstr "Rejection Reason"
 
 #: coati_payroll/templates/modules/vacation/leave_request_form.html:50
 msgid ""
 "Asegúrese de que el empleado tenga suficiente balance de vacaciones antes"
 " de crear la solicitud."
-msgstr ""
+msgstr "Ensure the employee has sufficient vacation balance before creating the request."
 
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:9
 msgid "Solicitudes de Vacaciones"
-msgstr ""
+msgstr "Vacation Requests"
 
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:26
-#, fuzzy
-msgid "Pendientes"
+msgid ""
 msgstr "Pending"
 
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:32
-#, fuzzy
 msgid "Aprobadas"
 msgstr "Approved"
 
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:38
-#, fuzzy
 msgid "Rechazadas"
 msgstr "Rejected"
 
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:51
-#, fuzzy
 msgid "Fecha Inicio"
-msgstr "Home"
+msgstr "Start Date"
 
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:52
-#, fuzzy
 msgid "Fecha Fin"
-msgstr "Date"
+msgstr "End Date"
 
 #: coati_payroll/templates/modules/vacation/leave_request_index.html:88
 msgid "No hay solicitudes registradas."
-msgstr ""
+msgstr "No requests registered."
 
 #: coati_payroll/templates/modules/vacation/policy_detail.html:44
 msgid "Global (No asociada a planilla)"
-msgstr ""
+msgstr "Global (Not associated with payroll)"
 
 #: coati_payroll/templates/modules/vacation/policy_detail.html:65
 #: coati_payroll/templates/modules/vacation/policy_form.html:59
-#, fuzzy
 msgid "Configuración de Acumulación"
-msgstr "Global Settings"
+msgstr "Accumulation Configuration"
 
 #: coati_payroll/templates/modules/vacation/policy_detail.html:69
 #: coati_payroll/templates/modules/vacation/policy_index.html:24
 msgid "Método"
-msgstr ""
+msgstr "Method"
 
 #: coati_payroll/templates/modules/vacation/policy_detail.html:75
 #: coati_payroll/templates/modules/vacation/policy_index.html:25
-#, fuzzy
 msgid "Frecuencia"
-msgstr "Recurring"
+msgstr "Frequency"
 
 #: coati_payroll/templates/modules/vacation/policy_detail.html:89
-#, fuzzy
 msgid "Límites y Vencimiento"
-msgstr "Date of birth"
+msgstr "Limits and Expiration"
 
 #: coati_payroll/templates/modules/vacation/policy_detail.html:94
 #: coati_payroll/templates/modules/vacation/policy_detail.html:97
 msgid "Sin límite"
-msgstr ""
+msgstr "No limit"
 
 #: coati_payroll/templates/modules/vacation/policy_detail.html:116
 #: coati_payroll/templates/modules/vacation/policy_form.html:113
-#, fuzzy
 msgid "Configuración de Uso"
-msgstr "Settings"
+msgstr "Usage Configuration"
 
 #: coati_payroll/templates/modules/vacation/policy_detail.html:166
 msgid "Estadísticas"
-msgstr ""
+msgstr "Statistics"
 
 #: coati_payroll/templates/modules/vacation/policy_form.html:39
 msgid "Asociación de Política:"
-msgstr ""
+msgstr "Policy Association:"
 
 #: coati_payroll/templates/modules/vacation/policy_form.html:39
 msgid ""
 "Las políticas pueden asociarse a una Planilla específica (recomendado "
 "para multi-país) o a una Empresa completa. Una instalación puede tener "
 "varias planillas con distintas reglas de vacaciones."
-msgstr ""
+msgstr "Policies can be associated with a specific Payroll (recommended for multi-country) or with an entire Company. An installation can have multiple payrolls with different vacation rules."
 
 #: coati_payroll/templates/modules/vacation/policy_form.html:83
 msgid "Límites de Balance"
-msgstr ""
+msgstr "Balance Limits"
 
 #: coati_payroll/templates/modules/vacation/policy_form.html:98
-#, fuzzy
 msgid "Reglas de Vencimiento"
-msgstr "Date of birth"
+msgstr "Expiration Rules"
 
 #: coati_payroll/templates/modules/vacation/policy_index.html:9
-#, fuzzy
 msgid "Políticas de Vacaciones"
-msgstr "Observations"
+msgstr "Vacation Policies"
 
 #: coati_payroll/templates/modules/vacation/policy_index.html:43
 msgid "Global"
-msgstr ""
+msgstr "Global"
 
 #: coati_payroll/templates/modules/vacation/policy_index.html:69
 msgid "No hay políticas registradas."
-msgstr ""
+msgstr "No policies registered."
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:19
 msgid "Registro Directo de Vacaciones Tomadas"
-msgstr ""
+msgstr "Direct Record of Vacation Taken"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:24
 msgid "Importante: Distinción entre Días Calendario y Días de Vacaciones"
-msgstr ""
+msgstr "Important: Distinction between Calendar Days and Vacation Days"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:26
 msgid "Este formulario permite especificar:"
-msgstr ""
+msgstr "This form allows you to specify:"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:29
 msgid "Período de descanso:"
-msgstr ""
+msgstr "Leave period:"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:29
 msgid "Fechas calendario del descanso (ej: viernes a lunes = 4 días calendario)"
-msgstr ""
+msgstr "Calendar dates of the leave (e.g., Friday to Monday = 4 calendar days)"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:30
 msgid "Días a descontar:"
-msgstr ""
+msgstr "Days to deduct:"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:30
 msgid ""
 "Días reales de vacaciones según política de empresa (ej: solo 2 días de "
 "vacaciones)"
-msgstr ""
+msgstr "Actual vacation days according to company policy (e.g., only 2 vacation days)"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:33
 msgid ""
 "Ejemplo: Un empleado toma viernes y lunes (4 días calendario), pero según"
 " política de la empresa solo se descuentan 2 días de su saldo de "
 "vacaciones."
-msgstr ""
+msgstr "Example: An employee takes Friday and Monday (4 calendar days), but according to company policy only 2 days are deducted from their vacation balance."
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:47
 msgid "Período de Descanso (Calendario)"
-msgstr ""
+msgstr "Leave Period (Calendar)"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:59
 msgid "Días de Vacaciones a Descontar"
-msgstr ""
+msgstr "Vacation Days to Deduct"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:67
 msgid ""
 "Este valor se descontará del saldo de vacaciones del empleado y puede ser"
 " diferente de los días calendario del período de descanso."
-msgstr ""
+msgstr "This value will be deducted from the employee's vacation balance and may differ from the calendar days of the leave period."
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:74
 msgid "Asociación con Nómina (REQUERIDO)"
-msgstr ""
+msgstr "Association with Payroll (REQUIRED)"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:78
 msgid "La novedad debe asociarse a una Percepción o Deducción"
-msgstr ""
+msgstr "The novelty must be associated with an Earning or Deduction"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:80
 msgid ""
 "Esto asegura que al calcular la nómina del empleado, las vacaciones se "
 "procesen correctamente."
-msgstr ""
+msgstr "This ensures that when calculating the employee's payroll, vacations are processed correctly."
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:83
-#, fuzzy
 msgid "Deducción:"
-msgstr "Deduction"
+msgstr "Deduction:"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:83
 msgid "Si las vacaciones se descuentan del salario (ausencias)"
-msgstr ""
+msgstr "If vacations are deducted from salary (absences)"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:84
-#, fuzzy
 msgid "Percepción:"
-msgstr "Perception"
+msgstr "Earning:"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:84
 msgid "Si las vacaciones se pagan como ingreso adicional"
-msgstr ""
+msgstr "If vacations are paid as additional income"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:109
 msgid "¿Qué sucede al registrar?"
-msgstr ""
+msgstr "What happens when recording?"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:111
 msgid "Se crea un registro de vacaciones (VacationNovelty)"
-msgstr ""
+msgstr "A vacation record is created (VacationNovelty)"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:112
 msgid "Se descuenta el saldo de la cuenta de vacaciones del empleado"
-msgstr ""
+msgstr "The employee's vacation account balance is deducted"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:113
 msgid "Se crea una entrada en el libro mayor de vacaciones (auditoría)"
-msgstr ""
+msgstr "An entry is created in the vacation ledger (audit)"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:114
 msgid "Se crea una novedad de nómina asociada para los cálculos de pago"
-msgstr ""
+msgstr "An associated payroll novelty is created for payment calculations"
 
 #: coati_payroll/templates/modules/vacation/register_taken_form.html:115
 msgid ""
 "El registro queda marcado como \"aprobado\" y \"disfrutado\" "
 "automáticamente"
-msgstr ""
+msgstr "The record is automatically marked as \"approved\" and \"taken\""
 
 #: coati_payroll/vistas/calculation_rule.py:99
 msgid "Regla de cálculo creada exitosamente."
-msgstr ""
+msgstr "Calculation rule created successfully."
 
 #: coati_payroll/vistas/calculation_rule.py:105
 msgid "Nueva Regla de Cálculo"
-msgstr ""
+msgstr "New Calculation Rule"
 
 #: coati_payroll/vistas/calculation_rule.py:134
 msgid "Regla de cálculo actualizada exitosamente."
-msgstr ""
+msgstr "Calculation rule updated successfully."
 
 #: coati_payroll/vistas/calculation_rule.py:140
 msgid "Editar Regla de Cálculo"
-msgstr ""
+msgstr "Edit Calculation Rule"
 
 #: coati_payroll/vistas/calculation_rule.py:270
 msgid "Regla de cálculo eliminada exitosamente."
-msgstr ""
+msgstr "Calculation rule deleted successfully."
 
 #: coati_payroll/vistas/calculation_rule.py:307
 msgid "Regla de cálculo duplicada exitosamente."
-msgstr ""
-
-#: coati_payroll/vistas/carga_inicial_prestacion.py:104
-msgid "Ya existe una carga inicial para este empleado, prestación y periodo."
-msgstr ""
-
-#: coati_payroll/vistas/carga_inicial_prestacion.py:126
-msgid "Carga inicial creada exitosamente en estado borrador."
-msgstr ""
-
-#: coati_payroll/vistas/carga_inicial_prestacion.py:139
-msgid "No se puede editar una carga inicial ya aplicada."
-msgstr ""
-
-#: coati_payroll/vistas/carga_inicial_prestacion.py:176
-msgid "Carga inicial actualizada exitosamente."
-msgstr ""
-
-#: coati_payroll/vistas/carga_inicial_prestacion.py:189
-msgid "Esta carga inicial ya ha sido aplicada."
-msgstr ""
-
-#: coati_payroll/vistas/carga_inicial_prestacion.py:221
-msgid "Carga inicial aplicada exitosamente."
-msgstr ""
+msgstr "Calculation rule duplicated successfully."
 
 #: coati_payroll/vistas/carga_inicial_prestacion.py:225
-#, fuzzy, python-format
+#, python-format
 msgid "Error al aplicar la carga inicial: %(error)s"
-msgstr "Error updating language: %(error)s"
+msgstr "Error applying initial load: %(error)s"
 
 #: coati_payroll/vistas/carga_inicial_prestacion.py:237
 msgid "No se puede eliminar una carga inicial ya aplicada."
-msgstr ""
+msgstr "Cannot delete an already applied initial load."
 
 #: coati_payroll/vistas/carga_inicial_prestacion.py:243
 msgid "Carga inicial eliminada exitosamente."
-msgstr ""
+msgstr "Initial load deleted successfully."
 
 #: coati_payroll/vistas/carga_inicial_prestacion.py:246
-#, fuzzy, python-format
+#, python-format
 msgid "Error al eliminar la carga inicial: %(error)s"
-msgstr "Error updating language: %(error)s"
+msgstr "Error deleting initial load: %(error)s"
 
 #: coati_payroll/vistas/carga_inicial_prestacion.py:307
 msgid ""
 "La librería openpyxl no está instalada. No se puede generar el reporte "
 "Excel."
-msgstr ""
+msgstr "The openpyxl library is not installed. Cannot generate Excel report."
 
 #: coati_payroll/vistas/config_calculos.py:64
-#, fuzzy
 msgid "Configuración de cálculos actualizada."
-msgstr "Global Settings"
+msgstr "Calculation configuration updated."
 
 #: coati_payroll/vistas/configuracion.py:65
 msgid "Por favor seleccione un idioma."
@@ -6683,151 +6682,151 @@ msgstr "Error updating language: %(error)s"
 
 #: coati_payroll/vistas/currency.py:64
 msgid "Moneda creada exitosamente."
-msgstr ""
+msgstr "Currency created successfully."
 
 #: coati_payroll/vistas/currency.py:76 coati_payroll/vistas/currency.py:106
 msgid "Moneda no encontrada."
-msgstr ""
+msgstr "Currency not found."
 
 #: coati_payroll/vistas/currency.py:89
 msgid "Moneda actualizada exitosamente."
-msgstr ""
+msgstr "Currency updated successfully."
 
 #: coati_payroll/vistas/currency.py:95
 msgid "Editar Moneda"
-msgstr ""
+msgstr "Edit Currency"
 
 #: coati_payroll/vistas/currency.py:111
 msgid "Moneda eliminada exitosamente."
-msgstr ""
+msgstr "Currency deleted successfully."
 
 #: coati_payroll/vistas/custom_field.py:66
 msgid "Campo personalizado creado exitosamente."
-msgstr ""
+msgstr "Custom field created successfully."
 
 #: coati_payroll/vistas/custom_field.py:72
 msgid "Nuevo Campo Personalizado"
-msgstr ""
+msgstr "New Custom Field"
 
 #: coati_payroll/vistas/custom_field.py:82
 #: coati_payroll/vistas/custom_field.py:114
 msgid "Campo personalizado no encontrado."
-msgstr ""
+msgstr "Custom field not found."
 
 #: coati_payroll/vistas/custom_field.py:97
 msgid "Campo personalizado actualizado exitosamente."
-msgstr ""
+msgstr "Custom field updated successfully."
 
 #: coati_payroll/vistas/custom_field.py:103
 msgid "Editar Campo Personalizado"
-msgstr ""
+msgstr "Edit Custom Field"
 
 #: coati_payroll/vistas/custom_field.py:119
 msgid "Campo personalizado eliminado exitosamente."
-msgstr ""
+msgstr "Custom field deleted successfully."
 
 #: coati_payroll/vistas/employee.py:188
 msgid "Empleado creado exitosamente."
-msgstr ""
+msgstr "Employee created successfully."
 
 #: coati_payroll/vistas/employee.py:212 coati_payroll/vistas/employee.py:299
 #: coati_payroll/vistas/liquidacion.py:139 coati_payroll/vistas/vacation.py:551
 #: coati_payroll/vistas/vacation.py:813
 msgid "Empleado no encontrado."
-msgstr ""
+msgstr "Employee not found."
 
 #: coati_payroll/vistas/employee.py:267
 msgid "Empleado actualizado exitosamente."
-msgstr ""
+msgstr "Employee updated successfully."
 
 #: coati_payroll/vistas/employee.py:286
 msgid "Editar Empleado"
-msgstr ""
+msgstr "Edit Employee"
 
 #: coati_payroll/vistas/employee.py:304
 msgid "Empleado eliminado exitosamente."
-msgstr ""
+msgstr "Employee deleted successfully."
 
 #: coati_payroll/vistas/empresa.py:63
 msgid "Empresa creada exitosamente."
-msgstr ""
+msgstr "Company created successfully."
 
 #: coati_payroll/vistas/empresa.py:67
 #, python-brace-format
 msgid "Error al crear la empresa: {}"
-msgstr ""
+msgstr "Error creating company: {}"
 
 #: coati_payroll/vistas/empresa.py:80 coati_payroll/vistas/empresa.py:111
 #: coati_payroll/vistas/empresa.py:139
 msgid "Empresa no encontrada."
-msgstr ""
+msgstr "Company not found."
 
 #: coati_payroll/vistas/empresa.py:91
 msgid "Empresa actualizada exitosamente."
-msgstr ""
+msgstr "Company updated successfully."
 
 #: coati_payroll/vistas/empresa.py:95
 #, python-brace-format
 msgid "Error al actualizar la empresa: {}"
-msgstr ""
+msgstr "Error updating company: {}"
 
 #: coati_payroll/vistas/empresa.py:101
 msgid "Editar Empresa"
-msgstr ""
+msgstr "Edit Company"
 
 #: coati_payroll/vistas/empresa.py:117
 msgid ""
 "No se puede eliminar la empresa porque tiene empleados o planillas "
 "asociadas."
-msgstr ""
+msgstr "Cannot delete the company because it has associated employees or payrolls."
 
 #: coati_payroll/vistas/empresa.py:125
 msgid "Empresa eliminada exitosamente."
-msgstr ""
+msgstr "Company deleted successfully."
 
 #: coati_payroll/vistas/empresa.py:128
 #, python-brace-format
 msgid "Error al eliminar la empresa: {}"
-msgstr ""
+msgstr "Error deleting company: {}"
 
 #: coati_payroll/vistas/empresa.py:147
 msgid "activada"
-msgstr ""
+msgstr "activated"
 
 #: coati_payroll/vistas/empresa.py:147
 msgid "desactivada"
-msgstr ""
+msgstr "deactivated"
 
 #: coati_payroll/vistas/empresa.py:148
 #, python-brace-format
 msgid "Empresa {} exitosamente."
-msgstr ""
+msgstr "Company {} successfully."
 
 #: coati_payroll/vistas/empresa.py:151
 #, python-brace-format
 msgid "Error al cambiar el estado de la empresa: {}"
-msgstr ""
+msgstr "Error changing company status: {}"
 
 #: coati_payroll/vistas/exchange_rate.py:108
 msgid "Tipo de cambio creado exitosamente."
-msgstr ""
+msgstr "Exchange rate created successfully."
 
 #: coati_payroll/vistas/exchange_rate.py:124
 #: coati_payroll/vistas/exchange_rate.py:156
 msgid "Tipo de cambio no encontrado."
-msgstr ""
+msgstr "Exchange rate not found."
 
 #: coati_payroll/vistas/exchange_rate.py:139
 msgid "Tipo de cambio actualizado exitosamente."
-msgstr ""
+msgstr "Exchange rate updated successfully."
 
 #: coati_payroll/vistas/exchange_rate.py:145
 msgid "Editar Tipo de Cambio"
-msgstr ""
+msgstr "Edit Exchange Rate"
 
 #: coati_payroll/vistas/exchange_rate.py:161
 msgid "Tipo de cambio eliminado exitosamente."
-msgstr ""
+msgstr "Exchange rate deleted successfully."
 
 #: coati_payroll/vistas/exchange_rate.py:179
 #: coati_payroll/vistas/exchange_rate.py:186
@@ -6835,112 +6834,112 @@ msgstr ""
 #: coati_payroll/vistas/prestacion.py:127 coati_payroll/vistas/vacation.py:906
 #: coati_payroll/vistas/vacation.py:912
 msgid "No se seleccionó ningún archivo."
-msgstr ""
+msgstr "No file was selected."
 
 #: coati_payroll/vistas/exchange_rate.py:191
 msgid "El archivo debe ser un archivo Excel (.xlsx o .xls)."
-msgstr ""
+msgstr "File must be an Excel file (.xlsx or .xls)."
 
 #: coati_payroll/vistas/exchange_rate.py:218
 #, python-brace-format
 msgid "Fila {}: formato incorrecto, se esperan {} columnas."
-msgstr ""
+msgstr "Row {}: incorrect format, expected {} columns."
 
 #: coati_payroll/vistas/exchange_rate.py:237
 #, python-brace-format
 msgid "Fila {}: fecha inválida '{}'."
-msgstr ""
+msgstr "Row {}: invalid date '{}'."
 
 #: coati_payroll/vistas/exchange_rate.py:241
 #, python-brace-format
 msgid "Fila {}: fecha inválida."
-msgstr ""
+msgstr "Row {}: invalid date."
 
 #: coati_payroll/vistas/exchange_rate.py:247
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Fila {}: moneda origen vacía."
-msgstr "Source currency"
+msgstr "Row {}: origin currency empty."
 
 #: coati_payroll/vistas/exchange_rate.py:254
 #, python-brace-format
 msgid "Fila {}: moneda origen '{}' no encontrada."
-msgstr ""
+msgstr "Row {}: origin currency '{}' not found."
 
 #: coati_payroll/vistas/exchange_rate.py:260
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Fila {}: moneda destino vacía."
-msgstr "Destination currency"
+msgstr "Row {}: target currency empty."
 
 #: coati_payroll/vistas/exchange_rate.py:268
 #, python-brace-format
 msgid "Fila {}: moneda destino '{}' no encontrada."
-msgstr ""
+msgstr "Row {}: target currency '{}' not found."
 
 #: coati_payroll/vistas/exchange_rate.py:283
 #, python-brace-format
 msgid "Fila {}: tasa debe ser mayor que cero."
-msgstr ""
+msgstr "Row {}: rate must be greater than zero."
 
 #: coati_payroll/vistas/exchange_rate.py:287
 #, python-brace-format
 msgid "Fila {}: tasa inválida '{}'."
-msgstr ""
+msgstr "Row {}: invalid rate '{}'."
 
 #: coati_payroll/vistas/exchange_rate.py:315
 #, python-brace-format
 msgid "Fila {}: error inesperado - {}."
-msgstr ""
+msgstr "Row {}: unexpected error - {}."
 
 #: coati_payroll/vistas/exchange_rate.py:325
 #, python-brace-format
 msgid "Importación completada: {} creados, {} actualizados."
-msgstr ""
+msgstr "Import completed: {} created, {} updated."
 
 #: coati_payroll/vistas/exchange_rate.py:330
 #, python-brace-format
 msgid "{} errores encontrados durante la importación."
-msgstr ""
+msgstr "{} errors found during import."
 
 #: coati_payroll/vistas/exchange_rate.py:334
 #, python-brace-format
 msgid "... y {} errores más."
-msgstr ""
+msgstr "... and {} more errors."
 
 #: coati_payroll/vistas/exchange_rate.py:340
 #, python-brace-format
 msgid "Error al procesar el archivo: {}."
-msgstr ""
+msgstr "Error processing file: {}."
 
 #: coati_payroll/vistas/liquidacion.py:71
 #: coati_payroll/vistas/planilla/nomina_routes.py:56
 msgid "Formato de fecha inválido."
-msgstr ""
+msgstr "Invalid date format."
 
 #: coati_payroll/vistas/liquidacion.py:87
 msgid "Liquidación calculada."
-msgstr ""
+msgstr "Settlement calculated."
 
 #: coati_payroll/vistas/liquidacion.py:123
 msgid "Liquidación recalculada."
-msgstr ""
+msgstr "Settlement recalculated."
 
 #: coati_payroll/vistas/liquidacion.py:134
 msgid "Solo se pueden aplicar liquidaciones en borrador."
-msgstr ""
+msgstr "Only draft settlements can be applied."
 
 #: coati_payroll/vistas/liquidacion.py:164
 msgid ""
 "Liquidación aplicada. Empleado marcado como inactivo y desvinculado de "
 "planillas."
-msgstr ""
+msgstr "Settlement applied. Employee marked as inactive and unlinked from payrolls."
 
 #: coati_payroll/vistas/liquidacion.py:175
 msgid "Solo se pueden pagar liquidaciones aplicadas."
-msgstr ""
+msgstr "Only applied settlements can be paid."
 
 #: coati_payroll/vistas/liquidacion.py:180
 msgid "Liquidación marcada como pagada."
-msgstr ""
+msgstr "Settlement marked as paid."
 
 #: coati_payroll/vistas/liquidacion.py:189
 #: coati_payroll/vistas/planilla/export_routes.py:36
@@ -6949,506 +6948,506 @@ msgstr ""
 #: coati_payroll/vistas/planilla/export_routes.py:139
 #: coati_payroll/vistas/prestamo.py:645
 msgid "Excel export no disponible. Instale openpyxl."
-msgstr ""
+msgstr "Excel export not available. Install openpyxl."
 
 #: coati_payroll/vistas/liquidacion.py:203
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error al exportar liquidación: {}"
-msgstr "Save Changes"
+msgstr "Error exporting settlement: {}"
 
 #: coati_payroll/vistas/payroll_concepts.py:156
 #, python-format
 msgid "%(type)s creada exitosamente en estado borrador."
-msgstr ""
+msgstr "%(type)s created successfully in draft status."
 
 #: coati_payroll/vistas/payroll_concepts.py:217
 #, python-format
 msgid "%(type)s actualizada. Estado cambiado a borrador - requiere aprobación."
-msgstr ""
+msgstr "%(type)s updated. Status changed to draft - requires approval."
 
 #: coati_payroll/vistas/payroll_concepts.py:221
 #, python-format
 msgid "%(type)s actualizada exitosamente."
-msgstr ""
+msgstr "%(type)s updated successfully."
 
 #: coati_payroll/vistas/payroll_concepts.py:228
 #, python-format
 msgid "Editar %(type)s"
-msgstr ""
+msgstr "Edit %(type)s"
 
 #: coati_payroll/vistas/payroll_concepts.py:248
 #, python-format
 msgid "No se puede eliminar: %(type)s está asociada a una o más planillas."
-msgstr ""
+msgstr "Cannot delete: %(type)s is associated with one or more payrolls."
 
 #: coati_payroll/vistas/payroll_concepts.py:257
 #, python-format
 msgid "%(type)s eliminada exitosamente."
-msgstr ""
+msgstr "%(type)s deleted successfully."
 
 #: coati_payroll/vistas/payroll_concepts.py:449
 msgid "No tiene permisos para aprobar conceptos de nómina."
-msgstr ""
+msgstr "You do not have permission to approve payroll concepts."
 
 #: coati_payroll/vistas/payroll_concepts.py:463
 #, python-format
 msgid "%(type)s aprobada exitosamente."
-msgstr ""
+msgstr "%(type)s approved successfully."
 
 #: coati_payroll/vistas/payroll_concepts.py:465
 #, python-format
 msgid "%(type)s ya está aprobada."
-msgstr ""
+msgstr "%(type)s is already approved."
 
 #: coati_payroll/vistas/payroll_concepts.py:474
 msgid "No tiene permisos para rechazar conceptos de nómina."
-msgstr ""
+msgstr "You do not have permission to reject payroll concepts."
 
 #: coati_payroll/vistas/payroll_concepts.py:491
 #, python-format
 msgid "%(type)s marcada como borrador."
-msgstr ""
+msgstr "%(type)s marked as draft."
 
 #: coati_payroll/vistas/plugins.py:27
 msgid "Plugin no encontrado."
-msgstr ""
+msgstr "Plugin not found."
 
 #: coati_payroll/vistas/plugins.py:33
 msgid "Plugin marcado como inactivo."
-msgstr ""
+msgstr "Plugin marked as inactive."
 
 #: coati_payroll/vistas/plugins.py:40
 msgid "Plugin activado. Reinicie la aplicación para cargar sus blueprints."
-msgstr ""
+msgstr "Plugin activated. Restart the application to load its blueprints."
 
 #: coati_payroll/vistas/plugins.py:42
 msgid "Plugin desactivado."
-msgstr ""
+msgstr "Plugin deactivated."
 
 #: coati_payroll/vistas/prestacion.py:131 coati_payroll/vistas/vacation.py:916
 msgid "Por favor, suba un archivo Excel (.xlsx o .xls)."
-msgstr ""
+msgstr "Please upload an Excel file (.xlsx or .xls)."
 
 #: coati_payroll/vistas/prestacion.py:249
 #, python-brace-format
 msgid "Carga completada: {} registros exitosos en estado borrador, {} errores."
-msgstr ""
+msgstr "Load completed: {} successful records in draft status, {} errors."
 
 #: coati_payroll/vistas/prestacion.py:263 coati_payroll/vistas/vacation.py:1036
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error al guardar los cambios: {}"
-msgstr "Save Changes"
+msgstr "Error saving changes: {}"
 
 #: coati_payroll/vistas/prestacion.py:266 coati_payroll/vistas/vacation.py:1039
 msgid "Error: La librería openpyxl no está instalada. Contacte al administrador."
-msgstr ""
+msgstr "Error: The openpyxl library is not installed. Contact the administrator."
 
 #: coati_payroll/vistas/prestacion.py:268 coati_payroll/vistas/vacation.py:1041
 #, python-brace-format
 msgid "Error al procesar el archivo Excel: {}"
-msgstr ""
+msgstr "Error processing Excel file: {}"
 
 #: coati_payroll/vistas/prestamo.py:128 coati_payroll/vistas/prestamo.py:254
 msgid "-- Sin deducción asociada --"
-msgstr ""
+msgstr "-- No associated deduction --"
 
 #: coati_payroll/vistas/prestamo.py:156
 msgid "Préstamo/Adelanto creado exitosamente. Estado: Borrador."
-msgstr ""
+msgstr "Loan/Advance created successfully. Status: Draft."
 
 #: coati_payroll/vistas/prestamo.py:225 coati_payroll/vistas/prestamo.py:291
 #: coati_payroll/vistas/prestamo.py:312 coati_payroll/vistas/prestamo.py:385
 #: coati_payroll/vistas/prestamo.py:537 coati_payroll/vistas/prestamo.py:637
 #: coati_payroll/vistas/prestamo.py:718
 msgid "Préstamo no encontrado."
-msgstr ""
+msgstr "Loan not found."
 
 #: coati_payroll/vistas/prestamo.py:231
 #, python-brace-format
 msgid "No se puede editar un préstamo en estado '{estado}'."
-msgstr ""
+msgstr "Cannot edit a loan in status '{estado}'."
 
 #: coati_payroll/vistas/prestamo.py:279
 msgid "Préstamo/Adelanto actualizado exitosamente."
-msgstr ""
+msgstr "Loan/Advance updated successfully."
 
 #: coati_payroll/vistas/prestamo.py:295
 msgid "Solo los préstamos en borrador pueden ser enviados."
-msgstr ""
+msgstr "Only loans in draft can be sent."
 
 #: coati_payroll/vistas/prestamo.py:302
 msgid "Préstamo enviado para aprobación."
-msgstr ""
+msgstr "Loan sent for approval."
 
 #: coati_payroll/vistas/prestamo.py:316
 msgid "Este préstamo no puede ser aprobado en su estado actual."
-msgstr ""
+msgstr "This loan cannot be approved in its current status."
 
 #: coati_payroll/vistas/prestamo.py:357
 msgid "Préstamo aprobado exitosamente."
-msgstr ""
+msgstr "Loan approved successfully."
 
 #: coati_payroll/vistas/prestamo.py:367
 msgid "Préstamo rechazado."
-msgstr ""
+msgstr "Loan rejected."
 
 #: coati_payroll/vistas/prestamo.py:389
 msgid "Este préstamo ya está finalizado."
-msgstr ""
+msgstr "This loan is already finalized."
 
 #: coati_payroll/vistas/prestamo.py:396
 msgid "Préstamo cancelado."
-msgstr ""
+msgstr "Loan cancelled."
 
 #: coati_payroll/vistas/prestamo.py:415
 msgid "Solo se pueden registrar pagos en préstamos aprobados o aplicados."
-msgstr ""
+msgstr "Payments can only be recorded for approved or applied loans."
 
 #: coati_payroll/vistas/prestamo.py:421 coati_payroll/vistas/prestamo.py:549
 msgid "Este préstamo ya está totalmente pagado."
-msgstr ""
+msgstr "This loan is already fully paid."
 
 #: coati_payroll/vistas/prestamo.py:432
 #, python-brace-format
 msgid "El monto del pago ({monto}) excede el saldo pendiente ({saldo})."
-msgstr ""
+msgstr "Payment amount ({monto}) exceeds pending balance ({saldo})."
 
 #: coati_payroll/vistas/prestamo.py:513
 msgid "Pago extraordinario registrado exitosamente."
-msgstr ""
+msgstr "Extraordinary payment recorded successfully."
 
 #: coati_payroll/vistas/prestamo.py:543
 msgid "Solo se pueden condonar préstamos aprobados o aplicados."
-msgstr ""
+msgstr "Only approved or applied loans can be forgiven."
 
 #: coati_payroll/vistas/prestamo.py:560
 #, python-brace-format
 msgid "El monto a condonar ({monto}) excede el saldo pendiente ({saldo})."
-msgstr ""
+msgstr "Forgiveness amount ({monto}) exceeds pending balance ({saldo})."
 
 #: coati_payroll/vistas/prestamo.py:614
 #, python-brace-format
 msgid "Condonación de deuda registrada exitosamente. Monto condonado: {monto}"
-msgstr ""
+msgstr "Debt forgiveness recorded successfully. Amount forgiven: {monto}"
 
 #: coati_payroll/vistas/prestamo.py:745
 msgid "PDF export no disponible. Instale WeasyPrint."
-msgstr ""
+msgstr "PDF export not available. Install WeasyPrint."
 
 #: coati_payroll/vistas/report.py:168 coati_payroll/vistas/report.py:305
 #: coati_payroll/vistas/report.py:335 coati_payroll/vistas/report.py:355
 #: coati_payroll/vistas/report.py:407
 msgid "Reporte no encontrado."
-msgstr ""
+msgstr "Report not found."
 
 #: coati_payroll/vistas/report.py:173
 msgid "Este reporte está deshabilitado."
-msgstr ""
+msgstr "This report is disabled."
 
 #: coati_payroll/vistas/report.py:178 coati_payroll/vistas/report.py:412
 msgid "No tiene permisos para ver este reporte."
-msgstr ""
+msgstr "You do not have permission to view this report."
 
 #: coati_payroll/vistas/report.py:183
 msgid "No tiene permisos para ejecutar este reporte."
-msgstr ""
+msgstr "You do not have permission to execute this report."
 
 #: coati_payroll/vistas/report.py:259
 msgid "No tiene permisos para exportar este reporte."
-msgstr ""
+msgstr "You do not have permission to export this report."
 
 #: coati_payroll/vistas/report.py:322
 msgid "Estado del reporte actualizado."
-msgstr ""
+msgstr "Report status updated."
 
 #: coati_payroll/vistas/report.py:389
 msgid "Permisos actualizados correctamente."
-msgstr ""
+msgstr "Permissions updated successfully."
 
 #: coati_payroll/vistas/tipo_planilla.py:69
 msgid "Tipo de planilla creado exitosamente."
-msgstr ""
+msgstr "Payroll type created successfully."
 
 #: coati_payroll/vistas/tipo_planilla.py:85
 #: coati_payroll/vistas/tipo_planilla.py:120
 msgid "Tipo de planilla no encontrado."
-msgstr ""
+msgstr "Payroll type not found."
 
 #: coati_payroll/vistas/tipo_planilla.py:103
 msgid "Tipo de planilla actualizado exitosamente."
-msgstr ""
+msgstr "Payroll type updated successfully."
 
 #: coati_payroll/vistas/tipo_planilla.py:109
 msgid "Editar Tipo de Planilla"
-msgstr ""
+msgstr "Edit Payroll Type"
 
 #: coati_payroll/vistas/tipo_planilla.py:126
 msgid "No se puede eliminar un tipo de planilla que está siendo usado."
-msgstr ""
+msgstr "Cannot delete a payroll type that is being used."
 
 #: coati_payroll/vistas/tipo_planilla.py:133
 msgid "Tipo de planilla eliminado exitosamente."
-msgstr ""
+msgstr "Payroll type deleted successfully."
 
 #: coati_payroll/vistas/user.py:58
 msgid "La contraseña es requerida para nuevos usuarios."
-msgstr ""
+msgstr "Password is required for new users."
 
 #: coati_payroll/vistas/user.py:70
 msgid "Usuario creado exitosamente."
-msgstr ""
+msgstr "User created successfully."
 
 #: coati_payroll/vistas/user.py:82 coati_payroll/vistas/user.py:113
 msgid "Usuario no encontrado."
-msgstr ""
+msgstr "User not found."
 
 #: coati_payroll/vistas/user.py:99
 msgid "Usuario actualizado exitosamente."
-msgstr ""
+msgstr "User updated successfully."
 
 #: coati_payroll/vistas/user.py:104
 msgid "Editar Usuario"
-msgstr ""
+msgstr "Edit User"
 
 #: coati_payroll/vistas/user.py:117
 msgid "No puedes eliminar tu propio usuario."
-msgstr ""
+msgstr "You cannot delete your own user."
 
 #: coati_payroll/vistas/user.py:122
 msgid "Usuario eliminado exitosamente."
-msgstr ""
+msgstr "User deleted successfully."
 
 #: coati_payroll/vistas/user.py:146
 msgid "Debe ingresar la contraseña actual."
-msgstr ""
+msgstr "You must enter the current password."
 
 #: coati_payroll/vistas/user.py:148
 msgid "La contraseña actual es incorrecta."
-msgstr ""
+msgstr "The current password is incorrect."
 
 #: coati_payroll/vistas/user.py:150
 msgid "Debe ingresar una nueva contraseña."
-msgstr ""
+msgstr "You must enter a new password."
 
 #: coati_payroll/vistas/user.py:152
 msgid "Las contraseñas no coinciden."
-msgstr ""
+msgstr "Passwords do not match."
 
 #: coati_payroll/vistas/user.py:160
 msgid "Contraseña actualizada exitosamente."
-msgstr ""
+msgstr "Password updated successfully."
 
 #: coati_payroll/vistas/user.py:164
 msgid "Perfil actualizado exitosamente."
-msgstr ""
+msgstr "Profile updated successfully."
 
 #: coati_payroll/vistas/vacation.py:89 coati_payroll/vistas/vacation.py:147
 msgid "-- Seleccionar Planilla --"
-msgstr ""
+msgstr "-- Select Payroll --"
 
 #: coati_payroll/vistas/vacation.py:99 coati_payroll/vistas/vacation.py:157
 msgid "-- Seleccionar Empresa --"
-msgstr ""
+msgstr "-- Select Company --"
 
 #: coati_payroll/vistas/vacation.py:109
 msgid "Política de vacaciones creada exitosamente."
-msgstr ""
+msgstr "Vacation policy created successfully."
 
 #: coati_payroll/vistas/vacation.py:113
 #, python-brace-format
 msgid "Error al crear la política: {}"
-msgstr ""
+msgstr "Error creating policy: {}"
 
 #: coati_payroll/vistas/vacation.py:118
 msgid "Nueva Política de Vacaciones"
-msgstr ""
+msgstr "New Vacation Policy"
 
 #: coati_payroll/vistas/vacation.py:131 coati_payroll/vistas/vacation.py:185
 msgid "Política no encontrada."
-msgstr ""
+msgstr "Policy not found."
 
 #: coati_payroll/vistas/vacation.py:165
 msgid "Política actualizada exitosamente."
-msgstr ""
+msgstr "Policy updated successfully."
 
 #: coati_payroll/vistas/vacation.py:169
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error al actualizar la política: {}"
-msgstr "Error updating language: %(error)s"
+msgstr "Error updating policy: {}"
 
 #: coati_payroll/vistas/vacation.py:175
 msgid "Editar Política de Vacaciones"
-msgstr ""
+msgstr "Edit Vacation Policy"
 
 #: coati_payroll/vistas/vacation.py:237
 msgid "Cuenta no encontrada."
-msgstr ""
+msgstr "Account not found."
 
 #: coati_payroll/vistas/vacation.py:287
 msgid "Cuenta de vacaciones creada exitosamente."
-msgstr ""
+msgstr "Vacation account created successfully."
 
 #: coati_payroll/vistas/vacation.py:291
 #, python-brace-format
 msgid "Error al crear la cuenta: {}"
-msgstr ""
+msgstr "Error creating account: {}"
 
 #: coati_payroll/vistas/vacation.py:296
 msgid "Nueva Cuenta de Vacaciones"
-msgstr ""
+msgstr "New Vacation Account"
 
 #: coati_payroll/vistas/vacation.py:347
 msgid "El empleado no tiene una cuenta de vacaciones activa."
-msgstr ""
+msgstr "The employee does not have an active vacation account."
 
 #: coati_payroll/vistas/vacation.py:351 coati_payroll/vistas/vacation.py:361
 #: coati_payroll/vistas/vacation.py:382
 msgid "Nueva Solicitud de Vacaciones"
-msgstr ""
+msgstr "New Vacation Request"
 
 #: coati_payroll/vistas/vacation.py:357
 msgid "Saldo insuficiente para la solicitud."
-msgstr ""
+msgstr "Insufficient balance for the request."
 
 #: coati_payroll/vistas/vacation.py:373
 msgid "Solicitud de vacaciones creada exitosamente."
-msgstr ""
+msgstr "Vacation request created successfully."
 
 #: coati_payroll/vistas/vacation.py:377
 #, python-brace-format
 msgid "Error al crear la solicitud: {}"
-msgstr ""
+msgstr "Error creating request: {}"
 
 #: coati_payroll/vistas/vacation.py:392 coati_payroll/vistas/vacation.py:407
 #: coati_payroll/vistas/vacation.py:461
 msgid "Solicitud no encontrada."
-msgstr ""
+msgstr "Request not found."
 
 #: coati_payroll/vistas/vacation.py:411
 msgid "Solo se pueden aprobar solicitudes pendientes."
-msgstr ""
+msgstr "Only pending requests can be approved."
 
 #: coati_payroll/vistas/vacation.py:447
 msgid "Solicitud aprobada exitosamente."
-msgstr ""
+msgstr "Request approved successfully."
 
 #: coati_payroll/vistas/vacation.py:450
 #, python-brace-format
 msgid "Error al aprobar la solicitud: {}"
-msgstr ""
+msgstr "Error approving request: {}"
 
 #: coati_payroll/vistas/vacation.py:465
 msgid "Solo se pueden rechazar solicitudes pendientes."
-msgstr ""
+msgstr "Only pending requests can be rejected."
 
 #: coati_payroll/vistas/vacation.py:478
 msgid "Solicitud rechazada."
-msgstr ""
+msgstr "Request rejected."
 
 #: coati_payroll/vistas/vacation.py:481
 #, python-brace-format
 msgid "Error al rechazar la solicitud: {}"
-msgstr ""
+msgstr "Error rejecting request: {}"
 
 #: coati_payroll/vistas/vacation.py:564
 msgid "Debe seleccionar una percepción cuando el tipo de concepto es percepción."
-msgstr ""
+msgstr "You must select an earning when the concept type is earning."
 
 #: coati_payroll/vistas/vacation.py:572
 msgid "Debe seleccionar una deducción cuando el tipo de concepto es deducción."
-msgstr ""
+msgstr "You must select a deduction when the concept type is deduction."
 
 #: coati_payroll/vistas/vacation.py:595
 msgid ""
 "El empleado no tiene una cuenta de vacaciones activa. Cree una cuenta "
 "primero."
-msgstr ""
+msgstr "The employee does not have an active vacation account. Create an account first."
 
 #: coati_payroll/vistas/vacation.py:687
 #, python-brace-format
 msgid "Error al registrar vacaciones: {}"
-msgstr ""
+msgstr "Error recording vacation: {}"
 
 #: coati_payroll/vistas/vacation.py:826
 #, python-brace-format
 msgid ""
 "El empleado {} no tiene una cuenta de vacaciones activa. Por favor, cree "
 "una cuenta primero."
-msgstr ""
+msgstr "Employee {} does not have an active vacation account. Please create an account first."
 
 #: coati_payroll/vistas/vacation.py:843
 #, python-brace-format
 msgid ""
 "La cuenta de vacaciones del empleado {} ya tiene movimientos registrados."
 " No se puede cargar un saldo inicial para cuentas con historial."
-msgstr ""
+msgstr "The vacation account of employee {} already has recorded movements. Cannot load an initial balance for accounts with history."
 
 #: coati_payroll/vistas/vacation.py:875
 #, python-brace-format
 msgid "Saldo inicial de {} {} cargado exitosamente para {}."
-msgstr ""
+msgstr "Initial balance of {} {} loaded successfully for {}."
 
 #: coati_payroll/vistas/vacation.py:883
 #, python-brace-format
 msgid "Error al cargar saldo inicial: {}"
-msgstr ""
+msgstr "Error loading initial balance: {}"
 
 #: coati_payroll/vistas/vacation.py:1024
 #, python-brace-format
 msgid "Carga completada: {} registros exitosos, {} errores."
-msgstr ""
+msgstr "Load completed: {} successful records, {} errors."
 
 #: coati_payroll/vistas/planilla/association_routes.py:53
 msgid "Debe seleccionar un empleado."
-msgstr ""
+msgstr "You must select an employee."
 
 #: coati_payroll/vistas/planilla/association_routes.py:62
 msgid "El empleado ya está asignado a esta planilla."
-msgstr ""
+msgstr "The employee is already assigned to this payroll."
 
 #: coati_payroll/vistas/planilla/association_routes.py:81
 msgid "Empleado agregado exitosamente."
-msgstr ""
+msgstr "Employee added successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:92
 msgid "Empleado removido exitosamente."
-msgstr ""
+msgstr "Employee removed successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:113
 msgid "Percepción agregada exitosamente."
-msgstr ""
+msgstr "Earning added successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:124
 msgid "Percepción removida exitosamente."
-msgstr ""
+msgstr "Earning removed successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:146
 msgid "Deducción agregada exitosamente."
-msgstr ""
+msgstr "Deduction added successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:157
 msgid "Deducción removida exitosamente."
-msgstr ""
+msgstr "Deduction removed successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:172
 msgid "Prioridad actualizada."
-msgstr ""
+msgstr "Priority updated."
 
 #: coati_payroll/vistas/planilla/association_routes.py:194
 msgid "Prestación agregada exitosamente."
-msgstr ""
+msgstr "Benefit added successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:205
 msgid "Prestación removida exitosamente."
-msgstr ""
+msgstr "Benefit removed successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:226
 msgid "Regla de cálculo agregada exitosamente."
-msgstr ""
+msgstr "Calculation rule added successfully."
 
 #: coati_payroll/vistas/planilla/association_routes.py:237
 msgid "Regla de cálculo removida exitosamente."
-msgstr ""
+msgstr "Calculation rule removed successfully."
 
 #: coati_payroll/vistas/planilla/export_routes.py:43
 #: coati_payroll/vistas/planilla/export_routes.py:72
@@ -7456,187 +7455,187 @@ msgstr ""
 #: coati_payroll/vistas/planilla/export_routes.py:146
 #: coati_payroll/vistas/planilla/nomina_routes.py:448
 msgid "La nómina no pertenece a esta planilla."
-msgstr ""
+msgstr "The payroll does not belong to this payroll configuration."
 
 #: coati_payroll/vistas/planilla/export_routes.py:55
 #, python-brace-format
 msgid "Error al exportar nómina: {}"
-msgstr ""
+msgstr "Error exporting payroll: {}"
 
 #: coati_payroll/vistas/planilla/export_routes.py:84
 #, python-brace-format
 msgid "Error al exportar prestaciones: {}"
-msgstr ""
+msgstr "Error exporting benefits: {}"
 
 #: coati_payroll/vistas/planilla/export_routes.py:110
 #: coati_payroll/vistas/planilla/export_routes.py:155
 msgid ""
 "No existe comprobante contable para esta nómina. Debe recalcular la "
 "nómina."
-msgstr ""
+msgstr "There is no accounting voucher for this payroll. You must recalculate the payroll."
 
 #: coati_payroll/vistas/planilla/export_routes.py:116
 #: coati_payroll/vistas/planilla/export_routes.py:161
 msgid ""
 "ADVERTENCIA: La configuración contable está incompleta. Revise las "
 "advertencias en el log."
-msgstr ""
+msgstr "WARNING: Accounting configuration is incomplete. Check the warnings in the log."
 
 #: coati_payroll/vistas/planilla/export_routes.py:129
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error al exportar comprobante: {}"
-msgstr "Receipt Number"
+msgstr "Error exporting voucher: {}"
 
 #: coati_payroll/vistas/planilla/export_routes.py:174
 #, python-brace-format
 msgid "Error al exportar comprobante detallado: {}"
-msgstr ""
+msgstr "Error exporting detailed voucher: {}"
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:47
 msgid "Debe especificar el período de la nómina."
-msgstr ""
+msgstr "You must specify the payroll period."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:80
 #, python-format
 msgid ""
 "La nómina está siendo calculada en segundo plano. Se procesarán %(num)d "
 "empleados. Por favor, revise el progreso en unos momentos."
-msgstr ""
+msgstr "The payroll is being calculated in the background. %(num)d employees will be processed. Please check the progress in a few moments."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:88
 msgid "Nómina generada exitosamente."
-msgstr ""
+msgstr "Payroll generated successfully."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:186
 msgid "El detalle no pertenece a esta nómina."
-msgstr ""
+msgstr "The detail does not belong to this payroll."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:274
 msgid "Solo se pueden aprobar nóminas en estado 'generado'."
-msgstr ""
+msgstr "Only 'generated' payrolls can be approved."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:281
 msgid ""
 "No se puede aprobar una nómina con errores de procesamiento. Corrija los "
 "errores y recalcule la nómina antes de aprobar."
-msgstr ""
+msgstr "Cannot approve a payroll with processing errors. Correct the errors and recalculate the payroll before approving."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:292
 msgid "Nómina aprobada exitosamente."
-msgstr ""
+msgstr "Payroll approved successfully."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:307
 msgid "Solo se pueden aplicar nóminas en estado 'aprobado'."
-msgstr ""
+msgstr "Only 'approved' payrolls can be applied."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:338
 #, python-brace-format
 msgid "Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas."
-msgstr ""
+msgstr "Payroll applied successfully. {} novelty(ies) marked as executed."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:355
 msgid "Solo se pueden reintentar nóminas en estado 'error'."
-msgstr ""
+msgstr "Only 'error' payrolls can be retried."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:363
 msgid ""
 "Reintento de nómina iniciado exitosamente. El procesamiento se realizará "
 "en segundo plano."
-msgstr ""
+msgstr "Payroll retry started successfully. Processing will be done in the background."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:367
 #, python-brace-format
 msgid "Error al reintentar la nómina: {}"
-msgstr ""
+msgstr "Error retrying payroll: {}"
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:383
 msgid "No se puede recalcular una nómina en estado 'aplicado' (pagada)."
-msgstr ""
+msgstr "Cannot recalculate a payroll in 'applied' (paid) status."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:397
 msgid "Nómina recalculada exitosamente."
-msgstr ""
+msgstr "Payroll recalculated successfully."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:400
 msgid "Error al recalcular la nómina."
-msgstr ""
+msgstr "Error recalculating payroll."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:457
 msgid ""
 "Solo se puede regenerar el comprobante contable para nóminas en estado "
 "'aplicado' o 'pagado'. Para nóminas en otros estados, use 'recalcular'."
-msgstr ""
+msgstr "Accounting voucher can only be regenerated for payrolls in 'applied' or 'paid' status. For payrolls in other statuses, use 'recalculate'."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:477
 msgid "Comprobante contable regenerado exitosamente."
-msgstr ""
+msgstr "Accounting voucher regenerated successfully."
 
 #: coati_payroll/vistas/planilla/nomina_routes.py:486
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error al regenerar comprobante contable: {}"
-msgstr "Save Changes"
+msgstr "Error regenerating accounting voucher: {}"
 
 #: coati_payroll/vistas/planilla/novedad_routes.py:67
 msgid "No se pueden agregar novedades a una nómina aplicada."
-msgstr ""
+msgstr "Cannot add novelties to an applied payroll."
 
 #: coati_payroll/vistas/planilla/novedad_routes.py:92
 msgid "Novedad agregada exitosamente."
-msgstr ""
+msgstr "Novelty added successfully."
 
 #: coati_payroll/vistas/planilla/novedad_routes.py:126
 #: coati_payroll/vistas/planilla/novedad_routes.py:205
 msgid "La novedad no pertenece a esta nómina."
-msgstr ""
+msgstr "The novelty does not belong to this payroll."
 
 #: coati_payroll/vistas/planilla/novedad_routes.py:136
 msgid "No se pueden editar novedades de una nómina aplicada."
-msgstr ""
+msgstr "Cannot edit novelties of an applied payroll."
 
 #: coati_payroll/vistas/planilla/novedad_routes.py:171
 msgid "Novedad actualizada exitosamente."
-msgstr ""
+msgstr "Novelty updated successfully."
 
 #: coati_payroll/vistas/planilla/novedad_routes.py:215
 msgid "No se pueden eliminar novedades de una nómina aplicada."
-msgstr ""
+msgstr "Cannot delete novelties of an applied payroll."
 
 #: coati_payroll/vistas/planilla/novedad_routes.py:226
 msgid "Novedad eliminada exitosamente."
-msgstr ""
+msgstr "Novelty deleted successfully."
 
 #: coati_payroll/vistas/planilla/routes.py:67
 msgid "Planilla creada exitosamente."
-msgstr ""
+msgstr "Payroll created successfully."
 
 #: coati_payroll/vistas/planilla/routes.py:100
 msgid "Planilla actualizada exitosamente."
-msgstr ""
+msgstr "Payroll updated successfully."
 
 #: coati_payroll/vistas/planilla/routes.py:144
 msgid "Planilla eliminada exitosamente."
-msgstr ""
+msgstr "Payroll deleted successfully."
 
 #: coati_payroll/vistas/planilla/services/novedad_service.py:71
 #, python-brace-format
 msgid ""
 "La fecha de la novedad debe estar dentro del período de la nómina ({} a "
 "{})."
-msgstr ""
+msgstr "The novelty date must be within the payroll period ({} to {})."
 
 #: coati_payroll/vistas/planilla/validators/planilla_validators.py:35
 msgid "La planilla debe tener una empresa asignada antes de agregar empleados."
-msgstr ""
+msgstr "The payroll must have a company assigned before adding employees."
 
 #: coati_payroll/vistas/planilla/validators/planilla_validators.py:37
 msgid ""
 "El empleado debe tener una empresa asignada antes de ser agregado a una "
 "planilla."
-msgstr ""
+msgstr "The employee must have a company assigned before being added to a payroll."
 
 #: coati_payroll/vistas/planilla/validators/planilla_validators.py:39
 msgid "El empleado y la planilla deben pertenecer a la misma empresa."
-msgstr ""
+msgstr "The employee and the payroll must belong to the same company."
 
 #~ msgid ""
 #~ "Moneda base para los cálculos. La "
@@ -7674,4 +7673,3 @@ msgstr ""
 
 #~ msgid "Cargar desde Archivo JSON"
 #~ msgstr ""
-
