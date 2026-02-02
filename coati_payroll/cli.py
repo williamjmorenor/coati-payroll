@@ -32,10 +32,12 @@ from coati_payroll.model import db, Usuario, PluginRegistry
 from coati_payroll.auth import proteger_passwd
 from coati_payroll.log import log
 from coati_payroll.plugin_manager import discover_installed_plugins, load_plugin_module, sync_plugin_registry
+from coati_payroll.wsgi_server import serve as wsgi_server
 
 
 # Global context to store CLI options
 class CLIContext:
+
     def __init__(self):
         self.environment = None
         self.json_output = False
@@ -58,6 +60,7 @@ def output_result(ctx, message, data=None, success=True):
 
 
 class PluginsCommand(click.Group):
+
     def list_commands(self, cli_ctx):
         try:
             return [p.plugin_id for p in discover_installed_plugins()]
@@ -65,6 +68,7 @@ class PluginsCommand(click.Group):
             return []
 
     def get_command(self, cli_ctx, name):
+
         def _load_module_or_fail():
             try:
                 return load_plugin_module(name)
@@ -315,7 +319,6 @@ class PluginsCommand(click.Group):
 
 plugins = PluginsCommand(name="plugins", help="Gestión de plugins instalados")
 
-
 # ============================================================================
 # SYSTEM COMMANDS
 # ============================================================================
@@ -535,6 +538,17 @@ def _database_status():
             counts[table] = result.scalar()
 
     return {"tables": len(tables), "table_names": tables[:10], "record_counts": counts}
+
+
+@click.command()
+@with_appcontext
+@pass_context
+def serve():
+    """Run the application server."""
+    try:
+        wsgi_server(app=current_app)
+    except Exception as e:
+        click.echo(f"Failed to start server: {e}", err=True)
 
 
 @click.group()
