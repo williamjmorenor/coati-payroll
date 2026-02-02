@@ -57,7 +57,7 @@ class NovedadService:
         if fecha_novedad:
             if fecha_novedad < nomina.periodo_inicio or fecha_novedad > nomina.periodo_fin:
                 return False, _(
-                    "La fecha de la novedad debe estar dentro del período de la nómina " "({} a {})."
+                    "La fecha de la novedad debe estar dentro del período de la nómina ({} a {})."
                 ).format(
                     nomina.periodo_inicio.strftime("%d/%m/%Y"),
                     nomina.periodo_fin.strftime("%d/%m/%Y"),
