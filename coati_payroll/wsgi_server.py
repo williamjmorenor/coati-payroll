@@ -6,7 +6,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Standard library
 # <-------------------------------------------------------------------------> #
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
@@ -20,13 +20,12 @@ from coati_payroll import ensure_database_initialized
 from coati_payroll.log import log
 
 if TYPE_CHECKING:
-    pass
+    from flask import Flask
 
 
 # Servidor predefinido.
-def serve(app=None, host="0.0.0.0", port=5000):
+def serve(app: Optional[Flask] = None, host: str = "0.0.0.0", port: int | str = 5000):
 
-    # Asegura que la base de datos esté inicializada y exista un administrador.
     try:
         log.trace(f"Flask SQLALCHEMY_DATABASE_URI = {app.config.get('SQLALCHEMY_DATABASE_URI')}")
         ensure_database_initialized(app)
@@ -35,4 +34,4 @@ def serve(app=None, host="0.0.0.0", port=5000):
         log.trace(f"Database init raised: {exc}")
 
     log.trace("Starting waitress on 0.0.0.0:{port}")
-    wsgi_server(app, host="0.0.0.0", port=port)
+    wsgi_server(app, host=host, port=port)
