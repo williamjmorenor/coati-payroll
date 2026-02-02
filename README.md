@@ -3,9 +3,12 @@
 # Coati Payroll
 
 ![PyPI - License](https://img.shields.io/badge/License-Apache%202.0-brightgreen?logo=apache&logoColor=white)
+![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white)
 [![Unit Testing](https://github.com/williamjmorenor/coati-payroll/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/williamjmorenor/coati-payroll/actions/workflows/python-package.yml)
 [![codecov](https://codecov.io/github/bmosoluciones/coati-payroll/graph/badge.svg?token=gT6jVct2KT)](https://codecov.io/github/bmosoluciones/coati-payroll)
-![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white)
+[![Code style: black](https://img.shields.io/badge/Python%20code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code style: Prettier](https://img.shields.io/badge/HTML%20code%20style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 A jurisdiction-agnostic payroll calculation engine developed by BMO Soluciones, S.A.
 
