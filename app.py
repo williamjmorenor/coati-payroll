@@ -1,4 +1,6 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,9 +57,7 @@ def serve():
 
     # Asegura que la base de datos esté inicializada y exista un administrador.
     try:
-        log.trace(
-            f"Flask SQLALCHEMY_DATABASE_URI = {app.config.get('SQLALCHEMY_DATABASE_URI')}"
-        )
+        log.trace(f"Flask SQLALCHEMY_DATABASE_URI = {app.config.get('SQLALCHEMY_DATABASE_URI')}")
         ensure_database_initialized(app)
         log.trace("Database initialized")
     except Exception as exc:
