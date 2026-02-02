@@ -14,6 +14,7 @@ from coati_payroll.vistas.payroll_concepts import (
     prestacion_bp,
 )
 from coati_payroll.vistas.planilla import planilla_bp
+from coati_payroll.vistas.nomina import nomina_bp
 from coati_payroll.vistas.tipo_planilla import tipo_planilla_bp
 from coati_payroll.vistas.prestamo import prestamo_bp
 from coati_payroll.vistas.empresa import empresa_bp
@@ -38,6 +39,7 @@ __all__ = [
     "deduccion_bp",
     "prestacion_bp",
     "planilla_bp",
+    "nomina_bp",
     "tipo_planilla_bp",
     "prestamo_bp",
     "empresa_bp",
