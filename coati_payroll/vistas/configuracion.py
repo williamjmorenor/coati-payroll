@@ -22,7 +22,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Third party libraries
 # <-------------------------------------------------------------------------> #
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, url_for
 
 # <-------------------------------------------------------------------------> #
 # Local modules
@@ -43,15 +43,18 @@ configuracion_bp = Blueprint("configuracion", __name__, url_prefix="/configuraci
 def index():
     """Display global configuration page."""
     current_language = get_language_from_db()
-
-    # Language names for display
     language_names = {"en": "English", "es": "Español"}
+    from coati_payroll.forms import ConfiguracionIdiomaForm
 
+    form = ConfiguracionIdiomaForm()
+    form.idioma.choices = [(lang, language_names[lang]) for lang in SUPPORTED_LANGUAGES]
+    form.idioma.data = current_language
     return render_template(
         "modules/configuracion/index.html",
         current_language=current_language,
         supported_languages=SUPPORTED_LANGUAGES,
         language_names=language_names,
+        form=form,
     )
 
 
@@ -59,29 +62,27 @@ def index():
 @require_write_access()
 def cambiar_idioma():
     """Change the application language."""
-    new_language = request.form.get("idioma", "").strip()
+    from coati_payroll.forms import ConfiguracionIdiomaForm
 
-    if not new_language:
-        flash(_("Por favor seleccione un idioma."), "warning")
+    language_names = {"en": "English", "es": "Español"}
+    form = ConfiguracionIdiomaForm()
+    form.idioma.choices = [(lang, language_names[lang]) for lang in SUPPORTED_LANGUAGES]
+    if form.validate_on_submit():
+        new_language = form.idioma.data
+        try:
+            set_language_in_db(new_language)
+            flash(
+                _(
+                    "Idioma actualizado a %(language)s.",
+                    language=language_names[new_language],
+                ),
+                "success",
+            )
+        except Exception as e:
+            flash(_("Error al actualizar el idioma: %(error)s", error=str(e)), "danger")
         return redirect(url_for("configuracion.index"))
-
-    if new_language not in SUPPORTED_LANGUAGES:
-        flash(_("Idioma no soportado."), "danger")
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(error, "danger")
         return redirect(url_for("configuracion.index"))
-
-    try:
-        set_language_in_db(new_language)
-
-        # Message will be shown in the new language after redirect
-        language_names = {"en": "English", "es": "Español"}
-        flash(
-            _(
-                "Idioma actualizado a %(language)s.",
-                language=language_names[new_language],
-            ),
-            "success",
-        )
-    except Exception as e:
-        flash(_("Error al actualizar el idioma: %(error)s", error=str(e)), "danger")
-
-    return redirect(url_for("configuracion.index"))

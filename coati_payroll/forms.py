@@ -47,6 +47,7 @@ from wtforms.validators import (
     Regexp,
 )
 
+
 # <-------------------------------------------------------------------------> #
 # Third party libraries
 # <-------------------------------------------------------------------------> #
@@ -1767,3 +1768,8 @@ class VacationInitialBalanceForm(FlaskForm):
     )
 
     submit = SubmitField(_("Cargar Saldo Inicial"))
+
+
+class ConfiguracionIdiomaForm(FlaskForm):
+    idioma = SelectField("Idioma", validators=[DataRequired()])
+    submit = SubmitField("Guardar Cambios")
