@@ -1,7 +1,7 @@
 # Proyecto: Coati Payroll - Sistema de Nómina Agnóstico a Jurisdicción
 
 ## Estado Actual
-Social Contract Compliance - **COMPLETADO** (28 dic 2025)
+**Versión 1.0.0** - Release estable (02 feb 2026)
 
 ## Cambios Recientes - Compliance del Contrato Social
 
@@ -108,16 +108,23 @@ Para que el sistema calcule correctamente una nómina, tanto el empleado como la
 - Acumulación: Anual o de por vida
 - Cálculo: Sin prorrateo en meses calendario completos
 
-## Próximos Pasos
-1. ✅ Implementación de IR - COMPLETADO
-2. ✅ Tests de IR - COMPLETADO
-3. ✅ Tests de vacaciones - EN PROGRESO (9/11 pasando)
-4. ⏳ Corregir tests de vacaciones (2 tests) - Bajo fixture DB, no de lógica
-5. ⏳ Documentar API de servicios
+## Release 1.0.0
+
+### Archivos Actualizados
+- `coati_payroll/version.py` - Versión actualizada a 1.0.0
+- `CHANGELOG.md` - Historial de cambios del proyecto
+
+### Características Principales
+- Motor de nómina agnóstico a jurisdicción
+- Motor de fórmulas con tablas de impuestos progresivos
+- Gestión completa de vacaciones
+- Control de acceso basado en roles (RBAC)
+- Sistema de reportes personalizados
+- Procesamiento en cola para nóminas grandes
+- Internacionalización (i18n)
 
 ## Notas Técnicas
-- Tabla de IR: 5 tramos progresivos (0%, 15%, 20%, 25%, 30%)
-- INSS: 7% deducible como porcentaje del bruto
-- Período fiscal: Enero a diciembre
-- Moneda: Córdoba Nicaragüense (NIO)
-- País: Nicaragua (ISO 3166-1 alpha-2: NI)
+- Arquitectura limpia con separación de responsabilidades
+- Evaluación segura de expresiones (patrón AST Visitor)
+- Validación de esquemas en motor de fórmulas
+- Todos los valores por defecto documentados como no-legales
