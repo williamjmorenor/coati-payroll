@@ -67,7 +67,7 @@ def validate_safe_function_call(func_name: str, args: list[Any]) -> None:
 
     if len(args) > MAX_FUNCTION_ARGS:
         raise ValueError(
-            f"Too many arguments ({len(args)}) for function '{func_name}'. " f"Maximum allowed: {MAX_FUNCTION_ARGS}"
+            f"Too many arguments ({len(args)}) for function '{func_name}'. Maximum allowed: {MAX_FUNCTION_ARGS}"
         )
 
     if func_name == "round" and len(args) > 2:

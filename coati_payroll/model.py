@@ -1336,7 +1336,7 @@ class AdelantoAbono(database.Model, BaseTabla):
         nullable=False,
         index=True,
     )
-    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=True)
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=True)
     liquidacion_id = database.Column(database.String(26), database.ForeignKey("liquidacion.id"), nullable=True)
     fecha_abono = database.Column(database.Date, nullable=False, default=date.today)
     monto_abonado = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -1396,7 +1396,7 @@ class InteresAdelanto(database.Model, BaseTabla):
         nullable=False,
         index=True,
     )
-    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=True)
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=True)
 
     # Calculation period
     fecha_desde = database.Column(database.Date, nullable=False)
@@ -1764,7 +1764,7 @@ class PrestacionAcumulada(database.Model, BaseTabla):
     )  # Balance after this transaction
 
     # Reference to source document that created this transaction
-    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=True)
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=True)
     carga_inicial_id = database.Column(
         database.String(26), database.ForeignKey("carga_inicial_prestacion.id"), nullable=True
     )
@@ -2353,7 +2353,7 @@ class NominaAuditLog(database.Model, BaseTabla):
     __tablename__ = "nomina_audit_log"
 
     # Foreign key to nomina
-    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False)
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
 
     # Action performed
     accion = database.Column(
