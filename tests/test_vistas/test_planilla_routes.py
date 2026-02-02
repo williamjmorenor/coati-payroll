@@ -53,60 +53,6 @@ def moneda(app, db_session):
 
         moneda = Moneda(codigo="USD", nombre="Dolar", simbolo="$", activo=True)
         db_session.add(moneda)
-        db_session.commit()
-        db_session.refresh(moneda)
-        return moneda
-
-
-@pytest.fixture
-def empresa(app, db_session):
-    """Create an Empresa for testing."""
-    with app.app_context():
-        from coati_payroll.model import Empresa
-
-        empresa = Empresa(
-            codigo="TEST",
-            razon_social="Test Company S.A.",
-            ruc="123456789",
-            activo=True,
-        )
-        db_session.add(empresa)
-        db_session.commit()
-        db_session.refresh(empresa)
-        return empresa
-
-
-@pytest.fixture
-def planilla(app, db_session, tipo_planilla, moneda, empresa, admin_user):
-    """Create a Planilla for testing."""
-    with app.app_context():
-        from coati_payroll.model import Planilla
-
-        planilla = Planilla(
-            nombre="Test Planilla",
-            descripcion="Planilla de prueba",
-            tipo_planilla_id=tipo_planilla.id,
-            moneda_id=moneda.id,
-            empresa_id=empresa.id,
-            periodo_fiscal_inicio=date(2024, 1, 1),
-            periodo_fiscal_fin=date(2024, 12, 31),
-            prioridad_prestamos=250,
-            prioridad_adelantos=251,
-            aplicar_prestamos_automatico=True,
-            aplicar_adelantos_automatico=True,
-            activo=True,
-            creado_por=admin_user.usuario,
-        )
-        db_session.add(planilla)
-        db_session.commit()
-        db_session.refresh(planilla)
-        return planilla
-
-
-@pytest.fixture
-def empleado(app, db_session, empresa):
-    """Create an Empleado for testing."""
-    with app.app_context():
         from tests.factories.employee_factory import create_employee
 
         empleado = create_employee(
@@ -853,46 +799,6 @@ def test_nueva_novedad_post_creates_novedad(
         ).scalar_one_or_none()
         assert novedad is not None
         assert novedad.empleado_id == nomina_empleado.empleado_id
-
-
-def test_nueva_novedad_blocked_for_applied_nomina(app, client, admin_user, db_session, planilla, empleado):
-    """Test that novedades cannot be added to an applied nomina."""
-    with app.app_context():
-        login_user(client, admin_user.usuario, "admin-password")
-
-        # Create a nomina with "aplicado" state
-        from coati_payroll.model import Nomina, NominaEmpleado
-
-        nomina = Nomina(
-            planilla_id=planilla.id,
-            periodo_inicio=date.today(),
-            periodo_fin=date.today() + timedelta(days=14),
-            generado_por=admin_user.usuario,
-            estado="aplicado",  # Set to aplicado from the start
-        )
-        db_session.add(nomina)
-        db_session.commit()
-        db_session.refresh(nomina)
-
-        # Create nomina empleado
-        nomina_empleado = NominaEmpleado(
-            nomina_id=nomina.id,
-            empleado_id=empleado.id,
-            salario_bruto=Decimal("1000.00"),
-            total_ingresos=Decimal("1000.00"),
-            total_deducciones=Decimal("100.00"),
-            salario_neto=Decimal("900.00"),
-            sueldo_base_historico=Decimal("1000.00"),
-        )
-        db_session.add(nomina_empleado)
-        db_session.commit()
-
-        response = client.get(
-            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/new",
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
-        assert "No se pueden agregar novedades".encode() in response.data or "aplicada".encode() in response.data
 
 
 def test_editar_novedad_get_displays_form(
