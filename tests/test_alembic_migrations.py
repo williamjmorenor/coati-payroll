@@ -1,4 +1,6 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +37,7 @@ def test_alembic_upgrade_app_context(monkeypatch):
     # Respetar DATABASE_URL o usar SQLite en memoria
     if not os.environ.get("DATABASE_URL"):
         monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    
+
     # Desactivar AUTO_MIGRATE para que no interfiera con el test
     monkeypatch.setenv("COATI_AUTO_MIGRATE", "0")
 
@@ -48,7 +50,7 @@ def test_alembic_upgrade_app_context(monkeypatch):
         "WTF_CSRF_ENABLED": False,
         "SQLALCHEMY_DATABASE_URI": os.environ.get("DATABASE_URL", "sqlite:///:memory:"),
         "SQLALCHEMY_ENGINE_OPTIONS": {"poolclass": StaticPool},
-        "SQLALCHEMY_CONNECT_ARGS": {"check_same_thread": False}
+        "SQLALCHEMY_CONNECT_ARGS": {"check_same_thread": False},
     }
 
     app = create_app(config_overrides)
@@ -129,7 +131,7 @@ def test_alembic_upgrade_app_context(monkeypatch):
 def test_alembic_stamp_and_upgrade(monkeypatch):
     """
     Test que verifica que stamp y upgrade funcionan correctamente en secuencia.
-    
+
     Este test simula el flujo típico de una nueva instalación:
     1. Crear base de datos con create_all()
     2. Marcar como actualizada con stamp('head')
@@ -138,7 +140,7 @@ def test_alembic_stamp_and_upgrade(monkeypatch):
     # Usar SQLite en memoria para este test
     if not os.environ.get("DATABASE_URL"):
         monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    
+
     # Desactivar AUTO_MIGRATE
     monkeypatch.setenv("COATI_AUTO_MIGRATE", "0")
 
@@ -149,7 +151,7 @@ def test_alembic_stamp_and_upgrade(monkeypatch):
         "WTF_CSRF_ENABLED": False,
         "SQLALCHEMY_DATABASE_URI": os.environ.get("DATABASE_URL", "sqlite:///:memory:"),
         "SQLALCHEMY_ENGINE_OPTIONS": {"poolclass": StaticPool},
-        "SQLALCHEMY_CONNECT_ARGS": {"check_same_thread": False}
+        "SQLALCHEMY_CONNECT_ARGS": {"check_same_thread": False},
     }
 
     app = create_app(config_overrides)
@@ -160,7 +162,7 @@ def test_alembic_stamp_and_upgrade(monkeypatch):
         # Crear esquema base
         db.create_all()
         ensure_database_initialized(app)
-        
+
         # Marcar como actualizada
         alembic.stamp("head")
         db.session.commit()
@@ -187,7 +189,7 @@ def test_alembic_current_command(monkeypatch):
     # Usar SQLite en memoria
     if not os.environ.get("DATABASE_URL"):
         monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    
+
     # Desactivar AUTO_MIGRATE
     monkeypatch.setenv("COATI_AUTO_MIGRATE", "0")
 
@@ -198,7 +200,7 @@ def test_alembic_current_command(monkeypatch):
         "WTF_CSRF_ENABLED": False,
         "SQLALCHEMY_DATABASE_URI": os.environ.get("DATABASE_URL", "sqlite:///:memory:"),
         "SQLALCHEMY_ENGINE_OPTIONS": {"poolclass": StaticPool},
-        "SQLALCHEMY_CONNECT_ARGS": {"check_same_thread": False}
+        "SQLALCHEMY_CONNECT_ARGS": {"check_same_thread": False},
     }
 
     app = create_app(config_overrides)

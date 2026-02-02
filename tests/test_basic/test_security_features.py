@@ -1,4 +1,6 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Test security features implementation."""
-
 
 
 def test_security_headers_are_present(client):

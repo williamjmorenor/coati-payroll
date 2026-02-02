@@ -1,4 +1,6 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -603,7 +605,7 @@ def test_view_audit_log_route_success(app, client, admin_user, db_session):
 
         # Verify the audit logs exist
         assert len(perc.audit_logs) >= 2
-        
+
         # Verify sorting logic that's used in view_audit_log_route
         audit_logs = sorted(perc.audit_logs, key=lambda x: x.timestamp, reverse=True)
         assert audit_logs[0].accion == "updated"  # Most recent first

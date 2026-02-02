@@ -1,4 +1,6 @@
-# Copyright 2025 BMO Soluciones, S.A.
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +30,7 @@ import pytest
 from cachelib.file import FileSystemCache
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from coati_payroll import create_app, ensure_database_initialized
+from coati_payroll import create_app
 from coati_payroll.model import db as _db
 
 
