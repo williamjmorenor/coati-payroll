@@ -149,7 +149,7 @@ class SafeASTVisitor(ASTVisitor):
         """
         if node.id not in self.variables:
             raise CalculationError(
-                f"Undefined variable: '{node.id}'. " f"Available variables: {', '.join(sorted(self.variables.keys()))}"
+                f"Undefined variable: '{node.id}'. Available variables: {', '.join(sorted(self.variables.keys()))}"
             )
         return self.variables[node.id]
 
@@ -172,7 +172,7 @@ class SafeASTVisitor(ASTVisitor):
         op_func = SAFE_OPERATORS.get(op_type)
         if not op_func:
             raise CalculationError(
-                f"Operator '{op_type.__name__}' is not allowed. " f"Allowed operators: +, -, *, /, //, %, **"
+                f"Operator '{op_type.__name__}' is not allowed. Allowed operators: +, -, *, /, //, %, **"
             )
 
         if op_type in (ast.Div, ast.FloorDiv, ast.Mod) and right == 0:
@@ -224,7 +224,7 @@ class SafeASTVisitor(ASTVisitor):
         """
         if not isinstance(node.func, ast.Name):
             raise CalculationError(
-                "Only direct named function calls are allowed. " "Attribute access and lambda functions are prohibited."
+                "Only direct named function calls are allowed. Attribute access and lambda functions are prohibited."
             )
 
         func_name = node.func.id

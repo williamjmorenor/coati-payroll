@@ -98,7 +98,7 @@ def to_decimal(value: Any) -> Decimal:
             )
         if math.isinf(value):
             raise ValidationError(
-                "Cannot convert infinity to Decimal. " "Check for division by zero or overflow in input calculations."
+                "Cannot convert infinity to Decimal. Check for division by zero or overflow in input calculations."
             )
 
     try:
@@ -127,10 +127,10 @@ def _validate_decimal_range(value: Decimal) -> None:
         ValidationError: If value is outside acceptable range
     """
     if value.is_nan():
-        raise ValidationError("Decimal value is NaN (Not a Number). " "This indicates an invalid calculation result.")
+        raise ValidationError("Decimal value is NaN (Not a Number). This indicates an invalid calculation result.")
 
     if value.is_infinite():
-        raise ValidationError("Decimal value is infinite. " "This indicates an overflow or division by zero.")
+        raise ValidationError("Decimal value is infinite. This indicates an overflow or division by zero.")
 
     if value > MAX_DECIMAL_VALUE or value < MIN_DECIMAL_VALUE:
         raise ValidationError(

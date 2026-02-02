@@ -62,7 +62,7 @@ def validate_safe_function_call(func_name: str, args: list[Any]) -> None:
     """
     if func_name not in SAFE_FUNCTIONS:
         raise ValueError(
-            f"Function '{func_name}' is not in the whitelist. " f"Allowed functions: {', '.join(SAFE_FUNCTIONS.keys())}"
+            f"Function '{func_name}' is not in the whitelist. Allowed functions: {', '.join(SAFE_FUNCTIONS.keys())}"
         )
 
     if len(args) > MAX_FUNCTION_ARGS:

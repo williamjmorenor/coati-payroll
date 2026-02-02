@@ -29,6 +29,8 @@ ROUTE_CONFIG_DEDUCCIONES = "planilla.config_deducciones"
 ROUTE_CONFIG_PRESTACIONES = "planilla.config_prestaciones"
 ROUTE_CONFIG_REGLAS = "planilla.config_reglas"
 ERROR_NOT_FOUND = "no encontrada"
+LITERAL_CONFIG_EMPLEADOS = "planilla.config_empleados"
+LITERAL_CONFIG_DEDUCCIONES = "planilla.config_deducciones"
 
 
 @planilla_bp.route("/<planilla_id>/empleado/add", methods=["POST"])
@@ -68,7 +70,7 @@ def add_empleado(planilla_id: str):
     db.session.add(association)
     db.session.commit()
     flash(_("Empleado agregado exitosamente."), "success")
-    return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+    return redirect(url_for(LITERAL_CONFIG_EMPLEADOS, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/empleado/<association_id>/remove", methods=["POST"])
@@ -79,7 +81,7 @@ def remove_empleado(planilla_id: str, association_id: str):
     db.session.delete(association)
     db.session.commit()
     flash(_("Empleado removido exitosamente."), "success")
-    return redirect(url_for("planilla.config_empleados", planilla_id=planilla_id))
+    return redirect(url_for(LITERAL_CONFIG_EMPLEADOS, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/percepcion/add", methods=["POST"])
@@ -144,7 +146,7 @@ def remove_deduccion(planilla_id: str, association_id: str):
     db.session.delete(association)
     db.session.commit()
     flash(_("Deducción removida exitosamente."), "success")
-    return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
+    return redirect(url_for(LITERAL_CONFIG_DEDUCCIONES, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/deduccion/<association_id>/update-priority", methods=["POST"])
@@ -160,7 +162,7 @@ def update_deduccion_priority(planilla_id: str, association_id: str):
         db.session.commit()
         flash(_("Prioridad actualizada."), "success")
 
-    return redirect(url_for("planilla.config_deducciones", planilla_id=planilla_id))
+    return redirect(url_for(LITERAL_CONFIG_DEDUCCIONES, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/prestacion/add", methods=["POST"])

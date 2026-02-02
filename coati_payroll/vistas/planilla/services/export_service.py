@@ -385,7 +385,7 @@ class ExportService:
         """
         openpyxl_classes = check_openpyxl_available()
         if not openpyxl_classes:
-            raise ImportError("openpyxl no está disponible")
+            raise ImportError(ERROR_OPENPYXL_NOT_AVAILABLE)
 
         Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
 
@@ -574,7 +574,7 @@ class ExportService:
         """
         openpyxl_classes = check_openpyxl_available()
         if not openpyxl_classes:
-            raise ImportError("openpyxl no está disponible")
+            raise ImportError(ERROR_OPENPYXL_NOT_AVAILABLE)
 
         Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
 
