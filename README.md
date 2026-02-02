@@ -525,6 +525,10 @@ This software is distributed under the Apache 2.0 License **"AS IS"**:
 To report issues or request features, please open an [Issue on GitHub](https://github.com/williamjmorenor/coati-payroll/issues).
 
 ## License
+```
+SPDX-License-Identifier: Apache-2.0
+Copyright 2025 - 2026 BMO Soluciones, S.A.
+```
 
 This project is licensed under the **Apache License 2.0** - a permissive open-source license that allows free use, modification, and distribution (including for commercial purposes), as long as copyright and license notices are preserved. It also includes a patent grant to protect users from patent claims but terminates rights if you file such claims. You may combine Apache-licensed code with proprietary software, but you cannot use Apache trademarks or logos without permission, and you must provide proper attribution to the original authors.
 
