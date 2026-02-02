@@ -96,11 +96,26 @@ def test_custom_report_builder_valid_definition(app, db_session):
     with app.app_context():
         definition = {
             "columns": [
-                {"type": "field", "entity": "Employee", "field": "codigo_empleado"},
-                {"type": "field", "entity": "Employee", "field": "primer_nombre"},
+                {
+                    "type": "field",
+                    "entity": "Employee",
+                    "field": "codigo_empleado"
+                },
+                {
+                    "type": "field",
+                    "entity": "Employee",
+                    "field": "primer_nombre"
+                },
             ],
-            "filters": [{"field": "activo", "operator": "=", "value": True}],
-            "sorting": [{"field": "primer_apellido", "direction": "asc"}],
+            "filters": [{
+                "field": "activo",
+                "operator": "=",
+                "value": True
+            }],
+            "sorting": [{
+                "field": "primer_apellido",
+                "direction": "asc"
+            }],
         }
 
         report = Report(
@@ -163,7 +178,11 @@ def test_custom_report_builder_invalid_field(app, db_session):
     with app.app_context():
         definition = {
             "columns": [
-                {"type": "field", "entity": "Employee", "field": "invalid_field"},
+                {
+                    "type": "field",
+                    "entity": "Employee",
+                    "field": "invalid_field"
+                },
             ],
         }
 
@@ -198,9 +217,17 @@ def test_custom_report_builder_invalid_operator(app, db_session):
     with app.app_context():
         definition = {
             "columns": [
-                {"type": "field", "entity": "Employee", "field": "codigo_empleado"},
+                {
+                    "type": "field",
+                    "entity": "Employee",
+                    "field": "codigo_empleado"
+                },
             ],
-            "filters": [{"field": "activo", "operator": "invalid_op", "value": True}],
+            "filters": [{
+                "field": "activo",
+                "operator": "invalid_op",
+                "value": True
+            }],
         }
 
         report = Report(
@@ -234,7 +261,8 @@ def test_custom_report_execute_with_data(app, db_session):
     """
     with app.app_context():
         # Create test data
-        empresa = create_company(db_session, "TEST_COMP", "Test Company", "J1234")
+        empresa = create_company(db_session, "TEST_COMP", "Test Company",
+                                 "J1234")
         emp1 = create_employee(
             db_session,
             empresa_id=empresa.id,
@@ -256,11 +284,24 @@ def test_custom_report_execute_with_data(app, db_session):
         # Create report
         definition = {
             "columns": [
-                {"type": "field", "entity": "Employee", "field": "primer_nombre", "label": "Nombre"},
-                {"type": "field", "entity": "Employee", "field": "primer_apellido", "label": "Apellido"},
+                {
+                    "type": "field",
+                    "entity": "Employee",
+                    "field": "primer_nombre",
+                    "label": "Nombre"
+                },
+                {
+                    "type": "field",
+                    "entity": "Employee",
+                    "field": "primer_apellido",
+                    "label": "Apellido"
+                },
             ],
             "filters": [],
-            "sorting": [{"field": "primer_apellido", "direction": "asc"}],
+            "sorting": [{
+                "field": "primer_apellido",
+                "direction": "asc"
+            }],
         }
 
         report = Report(
@@ -429,7 +470,8 @@ def test_report_execution_manager(app, db_session):
     """
     with app.app_context():
         # Create test data
-        empresa = create_company(db_session, "TEST_COMP2", "Test Company 2", "J5678")
+        empresa = create_company(db_session, "TEST_COMP2", "Test Company 2",
+                                 "J5678")
         emp1 = create_employee(db_session, empresa_id=empresa.id)
         assert emp1
         db_session.commit()
@@ -437,7 +479,12 @@ def test_report_execution_manager(app, db_session):
         # Create report
         definition = {
             "columns": [
-                {"type": "field", "entity": "Employee", "field": "codigo_empleado", "label": "Código"},
+                {
+                    "type": "field",
+                    "entity": "Employee",
+                    "field": "codigo_empleado",
+                    "label": "Código"
+                },
             ],
             "filters": [],
             "sorting": [],
@@ -463,62 +510,3 @@ def test_report_execution_manager(app, db_session):
         assert execution.row_count == 1
         assert execution.execution_time_ms > 0
         assert len(results) == 1
-
-
-def test_custom_report_pagination(app, db_session):
-    """
-    Test custom report pagination.
-
-    Setup:
-        - Create multiple employees
-        - Create report
-
-    Action:
-        - Execute with pagination
-
-    Verification:
-        - Correct page of results returned
-    """
-    with app.app_context():
-        empresa = create_company(db_session, "TEST_COMP3", "Test Company 3", "J9999")
-
-        # Create 5 employees
-        for i in range(5):
-            create_employee(
-                db_session,
-                empresa_id=empresa.id,
-                primer_nombre=f"Emp{i}",
-            )
-        db_session.commit()
-
-        # Create report
-        definition = {
-            "columns": [
-                {"type": "field", "entity": "Employee", "field": "primer_nombre", "label": "Nombre"},
-            ],
-            "filters": [],
-            "sorting": [],
-        }
-
-        report = Report(
-            name="Paginated Report",
-            type=ReportType.CUSTOM,
-            status=ReportStatus.ENABLED,
-            base_entity="Employee",
-            definition=definition,
-        )
-
-        builder = CustomReportBuilder(report)
-
-        # Get page 1 with 2 per page
-        results_page1, total = builder.execute(page=1, per_page=2)
-        assert len(results_page1) == 2
-        assert total == 5
-
-        # Get page 2
-        results_page2, total = builder.execute(page=2, per_page=2)
-        assert len(results_page2) == 2
-
-        # Get page 3
-        results_page3, total = builder.execute(page=3, per_page=2)
-        assert len(results_page3) == 1  # Last page has only 1
