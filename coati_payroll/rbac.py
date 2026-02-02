@@ -30,6 +30,10 @@ from flask_login import current_user
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
 
+# Constants
+MESSAGE_LOGIN_REQUIRED = "Favor iniciar sesión para acceder al sistema."
+ROUTE_AUTH_LOGIN = "auth.login"
+
 
 def require_role(*allowed_roles: str):
     """Decorator to restrict access to specific user roles.
@@ -54,8 +58,8 @@ def require_role(*allowed_roles: str):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                flash(_("Favor iniciar sesión para acceder al sistema."), "warning")
-                return redirect(url_for("auth.login"))
+                flash(_(MESSAGE_LOGIN_REQUIRED), "warning")
+                return redirect(url_for(ROUTE_AUTH_LOGIN))
 
             # Check if user has required role
             if current_user.tipo not in allowed_roles:
@@ -88,8 +92,8 @@ def require_read_access():
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                flash(_("Favor iniciar sesión para acceder al sistema."), "warning")
-                return redirect(url_for("auth.login"))
+                flash(_(MESSAGE_LOGIN_REQUIRED), "warning")
+                return redirect(url_for(ROUTE_AUTH_LOGIN))
 
             # All authenticated users can read
             return f(*args, **kwargs)
@@ -121,8 +125,8 @@ def require_write_access():
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                flash(_("Favor iniciar sesión para acceder al sistema."), "warning")
-                return redirect(url_for("auth.login"))
+                flash(_(MESSAGE_LOGIN_REQUIRED), "warning")
+                return redirect(url_for(ROUTE_AUTH_LOGIN))
 
             # Only admin and hhrr can write
             if current_user.tipo not in [TipoUsuario.ADMIN, TipoUsuario.HHRR]:

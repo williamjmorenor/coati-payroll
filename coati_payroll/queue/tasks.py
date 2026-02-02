@@ -35,6 +35,10 @@ from coati_payroll.model import (
 from coati_payroll.nomina_engine import NominaEngine
 from coati_payroll.queue import get_queue_driver
 
+# Error messages
+ERROR_PLANILLA_NOT_FOUND = "Planilla not found"
+ERROR_NO_ACTIVE_EMPLOYEES = "No active employees found"
+
 # Get the queue driver
 queue = get_queue_driver()
 
@@ -158,7 +162,7 @@ def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str,
         if not planilla:
             return {
                 "success": False,
-                "error": "Planilla not found",
+                "error": ERROR_PLANILLA_NOT_FOUND,
             }
 
         # Reset nomina state for retry
@@ -314,7 +318,7 @@ def calculate_employee_payroll(
             return {
                 "empleado_id": empleado_id,
                 "success": False,
-                "error": "Planilla not found",
+                "error": ERROR_PLANILLA_NOT_FOUND,
             }
 
         # Initialize engine for single employee
@@ -403,7 +407,7 @@ def process_payroll_parallel(
         if not empleados:
             return {
                 "success": False,
-                "error": "No active employees found",
+                "error": ERROR_NO_ACTIVE_EMPLOYEES,
             }
 
         # Create nomina record first
@@ -507,11 +511,11 @@ def process_large_payroll(
         if not planilla:
             log.error(f"Planilla {planilla_id} not found")
             nomina.estado = NominaEstado.ERROR
-            nomina.errores_calculo = {"error": "Planilla not found"}
+            nomina.errores_calculo = {"error": ERROR_PLANILLA_NOT_FOUND}
             db.session.commit()
             return {
                 "success": False,
-                "error": "Planilla not found",
+                "error": ERROR_PLANILLA_NOT_FOUND,
             }
 
         # Get all active employees
@@ -520,11 +524,11 @@ def process_large_payroll(
         if not empleados:
             log.warning(f"No active employees found for planilla {planilla_id}")
             nomina.estado = NominaEstado.ERROR
-            nomina.errores_calculo = {"error": "No active employees found"}
+            nomina.errores_calculo = {"error": ERROR_NO_ACTIVE_EMPLOYEES}
             db.session.commit()
             return {
                 "success": False,
-                "error": "No active employees found",
+                "error": ERROR_NO_ACTIVE_EMPLOYEES,
             }
 
         # Initialize progress tracking

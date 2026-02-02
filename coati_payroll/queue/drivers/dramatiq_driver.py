@@ -9,6 +9,10 @@ from typing import Any, Callable
 from coati_payroll.log import log
 from coati_payroll.queue.driver import QueueDriver
 
+# Error messages
+ERROR_DRAMATIQ_NOT_AVAILABLE = "Dramatiq driver not available"
+ERROR_HUEY_NOT_AVAILABLE = "Huey driver not available"
+
 
 class DramatiqDriver(QueueDriver):
     """Queue driver using Dramatiq with Redis backend.
@@ -168,7 +172,7 @@ class DramatiqDriver(QueueDriver):
             Dictionary with queue statistics
         """
         if not self._available or not self._broker:
-            return {"error": "Dramatiq driver not available"}
+            return {"error": ERROR_DRAMATIQ_NOT_AVAILABLE}
 
         try:
             import redis
@@ -213,7 +217,7 @@ class DramatiqDriver(QueueDriver):
             Dictionary with task status (limited in Dramatiq without results backend)
         """
         if not self._available:
-            return {"status": "error", "error": "Dramatiq driver not available"}
+            return {"status": "error", "error": ERROR_DRAMATIQ_NOT_AVAILABLE}
 
         try:
             # Dramatiq messages don't have built-in result tracking
@@ -240,7 +244,7 @@ class DramatiqDriver(QueueDriver):
             Dictionary with aggregated status (limited without Results backend)
         """
         if not self._available:
-            return {"error": "Dramatiq driver not available"}
+            return {"error": ERROR_DRAMATIQ_NOT_AVAILABLE}
 
         total = len(task_ids)
 

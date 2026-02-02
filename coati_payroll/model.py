@@ -57,6 +57,18 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# Foreign Key Constants
+FK_MONEDA_ID = "moneda.id"
+FK_EMPRESA_ID = "empresa.id"
+FK_PLANILLA_ID = "planilla.id"
+FK_PERCEPCION_ID = "percepcion.id"
+FK_DEDUCCION_ID = "deduccion.id"
+FK_PRESTACION_ID = "prestacion.id"
+FK_EMPLEADO_ID = "empleado.id"
+FK_NOMINA_ID = "nomina.id"
+FK_REPORT_ID = "report.id"
+
+
 # Utiliza orjon para serializar/deserializar JSON
 class OrjsonType(TypeDecorator):
     impl = JSON
@@ -204,8 +216,8 @@ class TipoCambio(database.Model, BaseTabla):
     )
 
     fecha = database.Column(database.Date, nullable=False, default=date.today, index=True)
-    moneda_origen_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=False)
-    moneda_destino_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=False)
+    moneda_origen_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=False)
+    moneda_destino_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=False)
     tasa = database.Column(database.Numeric(24, 10), nullable=False)
 
     moneda_origen = database.relationship(
@@ -258,11 +270,11 @@ class Empleado(database.Model, BaseTabla):
     salario_base = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
 
     # Moneda del sueldo: FK hacia moneda.id (consistencia)
-    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=True)
+    moneda_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=True)
     moneda = database.relationship("Moneda", back_populates="empleados")
 
     # Empresa a la que pertenece el empleado
-    empresa_id = database.Column(database.String(26), database.ForeignKey("empresa.id"), nullable=True)
+    empresa_id = database.Column(database.String(26), database.ForeignKey(FK_EMPRESA_ID), nullable=True)
     empresa = database.relationship("Empresa", back_populates="empleados")
 
     correo = database.Column(database.String(150), nullable=True, index=True)
@@ -379,11 +391,11 @@ class Planilla(database.Model, BaseTabla):
     tipo_planilla_id = database.Column(database.String(26), database.ForeignKey("tipo_planilla.id"), nullable=False)
     tipo_planilla = database.relationship("TipoPlanilla", back_populates="planillas")
 
-    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=False)
+    moneda_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=False)
     moneda = database.relationship("Moneda", back_populates="planillas")
 
     # Empresa a la que pertenece la planilla
-    empresa_id = database.Column(database.String(26), database.ForeignKey("empresa.id"), nullable=True)
+    empresa_id = database.Column(database.String(26), database.ForeignKey(FK_EMPRESA_ID), nullable=True)
     empresa = database.relationship("Empresa", back_populates="planillas")
 
     # Período Fiscal
@@ -673,8 +685,8 @@ class PlanillaIngreso(database.Model, BaseTabla):
     __tablename__ = "planilla_ingreso"
     __table_args__ = (database.UniqueConstraint("planilla_id", "percepcion_id", name="uq_planilla_percepcion"),)
 
-    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
-    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=False)
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=False)
+    percepcion_id = database.Column(database.String(26), database.ForeignKey(FK_PERCEPCION_ID), nullable=False)
 
     orden = database.Column(database.Integer, nullable=True, default=0)
     editable = database.Column(database.Boolean(), default=True)
@@ -706,8 +718,8 @@ class PlanillaDeduccion(database.Model, BaseTabla):
     __tablename__ = "planilla_deduccion"
     __table_args__ = (database.UniqueConstraint("planilla_id", "deduccion_id", name="uq_planilla_deduccion"),)
 
-    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
-    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=False)
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=False)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey(FK_DEDUCCION_ID), nullable=False)
 
     # Priority order for applying deductions (lower = higher priority)
     prioridad = database.Column(database.Integer, nullable=False, default=100)
@@ -734,8 +746,8 @@ class PlanillaPrestacion(database.Model, BaseTabla):
     __tablename__ = "planilla_prestacion"
     __table_args__ = (database.UniqueConstraint("planilla_id", "prestacion_id", name="uq_planilla_prestacion"),)
 
-    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
-    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=False)
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=False)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey(FK_PRESTACION_ID), nullable=False)
 
     orden = database.Column(database.Integer, nullable=True, default=0)
     editable = database.Column(database.Boolean(), default=True)
@@ -757,7 +769,7 @@ class PlanillaReglaCalculo(database.Model, BaseTabla):
     __tablename__ = "planilla_regla_calculo"
     __table_args__ = (database.UniqueConstraint("planilla_id", "regla_calculo_id", name="uq_planilla_regla"),)
 
-    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=False)
     regla_calculo_id = database.Column(database.String(26), database.ForeignKey("regla_calculo.id"), nullable=False)
 
     # Order of execution (important for dependent calculations)
@@ -777,8 +789,8 @@ class PlanillaEmpleado(database.Model, BaseTabla):
     __tablename__ = "planilla_empleado"
     __table_args__ = (database.UniqueConstraint("planilla_id", "empleado_id", name="uq_planilla_empleado"),)
 
-    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
-    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False)
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=False)
+    empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False)
 
     activo = database.Column(database.Boolean(), default=True)
     fecha_inicio = database.Column(database.Date, nullable=False, default=date.today)
@@ -792,7 +804,7 @@ class PlanillaEmpleado(database.Model, BaseTabla):
 class Nomina(database.Model, BaseTabla):
     __tablename__ = "nomina"
 
-    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=False)
     fecha_generacion = database.Column(database.DateTime, nullable=False, default=utc_now)
     periodo_inicio = database.Column(database.Date, nullable=False)
     periodo_fin = database.Column(database.Date, nullable=False)
@@ -856,8 +868,8 @@ class Nomina(database.Model, BaseTabla):
 class NominaEmpleado(database.Model, BaseTabla):
     __tablename__ = "nomina_empleado"
 
-    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False)
-    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False)
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
+    empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False)
 
     salario_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     total_ingresos = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
@@ -865,7 +877,7 @@ class NominaEmpleado(database.Model, BaseTabla):
     salario_neto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
 
     # datos para auditoria/moneda
-    moneda_origen_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=True)
+    moneda_origen_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=True)
     tipo_cambio_aplicado = database.Column(database.Numeric(24, 10), nullable=True)
 
     nomina = database.relationship("Nomina", back_populates="nomina_empleados")
@@ -894,9 +906,9 @@ class NominaDetalle(database.Model, BaseTabla):
     orden = database.Column(database.Integer, nullable=True, default=0)
 
     # referencias opcionales a catálogo original (si aplica)
-    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
-    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
-    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
+    percepcion_id = database.Column(database.String(26), database.ForeignKey(FK_PERCEPCION_ID), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey(FK_DEDUCCION_ID), nullable=True)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey(FK_PRESTACION_ID), nullable=True)
 
     nomina_empleado = database.relationship("NominaEmpleado", back_populates="nomina_detalles")
     percepcion = database.relationship("Percepcion", back_populates="nomina_detalles", foreign_keys=[percepcion_id])
@@ -917,7 +929,7 @@ class LiquidacionConcepto(database.Model, BaseTabla):
 class Liquidacion(database.Model, BaseTabla):
     __tablename__ = "liquidacion"
 
-    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False, index=True)
     concepto_id = database.Column(
         database.String(26), database.ForeignKey("liquidacion_concepto.id"), nullable=True, index=True
     )
@@ -952,9 +964,9 @@ class LiquidacionDetalle(database.Model, BaseTabla):
     monto = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     orden = database.Column(database.Integer, nullable=True, default=0)
 
-    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
-    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
-    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
+    percepcion_id = database.Column(database.String(26), database.ForeignKey(FK_PERCEPCION_ID), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey(FK_DEDUCCION_ID), nullable=True)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey(FK_PRESTACION_ID), nullable=True)
 
     liquidacion = database.relationship("Liquidacion", back_populates="detalles")
     percepcion = database.relationship("Percepcion", foreign_keys=[percepcion_id])
@@ -966,9 +978,9 @@ class NominaNovedad(database.Model, BaseTabla):
     __tablename__ = "nomina_novedad"
 
     # FK a la ejecución de Nómina (el ID que solicitaste)
-    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False)
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
     # FK al empleado afectado
-    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False)
+    empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False)
 
     tipo_valor = database.Column(database.String(20), nullable=True)  # horas | dias | cantidad | monto | porcentaje
 
@@ -982,8 +994,8 @@ class NominaNovedad(database.Model, BaseTabla):
     fecha_novedad = database.Column(database.Date, nullable=True)
 
     # Referencia opcional al maestro para saber qué regla aplica
-    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
-    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
+    percepcion_id = database.Column(database.String(26), database.ForeignKey(FK_PERCEPCION_ID), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey(FK_DEDUCCION_ID), nullable=True)
 
     # ---- Vacation Module Integration ----
     # Flag to mark this novelty as vacation/time-off
@@ -1024,12 +1036,12 @@ class ComprobanteContable(database.Model, BaseTabla):
 
     __tablename__ = "comprobante_contable"
 
-    nomina_id = database.Column(database.String(26), database.ForeignKey("nomina.id"), nullable=False, unique=True)
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False, unique=True)
 
     # Header information
     fecha_calculo = database.Column(database.Date, nullable=False, default=date.today)
     concepto = database.Column(database.String(255), nullable=True)  # Description/concept of the voucher
-    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=True)
+    moneda_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=True)
 
     # Summary totals (calculated from lines)
     total_debitos = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -1083,7 +1095,7 @@ class ComprobanteContableLinea(database.Model, BaseTabla):
     )
 
     # Employee information for audit trail (denormalized for easier reporting)
-    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False, index=True)
     empleado_codigo = database.Column(database.String(20), nullable=False, index=True)
     empleado_nombre = database.Column(database.String(255), nullable=False)
 
@@ -1123,7 +1135,7 @@ class HistorialSalario(database.Model, BaseTabla):
 
     empleado_id = database.Column(
         database.String(26),
-        database.ForeignKey("empleado.id"),
+        database.ForeignKey(FK_EMPLEADO_ID),
         nullable=False,
         index=True,
     )
@@ -1158,7 +1170,7 @@ class VacacionEmpleado(database.Model, BaseTabla):
 
     empleado_id = database.Column(
         database.String(26),
-        database.ForeignKey("empleado.id"),
+        database.ForeignKey(FK_EMPLEADO_ID),
         nullable=False,
         index=True,
     )
@@ -1184,7 +1196,7 @@ class VacacionDescansada(database.Model, BaseTabla):
 
     empleado_id = database.Column(
         database.String(26),
-        database.ForeignKey("empleado.id"),
+        database.ForeignKey(FK_EMPLEADO_ID),
         nullable=False,
         index=True,
     )
@@ -1213,7 +1225,7 @@ class TablaImpuesto(database.Model, BaseTabla):
 
     deduccion_id = database.Column(
         database.String(26),
-        database.ForeignKey("deduccion.id"),
+        database.ForeignKey(FK_DEDUCCION_ID),
         nullable=False,
         index=True,
     )
@@ -1241,11 +1253,11 @@ class Adelanto(database.Model, BaseTabla):
 
     empleado_id = database.Column(
         database.String(26),
-        database.ForeignKey("empleado.id"),
+        database.ForeignKey(FK_EMPLEADO_ID),
         nullable=False,
         index=True,
     )
-    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey(FK_DEDUCCION_ID), nullable=True)
 
     # Tipo: prestamo o adelanto
     tipo = database.Column(database.String(20), nullable=False, default="adelanto")  # adelanto, prestamo
@@ -1261,7 +1273,7 @@ class Adelanto(database.Model, BaseTabla):
     saldo_pendiente = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
 
     # Currency support - loan can be in different currency than payroll
-    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=True)
+    moneda_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=True)
     # Track amounts in both loan currency and payroll currency
     monto_deducido_moneda_planilla = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     monto_aplicado_moneda_prestamo = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
@@ -1490,9 +1502,9 @@ class ReglaCalculo(database.Model, BaseTabla):
     activo = database.Column(database.Boolean(), default=True, nullable=False)
 
     # Optional relationship to specific deduction/perception/benefit
-    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
-    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
-    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey(FK_DEDUCCION_ID), nullable=True)
+    percepcion_id = database.Column(database.String(26), database.ForeignKey(FK_PERCEPCION_ID), nullable=True)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey(FK_PRESTACION_ID), nullable=True)
 
     # Audit and governance fields
     estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
@@ -1546,7 +1558,7 @@ class AcumuladoAnual(database.Model, BaseTabla):
 
     empleado_id = database.Column(
         database.String(26),
-        database.ForeignKey("empleado.id"),
+        database.ForeignKey(FK_EMPLEADO_ID),
         nullable=False,
         index=True,
     )
@@ -1563,7 +1575,7 @@ class AcumuladoAnual(database.Model, BaseTabla):
     # Each company tracks accumulated values separately as they are distinct legal entities
     empresa_id = database.Column(
         database.String(26),
-        database.ForeignKey("empresa.id"),
+        database.ForeignKey(FK_EMPRESA_ID),
         nullable=False,
         index=True,
     )
@@ -1645,7 +1657,7 @@ class ConfiguracionCalculos(database.Model, BaseTabla):
     __table_args__ = (database.UniqueConstraint("empresa_id", "pais_id", name="uq_config_empresa_pais"),)
 
     # Optional relationships - can be None for global defaults
-    empresa_id = database.Column(database.String(26), database.ForeignKey("empresa.id"), nullable=True, index=True)
+    empresa_id = database.Column(database.String(26), database.ForeignKey(FK_EMPRESA_ID), nullable=True, index=True)
     pais_id = database.Column(database.String(26), nullable=True, index=True)  # Future: ForeignKey("pais.id")
 
     # Días base para nómina
@@ -1715,13 +1727,13 @@ class PrestacionAcumulada(database.Model, BaseTabla):
 
     empleado_id = database.Column(
         database.String(26),
-        database.ForeignKey("empleado.id"),
+        database.ForeignKey(FK_EMPLEADO_ID),
         nullable=False,
         index=True,
     )
     prestacion_id = database.Column(
         database.String(26),
-        database.ForeignKey("prestacion.id"),
+        database.ForeignKey(FK_PRESTACION_ID),
         nullable=False,
         index=True,
     )
@@ -1737,7 +1749,7 @@ class PrestacionAcumulada(database.Model, BaseTabla):
     mes = database.Column(database.Integer, nullable=False)  # 1-12
 
     # Currency tracking
-    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=False)
+    moneda_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=False)
 
     # Transaction amounts
     # For audit clarity, we store the transaction amount and running balance separately
@@ -1761,7 +1773,7 @@ class PrestacionAcumulada(database.Model, BaseTabla):
     # Balances accumulate per company as they are distinct legal entities
     empresa_id = database.Column(
         database.String(26),
-        database.ForeignKey("empresa.id"),
+        database.ForeignKey(FK_EMPRESA_ID),
         nullable=True,
         index=True,
     )
@@ -1810,13 +1822,13 @@ class CargaInicialPrestacion(database.Model, BaseTabla):
 
     empleado_id = database.Column(
         database.String(26),
-        database.ForeignKey("empleado.id"),
+        database.ForeignKey(FK_EMPLEADO_ID),
         nullable=False,
         index=True,
     )
     prestacion_id = database.Column(
         database.String(26),
-        database.ForeignKey("prestacion.id"),
+        database.ForeignKey(FK_PRESTACION_ID),
         nullable=False,
         index=True,
     )
@@ -1826,7 +1838,7 @@ class CargaInicialPrestacion(database.Model, BaseTabla):
     mes_corte = database.Column(database.Integer, nullable=False)  # 1-12
 
     # Currency and exchange rate
-    moneda_id = database.Column(database.String(26), database.ForeignKey("moneda.id"), nullable=False)
+    moneda_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=False)
     saldo_acumulado = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     tipo_cambio = database.Column(database.Numeric(24, 10), nullable=True, default=Decimal("1.0000000000"))
     saldo_convertido = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -1881,11 +1893,11 @@ class VacationPolicy(database.Model, BaseTabla):
 
     # Payroll association (primary) - policies are tied to specific payrolls
     # This allows different vacation rules for different payrolls in consolidated companies
-    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=True, index=True)
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=True, index=True)
     planilla = database.relationship("Planilla", backref="vacation_policies")
 
     # Company association (secondary, optional) - for policies that apply to entire company
-    empresa_id = database.Column(database.String(26), database.ForeignKey("empresa.id"), nullable=True, index=True)
+    empresa_id = database.Column(database.String(26), database.ForeignKey(FK_EMPRESA_ID), nullable=True, index=True)
     empresa = database.relationship("Empresa")
 
     # Status
@@ -1986,7 +1998,7 @@ class VacationAccount(database.Model, BaseTabla):
     )
 
     # Employee and policy association
-    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False, index=True)
     empleado = database.relationship("Empleado")
 
     policy_id = database.Column(
@@ -2036,7 +2048,7 @@ class VacationLedger(database.Model, BaseTabla):
     account = database.relationship("VacationAccount", back_populates="ledger_entries")
 
     # Employee reference (for easier querying)
-    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False)
+    empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False)
     empleado = database.relationship("Empleado")
 
     # Transaction details
@@ -2080,7 +2092,7 @@ class VacationNovelty(database.Model, BaseTabla):
     )
 
     # Employee and account
-    empleado_id = database.Column(database.String(26), database.ForeignKey("empleado.id"), nullable=False, index=True)
+    empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False, index=True)
     empleado = database.relationship("Empleado")
 
     account_id = database.Column(
@@ -2175,7 +2187,7 @@ class ReportRole(database.Model, BaseTabla):
     __table_args__ = (database.UniqueConstraint("report_id", "role", name="uq_report_role"),)
 
     # Foreign key to report
-    report_id = database.Column(database.String(26), database.ForeignKey("report.id"), nullable=False)
+    report_id = database.Column(database.String(26), database.ForeignKey(FK_REPORT_ID), nullable=False)
     report = database.relationship("Report", back_populates="permissions")
 
     # User role (admin, hhrr, audit)
@@ -2197,7 +2209,7 @@ class ReportExecution(database.Model, BaseTabla):
     __tablename__ = "report_execution"
 
     # Foreign key to report
-    report_id = database.Column(database.String(26), database.ForeignKey("report.id"), nullable=False)
+    report_id = database.Column(database.String(26), database.ForeignKey(FK_REPORT_ID), nullable=False)
     report = database.relationship("Report", back_populates="executions")
 
     # Execution status
@@ -2237,7 +2249,7 @@ class ReportAudit(database.Model, BaseTabla):
     __tablename__ = "report_audit"
 
     # Foreign key to report
-    report_id = database.Column(database.String(26), database.ForeignKey("report.id"), nullable=False)
+    report_id = database.Column(database.String(26), database.ForeignKey(FK_REPORT_ID), nullable=False)
     report = database.relationship("Report", back_populates="audit_entries")
 
     # Action performed
@@ -2264,9 +2276,9 @@ class ConceptoAuditLog(database.Model, BaseTabla):
     __tablename__ = "concepto_audit_log"
 
     # Foreign keys to the concepts (only one will be set)
-    percepcion_id = database.Column(database.String(26), database.ForeignKey("percepcion.id"), nullable=True)
-    deduccion_id = database.Column(database.String(26), database.ForeignKey("deduccion.id"), nullable=True)
-    prestacion_id = database.Column(database.String(26), database.ForeignKey("prestacion.id"), nullable=True)
+    percepcion_id = database.Column(database.String(26), database.ForeignKey(FK_PERCEPCION_ID), nullable=True)
+    deduccion_id = database.Column(database.String(26), database.ForeignKey(FK_DEDUCCION_ID), nullable=True)
+    prestacion_id = database.Column(database.String(26), database.ForeignKey(FK_PRESTACION_ID), nullable=True)
 
     # Type of concept (for easier filtering)
     tipo_concepto = database.Column(
@@ -2307,7 +2319,7 @@ class PlanillaAuditLog(database.Model, BaseTabla):
     __tablename__ = "planilla_audit_log"
 
     # Foreign key to planilla
-    planilla_id = database.Column(database.String(26), database.ForeignKey("planilla.id"), nullable=False)
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=False)
 
     # Action performed
     accion = database.Column(
