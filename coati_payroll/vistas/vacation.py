@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 \r\n # Copyright 2025 - 2026 BMO Soluciones, S.A.
+# SPDX-License-Identifier: Apache-2.0 \r\n # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+# Copyright 2025 - 2026 BMO Soluciones, S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -334,6 +335,19 @@ def leave_request_new():
     from coati_payroll.forms import VacationLeaveRequestForm
 
     form = VacationLeaveRequestForm()
+    # Asignar choices de empleados activos antes de validar
+    empleados = (
+        db.session.execute(
+            db.select(Empleado)
+            .filter(Empleado.activo.is_(True))
+            .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
+        )
+        .scalars()
+        .all()
+    )
+    form.empleado_id.choices = [("", _("-- Seleccionar Empleado --"))] + [
+        (e.id, f"{e.codigo_empleado} - {e.primer_nombre} {e.primer_apellido}") for e in empleados
+    ]
 
     if form.validate_on_submit():
         # Validate that employee has a vacation account
