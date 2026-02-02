@@ -105,15 +105,60 @@ def process_last_three_salaries(form):
 @employee_bp.route("/")
 @require_read_access()
 def index():
-    """List all employees with pagination."""
+    """List all employees with pagination and filters."""
     page = request.args.get("page", 1, type=int)
+
+    # Get filter parameters
+    buscar = request.args.get("buscar", type=str)
+    estado = request.args.get("estado", type=str)
+    area = request.args.get("area", type=str)
+    cargo = request.args.get("cargo", type=str)
+
+    # Build query with filters
+    query = db.select(Empleado)
+
+    if buscar:
+        search_term = f"%{buscar}%"
+        query = query.filter(
+            db.or_(
+                Empleado.primer_nombre.ilike(search_term),
+                Empleado.segundo_nombre.ilike(search_term),
+                Empleado.primer_apellido.ilike(search_term),
+                Empleado.segundo_apellido.ilike(search_term),
+                Empleado.codigo_empleado.ilike(search_term),
+                Empleado.identificacion_personal.ilike(search_term),
+            )
+        )
+
+    if estado == "activo":
+        query = query.filter(Empleado.activo == True)  # noqa: E712
+    elif estado == "inactivo":
+        query = query.filter(Empleado.activo == False)  # noqa: E712
+
+    if area:
+        query = query.filter(Empleado.area.ilike(f"%{area}%"))
+
+    if cargo:
+        query = query.filter(Empleado.cargo.ilike(f"%{cargo}%"))
+
+    query = query.order_by(Empleado.primer_apellido, Empleado.primer_nombre)
+
     pagination = db.paginate(
-        db.select(Empleado).order_by(Empleado.primer_apellido, Empleado.primer_nombre),
+        query,
         page=page,
         per_page=PER_PAGE,
         error_out=False,
     )
-    return render_template("modules/employee/index.html", employees=pagination.items, pagination=pagination)
+
+    return render_template(
+        "modules/employee/index.html",
+        employees=pagination.items,
+        pagination=pagination,
+        buscar=buscar,
+        estado=estado,
+        area=area,
+        cargo=cargo,
+    )
 
 
 @employee_bp.route("/new", methods=["GET", "POST"])

@@ -18,11 +18,35 @@ empresa_bp = Blueprint("empresa", __name__, url_prefix="/empresa")
 @empresa_bp.route("/")
 @require_read_access()
 def index():
-    """List all companies."""
+    """List all companies with pagination and filters."""
     page = request.args.get("page", 1, type=int)
     per_page = 20
 
-    query = db.select(Empresa).order_by(Empresa.razon_social)
+    # Get filter parameters
+    buscar = request.args.get("buscar", type=str)
+    estado = request.args.get("estado", type=str)
+
+    # Build query with filters
+    query = db.select(Empresa)
+
+    if buscar:
+        search_term = f"%{buscar}%"
+        query = query.filter(
+            db.or_(
+                Empresa.razon_social.ilike(search_term),
+                Empresa.nombre_comercial.ilike(search_term),
+                Empresa.codigo.ilike(search_term),
+                Empresa.ruc.ilike(search_term),
+            )
+        )
+
+    if estado == "activo":
+        query = query.filter(Empresa.activo == True)  # noqa: E712
+    elif estado == "inactivo":
+        query = query.filter(Empresa.activo == False)  # noqa: E712
+
+    query = query.order_by(Empresa.razon_social)
+
     pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
     empresas = pagination.items
 
@@ -30,6 +54,8 @@ def index():
         "modules/empresa/index.html",
         empresas=empresas,
         pagination=pagination,
+        buscar=buscar,
+        estado=estado,
     )
 
 

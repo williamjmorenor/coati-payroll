@@ -17,6 +17,57 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         </a>
     </div>
 
+    <!-- Filter Form -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-funnel me-1"></i>{{ _('Filtros') }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('employee.index') }}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="buscar" class="form-label">{{ _('Buscar') }}</label>
+                        <input type="text" class="form-control" id="buscar" name="buscar" 
+                               value="{{ buscar or '' }}" 
+                               placeholder="{{ _('Nombre, código o identificación...') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="estado" class="form-label">{{ _('Estado') }}</label>
+                        <select class="form-select" id="estado" name="estado">
+                            <option value="">{{ _('Todos') }}</option>
+                            <option value="activo" {% if estado == 'activo' %}selected{% endif %}>{{ _('Activo') }}</option>
+                            <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>{{ _('Inactivo') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="area" class="form-label">{{ _('Área') }}</label>
+                        <input type="text" class="form-control" id="area" name="area" 
+                               value="{{ area or '' }}" 
+                               placeholder="{{ _('Filtrar por área...') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="cargo" class="form-label">{{ _('Cargo') }}</label>
+                        <input type="text" class="form-control" id="cargo" name="cargo" 
+                               value="{{ cargo or '' }}" 
+                               placeholder="{{ _('Filtrar por cargo...') }}">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>{{ _('Buscar') }}
+                        </button>
+                        <a href="{{ url_for('employee.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>{{ _('Limpiar') }}
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">

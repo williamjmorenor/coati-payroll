@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 -#}
 
 {% extends 'base.html' %}
-{% from 'macros.html' import render_messages %}
+{% from 'macros.html' import render_messages, render_pagination %}
 
 {% block content %}
 <div class="container">
@@ -15,6 +15,54 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <a href="{{ url_for('liquidacion.nueva') }}" class="btn btn-primary">
             <i class="bi bi-plus-circle me-1"></i>{{ _('Nueva') }}
         </a>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-funnel me-1"></i>{{ _('Filtros') }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('liquidacion.index') }}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="buscar" class="form-label">{{ _('Buscar Empleado') }}</label>
+                        <input type="text" class="form-control" id="buscar" name="buscar" 
+                               value="{{ buscar or '' }}" 
+                               placeholder="{{ _('Nombre, código o identificación...') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="estado" class="form-label">{{ _('Estado') }}</label>
+                        <select class="form-select" id="estado" name="estado">
+                            <option value="">{{ _('Todos') }}</option>
+                            <option value="borrador" {% if estado == 'borrador' %}selected{% endif %}>{{ _('Borrador') }}</option>
+                            <option value="aplicada" {% if estado == 'aplicada' %}selected{% endif %}>{{ _('Aplicada') }}</option>
+                            <option value="pagada" {% if estado == 'pagada' %}selected{% endif %}>{{ _('Pagada') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fecha_desde" class="form-label">{{ _('Fecha desde') }}</label>
+                        <input type="date" class="form-control" id="fecha_desde" name="fecha_desde" value="{{ fecha_desde or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fecha_hasta" class="form-label">{{ _('Fecha hasta') }}</label>
+                        <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta" value="{{ fecha_hasta or '' }}">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>{{ _('Buscar') }}
+                        </button>
+                        <a href="{{ url_for('liquidacion.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>{{ _('Limpiar') }}
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="card">
@@ -54,6 +102,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         </tbody>
                     </table>
                 </div>
+                {{ render_pagination(pagination, 'liquidacion.index') }}
             {% else %}
                 <p class="text-muted mb-0">{{ _('No hay liquidaciones registradas.') }}</p>
             {% endif %}
