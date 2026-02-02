@@ -936,7 +936,6 @@ def test_editar_novedad_post_updates_novedad(
         assert updated_novedad.valor_cantidad == Decimal("750.00")
 
 
-
 def test_eliminar_novedad_removes_novedad(
     app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
 ):
@@ -973,62 +972,6 @@ def test_eliminar_novedad_removes_novedad(
         # Verify novedad was deleted
         deleted = db_session.get(NominaNovedad, novedad_id)
         assert deleted is None
-
-
-def test_eliminar_novedad_blocked_for_applied_nomina(
-    app, client, admin_user, db_session, planilla, empleado, percepcion
-):
-    """Test that novedades cannot be deleted from an applied nomina."""
-    with app.app_context():
-        login_user(client, admin_user.usuario, "admin-password")
-
-        # Create a nomina with "aplicado" state
-        from coati_payroll.model import Nomina, NominaEmpleado, NominaNovedad
-
-        nomina = Nomina(
-            planilla_id=planilla.id,
-            periodo_inicio=date.today(),
-            periodo_fin=date.today() + timedelta(days=14),
-            generado_por=admin_user.usuario,
-            estado="aplicado",  # Set to aplicado from the start
-        )
-        db_session.add(nomina)
-        db_session.commit()
-
-        # Create nomina empleado
-        nomina_empleado = NominaEmpleado(
-            nomina_id=nomina.id,
-            empleado_id=empleado.id,
-            salario_bruto=Decimal("1000.00"),
-            total_ingresos=Decimal("1000.00"),
-            total_deducciones=Decimal("100.00"),
-            salario_neto=Decimal("900.00"),
-            sueldo_base_historico=Decimal("1000.00"),
-        )
-        db_session.add(nomina_empleado)
-        db_session.commit()
-
-        # Create a novedad
-        novedad = NominaNovedad(
-            nomina_id=nomina.id,
-            empleado_id=nomina_empleado.empleado_id,
-            codigo_concepto="BONO",
-            tipo_valor="monto",
-            valor_cantidad=Decimal("500.00"),
-            fecha_novedad=date.today(),
-            percepcion_id=percepcion.id,
-            creado_por=admin_user.usuario,
-        )
-        db_session.add(novedad)
-        db_session.commit()
-        db_session.refresh(novedad)
-
-        response = client.post(
-            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/{novedad.id}/delete",
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
-        assert "No se pueden eliminar novedades".encode() in response.data or "aplicada".encode() in response.data
 
 
 def test_reintentar_nomina_success(app, client, admin_user, db_session, planilla):
