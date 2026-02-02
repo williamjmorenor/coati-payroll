@@ -53,18 +53,73 @@ def moneda(app, db_session):
 
         moneda = Moneda(codigo="USD", nombre="Dolar", simbolo="$", activo=True)
         db_session.add(moneda)
-        from tests.factories.employee_factory import create_employee
+        db_session.commit()
+        db_session.refresh(moneda)
+        return moneda
 
-        empleado = create_employee(
-            db_session,
-            empresa.id,
-            codigo="EMP001",
+
+@pytest.fixture
+def empresa(app, db_session):
+    """Create an Empresa for testing."""
+    with app.app_context():
+        from coati_payroll.model import Empresa
+
+        empresa = Empresa(
+            codigo="TEST",
+            razon_social="Test Company S.A.",
+            ruc="123456789",
+            activo=True,
+        )
+        db_session.add(empresa)
+        db_session.commit()
+        db_session.refresh(empresa)
+        return empresa
+
+
+@pytest.fixture
+def empleado(app, db_session, empresa, moneda):
+    """Create an Empleado for testing."""
+    with app.app_context():
+        from coati_payroll.model import Empleado
+
+        empleado = Empleado(
+            empresa_id=empresa.id,
+            codigo_empleado="EMP001",
             primer_nombre="Juan",
             primer_apellido="Perez",
             identificacion_personal="001-010101-0001A",
             salario_base=Decimal("1000.00"),
+            moneda_id=moneda.id,
+            fecha_alta=date.today(),
+            activo=True,
         )
+        db_session.add(empleado)
+        db_session.commit()
+        db_session.refresh(empleado)
         return empleado
+
+
+@pytest.fixture
+def planilla(app, db_session, tipo_planilla, moneda, empresa, admin_user):
+    """Create a Planilla for testing."""
+    with app.app_context():
+        from coati_payroll.model import Planilla
+
+        planilla = Planilla(
+            nombre="Test Planilla",
+            descripcion="Planilla de prueba",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            empresa_id=empresa.id,
+            periodo_fiscal_inicio=date(2024, 1, 1),
+            periodo_fiscal_fin=date(2024, 12, 31),
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(planilla)
+        db_session.commit()
+        db_session.refresh(planilla)
+        return planilla
 
 
 @pytest.fixture
