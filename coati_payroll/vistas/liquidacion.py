@@ -28,9 +28,59 @@ ROUTE_LIQUIDACION_VER = "liquidacion.ver"
 @login_required
 @require_read_access()
 def index():
-    """List liquidaciones."""
-    liquidaciones = db.session.execute(db.select(Liquidacion).order_by(Liquidacion.creado.desc())).scalars().all()
-    return render_template("modules/liquidacion/index.html", liquidaciones=liquidaciones)
+    """List liquidaciones with pagination and filters."""
+    from coati_payroll.vistas.constants import PER_PAGE
+
+    page = request.args.get("page", 1, type=int)
+
+    # Get filter parameters
+    buscar = request.args.get("buscar", type=str)
+    estado = request.args.get("estado", type=str)
+    fecha_desde = request.args.get("fecha_desde", type=str)
+    fecha_hasta = request.args.get("fecha_hasta", type=str)
+
+    # Build query with filters
+    query = db.select(Liquidacion).join(Liquidacion.empleado)
+
+    if buscar:
+        search_term = f"%{buscar}%"
+        query = query.filter(
+            db.or_(
+                Empleado.primer_nombre.ilike(search_term),
+                Empleado.segundo_nombre.ilike(search_term),
+                Empleado.primer_apellido.ilike(search_term),
+                Empleado.segundo_apellido.ilike(search_term),
+                Empleado.codigo_empleado.ilike(search_term),
+                Empleado.identificacion_personal.ilike(search_term),
+            )
+        )
+
+    if estado:
+        query = query.filter(Liquidacion.estado == estado)
+
+    if fecha_desde:
+        query = query.filter(Liquidacion.fecha_calculo >= fecha_desde)
+    if fecha_hasta:
+        query = query.filter(Liquidacion.fecha_calculo <= fecha_hasta)
+
+    query = query.order_by(Liquidacion.creado.desc())
+
+    pagination = db.paginate(
+        query,
+        page=page,
+        per_page=PER_PAGE,
+        error_out=False,
+    )
+
+    return render_template(
+        "modules/liquidacion/index.html",
+        liquidaciones=pagination.items,
+        pagination=pagination,
+        buscar=buscar,
+        estado=estado,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+    )
 
 
 @liquidacion_bp.route("/nueva", methods=["GET", "POST"])

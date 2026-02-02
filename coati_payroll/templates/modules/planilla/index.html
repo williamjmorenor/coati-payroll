@@ -4,6 +4,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 -#}
 
 {% extends "base.html" %}
+{% from 'macros.html' import render_pagination %}
 
 {% block content %}
 <div class="container-fluid">
@@ -24,6 +25,67 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             {% endfor %}
         {% endif %}
     {% endwith %}
+
+    <!-- Filter Form -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-funnel me-1"></i>{{ _('Filtros') }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('planilla.index') }}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="buscar" class="form-label">{{ _('Buscar') }}</label>
+                        <input type="text" class="form-control" id="buscar" name="buscar" 
+                               value="{{ buscar or '' }}" 
+                               placeholder="{{ _('Nombre o descripción...') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tipo_planilla_id" class="form-label">{{ _('Tipo de Planilla') }}</label>
+                        <select class="form-select" id="tipo_planilla_id" name="tipo_planilla_id">
+                            <option value="">{{ _('Todos') }}</option>
+                            {% for tipo in tipos_planilla %}
+                                <option value="{{ tipo.id }}" {% if tipo_planilla_id == tipo.id %}selected{% endif %}>
+                                    {{ tipo.codigo }} - {{ tipo.descripcion or tipo.codigo }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="empresa_id" class="form-label">{{ _('Empresa') }}</label>
+                        <select class="form-select" id="empresa_id" name="empresa_id">
+                            <option value="">{{ _('Todas') }}</option>
+                            {% for empresa in empresas %}
+                                <option value="{{ empresa.id }}" {% if empresa_id == empresa.id %}selected{% endif %}>
+                                    {{ empresa.codigo }} - {{ empresa.razon_social }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="estado" class="form-label">{{ _('Estado') }}</label>
+                        <select class="form-select" id="estado" name="estado">
+                            <option value="">{{ _('Todos') }}</option>
+                            <option value="activo" {% if estado == 'activo' %}selected{% endif %}>{{ _('Activo') }}</option>
+                            <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>{{ _('Inactivo') }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>{{ _('Buscar') }}
+                        </button>
+                        <a href="{{ url_for('planilla.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>{{ _('Limpiar') }}
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="card shadow-sm">
         <div class="card-body">
@@ -134,6 +196,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </tbody>
                 </table>
             </div>
+            {{ render_pagination(pagination, 'planilla.index') }}
             {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-calculator display-1 text-muted"></i>

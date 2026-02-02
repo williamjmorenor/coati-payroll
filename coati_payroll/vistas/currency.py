@@ -19,18 +19,45 @@ currency_bp = Blueprint("currency", __name__, url_prefix="/currency")
 @currency_bp.route("/")
 @require_read_access()
 def index():
-    """List all currencies with pagination."""
+    """List all currencies with pagination and filters."""
     page = request.args.get("page", 1, type=int)
+
+    # Get filter parameters
+    buscar = request.args.get("buscar", type=str)
+    estado = request.args.get("estado", type=str)
+
+    # Build query with filters
+    query = db.select(Moneda)
+
+    if buscar:
+        search_term = f"%{buscar}%"
+        query = query.filter(
+            db.or_(
+                Moneda.codigo.ilike(search_term),
+                Moneda.nombre.ilike(search_term),
+            )
+        )
+
+    if estado == "activo":
+        query = query.filter(Moneda.activo == True)  # noqa: E712
+    elif estado == "inactivo":
+        query = query.filter(Moneda.activo == False)  # noqa: E712
+
+    query = query.order_by(Moneda.codigo)
+
     pagination = db.paginate(
-        db.select(Moneda).order_by(Moneda.codigo),
+        query,
         page=page,
         per_page=PER_PAGE,
         error_out=False,
     )
+
     return render_template(
         "modules/currency/index.html",
         currencies=pagination.items,
         pagination=pagination,
+        buscar=buscar,
+        estado=estado,
     )
 
 

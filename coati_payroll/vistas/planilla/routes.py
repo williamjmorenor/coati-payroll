@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 """Main routes for planilla management."""
 
-from flask import flash, redirect, render_template, url_for
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from coati_payroll.model import db, Planilla
@@ -19,9 +19,71 @@ from coati_payroll.vistas.planilla import planilla_bp
 @planilla_bp.route("/")
 @require_read_access()
 def index():
-    """List all planillas."""
-    planillas = db.session.execute(db.select(Planilla).order_by(Planilla.nombre)).scalars().all()
-    return render_template("modules/planilla/index.html", planillas=planillas)
+    """List all planillas with pagination and filters."""
+    from coati_payroll.model import TipoPlanilla, Empresa
+    from coati_payroll.vistas.constants import PER_PAGE
+
+    page = request.args.get("page", 1, type=int)
+
+    # Get filter parameters
+    buscar = request.args.get("buscar", type=str)
+    estado = request.args.get("estado", type=str)
+    tipo_planilla_id = request.args.get("tipo_planilla_id", type=str) if request.args.get("tipo_planilla_id") else None
+    empresa_id = request.args.get("empresa_id", type=str) if request.args.get("empresa_id") else None
+
+    # Build query with filters
+    query = db.select(Planilla)
+
+    if buscar:
+        search_term = f"%{buscar}%"
+        query = query.filter(
+            db.or_(
+                Planilla.nombre.ilike(search_term),
+                Planilla.descripcion.ilike(search_term),
+            )
+        )
+
+    if estado == "activo":
+        query = query.filter(Planilla.activo == True)  # noqa: E712
+    elif estado == "inactivo":
+        query = query.filter(Planilla.activo == False)  # noqa: E712
+
+    if tipo_planilla_id:
+        query = query.filter(Planilla.tipo_planilla_id == tipo_planilla_id)
+
+    if empresa_id:
+        query = query.filter(Planilla.empresa_id == empresa_id)
+
+    query = query.order_by(Planilla.nombre)
+
+    pagination = db.paginate(
+        query,
+        page=page,
+        per_page=PER_PAGE,
+        error_out=False,
+    )
+
+    # Get choices for filter dropdowns
+    tipos_planilla = (
+        db.session.execute(db.select(TipoPlanilla).filter_by(activo=True).order_by(TipoPlanilla.codigo))
+        .scalars()
+        .all()
+    )
+    empresas = (
+        db.session.execute(db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)).scalars().all()
+    )
+
+    return render_template(
+        "modules/planilla/index.html",
+        planillas=pagination.items,
+        pagination=pagination,
+        buscar=buscar,
+        estado=estado,
+        tipo_planilla_id=tipo_planilla_id,
+        empresa_id=empresa_id,
+        tipos_planilla=tipos_planilla,
+        empresas=empresas,
+    )
 
 
 @planilla_bp.route("/new", methods=["GET", "POST"])
