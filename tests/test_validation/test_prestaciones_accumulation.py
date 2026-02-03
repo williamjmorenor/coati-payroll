@@ -437,7 +437,7 @@ def test_prestaciones_monthly_settlement(app, db_session):
             codigo="INSS_PATRONAL",
             nombre="INSS Patronal",
             descripcion="Seguro Social Patronal - Liquidación Mensual",
-            tipo="seguro_social",
+            tipo="social_security",
             tipo_acumulacion="monthly",  # Settles monthly
             formula_tipo="porcentaje_salario",
             porcentaje=Decimal("19.00"),  # 19% employer contribution

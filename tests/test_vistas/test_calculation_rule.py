@@ -27,7 +27,7 @@ def test_calculation_rule_index_lists_rules(app, client, admin_user, db_session)
             jurisdiccion="Nicaragua",
             moneda_referencia="NIO",
             version=1,
-            tipo_regla="impuesto",
+            tipo_regla="tax",
             vigente_desde=date(2025, 1, 1),
             activo=True,
             esquema_json={},
@@ -150,7 +150,7 @@ def test_calculation_rule_supports_versioning(app, client, admin_user, db_sessio
                 "jurisdiccion": "Nicaragua",
                 "moneda_referencia": "NIO",
                 "version": 1,
-                "tipo_regla": "impuesto",
+                "tipo_regla": "tax",
                 "vigente_desde": "2025-01-01",
                 "vigente_hasta": "2025-06-30",
                 "activo": "y",
@@ -168,7 +168,7 @@ def test_calculation_rule_supports_versioning(app, client, admin_user, db_sessio
                 "jurisdiccion": "Nicaragua",
                 "moneda_referencia": "NIO",
                 "version": 2,
-                "tipo_regla": "impuesto",
+                "tipo_regla": "tax",
                 "vigente_desde": "2025-07-01",
                 "activo": "y",
             },
@@ -189,7 +189,7 @@ def test_calculation_rule_different_rule_types(app, client, admin_user, db_sessi
         login_user(client, admin_user.usuario, "admin-password")
 
         rule_types = [
-            ("IMP_RULE", "impuesto", "Tax Rule"),
+            ("IMP_RULE", "tax", "Tax Rule"),
             ("DED_RULE", "deduccion", "Deduction Rule"),
             ("PRES_RULE", "prestacion", "Benefit Rule"),
             ("OTH_RULE", "otro", "Other Rule"),

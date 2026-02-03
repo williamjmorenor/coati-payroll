@@ -396,7 +396,7 @@ def test_load_benefit_concepts_creates_concepts(app, db_session):
 
         assert vacation_provision is not None
         assert vacation_provision.codigo == "PAID_VACATION_PROVISION"
-        assert vacation_provision.tipo == "patronal"
+        assert vacation_provision.tipo == "employer"
         assert vacation_provision.activo is True
 
 

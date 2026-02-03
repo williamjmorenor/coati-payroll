@@ -170,7 +170,7 @@ def test_deducciones_adelantos_y_recalculo_no_duplica_abonos(app, db_session):
             empresa_id=empresa.id,
             pais_id=None,
             activo=True,
-            liquidacion_modo_dias="calendario",
+            liquidacion_modo_dias="calendar",
             liquidacion_factor_calendario=30,
             liquidacion_factor_laboral=28,
         )
