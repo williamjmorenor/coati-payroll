@@ -511,7 +511,7 @@ def test_vacation_calendar_vs_vacation_days_distinction(app, db_session):
 
         ledger_entry.balance_after = vacation_account.current_balance
         vacation_novelty.ledger_entry_id = ledger_entry.id
-        vacation_novelty.estado = "disfrutado"
+        vacation_novelty.estado = "taken"
 
         db_session.commit()
 

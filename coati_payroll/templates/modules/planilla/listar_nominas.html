@@ -49,11 +49,11 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             ({{ nomina.empleados_procesados }}/{{ nomina.total_empleados }})
                             {% endif %}
                         </span>
-                        {% elif nomina.estado == 'generado' %}
+                        {% elif nomina.estado == 'generated' %}
                         <span class="badge bg-warning">Generado</span>
-                        {% elif nomina.estado == 'aprobado' %}
+                        {% elif nomina.estado == 'approved' %}
                         <span class="badge bg-info">Aprobado</span>
-                        {% elif nomina.estado == 'aplicado' %}
+                        {% elif nomina.estado == 'applied' %}
                         <span class="badge bg-success">Aplicado</span>
                         {% elif nomina.estado == 'error' %}
                         <span class="badge bg-danger">Error</span>

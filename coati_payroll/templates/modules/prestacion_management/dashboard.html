@@ -44,7 +44,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 <div class="card-body">
                     <h5 class="card-title">{{ _('Cargas Pendientes') }}</h5>
                     <p class="display-4">{{ pending_loads }}</p>
-                    <a href="{{ url_for('carga_inicial_prestacion.index', estado='borrador') }}" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('carga_inicial_prestacion.index', estado='draft') }}" class="btn btn-sm btn-primary">
                         {{ _('Ver Pendientes') }}
                     </a>
                 </div>

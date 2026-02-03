@@ -200,7 +200,7 @@ def aplicar(carga_id):
         db.session.add(transaccion)
 
         # Update carga status
-        carga.estado = "aplicado"
+        carga.estado = "applied"
         carga.fecha_aplicacion = datetime.now()
         carga.aplicado_por = current_user.usuario if current_user.is_authenticated else None
         carga.modificado_por = current_user.usuario if current_user.is_authenticated else None

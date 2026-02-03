@@ -38,7 +38,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         <div class="col-md-6">
                             <p>
                                 <strong>{{ _('Estado Actual') }}:</strong>
-                                {% if concept.estado_aprobacion == 'aprobado' %}
+                                {% if concept.estado_aprobacion == 'approved' %}
                                     <span class="badge bg-success">{{ _('Aprobado') }}</span>
                                 {% else %}
                                     <span class="badge bg-warning text-dark">{{ _('Borrador') }}</span>
@@ -91,13 +91,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                         {% if log.estado_anterior and log.estado_nuevo %}
                                             <span class="badge bg-secondary">{{ log.estado_anterior }}</span>
                                             <i class="bi bi-arrow-right"></i>
-                                            {% if log.estado_nuevo == 'aprobado' %}
+                                            {% if log.estado_nuevo == 'approved' %}
                                                 <span class="badge bg-success">{{ log.estado_nuevo }}</span>
                                             {% else %}
                                                 <span class="badge bg-warning text-dark">{{ log.estado_nuevo }}</span>
                                             {% endif %}
                                         {% elif log.estado_nuevo %}
-                                            {% if log.estado_nuevo == 'aprobado' %}
+                                            {% if log.estado_nuevo == 'approved' %}
                                                 <span class="badge bg-success">{{ log.estado_nuevo }}</span>
                                             {% else %}
                                                 <span class="badge bg-warning text-dark">{{ log.estado_nuevo }}</span>

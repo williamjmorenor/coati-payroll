@@ -382,7 +382,7 @@ def test_create_demo_nomina(app, db_session):
         # Verify nomina created
         assert nomina is not None
         assert nomina.planilla_id == planilla1.id
-        assert nomina.estado == "generado"
+        assert nomina.estado == "generated"
         assert nomina.total_bruto == Decimal("0.00")
         assert nomina.total_deducciones == Decimal("0.00")
         assert nomina.total_neto == Decimal("0.00")

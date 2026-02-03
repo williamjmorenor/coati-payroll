@@ -53,16 +53,25 @@ def process_custom_fields_from_request(custom_fields):
     Returns:
         Dictionary with custom field names as keys and their converted values
     """
+    def normalize_custom_field_type(tipo_dato: str) -> str:
+        return {
+            "texto": "text",
+            "entero": "integer",
+            "decimal": "decimal",
+            "booleano": "boolean",
+        }.get(tipo_dato, tipo_dato)
+
     datos_adicionales = {}
     for field in custom_fields:
         field_name = f"custom_{field.nombre_campo}"
         raw_value = request.form.get(field_name, "")
+        tipo_dato = normalize_custom_field_type(field.tipo_dato)
 
-        match field.tipo_dato:
-            case "texto":
+        match tipo_dato:
+            case "text":
                 stripped = raw_value.strip() if raw_value else ""
                 datos_adicionales[field.nombre_campo] = stripped or None
-            case "entero":
+            case "integer":
                 try:
                     datos_adicionales[field.nombre_campo] = int(raw_value) if raw_value else None
                 except ValueError:
@@ -72,7 +81,7 @@ def process_custom_fields_from_request(custom_fields):
                     datos_adicionales[field.nombre_campo] = float(raw_value) if raw_value else None
                 except ValueError:
                     datos_adicionales[field.nombre_campo] = None
-            case "booleano":
+            case "boolean":
                 # Checkbox will send value only if checked
                 datos_adicionales[field.nombre_campo] = field_name in request.form
             case _:

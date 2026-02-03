@@ -137,10 +137,10 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     # Set tipo_concepto based on existing data
     if request.method == "GET":
         if novedad.percepcion_id:
-            form.tipo_concepto.data = "percepcion"
+            form.tipo_concepto.data = "income"
             form.percepcion_id.data = novedad.percepcion_id
         elif novedad.deduccion_id:
-            form.tipo_concepto.data = "deduccion"
+            form.tipo_concepto.data = "deduction"
             form.deduccion_id.data = novedad.deduccion_id
 
     if form.validate_on_submit():

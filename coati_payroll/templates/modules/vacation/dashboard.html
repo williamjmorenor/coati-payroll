@@ -44,7 +44,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 <div class="card-body">
                     <h5 class="card-title">{{ _('Solicitudes Pendientes') }}</h5>
                     <p class="display-4">{{ pending_requests }}</p>
-                    <a href="{{ url_for('vacation.leave_request_index', estado='pendiente') }}" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('vacation.leave_request_index', estado='pending') }}" class="btn btn-sm btn-primary">
                         {{ _('Ver Solicitudes') }}
                     </a>
                 </div>
@@ -130,13 +130,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <td>{{ request.start_date.strftime('%Y-%m-%d') }} - {{ request.end_date.strftime('%Y-%m-%d') }}</td>
                             <td>{{ request.units }}</td>
                             <td>
-                                {% if request.estado == 'pendiente' %}
+                                {% if request.estado == 'pending' %}
                                     <span class="badge bg-warning">{{ _('Pendiente') }}</span>
-                                {% elif request.estado == 'aprobado' %}
+                                {% elif request.estado == 'approved' %}
                                     <span class="badge bg-success">{{ _('Aprobado') }}</span>
-                                {% elif request.estado == 'rechazado' %}
+                                {% elif request.estado == 'rejected' %}
                                     <span class="badge bg-danger">{{ _('Rechazado') }}</span>
-                                {% elif request.estado == 'disfrutado' %}
+                                {% elif request.estado == 'taken' %}
                                     <span class="badge bg-info">{{ _('Disfrutado') }}</span>
                                 {% endif %}
                             </td>

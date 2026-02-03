@@ -14,7 +14,18 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Standard library
 # <-------------------------------------------------------------------------> #
-from enum import StrEnum
+import enum
+from enum import Enum
+
+
+if hasattr(enum, "StrEnum"):
+    StrEnum = enum.StrEnum
+else:
+    class StrEnum(str, Enum):
+        """Fallback StrEnum implementation for Python < 3.11."""
+
+        def __str__(self) -> str:
+            return str(self.value)
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries

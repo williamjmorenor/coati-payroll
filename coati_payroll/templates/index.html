@@ -285,11 +285,11 @@ Soluciones, S.A. -#} {% extends 'base.html' %} {% block content %}
                                     </td>
                                     <td>
                                         {% if nomina.estado == 'calculado' or
-                                        nomina.estado == 'generado' %}
+                                        nomina.estado == 'generated' %}
                                         <span class="badge bg-warning"
                                             >{{ _('Generada') }}</span
                                         >
-                                        {% elif nomina.estado == 'aplicado' %}
+                                        {% elif nomina.estado == 'applied' %}
                                         <span class="badge bg-success"
                                             >{{ _('Aplicada') }}</span
                                         >

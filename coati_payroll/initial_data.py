@@ -488,8 +488,8 @@ def load_benefit_concepts() -> None:
             concept.codigo = concept_data["codigo"]
             concept.nombre = str(concept_data["nombre"])
             concept.descripcion = str(concept_data["descripcion"])
-            concept.tipo = "patronal"
-            concept.formula_tipo = "fijo"
+            concept.tipo = "employer"
+            concept.formula_tipo = "fixed"
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True

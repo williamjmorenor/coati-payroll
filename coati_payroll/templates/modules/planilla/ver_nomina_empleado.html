@@ -222,11 +222,11 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             </div>
             <div class="col-md-4">
                 <strong>Estado:</strong><br>
-                {% if nomina.estado == 'generado' %}
+                {% if nomina.estado == 'generated' %}
                 <span class="badge badge-warning">Generado</span>
-                {% elif nomina.estado == 'aprobado' %}
+                {% elif nomina.estado == 'approved' %}
                 <span class="badge badge-info">Aprobado</span>
-                {% elif nomina.estado == 'aplicado' %}
+                {% elif nomina.estado == 'applied' %}
                 <span class="badge badge-success">Aplicado</span>
                 {% endif %}
             </div>

@@ -7,7 +7,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Standard library
 # <-------------------------------------------------------------------------> #
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
@@ -107,7 +107,7 @@ def validar_acceso(usuario_id: str, acceso: str, /) -> bool:
         clave_validada = False
 
     if clave_validada:
-        registro.ultimo_acceso = datetime.now(UTC)
+        registro.ultimo_acceso = datetime.now(timezone.utc)
         database.session.commit()
 
     return clave_validada

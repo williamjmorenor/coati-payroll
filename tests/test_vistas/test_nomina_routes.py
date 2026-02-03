@@ -542,7 +542,7 @@ def test_aprobar_nomina_success(app, client, admin_user, db_session, planilla, n
 
         # Ensure nomina is in correct state
         nomina = db.session.merge(nomina)
-        nomina.estado = "generado"
+        nomina.estado = "generated"
         db.session.commit()
         db.session.refresh(nomina)
         assert nomina.estado == "generated"
@@ -556,11 +556,11 @@ def test_aprobar_nomina_success(app, client, admin_user, db_session, planilla, n
 
 
 def test_aprobar_nomina_wrong_state(app, client, admin_user, db_session, planilla, nomina):
-    """Test that aprobar_nomina only works for 'generado' state."""
+    """Test that aprobar_nomina only works for 'generated' state."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Change state to something other than 'generado'
+        # Change state to something other than 'generated'
         nomina.estado = "approved"
         db_session.commit()
 
@@ -577,7 +577,7 @@ def test_aprobar_nomina_with_errors_fails(app, client, admin_user, db_session, p
 
         # Add error log entry
         nomina = db.session.merge(nomina)
-        nomina.estado = "generado"
+        nomina.estado = "generated"
         nomina.log_procesamiento = [{"status": "error", "message": "Test error"}]
         db.session.commit()
 
@@ -622,15 +622,15 @@ def test_aplicar_nomina_success(app, client, admin_user, db_session, planilla, n
 
 
 def test_aplicar_nomina_wrong_state(app, client, admin_user, db_session, planilla, nomina):
-    """Test that aplicar_nomina only works for 'aprobado' state."""
+    """Test that aplicar_nomina only works for 'approved' state."""
     with app.app_context():
         from coati_payroll.model import db
 
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Ensure state is 'generado'
+        # Ensure state is 'generated'
         nomina = db.session.merge(nomina)
-        nomina.estado = "generado"
+        nomina.estado = "generated"
         db.session.commit()
         db.session.refresh(nomina)
         assert nomina.estado == "generated"
@@ -694,7 +694,7 @@ def test_reintentar_nomina_wrong_state(app, client, admin_user, db_session, plan
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Keep state as 'generado'
+        # Keep state as 'generated'
         assert nomina.estado == "generated"
 
         response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/reintentar", follow_redirects=False)
@@ -730,12 +730,12 @@ def test_recalcular_nomina_success(mock_recalcular, app, client, admin_user, db_
 
 
 def test_recalcular_nomina_aplicado_state_fails(app, client, admin_user, db_session, planilla, nomina):
-    """Test that recalcular_nomina fails for 'aplicado' state."""
+    """Test that recalcular_nomina fails for 'applied' state."""
     with app.app_context():
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Set nomina to aplicado state
-        nomina.estado = "aplicado"
+        # Set nomina to applied state
+        nomina.estado = "applied"
         db_session.commit()
 
         response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/recalcular", follow_redirects=False)
@@ -844,9 +844,9 @@ def test_regenerar_comprobante_contable_invalid_state(app, client, admin_user, d
 
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Set nomina to 'generado' state (invalid for regenerar_comprobante)
+        # Set nomina to 'generated' state (invalid for regenerar_comprobante)
         nomina = db.session.merge(nomina)
-        nomina.estado = "generado"
+        nomina.estado = "generated"
         db_session.commit()
 
         response = client.post(
@@ -864,9 +864,9 @@ def test_regenerar_comprobante_contable_aplicado_state_success(app, client, admi
 
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Set nomina to 'aplicado' state
+        # Set nomina to 'applied' state
         nomina = db.session.merge(nomina)
-        nomina.estado = "aplicado"
+        nomina.estado = "applied"
         nomina.periodo_fin = date(2025, 1, 31)
         db_session.commit()
 
@@ -896,9 +896,9 @@ def test_regenerar_comprobante_contable_pagado_state_success(app, client, admin_
 
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Set nomina to 'pagado' state
+        # Set nomina to 'paid' state
         nomina = db.session.merge(nomina)
-        nomina.estado = "pagado"
+        nomina.estado = "paid"
         nomina.periodo_fin = date(2025, 1, 31)
         db_session.commit()
 
@@ -928,9 +928,9 @@ def test_regenerar_comprobante_contable_with_warnings(app, client, admin_user, d
 
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Set nomina to 'aplicado' state
+        # Set nomina to 'applied' state
         nomina = db.session.merge(nomina)
-        nomina.estado = "aplicado"
+        nomina.estado = "applied"
         nomina.periodo_fin = date(2025, 1, 31)
         db_session.commit()
 
@@ -960,9 +960,9 @@ def test_regenerar_comprobante_contable_handles_exception(app, client, admin_use
 
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Set nomina to 'aplicado' state
+        # Set nomina to 'applied' state
         nomina = db.session.merge(nomina)
-        nomina.estado = "aplicado"
+        nomina.estado = "applied"
         nomina.periodo_fin = date(2025, 1, 31)
         db_session.commit()
 
@@ -991,9 +991,9 @@ def test_regenerar_comprobante_contable_uses_fecha_calculo_original(
 
         login_user(client, admin_user.usuario, "admin-password")
 
-        # Set nomina to 'aplicado' state with fecha_calculo_original
+        # Set nomina to 'applied' state with fecha_calculo_original
         nomina = db.session.merge(nomina)
-        nomina.estado = "aplicado"
+        nomina.estado = "applied"
         nomina.fecha_calculo_original = date(2025, 1, 15)
         nomina.periodo_fin = date(2025, 1, 31)
         db_session.commit()

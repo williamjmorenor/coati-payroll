@@ -47,7 +47,7 @@ def test_prestamo_index_with_filters(app, client, admin_user, db_session):
         - Create employee and loan
 
     Action:
-        - GET /prestamo/?empleado_id=X&estado=borrador&tipo=prestamo
+        - GET /prestamo/?empleado_id=X&estado=draft&tipo=prestamo
 
     Verification:
         - Page loads successfully with filters applied
@@ -95,7 +95,7 @@ def test_prestamo_index_with_filters(app, client, admin_user, db_session):
         login_user(client, admin_user.usuario, "admin-password")
 
         # Test filters
-        response = client.get(f"/prestamo/?empleado_id={empleado.id}&estado=borrador&tipo=prestamo")
+        response = client.get(f"/prestamo/?empleado_id={empleado.id}&estado=draft&tipo=prestamo")
         assert response.status_code == 200
 
 

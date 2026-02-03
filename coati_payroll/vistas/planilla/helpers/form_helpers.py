@@ -78,7 +78,12 @@ def get_concepto_ids_from_form(form) -> tuple[str | None, str | None]:
     percepcion_id = None
     deduccion_id = None
 
-    if form.tipo_concepto.data == "income":
+    tipo_concepto = {
+        "percepcion": "income",
+        "deduccion": "deduction",
+    }.get(form.tipo_concepto.data, form.tipo_concepto.data)
+
+    if tipo_concepto == "income":
         percepcion_id = form.percepcion_id.data if form.percepcion_id.data else None
     else:
         deduccion_id = form.deduccion_id.data if form.deduccion_id.data else None

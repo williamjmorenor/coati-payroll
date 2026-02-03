@@ -810,8 +810,8 @@ class Nomina(database.Model, BaseTabla):
     periodo_fin = database.Column(database.Date, nullable=False)
     generado_por = database.Column(database.String(150), nullable=True)
     estado = database.Column(
-        database.String(30), nullable=False, default="generado"
-    )  # calculando, generado, aprobado, aplicado, pagado, anulado, error (all are valid permanent states)
+        database.String(30), nullable=False, default="generated"
+    )  # calculating, generated, approved, applied, paid, cancelled, error (all are valid permanent states)
 
     total_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     total_deducciones = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
@@ -1010,8 +1010,8 @@ class NominaNovedad(database.Model, BaseTabla):
     fecha_inicio_descanso = database.Column(database.Date, nullable=True)
     fecha_fin_descanso = database.Column(database.Date, nullable=True)
 
-    # Estado de la novedad: 'pendiente' | 'ejecutada'
-    # Se marca como 'ejecutada' cuando la nómina cambia a estado 'aplicado'
+    # Estado de la novedad: 'pending' | 'executed'
+    # Se marca como 'executed' cuando la nómina cambia a estado 'applied'
     estado = database.Column(database.String(20), nullable=False, default="pending")  # Use NovedadEstado enum values
 
     nomina = database.relationship("Nomina", back_populates="novedades")
@@ -1436,10 +1436,10 @@ class CampoPersonalizado(database.Model, BaseTabla):
     The actual values are stored in the `datos_adicionales` JSON column of Empleado.
 
     Field types:
-    - texto: String/text field
-    - entero: Integer field
+    - text: String/text field
+    - integer: Integer field
     - decimal: Decimal/float field
-    - booleano: Boolean (true/false) field
+    - boolean: Boolean (true/false) field
     """
 
     __tablename__ = "campo_personalizado"
@@ -1448,8 +1448,8 @@ class CampoPersonalizado(database.Model, BaseTabla):
     nombre_campo = database.Column(database.String(100), unique=True, nullable=False, index=True)
     etiqueta = database.Column(database.String(150), nullable=False)
     tipo_dato = database.Column(
-        database.String(20), nullable=False, default="texto"
-    )  # texto, entero, decimal, booleano
+        database.String(20), nullable=False, default="text"
+    )  # text, integer, decimal, boolean
     descripcion = database.Column(database.String(255), nullable=True)
     orden = database.Column(database.Integer, nullable=False, default=0)
     activo = database.Column(database.Boolean(), default=True, nullable=False)
@@ -1803,9 +1803,9 @@ class CargaInicialPrestacion(database.Model, BaseTabla):
     balances are transferred to the PrestacionAcumulada table.
 
     Workflow:
-    1. Create entry in 'borrador' (draft) status
+    1. Create entry in 'draft' status
     2. Review and validate the data
-    3. Change status to 'aplicado' (applied)
+    3. Change status to 'applied'
     4. System automatically creates corresponding PrestacionAcumulada record
     """
 

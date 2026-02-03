@@ -652,7 +652,7 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
     nomina.planilla_id = planilla.id
     nomina.periodo_inicio = next_month_start
     nomina.periodo_fin = next_month_end
-    nomina.estado = "generado"
+    nomina.estado = "generated"
     nomina.total_bruto = Decimal("0.00")
     nomina.total_deducciones = Decimal("0.00")
     nomina.total_neto = Decimal("0.00")

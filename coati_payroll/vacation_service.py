@@ -394,7 +394,7 @@ class VacationService:
 
             vac_novelty = db.session.get(VacationNovelty, nomina_novedad.vacation_novelty_id)
 
-            if not vac_novelty or vac_novelty.estado != "aprobado":
+            if not vac_novelty or vac_novelty.estado != "approved":
                 continue
 
             # Skip if already processed (has ledger entry)
@@ -425,7 +425,7 @@ class VacationService:
 
             # Link ledger entry to novelty
             vac_novelty.ledger_entry_id = ledger_entry.id
-            vac_novelty.estado = "disfrutado"
+            vac_novelty.estado = "taken"
 
             db.session.add(ledger_entry)
             db.session.flush()

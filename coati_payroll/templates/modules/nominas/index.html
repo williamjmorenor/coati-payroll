@@ -51,11 +51,11 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         <select class="form-select" id="estado" name="estado">
                             <option value="">{{ _('Todos') }}</option>
                             <option value="calculando" {% if estado == 'calculando' %}selected{% endif %}>{{ _('Calculando') }}</option>
-                            <option value="generado" {% if estado == 'generado' %}selected{% endif %}>{{ _('Generado') }}</option>
-                            <option value="aprobado" {% if estado == 'aprobado' %}selected{% endif %}>{{ _('Aprobado') }}</option>
-                            <option value="aplicado" {% if estado == 'aplicado' %}selected{% endif %}>{{ _('Aplicado') }}</option>
-                            <option value="pagado" {% if estado == 'pagado' %}selected{% endif %}>{{ _('Pagado') }}</option>
-                            <option value="anulado" {% if estado == 'anulado' %}selected{% endif %}>{{ _('Anulado') }}</option>
+                            <option value="generated" {% if estado == 'generated' %}selected{% endif %}>{{ _('Generado') }}</option>
+                            <option value="approved" {% if estado == 'approved' %}selected{% endif %}>{{ _('Aprobado') }}</option>
+                            <option value="applied" {% if estado == 'applied' %}selected{% endif %}>{{ _('Aplicado') }}</option>
+                            <option value="paid" {% if estado == 'paid' %}selected{% endif %}>{{ _('Pagado') }}</option>
+                            <option value="cancelled" {% if estado == 'cancelled' %}selected{% endif %}>{{ _('Anulado') }}</option>
                             <option value="error" {% if estado == 'error' %}selected{% endif %}>{{ _('Error') }}</option>
                         </select>
                     </div>
@@ -127,15 +127,15 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                     ({{ nomina.empleados_procesados }}/{{ nomina.total_empleados }})
                                     {% endif %}
                                 </span>
-                                {% elif nomina.estado == 'generado' %}
+                                {% elif nomina.estado == 'generated' %}
                                 <span class="badge bg-warning text-dark">{{ _('Generado') }}</span>
-                                {% elif nomina.estado == 'aprobado' %}
+                                {% elif nomina.estado == 'approved' %}
                                 <span class="badge bg-info">{{ _('Aprobado') }}</span>
-                                {% elif nomina.estado == 'aplicado' %}
+                                {% elif nomina.estado == 'applied' %}
                                 <span class="badge bg-success">{{ _('Aplicado') }}</span>
-                                {% elif nomina.estado == 'pagado' %}
+                                {% elif nomina.estado == 'paid' %}
                                 <span class="badge bg-success">{{ _('Pagado') }}</span>
-                                {% elif nomina.estado == 'anulado' %}
+                                {% elif nomina.estado == 'cancelled' %}
                                 <span class="badge bg-secondary">{{ _('Anulado') }}</span>
                                 {% elif nomina.estado == 'error' %}
                                 <span class="badge bg-danger">{{ _('Error') }}</span>
