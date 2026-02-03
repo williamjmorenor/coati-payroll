@@ -62,6 +62,8 @@ def app():
     with app.app_context():
         _db.session.remove()
         _db.drop_all()
+        # Dispose of the engine's connection pool to close all connections
+        _db.engine.dispose()
 
     # Clean up session directory
     import shutil
@@ -91,59 +93,62 @@ def db_session(app):
         connection = _db.engine.connect()
         transaction = connection.begin()
 
-        # Bind the session to the connection
-        # expire_on_commit=False prevents objects from being detached after commit
-        session = scoped_session(sessionmaker(bind=connection, expire_on_commit=False))
-
-        # Replace the default session with our transactional session
-        _db.session = session
-
-        # Disable Flask-SQLAlchemy's automatic session removal on teardown.
-        # The default teardown handler calls db.session.remove(), which discards
-        # the scoped session after each request. That detaches model instances
-        # created in the test before the test can refresh them, triggering
-        # "Instance ... is not persistent within this Session" errors. For the
-        # isolated in-memory DB used in tests we keep the session alive for the
-        # whole test and let the fixture clean it up explicitly.
         try:
-            app.teardown_appcontext_funcs = [
-                func for func in app.teardown_appcontext_funcs if getattr(func, "__name__", "") != "shutdown_session"
-            ]
-            # Also neutralize any remaining teardown calls to session.remove()
-            session.remove = lambda: None
-        except Exception:
-            pass
+            # Bind the session to the connection
+            # expire_on_commit=False prevents objects from being detached after commit
+            session = scoped_session(sessionmaker(bind=connection, expire_on_commit=False))
 
-        # IMPORTANT: For SQLite in-memory databases, schema is per-connection.
-        # Ensure tables exist on this connection, otherwise tests will see
-        # "no such table" errors.
-        # Note: Use checkfirst=False because we're on a fresh connection and want to
-        # create everything. However, we need to handle the edge case where
-        # SQLAlchemy's metadata has stale index references from a previous test run.
-        # We'll try checkfirst=False first, and if we get an index error, try again
-        # with checkfirst=True which should skip the problematic index.
-        try:
-            _db.metadata.create_all(bind=connection)
-        except Exception as exc:
-            from sqlalchemy.exc import OperationalError, ProgrammingError
-            error_msg = str(exc).lower()
-            # If we got an "index already exists" error, try again with checkfirst=True
-            if isinstance(exc, (OperationalError, ProgrammingError)) and "index" in error_msg and "already exists" in error_msg:
-                log.trace(f"Index already exists, retrying with checkfirst=True: {exc}")
-                # Try again with checkfirst=True to skip existing objects
-                _db.metadata.create_all(bind=connection, checkfirst=True)
-            else:
-                # Some other error, re-raise it
-                raise
+            # Replace the default session with our transactional session
+            _db.session = session
 
-        yield session
+            # Disable Flask-SQLAlchemy's automatic session removal on teardown.
+            # The default teardown handler calls db.session.remove(), which discards
+            # the scoped session after each request. That detaches model instances
+            # created in the test before the test can refresh them, triggering
+            # "Instance ... is not persistent within this Session" errors. For the
+            # isolated in-memory DB used in tests we keep the session alive for the
+            # whole test and let the fixture clean it up explicitly.
+            try:
+                app.teardown_appcontext_funcs = [
+                    func for func in app.teardown_appcontext_funcs if getattr(func, "__name__", "") != "shutdown_session"
+                ]
+                # Also neutralize any remaining teardown calls to session.remove()
+                session.remove = lambda: None
+            except Exception:
+                pass
 
-        # Rollback the transaction after the test
-        session.close()
-        # Only rollback if transaction is still active
-        if transaction.is_active:
-            transaction.rollback()
-        connection.close()
+            # IMPORTANT: For SQLite in-memory databases, schema is per-connection.
+            # Ensure tables exist on this connection, otherwise tests will see
+            # "no such table" errors.
+            # Note: Use checkfirst=False because we're on a fresh connection and want to
+            # create everything. However, we need to handle the edge case where
+            # SQLAlchemy's metadata has stale index references from a previous test run.
+            # We'll try checkfirst=False first, and if we get an index error, try again
+            # with checkfirst=True which should skip the problematic index.
+            try:
+                _db.metadata.create_all(bind=connection)
+            except Exception as exc:
+                from sqlalchemy.exc import OperationalError, ProgrammingError
+                error_msg = str(exc).lower()
+                # If we got an "index already exists" error, try again with checkfirst=True
+                if isinstance(exc, (OperationalError, ProgrammingError)) and "index" in error_msg and "already exists" in error_msg:
+                    log.trace(f"Index already exists, retrying with checkfirst=True: {exc}")
+                    # Try again with checkfirst=True to skip existing objects
+                    _db.metadata.create_all(bind=connection, checkfirst=True)
+                else:
+                    # Some other error, re-raise it
+                    raise
+
+            yield session
+
+            # Rollback the transaction after the test
+            session.close()
+            # Only rollback if transaction is still active
+            if transaction.is_active:
+                transaction.rollback()
+        finally:
+            # Always close the connection, even if an exception occurred
+            connection.close()
 
 
 @pytest.fixture(scope="function")
