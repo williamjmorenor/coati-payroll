@@ -18,7 +18,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <a href="{{ url_for('planilla.ver_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> {{ _('Volver a la Nómina') }}
         </a>
-        {% if nomina.estado != 'aplicado' %}
+        {% if nomina.estado != 'applied' %}
         <a href="{{ url_for('planilla.nueva_novedad', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> {{ _('Nueva Novedad') }}
         </a>
@@ -37,11 +37,11 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             </div>
             <div class="col-md-4">
                 <strong>{{ _('Estado:') }}</strong>
-                {% if nomina.estado == 'generado' %}
+                {% if nomina.estado == 'generated' %}
                 <span class="badge bg-warning text-dark">{{ _('Generado') }}</span>
-                {% elif nomina.estado == 'aprobado' %}
+                {% elif nomina.estado == 'approved' %}
                 <span class="badge bg-info">{{ _('Aprobado') }}</span>
-                {% elif nomina.estado == 'aplicado' %}
+                {% elif nomina.estado == 'applied' %}
                 <span class="badge bg-success">{{ _('Aplicado') }}</span>
                 {% endif %}
             </div>
@@ -49,7 +49,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     </div>
 </div>
 
-{% if nomina.estado == 'aplicado' %}
+{% if nomina.estado == 'applied' %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
     {{ _('Esta nómina ya ha sido aplicada. No se pueden agregar, editar o eliminar novedades.') }}
@@ -111,14 +111,14 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <td class="text-end">{{ "{:,.2f}".format(novedad.valor_cantidad|float) }}</td>
                     <td>{{ novedad.fecha_novedad.strftime('%d/%m/%Y') if novedad.fecha_novedad else '-' }}</td>
                     <td>
-                        {% if novedad.estado == 'ejecutada' %}
+                        {% if novedad.estado == 'executed' %}
                         <span class="badge bg-success">{{ _('Ejecutada') }}</span>
                         {% else %}
                         <span class="badge bg-warning text-dark">{{ _('Pendiente') }}</span>
                         {% endif %}
                     </td>
                     <td>
-                        {% if nomina.estado != 'aplicado' %}
+                        {% if nomina.estado != 'applied' %}
                         <a href="{{ url_for('planilla.editar_novedad', planilla_id=planilla.id, nomina_id=nomina.id, novedad_id=novedad.id) }}"
                            class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
                             <i class="bi bi-pencil"></i>
@@ -143,7 +143,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <div class="text-center py-5">
             <i class="bi bi-inbox display-4 text-muted"></i>
             <p class="text-muted mt-3">{{ _('No hay novedades registradas para esta nómina.') }}</p>
-            {% if nomina.estado != 'aplicado' %}
+            {% if nomina.estado != 'applied' %}
             <a href="{{ url_for('planilla.nueva_novedad', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> {{ _('Agregar Primera Novedad') }}
             </a>

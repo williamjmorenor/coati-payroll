@@ -33,9 +33,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             <div class="col-md-4">
                 <strong>Estado:</strong><br>
                 <span class="badge 
-                    {% if nomina.estado == 'generado' %}bg-success
-                    {% elif nomina.estado == 'aprobado' %}bg-info
-                    {% elif nomina.estado == 'aplicado' %}bg-primary
+                    {% if nomina.estado == 'generated' %}bg-success
+                    {% elif nomina.estado == 'approved' %}bg-info
+                    {% elif nomina.estado == 'applied' %}bg-primary
                     {% elif nomina.estado == 'error' %}bg-danger
                     {% else %}bg-warning{% endif %}">
                     {{ nomina.estado|upper }}

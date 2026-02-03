@@ -31,19 +31,19 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <div class="row mb-2">
                         <div class="col-6 fw-bold">{{ _('Estado:') }}</div>
                         <div class="col-6">
-                            {% if prestamo.estado == 'borrador' %}
+                            {% if prestamo.estado == 'draft' %}
                                 <span class="badge bg-secondary">{{ _('Borrador') }}</span>
-                            {% elif prestamo.estado == 'pendiente' %}
+                            {% elif prestamo.estado == 'pending' %}
                                 <span class="badge bg-warning text-dark">{{ _('Pendiente') }}</span>
-                            {% elif prestamo.estado == 'aprobado' %}
+                            {% elif prestamo.estado == 'approved' %}
                                 <span class="badge bg-success">{{ _('Aprobado') }}</span>
-                            {% elif prestamo.estado == 'aplicado' %}
+                            {% elif prestamo.estado == 'applied' %}
                                 <span class="badge bg-success">{{ _('Aplicado') }}</span>
-                            {% elif prestamo.estado == 'pagado' %}
+                            {% elif prestamo.estado == 'paid' %}
                                 <span class="badge bg-dark">{{ _('Pagado') }}</span>
-                            {% elif prestamo.estado == 'rechazado' %}
+                            {% elif prestamo.estado == 'rejected' %}
                                 <span class="badge bg-danger">{{ _('Rechazado') }}</span>
-                            {% elif prestamo.estado == 'cancelado' %}
+                            {% elif prestamo.estado == 'cancelled' %}
                                 <span class="badge bg-secondary">{{ _('Cancelado') }}</span>
                             {% endif %}
                         </div>
@@ -51,7 +51,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <div class="row mb-2">
                         <div class="col-6 fw-bold">{{ _('Tipo:') }}</div>
                         <div class="col-6">
-                            {% if prestamo.tipo == 'adelanto' %}
+                            {% if prestamo.tipo == 'advance' %}
                                 <span class="badge bg-info">{{ _('Adelanto de Salario') }}</span>
                             {% else %}
                                 <span class="badge bg-primary">{{ _('Préstamo') }}</span>
@@ -152,9 +152,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <div class="row mb-2">
                         <div class="col-6 fw-bold">{{ _('Método de Amortización:') }}</div>
                         <div class="col-6">
-                            {% if prestamo.metodo_amortizacion == 'frances' %}
+                            {% if prestamo.metodo_amortizacion == 'french' %}
                                 {{ _('Francés - Cuota Constante') }}
-                            {% elif prestamo.metodo_amortizacion == 'aleman' %}
+                            {% elif prestamo.metodo_amortizacion == 'german' %}
                                 {{ _('Alemán - Amortización Constante') }}
                             {% else %}
                                 {{ prestamo.metodo_amortizacion|title }}
@@ -182,7 +182,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex gap-2 flex-wrap">
-                        {% if prestamo.estado == 'borrador' %}
+                        {% if prestamo.estado == 'draft' %}
                             <a href="{{ url_for('prestamo.edit', prestamo_id=prestamo.id) }}" class="btn btn-warning">
                                 <i class="bi bi-pencil me-1"></i>{{ _('Editar') }}
                             </a>
@@ -193,13 +193,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             </form>
                         {% endif %}
                         
-                        {% if prestamo.estado in ['pendiente', 'borrador'] %}
+                        {% if prestamo.estado in ['pending', 'draft'] %}
                             <a href="{{ url_for('prestamo.approve', prestamo_id=prestamo.id) }}" class="btn btn-success">
                                 <i class="bi bi-check-circle me-1"></i>{{ _('Aprobar/Rechazar') }}
                             </a>
                         {% endif %}
                         
-                        {% if prestamo.estado in ['aprobado', 'aplicado'] and prestamo.saldo_pendiente > 0 %}
+                        {% if prestamo.estado in ['approved', 'applied'] and prestamo.saldo_pendiente > 0 %}
                             <a href="{{ url_for('prestamo.pago_extraordinario', prestamo_id=prestamo.id) }}" class="btn btn-info">
                                 <i class="bi bi-cash-stack me-1"></i>{{ _('Registrar Pago Extraordinario') }}
                             </a>
@@ -208,7 +208,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             </a>
                         {% endif %}
                         
-                        {% if prestamo.estado not in ['pagado', 'cancelado'] %}
+                        {% if prestamo.estado not in ['paid', 'cancelled'] %}
                             <form method="POST" action="{{ url_for('prestamo.cancel', prestamo_id=prestamo.id) }}" class="d-inline"
                                   onsubmit="return confirm('{{ _('¿Está seguro de cancelar este préstamo?') }}');">
                                 <button type="submit" class="btn btn-danger">
