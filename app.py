@@ -36,7 +36,7 @@ app = create_app(cfg)
 log.trace("App initialized")
 
 # Antes de ejecutar el servidor:
-#   export FLASK_APP=app
+#   export FLASK_APP=app:app
 #   payrollctl database init
 #   payrollctl database migrate
 

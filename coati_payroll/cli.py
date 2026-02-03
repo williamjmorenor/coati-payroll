@@ -1545,10 +1545,14 @@ def register_cli_commands(app):
 
 def main():
     """Entry point for payrollctl CLI tool."""
-    import importlib.util
-    from pathlib import Path as PathlibPath
 
-    flask_app_path = os.environ.get("FLASK_APP", "app:app")
+    flask_app_path = os.environ.get("FLASK_APP", None)
+    if not flask_app_path:
+        click.echo(
+            "Error: FLASK_APP environment variable is not set.",
+            err=True,
+        )
+        sys.exit(1)
 
     try:
         if ":" in flask_app_path:
@@ -1560,19 +1564,10 @@ def main():
         try:
             module = __import__(module_name, fromlist=[app_name])
             flask_app = getattr(module, app_name)
+            flask_app.cli()
         except (ImportError, AttributeError):
-            app_file = PathlibPath.cwd() / f"{module_name}.py"
-            if app_file.exists():
-                spec = importlib.util.spec_from_file_location(module_name, app_file)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                flask_app = getattr(module, app_name)
-            else:
-                click.echo(f"Error: Could not load Flask app: {flask_app_path}", err=True)
-                click.echo("Set FLASK_APP environment variable to specify the app location.", err=True)
-                sys.exit(1)
-
-        flask_app.cli()
+            click.echo(f"Error: Failed to import Flask app: {flask_app_path}", err=True)
+            sys.exit(1)
 
     except Exception as e:
         click.echo(f"Error: Failed to initialize Flask app: {e}", err=True)

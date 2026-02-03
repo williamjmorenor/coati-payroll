@@ -70,7 +70,8 @@ EXPOSE 5000
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    FLASK_APP=app:app
 
 # Use tini as init system for proper signal handling
 ENTRYPOINT ["/usr/bin/tini", "--", "docker-entrypoint.sh"]
