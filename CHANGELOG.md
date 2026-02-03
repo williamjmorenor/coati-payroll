@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## unreleased
+
+### Changed:
+
+ - Removed implicit database initialization during application startup and WSGI bootstrap
+ - Schema management is now explicit via CLI commands.
+ - Enforced mandatory SECRET_KEY configuration in production to prevent insecure deployments.
+ - Normalized environment variable parsing for development and auto-migration flags.
+ - Improved logging to avoid duplicated handlers and noisy reload output.
+ - Reduced sensitive authentication logging and switched last-login timestamps to UTC.
+ - Pinned Python dependencies for reproducible builds and removed unnecessary runtime packages from Docker images.
+ - Simplified CI linting rules and injected test-only secrets for stable pipelines.
+ - Minor typing fixes and code cleanup across views and i18n helpers.
+
 ## [1.0.0] - 2026-02-02
 
 ### Added
