@@ -16,16 +16,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+RUN python3 -m venv /opt/venv
 
 # Set working directory for build
 WORKDIR /build
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
+    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # =============================================================================
 # Stage 2: Runtime stage
@@ -51,13 +50,17 @@ RUN useradd --create-home --shell /bin/bash coati
 
 # Copy virtual environment from builder stage
 COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
 
 # Set working directory
 WORKDIR /app
 
 # Copy application code
-COPY --chown=coati:coati . .
+COPY . .
+
+# Instalar paquete usando el pip del venv
+RUN /opt/venv/bin/pip install --no-cache-dir -e . \
+    && RUN chmod + xdocker-entrypoint.sh \
+    && chown -R coati:coati /app
 
 # Switch to non-root user
 USER coati
@@ -70,7 +73,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 # Use tini as init system for proper signal handling
-ENTRYPOINT ["/usr/bin/tini", "--"]
+ENTRYPOINT ["/usr/bin/tini", "--", "docker-entrypoint.sh"]
 
 # Run the application
-CMD ["python", "app.py"]
+CMD ["/opt/venv/bin/python", "app.py"]
