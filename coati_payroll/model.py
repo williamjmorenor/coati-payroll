@@ -928,10 +928,13 @@ class LiquidacionConcepto(database.Model, BaseTabla):
 
 class Liquidacion(database.Model, BaseTabla):
     __tablename__ = "liquidacion"
+    __table_args__ = (database.Index("ix_liquidacion_fk_concepto_id", "concepto_id"),)
 
     empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False, index=True)
     concepto_id = database.Column(
-        database.String(26), database.ForeignKey("liquidacion_concepto.id"), nullable=True, index=True
+        database.String(26),
+        database.ForeignKey("liquidacion_concepto.id"),
+        nullable=True,
     )
 
     fecha_calculo = database.Column(database.Date, nullable=False, default=date.today)
