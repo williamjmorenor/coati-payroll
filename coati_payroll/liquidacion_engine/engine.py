@@ -187,7 +187,7 @@ def recalcular_liquidacion(liquidacion_id: str, fecha_calculo: date | None = Non
     if not liquidacion:
         return None, ["Liquidación no encontrada."], []
 
-    if liquidacion.estado != "borrador":
+    if liquidacion.estado != "draft":
         return None, ["Solo se pueden recalcular liquidaciones en borrador."], []
 
     empleado = db.session.get(Empleado, liquidacion.empleado_id)
@@ -206,8 +206,8 @@ def recalcular_liquidacion(liquidacion_id: str, fecha_calculo: date | None = Non
             adelanto.saldo_pendiente = (
                 Decimal(str(adelanto.saldo_pendiente)) + Decimal(str(abono.monto_abonado))
             ).quantize(Decimal("0.01"))
-            if adelanto.saldo_pendiente > 0 and adelanto.estado == "pagado":
-                adelanto.estado = "aprobado"
+            if adelanto.saldo_pendiente > 0 and adelanto.estado == "paid":
+                adelanto.estado = "approved"
         db.session.delete(abono)
 
     # Remove existing details
@@ -240,7 +240,7 @@ def ejecutar_liquidacion(
         empleado_id=empleado.id,
         concepto_id=concepto_id,
         fecha_calculo=fecha_calculo or date.today(),
-        estado="borrador",
+        estado="draft",
     )
     db.session.add(liquidacion)
     db.session.flush()

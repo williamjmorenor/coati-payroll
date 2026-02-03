@@ -274,7 +274,7 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
         )
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
-    nomina.estado = "aprobado"
+    nomina.estado = "approved"
     nomina.modificado_por = current_user.usuario
     db.session.commit()
 

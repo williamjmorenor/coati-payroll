@@ -242,7 +242,7 @@ def account_detail(account_id):
     pending_requests = (
         db.session.execute(
             db.select(VacationNovelty)
-            .filter(VacationNovelty.account_id == account_id, VacationNovelty.estado == "pendiente")
+            .filter(VacationNovelty.account_id == account_id, VacationNovelty.estado == "pending")
             .order_by(VacationNovelty.start_date)
         )
         .scalars()
@@ -717,7 +717,7 @@ def dashboard():
 
     pending_requests = (
         db.session.execute(
-            db.select(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == "pendiente")
+            db.select(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == "pending")
         ).scalar()
         or 0
     )

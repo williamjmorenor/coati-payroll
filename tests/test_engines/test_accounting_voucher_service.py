@@ -523,7 +523,7 @@ class TestAccountingVoucherGeneration:
             assert len(lineas) >= 4
 
             # Find loan lines
-            loan_lines = [l for l in lineas if l.tipo_concepto == "prestamo"]
+            loan_lines = [l for l in lineas if l.tipo_concepto == "loan"]
             assert len(loan_lines) == 2
 
             # Check loan debit (salary payable)

@@ -294,7 +294,7 @@ class AccountingVoucherService:
                             is_loan_advance = True
                             # Get loan control account from first active loan
                             for adelanto in adelantos:
-                                if adelanto.estado in ("aprobado", "aplicado"):
+                                if adelanto.estado in ("approved", "applied"):
                                     cuenta_control_prestamo = adelanto.cuenta_haber
                                     break
 
@@ -322,7 +322,7 @@ class AccountingVoucherService:
                         credito=Decimal("0.00"),
                         monto_calculado=detalle.monto,
                         concepto=detalle.descripcion or "Préstamo/Adelanto",
-                        tipo_concepto="prestamo",
+                        tipo_concepto="loan",
                         concepto_codigo=detalle.codigo,
                         orden=orden,
                     )
@@ -345,7 +345,7 @@ class AccountingVoucherService:
                         credito=detalle.monto,
                         monto_calculado=detalle.monto,
                         concepto=detalle.descripcion or "Préstamo/Adelanto",
-                        tipo_concepto="prestamo",
+                        tipo_concepto="loan",
                         concepto_codigo=detalle.codigo,
                         orden=orden,
                     )
@@ -411,7 +411,7 @@ class AccountingVoucherService:
                             self.session.add(linea_haber)
                             total_creditos += detalle.monto
 
-                    elif detalle.tipo == "deduccion" and detalle.deduccion_id:
+                    elif detalle.tipo == "deduction" and detalle.deduccion_id:
                         deduccion = self.session.get(Deduccion, detalle.deduccion_id)
                         if deduccion and deduccion.contabilizable:
                             # Always create debit line (even if account is NULL)

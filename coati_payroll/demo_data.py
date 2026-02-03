@@ -715,7 +715,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                         novedad.valor_cantidad = Decimal("8.0")  # 8 hours overtime
                         novedad.fecha_novedad = date.today() - timedelta(days=5)
                         novedad.percepcion_id = overtime.id
-                        novedad.estado = "pendiente"
+                        novedad.estado = "pending"
                         db.session.add(novedad)
                         log.trace(f"Created overtime novedad for {empleado.codigo_empleado}")
 
@@ -742,7 +742,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                         novedad.valor_cantidad = Decimal("1.0")  # 1 day absence
                         novedad.fecha_novedad = date.today() - timedelta(days=3)
                         novedad.deduccion_id = absence.id
-                        novedad.estado = "pendiente"
+                        novedad.estado = "pending"
                         db.session.add(novedad)
                         log.trace(f"Created absence novedad for {empleado.codigo_empleado}")
 
