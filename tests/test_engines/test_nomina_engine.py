@@ -725,7 +725,7 @@ class TestHorasYDiasCalculation:
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("24000.00")
             emp_calculo.salario_mensual = Decimal("24000.00")
-            emp_calculo.novedades = {"HORAS_EXTRA": Decimal("10")}  # 10 overtime hours
+            emp_calculo.novedades = {"OVERTIME": Decimal("10")}  # 10 overtime hours
             emp_calculo.variables_calculo = {"novedad_HORAS_EXTRA": Decimal("10")}
 
             # Use ConceptCalculator directly
@@ -741,7 +741,7 @@ class TestHorasYDiasCalculation:
                 formula=None,
                 monto_override=None,
                 porcentaje_override=None,
-                codigo_concepto="HORAS_EXTRA",
+                codigo_concepto="OVERTIME",
             )
 
             # Hourly rate: 24000 / 30 / 8 = 100 per hour
@@ -818,7 +818,7 @@ class TestHorasYDiasCalculation:
                 formula=None,
                 monto_override=None,
                 porcentaje_override=None,
-                codigo_concepto="HORAS_EXTRA",
+                codigo_concepto="OVERTIME",
             )
 
             assert monto == Decimal("0.00")
@@ -876,7 +876,7 @@ class TestHorasYDiasCalculation:
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("30000.00")
             emp_calculo.salario_mensual = Decimal("30000.00")
-            emp_calculo.novedades = {"VACACIONES": Decimal("5")}  # 5 vacation days
+            emp_calculo.novedades = {"VACATION": Decimal("5")}  # 5 vacation days
             emp_calculo.variables_calculo = {"novedad_VACACIONES": Decimal("5")}
 
             # Use ConceptCalculator directly
@@ -892,7 +892,7 @@ class TestHorasYDiasCalculation:
                 formula=None,
                 monto_override=None,
                 porcentaje_override=None,
-                codigo_concepto="VACACIONES",
+                codigo_concepto="VACATION",
             )
 
             # Daily rate: 30000 / 30 = 1000 per day
@@ -1102,7 +1102,7 @@ class TestBadInputNominaEngine:
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("24000.00")
             emp_calculo.salario_mensual = Decimal("24000.00")
-            emp_calculo.novedades = {"HORAS_EXTRA": Decimal("-5")}  # Negative hours!
+            emp_calculo.novedades = {"OVERTIME": Decimal("-5")}  # Negative hours!
             emp_calculo.variables_calculo = {"novedad_HORAS_EXTRA": Decimal("-5")}
 
             # Use ConceptCalculator directly
@@ -1118,7 +1118,7 @@ class TestBadInputNominaEngine:
                 formula=None,
                 monto_override=None,
                 porcentaje_override=None,
-                codigo_concepto="HORAS_EXTRA",
+                codigo_concepto="OVERTIME",
             )
 
             # Negative hours should return 0 (calculator should handle this)

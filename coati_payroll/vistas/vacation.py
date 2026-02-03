@@ -581,10 +581,10 @@ def register_vacation_taken():
         # Get the concepto for codigo
         if tipo_concepto == "income":
             concepto = db.session.get(Percepcion, percepcion_id)
-            codigo_concepto = concepto.codigo if concepto else "VACACIONES"
+            codigo_concepto = concepto.codigo if concepto else "VACATION"
         else:
             concepto = db.session.get(Deduccion, deduccion_id)
-            codigo_concepto = concepto.codigo if concepto else "AUSENCIA"
+            codigo_concepto = concepto.codigo if concepto else "ABSENCE"
 
         # Validate that employee has a vacation account
         account = db.session.execute(
