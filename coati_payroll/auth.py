@@ -85,16 +85,21 @@ def proteger_passwd(clave: str, /) -> bytes:
 
 def validar_acceso(usuario_id: str, acceso: str, /) -> bool:
     """Verifica el inicio de sesión del usuario."""
-    registro = database.session.execute(database.select(Usuario).filter_by(usuario=usuario_id)).scalar_one_or_none()
-
-    if not registro:
+    if not (
+        registro := database.session.execute(
+            database.select(Usuario).filter_by(usuario=usuario_id)
+        ).scalar_one_or_none()
+    ):
         registro = database.session.execute(
             database.select(Usuario).filter_by(correo_electronico=usuario_id)
         ).scalar_one_or_none()
 
     if registro is not None:
         try:
-            ph.verify(registro.acceso, acceso.encode())
+            hash_pwd = (
+                registro.acceso.decode("utf-8") if isinstance(registro.acceso, (bytes, bytearray)) else registro.acceso
+            )
+            ph.verify(hash_pwd, acceso)
             clave_validada = True
         except VerifyMismatchError:
             clave_validada = False
