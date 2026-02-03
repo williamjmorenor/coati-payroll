@@ -409,7 +409,7 @@ def leave_request_approve(request_id):
         flash(_("Solicitud no encontrada."), "warning")
         return redirect(url_for("vacation.leave_request_index"))
 
-    if leave_request.estado != "pendiente":
+    if leave_request.estado != "pending":
         flash(_("Solo se pueden aprobar solicitudes pendientes."), "warning")
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
@@ -463,7 +463,7 @@ def leave_request_reject(request_id):
         flash(_("Solicitud no encontrada."), "warning")
         return redirect(url_for("vacation.leave_request_index"))
 
-    if leave_request.estado != "pendiente":
+    if leave_request.estado != "pending":
         flash(_("Solo se pueden rechazar solicitudes pendientes."), "warning")
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 

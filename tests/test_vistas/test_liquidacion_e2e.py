@@ -210,7 +210,7 @@ def test_aplicar_inactiva_empleado_y_desvincula_planillas(
         assert pe2.fecha_fin == date(2025, 1, 1)
 
         liq2 = db_session.get(Liquidacion, liq.id)
-        assert liq2.estado == "aplicada"
+        assert liq2.estado == "applied"
 
 
 def test_pagar_liquidacion(client, app, db_session, admin_user, empleado, concepto, planilla):
@@ -247,4 +247,4 @@ def test_pagar_liquidacion(client, app, db_session, admin_user, empleado, concep
         from coati_payroll.model import Liquidacion
 
         liq2 = db_session.get(Liquidacion, liq.id)
-        assert liq2.estado == "pagada"
+        assert liq2.estado == "paid"

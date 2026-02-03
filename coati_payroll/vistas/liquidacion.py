@@ -210,7 +210,7 @@ def aplicar(liquidacion_id: str):
 def pagar(liquidacion_id: str):
     liquidacion = db.get_or_404(Liquidacion, liquidacion_id)
 
-    if liquidacion.estado != "aplicada":
+    if liquidacion.estado != "applied":
         flash(_("Solo se pueden pagar liquidaciones aplicadas."), "error")
         return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 

@@ -399,7 +399,7 @@ def test_carga_inicial_prestacion_aplicar_creates_transaction(app, client, admin
 
         # Verify carga status updated
         db_session.refresh(carga)
-        assert carga.estado == "aplicado"
+        assert carga.estado == "applied"
         assert carga.aplicado_por == admin_user.usuario
         assert carga.fecha_aplicacion is not None
 
@@ -496,7 +496,7 @@ def test_carga_inicial_prestacion_eliminar_applied_redirects(app, client, admin_
         # Verify record still exists
         still_exists = db_session.execute(select(CargaInicialPrestacion).filter_by(id=carga_id)).scalar_one_or_none()
         assert still_exists is not None
-        assert still_exists.estado == "aplicado"
+        assert still_exists.estado == "applied"
 
 
 def test_carga_inicial_prestacion_reporte_excel_requires_authentication(app, client, db_session):

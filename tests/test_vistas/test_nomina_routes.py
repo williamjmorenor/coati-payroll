@@ -545,14 +545,14 @@ def test_aprobar_nomina_success(app, client, admin_user, db_session, planilla, n
         nomina.estado = "generado"
         db.session.commit()
         db.session.refresh(nomina)
-        assert nomina.estado == "generado"
+        assert nomina.estado == "generated"
 
         response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aprobar", follow_redirects=False)
         assert response.status_code == 302
 
         # Verify nomina was approved
         updated_nomina = db.session.get(Nomina, nomina.id)
-        assert updated_nomina.estado == "aprobado"
+        assert updated_nomina.estado == "approved"
 
 
 def test_aprobar_nomina_wrong_state(app, client, admin_user, db_session, planilla, nomina):
@@ -561,7 +561,7 @@ def test_aprobar_nomina_wrong_state(app, client, admin_user, db_session, planill
         login_user(client, admin_user.usuario, "admin-password")
 
         # Change state to something other than 'generado'
-        nomina.estado = "aprobado"
+        nomina.estado = "approved"
         db_session.commit()
 
         response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aprobar", follow_redirects=False)
@@ -586,7 +586,7 @@ def test_aprobar_nomina_with_errors_fails(app, client, admin_user, db_session, p
 
         # Verify nomina was NOT approved
         updated_nomina = db.session.get(Nomina, nomina.id)
-        assert updated_nomina.estado == "generado"
+        assert updated_nomina.estado == "generated"
 
 
 # ============================================================================
@@ -610,7 +610,7 @@ def test_aplicar_nomina_success(app, client, admin_user, db_session, planilla, n
 
         # First approve the nomina
         nomina = db.session.merge(nomina)
-        nomina.estado = "aprobado"
+        nomina.estado = "approved"
         db.session.commit()
 
         response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aplicar", follow_redirects=False)
@@ -618,7 +618,7 @@ def test_aplicar_nomina_success(app, client, admin_user, db_session, planilla, n
 
         # Verify nomina was applied
         updated_nomina = db.session.get(Nomina, nomina.id)
-        assert updated_nomina.estado == "aplicado"
+        assert updated_nomina.estado == "applied"
 
 
 def test_aplicar_nomina_wrong_state(app, client, admin_user, db_session, planilla, nomina):
@@ -633,14 +633,14 @@ def test_aplicar_nomina_wrong_state(app, client, admin_user, db_session, planill
         nomina.estado = "generado"
         db.session.commit()
         db.session.refresh(nomina)
-        assert nomina.estado == "generado"
+        assert nomina.estado == "generated"
 
         response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aplicar", follow_redirects=False)
         assert response.status_code == 302  # Redirects with error
 
         # Verify nomina was NOT applied
         updated_nomina = db.session.get(Nomina, nomina.id)
-        assert updated_nomina.estado == "generado"
+        assert updated_nomina.estado == "generated"
 
 
 # ============================================================================
@@ -695,7 +695,7 @@ def test_reintentar_nomina_wrong_state(app, client, admin_user, db_session, plan
         login_user(client, admin_user.usuario, "admin-password")
 
         # Keep state as 'generado'
-        assert nomina.estado == "generado"
+        assert nomina.estado == "generated"
 
         response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/reintentar", follow_redirects=False)
         assert response.status_code == 302  # Redirects with error
