@@ -184,9 +184,9 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
     )
 
     # Separate by type
-    percepciones = [d for d in detalles if d.tipo == "ingreso"]
-    deducciones = [d for d in detalles if d.tipo == "deduccion"]
-    prestaciones = [d for d in detalles if d.tipo == "prestacion"]
+    percepciones = [d for d in detalles if d.tipo == "income"]
+    deducciones = [d for d in detalles if d.tipo == "deduction"]
+    prestaciones = [d for d in detalles if d.tipo == "benefit"]
 
     return render_template(
         "modules/planilla/ver_nomina_empleado.html",

@@ -84,10 +84,10 @@ def agregar_asociacion(
     if tipo_componente == "percepcion":
         association_class = PlanillaIngreso
         filter_params["percepcion_id"] = componente_id
-    elif tipo_componente == "deduccion":
+    elif tipo_componente == "deduction":
         association_class = PlanillaDeduccion
         filter_params["deduccion_id"] = componente_id
-    elif tipo_componente == "prestacion":
+    elif tipo_componente == "benefit":
         association_class = PlanillaPrestacion
         filter_params["prestacion_id"] = componente_id
     elif tipo_componente == "regla":
@@ -112,7 +112,7 @@ def agregar_asociacion(
             activo=True,
             creado_por=usuario,
         )
-    elif tipo_componente == "deduccion":
+    elif tipo_componente == "deduction":
         prioridad = datos_extra.get("prioridad", 100)
         es_obligatoria = datos_extra.get("es_obligatoria", False)
         association = PlanillaDeduccion(
@@ -124,7 +124,7 @@ def agregar_asociacion(
             activo=True,
             creado_por=usuario,
         )
-    elif tipo_componente == "prestacion":
+    elif tipo_componente == "benefit":
         orden = datos_extra.get("orden", 0)
         association = PlanillaPrestacion(
             planilla_id=planilla_id,

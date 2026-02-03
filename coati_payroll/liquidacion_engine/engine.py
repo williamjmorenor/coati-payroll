@@ -109,7 +109,7 @@ class LiquidacionEngine:
         if liquidacion.dias_por_pagar > 0 and monto_dias > 0:
             liquidacion.detalles.append(
                 LiquidacionDetalle(
-                    tipo="ingreso",
+                    tipo="income",
                     codigo="DIAS_POR_PAGAR",
                     descripcion="Días por pagar",
                     monto=monto_dias,
@@ -156,7 +156,7 @@ class LiquidacionEngine:
             total_deducciones += item.monto
             liquidacion.detalles.append(
                 LiquidacionDetalle(
-                    tipo="deduccion",
+                    tipo="deduction",
                     codigo=item.codigo,
                     descripcion=item.nombre,
                     monto=item.monto,

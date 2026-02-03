@@ -41,7 +41,7 @@ class AccountingProcessor:
             orden += 1
             detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="ingreso",
+                tipo="income",
                 codigo=percepcion.codigo,
                 descripcion=percepcion.nombre,
                 monto=percepcion.monto,
@@ -55,7 +55,7 @@ class AccountingProcessor:
             orden += 1
             detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="deduccion",
+                tipo="deduction",
                 codigo=deduccion.codigo,
                 descripcion=deduccion.nombre,
                 monto=deduccion.monto,
@@ -69,7 +69,7 @@ class AccountingProcessor:
             orden += 1
             detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="prestacion",
+                tipo="benefit",
                 codigo=prestacion.codigo,
                 descripcion=prestacion.nombre,
                 monto=prestacion.monto,

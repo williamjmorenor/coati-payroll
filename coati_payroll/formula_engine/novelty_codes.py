@@ -19,12 +19,12 @@ NOVELTY_CODES = {
         "descripcion": "Horas extra dobles (feriados/domingos)",
     },
     "AUSENCIA": {
-        "tipo": "deduccion",
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Ausencia no justificada",
     },
     "INCAPACIDAD": {
-        "tipo": "deduccion",
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Incapacidad médica",
     },
@@ -49,12 +49,12 @@ NOVELTY_CODES = {
         "descripcion": "Pago de vacaciones",
     },
     "ADELANTO": {
-        "tipo": "deduccion",
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Adelanto de salario",
     },
     "PRESTAMO": {
-        "tipo": "deduccion",
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Cuota de préstamo",
     },
@@ -147,7 +147,7 @@ NOVELTY_CODES = {
         "descripcion": "Aporte empresa a fondo de ahorro",
     },
     "FONDO_AHORRO_EMPLEADO": {
-        "tipo": "deduccion",
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Aporte empleado a fondo de ahorro",
     },

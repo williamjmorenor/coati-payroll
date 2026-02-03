@@ -386,9 +386,9 @@ class ReglaCalculoForm(FlaskForm):
         _("Tipo de regla"),
         choices=[
             ("impuesto", _("Impuesto")),
-            ("deduccion", _("Deducción")),
+            ("deduction", _("Deducción")),
             ("percepcion", _("Percepción")),
-            ("prestacion", _("Prestación")),
+            ("benefit", _("Prestación")),
         ],
         validators=[DataRequired()],
     )
@@ -550,7 +550,7 @@ class DeduccionForm(FlaskForm):
             ("impuesto", _("Impuesto")),
             ("seguro_social", _("Seguro Social")),
             ("loan", _("Préstamo")),
-            ("adelanto", _("Adelanto")),
+            ("advance", _("Adelanto")),
             ("pension_alimenticia", _("Pensión Alimenticia")),
             ("ahorro", _("Ahorro Voluntario")),
             ("sindical", _("Cuota Sindical")),
@@ -980,7 +980,7 @@ class NominaNovedadForm(FlaskForm):
         _("Tipo de Concepto"),
         choices=[
             ("percepcion", _("Percepción (Ingreso)")),
-            ("deduccion", _("Deducción (Egreso)")),
+            ("deduction", _("Deducción (Egreso)")),
         ],
         validators=[DataRequired()],
         description=_("Tipo de concepto al que se asocia la novedad"),
@@ -1058,7 +1058,7 @@ class PrestamoForm(FlaskForm):
     tipo = SelectField(
         _("Tipo"),
         choices=[
-            ("adelanto", _("Adelanto de Salario")),
+            ("advance", _("Adelanto de Salario")),
             ("loan", _("Préstamo")),
         ],
         validators=[DataRequired()],
@@ -1694,7 +1694,7 @@ class VacationTakenForm(FlaskForm):
     tipo_concepto = SelectField(
         _("Tipo de Concepto"),
         choices=[
-            ("deduccion", _("Deducción (Descuento)")),
+            ("deduction", _("Deducción (Descuento)")),
             ("percepcion", _("Percepción (Pago de Vacaciones)")),
         ],
         validators=[DataRequired()],

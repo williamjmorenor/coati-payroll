@@ -68,12 +68,12 @@ def crear_log_auditoria(
         deduccion_id = None
         prestacion_id = None
     elif isinstance(concepto, Deduccion):
-        tipo_concepto = "deduccion"
+        tipo_concepto = "deduction"
         percepcion_id = None
         deduccion_id = concepto.id
         prestacion_id = None
     elif isinstance(concepto, Prestacion):
-        tipo_concepto = "prestacion"
+        tipo_concepto = "benefit"
         percepcion_id = None
         deduccion_id = None
         prestacion_id = concepto.id

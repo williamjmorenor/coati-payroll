@@ -560,7 +560,7 @@ def register_vacation_taken():
         # Validate tipo_concepto and associated percepcion/deduccion
         tipo_concepto = form.tipo_concepto.data
         percepcion_id = form.percepcion_id.data if tipo_concepto == "percepcion" else None
-        deduccion_id = form.deduccion_id.data if tipo_concepto == "deduccion" else None
+        deduccion_id = form.deduccion_id.data if tipo_concepto == "deduction" else None
 
         if tipo_concepto == "percepcion" and not percepcion_id:
             flash(_("Debe seleccionar una percepción cuando el tipo de concepto es percepción."), "danger")
@@ -570,7 +570,7 @@ def register_vacation_taken():
                 titulo=_("Registrar Vacaciones Descansadas"),
             )
 
-        if tipo_concepto == "deduccion" and not deduccion_id:
+        if tipo_concepto == "deduction" and not deduccion_id:
             flash(_("Debe seleccionar una deducción cuando el tipo de concepto es deducción."), "danger")
             return render_template(
                 "modules/vacation/register_taken_form.html",

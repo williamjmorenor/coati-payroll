@@ -1259,8 +1259,8 @@ class Adelanto(database.Model, BaseTabla):
     )
     deduccion_id = database.Column(database.String(26), database.ForeignKey(FK_DEDUCCION_ID), nullable=True)
 
-    # Tipo: prestamo o adelanto
-    tipo = database.Column(database.String(20), nullable=False, default="adelanto")  # adelanto, prestamo
+    # Tipo: loan o advance
+    tipo = database.Column(database.String(20), nullable=False, default="advance")  # advance, loan
 
     # Fechas
     fecha_solicitud = database.Column(database.Date, nullable=False, default=date.today)
