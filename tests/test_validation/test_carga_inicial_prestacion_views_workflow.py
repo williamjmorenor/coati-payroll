@@ -83,7 +83,7 @@ def test_carga_inicial_prestacion_create_apply_and_delete_workflow(app, client, 
             .one_or_none()
         )
         assert carga is not None
-        assert carga.estado == "borrador"
+        assert carga.estado == "draft"
 
         # Apply
         resp = client.post(f"/carga-inicial-prestaciones/{carga.id}/aplicar", follow_redirects=False)

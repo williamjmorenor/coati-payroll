@@ -85,7 +85,7 @@ class TestAccountingConfigurationValidation:
             percepcion = Percepcion(
                 codigo="BONO",
                 nombre="Bono Producción",
-                formula_tipo="fijo",
+                formula_tipo="fixed",
                 activo=True,
                 contabilizable=True,
                 codigo_cuenta_debe="5102",
@@ -193,7 +193,7 @@ class TestAccountingConfigurationValidation:
             deduccion = Deduccion(
                 codigo="INSS",
                 nombre="INSS Laboral",
-                formula_tipo="porcentaje",
+                formula_tipo="percentage",
                 activo=True,
                 contabilizable=True,
                 codigo_cuenta_debe=None,  # Missing
@@ -456,7 +456,7 @@ class TestAccountingVoucherGeneration:
             deduccion_prestamo = Deduccion(
                 codigo="PREST",
                 nombre="Préstamo",
-                formula_tipo="fijo",
+                formula_tipo="fixed",
                 activo=True,
                 contabilizable=True,
             )
@@ -467,7 +467,7 @@ class TestAccountingVoucherGeneration:
             adelanto = Adelanto(
                 empleado_id=empleado.id,
                 deduccion_id=deduccion_prestamo.id,
-                tipo="prestamo",
+                tipo="loan",
                 monto_aprobado=Decimal("10000.00"),
                 saldo_pendiente=Decimal("8000.00"),
                 cuotas_pactadas=10,

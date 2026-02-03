@@ -204,7 +204,7 @@ def test_vacation_leave_request_approve_creates_ledger_and_deducts_balance(app, 
             start_date=start_date,
             end_date=end_date,
             units=Decimal("5"),
-            estado="pendiente",
+            estado="pending",
         )
         db_session.add(leave_request)
         db_session.commit()
@@ -273,7 +273,7 @@ def test_vacation_leave_request_reject_sets_reason(app, client, admin_user, db_s
             start_date=start_date,
             end_date=end_date,
             units=Decimal("5"),
-            estado="pendiente",
+            estado="pending",
         )
         db_session.add(leave_request)
         db_session.commit()

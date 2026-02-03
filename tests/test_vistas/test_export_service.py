@@ -186,7 +186,7 @@ def nomina(app, db_session, planilla):
             periodo_inicio=date(2025, 1, 1),
             periodo_fin=date(2025, 1, 31),
             generado_por="test_user",
-            estado="generado",
+            estado="generated",
         )
         db_session.add(nomina)
         db_session.commit()

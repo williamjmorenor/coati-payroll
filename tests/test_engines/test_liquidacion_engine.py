@@ -193,9 +193,9 @@ def test_deducciones_adelantos_y_recalculo_no_duplica_abonos(app, db_session):
         ded = Deduccion(
             codigo="DED1",
             nombre="Deduccion Prestamo",
-            tipo="prestamo",
+            tipo="loan",
             es_impuesto=False,
-            formula_tipo="fijo",
+            formula_tipo="fixed",
             antes_impuesto=False,
             recurrente=False,
             activo=True,
@@ -206,7 +206,7 @@ def test_deducciones_adelantos_y_recalculo_no_duplica_abonos(app, db_session):
         prestamo = Adelanto(
             empleado_id=empleado.id,
             deduccion_id=ded.id,
-            tipo="prestamo",
+            tipo="loan",
             estado=AdelantoEstado.APROBADO,
             saldo_pendiente=Decimal("5.00"),
             monto_por_cuota=Decimal("5.00"),
@@ -216,7 +216,7 @@ def test_deducciones_adelantos_y_recalculo_no_duplica_abonos(app, db_session):
         adelanto = Adelanto(
             empleado_id=empleado.id,
             deduccion_id=None,
-            tipo="adelanto",
+            tipo="advance",
             estado=AdelantoEstado.APROBADO,
             saldo_pendiente=Decimal("3.00"),
             monto_por_cuota=Decimal("3.00"),

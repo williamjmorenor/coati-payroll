@@ -29,14 +29,14 @@ from enum import StrEnum
 class FormulaType(StrEnum):
     """Types of formulas for calculating payroll concepts."""
 
-    FIJO = "fijo"  # Fixed amount
-    PORCENTAJE = "porcentaje"  # Percentage
-    PORCENTAJE_SALARIO = "porcentaje_salario"  # Percentage of salary
-    PORCENTAJE_BRUTO = "porcentaje_bruto"  # Percentage of gross
+    FIJO = "fixed"  # Fixed amount
+    PORCENTAJE = "percentage"  # Percentage
+    PORCENTAJE_SALARIO = "salary_percentage"  # Percentage of salary
+    PORCENTAJE_BRUTO = "gross_percentage"  # Percentage of gross
     FORMULA = "formula"  # Complex formula using FormulaEngine
-    REGLA_CALCULO = "regla_calculo"  # Uses linked ReglaCalculo for calculation
-    HORAS = "horas"  # Based on hours
-    DIAS = "dias"  # Based on days
+    REGLA_CALCULO = "calculation_rule"  # Uses linked ReglaCalculo for calculation
+    HORAS = "hours"  # Based on hours
+    DIAS = "days"  # Based on days
 
 
 class StepType(StrEnum):
@@ -53,122 +53,122 @@ class NominaEstado(StrEnum):
 
     All states are valid and permanent. Once a nomina reaches a state, it remains
     in that state unless explicitly changed (e.g., ERROR can be retried, which
-    changes it to CALCULANDO).
+    changes it to CALCULATING).
     """
 
-    CALCULANDO = "calculando"  # Calculating in background
-    GENERADO = "generado"  # Generated but not approved
-    APROBADO = "aprobado"  # Approved and ready to apply
-    APLICADO = "aplicado"  # Applied/executed
-    PAGADO = "pagado"  # Paid out (synonym for APLICADO, for compatibility)
-    ANULADO = "anulado"  # Cancelled/voided
+    CALCULANDO = "calculating"  # Calculating in background
+    GENERADO = "generated"  # Generated but not approved
+    APROBADO = "approved"  # Approved and ready to apply
+    APLICADO = "applied"  # Applied/executed
+    PAGADO = "paid"  # Paid out (synonym for APLICADO, for compatibility)
+    ANULADO = "cancelled"  # Cancelled/voided
     ERROR = "error"  # Error during calculation (valid permanent state, can be retried)
 
 
 class AdelantoEstado(StrEnum):
     """States of a loan or salary advance."""
 
-    BORRADOR = "borrador"  # Draft - not yet submitted
-    PENDIENTE = "pendiente"  # Pending approval
-    APROBADO = "aprobado"  # Approved and active
-    APLICADO = "aplicado"  # Applied/disbursed (paid out to employee)
-    PAGADO = "pagado"  # Fully paid off (all installments completed)
-    RECHAZADO = "rechazado"  # Rejected
-    CANCELADO = "cancelado"  # Cancelled
+    BORRADOR = "draft"  # Draft - not yet submitted
+    PENDIENTE = "pending"  # Pending approval
+    APROBADO = "approved"  # Approved and active
+    APLICADO = "applied"  # Applied/disbursed (paid out to employee)
+    PAGADO = "paid"  # Fully paid off (all installments completed)
+    RECHAZADO = "rejected"  # Rejected
+    CANCELADO = "cancelled"  # Cancelled
 
 
 class AdelantoTipo(StrEnum):
     """Types of advances/loans."""
 
-    ADELANTO = "adelanto"  # Salary advance
-    PRESTAMO = "prestamo"  # Loan with optional interest
+    ADELANTO = "advance"  # Salary advance
+    PRESTAMO = "loan"  # Loan with optional interest
 
 
 class TipoInteres(StrEnum):
     """Interest rate types for loans."""
 
-    NINGUNO = "ninguno"  # No interest
+    NINGUNO = "none"  # No interest
     SIMPLE = "simple"  # Simple interest
-    COMPUESTO = "compuesto"  # Compound interest
+    COMPUESTO = "compound"  # Compound interest
 
 
 class MetodoAmortizacion(StrEnum):
     """Amortization methods for loans with interest."""
 
-    FRANCES = "frances"  # French method - constant payment (cuota constante)
-    ALEMAN = "aleman"  # German method - constant amortization (amortización constante)
+    FRANCES = "french"  # French method - constant payment (cuota constante)
+    ALEMAN = "german"  # German method - constant amortization (amortización constante)
 
 
 class VacacionEstado(StrEnum):
     """States of vacation requests."""
 
-    PENDIENTE = "pendiente"  # Pending approval
-    APROBADO = "aprobado"  # Approved
-    RECHAZADO = "rechazado"  # Rejected
-    DISFRUTADO = "disfrutado"  # Taken/enjoyed
+    PENDIENTE = "pending"  # Pending approval
+    APROBADO = "approved"  # Approved
+    RECHAZADO = "rejected"  # Rejected
+    DISFRUTADO = "taken"  # Taken/enjoyed
 
 
 class TipoUsuario(StrEnum):
     """User types in the system."""
 
     ADMIN = "admin"  # Administrator
-    HHRR = "hhrr"  # Human Resources
+    HHRR = "hr"  # Human Resources
     AUDIT = "audit"  # Auditor
 
 
 class EstadoAprobacion(StrEnum):
     """Approval states for payroll concepts (percepciones, deducciones, prestaciones)."""
 
-    BORRADOR = "borrador"  # Draft - not yet approved
-    APROBADO = "aprobado"  # Approved and ready for use
+    BORRADOR = "draft"  # Draft - not yet approved
+    APROBADO = "approved"  # Approved and ready for use
 
 
 class TipoDetalle(StrEnum):
     """Types of payroll detail entries."""
 
-    INGRESO = "ingreso"  # Income/perception
-    DEDUCCION = "deduccion"  # Deduction
-    PRESTACION = "prestacion"  # Employer benefit
+    INGRESO = "income"  # Income/perception
+    DEDUCCION = "deduction"  # Deduction
+    PRESTACION = "benefit"  # Employer benefit
 
 
 class Periodicidad(StrEnum):
     """Payroll periodicities."""
 
-    MENSUAL = "mensual"  # Monthly
-    QUINCENAL = "quincenal"  # Biweekly
-    SEMANAL = "semanal"  # Weekly
-    DIARIO = "diario"  # Daily
+    MENSUAL = "monthly"  # Monthly
+    QUINCENAL = "biweekly"  # Biweekly
+    SEMANAL = "weekly"  # Weekly
+    DIARIO = "daily"  # Daily
 
 
 class NovedadEstado(StrEnum):
     """States of a payroll novelty (novedad)."""
 
-    PENDIENTE = "pendiente"  # Pending - not yet executed
-    EJECUTADA = "ejecutada"  # Executed - nomina has been applied
+    PENDIENTE = "pending"  # Pending - not yet executed
+    EJECUTADA = "executed"  # Executed - nomina has been applied
 
 
 class TipoAcumulacionPrestacion(StrEnum):
     """Types of benefit accumulation periods."""
 
-    MENSUAL = "mensual"  # Settled monthly (e.g., INSS, INATEC)
-    ANUAL = "anual"  # Accumulated annually (e.g., 13th month)
-    VIDA_LABORAL = "vida_laboral"  # Accumulated over employment lifetime (e.g., severance)
+    MENSUAL = "monthly"  # Settled monthly (e.g., INSS, INATEC)
+    ANUAL = "annual"  # Accumulated annually (e.g., 13th month)
+    VIDA_LABORAL = "lifetime"  # Accumulated over employment lifetime (e.g., severance)
 
 
 class CargaInicialEstado(StrEnum):
     """States for initial benefit balance loading."""
 
-    BORRADOR = "borrador"  # Draft - not yet applied
-    APLICADO = "aplicado"  # Applied - transferred to accumulated table
+    BORRADOR = "draft"  # Draft - not yet applied
+    APLICADO = "applied"  # Applied - transferred to accumulated table
 
 
 class TipoTransaccionPrestacion(StrEnum):
     """Transaction types for accumulated benefits."""
 
-    SALDO_INICIAL = "saldo_inicial"  # Initial balance
-    ADICION = "adicion"  # Addition (increase)
-    DISMINUCION = "disminucion"  # Decrease (reduction)
-    AJUSTE = "ajuste"  # Adjustment (can be positive or negative)
+    SALDO_INICIAL = "initial_balance"  # Initial balance
+    ADICION = "addition"  # Addition (increase)
+    DISMINUCION = "decrease"  # Decrease (reduction)
+    AJUSTE = "adjustment"  # Adjustment (can be positive or negative)
 
 
 # ============================================================================

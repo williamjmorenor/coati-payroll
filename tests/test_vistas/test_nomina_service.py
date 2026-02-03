@@ -502,7 +502,7 @@ class TestRecalcularNomina:
 
             adelanto = Adelanto(
                 empleado_id=empleado.id,
-                tipo="adelanto",
+                tipo="advance",
                 monto_aprobado=Decimal("1000.00"),
                 fecha_desembolso=date(2024, 1, 15),
                 saldo_pendiente=Decimal("1000.00"),

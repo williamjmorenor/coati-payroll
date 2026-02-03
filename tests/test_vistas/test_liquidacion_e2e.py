@@ -126,7 +126,7 @@ def test_crear_y_ver_liquidacion(client, app, db_session, admin_user, empleado, 
         from coati_payroll.model import Liquidacion
 
         liq = db_session.execute(db.select(Liquidacion).where(Liquidacion.empleado_id == empleado.id)).scalars().one()
-        assert liq.estado == "borrador"
+        assert liq.estado == "draft"
 
         # detail page
         resp2 = client.get(f"/liquidaciones/{liq.id}")
@@ -160,7 +160,7 @@ def test_recalcular_liquidacion(client, app, db_session, admin_user, empleado, c
 
         liq2 = db_session.get(Liquidacion, liq.id)
         assert liq2 is not None
-        assert liq2.estado == "borrador"
+        assert liq2.estado == "draft"
 
 
 def test_aplicar_inactiva_empleado_y_desvincula_planillas(

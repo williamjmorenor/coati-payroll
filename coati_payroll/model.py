@@ -452,7 +452,7 @@ class Planilla(database.Model, BaseTabla):
     )
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -491,7 +491,7 @@ class Percepcion(database.Model, BaseTabla):
     unidad_calculo = database.Column(database.String(20), nullable=True)  # ej. 'hora', 'dia', 'mes', etc.
 
     # tipo de cálculo: 'fijo', 'porcentaje_salario', 'porcentaje_bruto', 'formula', 'horas', etc.
-    formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
+    formula_tipo = database.Column(database.String(50), nullable=False, default="fixed")
     monto_default = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     formula = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
     condicion = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
@@ -521,7 +521,7 @@ class Percepcion(database.Model, BaseTabla):
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -550,7 +550,7 @@ class Deduccion(database.Model, BaseTabla):
     tipo = database.Column(database.String(30), nullable=False, default="general")
     es_impuesto = database.Column(database.Boolean(), default=False)
 
-    formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
+    formula_tipo = database.Column(database.String(50), nullable=False, default="fixed")
     monto_default = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     formula = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
     condicion = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
@@ -578,7 +578,7 @@ class Deduccion(database.Model, BaseTabla):
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -624,7 +624,7 @@ class Prestacion(database.Model, BaseTabla):
 
     tipo = database.Column(database.String(30), nullable=False, default="patronal")
 
-    formula_tipo = database.Column(database.String(50), nullable=False, default="fijo")
+    formula_tipo = database.Column(database.String(50), nullable=False, default="fixed")
     monto_default = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     formula = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
     condicion = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
@@ -655,7 +655,7 @@ class Prestacion(database.Model, BaseTabla):
     )  # mensual | anual | vida_laboral
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -938,7 +938,7 @@ class Liquidacion(database.Model, BaseTabla):
     ultimo_dia_pagado = database.Column(database.Date, nullable=True)
     dias_por_pagar = database.Column(database.Integer, nullable=False, default=0)
 
-    estado = database.Column(database.String(30), nullable=False, default="borrador")  # borrador, aplicada, pagada
+    estado = database.Column(database.String(30), nullable=False, default="draft")  # draft, applied, paid
 
     total_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     total_deducciones = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
@@ -1012,7 +1012,7 @@ class NominaNovedad(database.Model, BaseTabla):
 
     # Estado de la novedad: 'pendiente' | 'ejecutada'
     # Se marca como 'ejecutada' cuando la nómina cambia a estado 'aplicado'
-    estado = database.Column(database.String(20), nullable=False, default="pendiente")  # Use NovedadEstado enum values
+    estado = database.Column(database.String(20), nullable=False, default="pending")  # Use NovedadEstado enum values
 
     nomina = database.relationship("Nomina", back_populates="novedades")
     empleado = database.relationship("Empleado", back_populates="novedades_registradas")
@@ -1203,7 +1203,7 @@ class VacacionDescansada(database.Model, BaseTabla):
     fecha_inicio = database.Column(database.Date, nullable=False)
     fecha_fin = database.Column(database.Date, nullable=False)
     dias_tomados = database.Column(database.Numeric(5, 2), nullable=False, default=Decimal("0.00"))
-    estado = database.Column(database.String(30), nullable=False, default="pendiente")
+    estado = database.Column(database.String(30), nullable=False, default="pending")
     autorizado_por = database.Column(database.String(150), nullable=True)
     fecha_autorizacion = database.Column(database.Date, nullable=True)
     observaciones = database.Column(database.String(500), nullable=True)
@@ -1305,8 +1305,8 @@ class Adelanto(database.Model, BaseTabla):
     cuenta_haber = database.Column(database.String(64), nullable=True)
     descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
 
-    # Estado: borrador, pendiente, aprobado, aplicado (pagado), rechazado, cancelado
-    estado = database.Column(database.String(30), nullable=False, default="borrador")
+    # Estado: draft, pending, approved, applied (paid), rejected, cancelled
+    estado = database.Column(database.String(30), nullable=False, default="draft")
     motivo = database.Column(database.String(500), nullable=True)
     aprobado_por = database.Column(database.String(150), nullable=True)
     rechazado_por = database.Column(database.String(150), nullable=True)
@@ -1507,7 +1507,7 @@ class ReglaCalculo(database.Model, BaseTabla):
     prestacion_id = database.Column(database.String(26), database.ForeignKey(FK_PRESTACION_ID), nullable=True)
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="borrador", index=True)
+    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -1843,8 +1843,8 @@ class CargaInicialPrestacion(database.Model, BaseTabla):
     tipo_cambio = database.Column(database.Numeric(24, 10), nullable=True, default=Decimal("1.0000000000"))
     saldo_convertido = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
 
-    # Status: borrador (draft) or aplicado (applied)
-    estado = database.Column(database.String(20), nullable=False, default="borrador")  # borrador | aplicado
+    # Status: draft (draft) or applied (applied)
+    estado = database.Column(database.String(20), nullable=False, default="draft")  # draft | applied
 
     # Application tracking
     fecha_aplicacion = database.Column(database.DateTime, nullable=True)
@@ -2109,8 +2109,8 @@ class VacationNovelty(database.Model, BaseTabla):
 
     # Status
     estado = database.Column(
-        database.String(20), nullable=False, default="pendiente"
-    )  # pendiente | aprobado | rechazado | disfrutado
+        database.String(20), nullable=False, default="pending"
+    )  # pending | approved | rejected | taken
 
     # Approval tracking
     fecha_aprobacion = database.Column(database.Date, nullable=True)

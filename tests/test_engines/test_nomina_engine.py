@@ -1417,7 +1417,7 @@ class TestConceptCalculatorFormulaMethods:
                 codigo="INSS",
                 nombre="INSS",
                 descripcion="Seguro Social",
-                formula_tipo="porcentaje",
+                formula_tipo="percentage",
                 porcentaje=Decimal("7.00"),
                 antes_impuesto=True,
                 activo=True,

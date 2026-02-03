@@ -119,7 +119,7 @@ def percepcion(app, db_session):
             codigo="BONO",
             nombre="Bono Mensual",
             descripcion="Bono mensual por desempeño",
-            formula_tipo="fijo",
+            formula_tipo="fixed",
             activo=True,
         )
         db_session.add(percepcion)
@@ -138,7 +138,7 @@ def deduccion(app, db_session):
             codigo="INSS",
             nombre="INSS Laboral",
             descripcion="Seguro Social Laboral",
-            formula_tipo="porcentaje",
+            formula_tipo="percentage",
             activo=True,
         )
         db_session.add(deduccion)
@@ -750,7 +750,7 @@ def nomina(app, db_session, planilla, admin_user):
             periodo_inicio=date.today(),
             periodo_fin=date.today() + timedelta(days=14),
             generado_por=admin_user.usuario,
-            estado="generado",
+            estado="generated",
         )
         db_session.add(nomina)
         db_session.commit()

@@ -1116,7 +1116,7 @@ def _users_create(username, password, name, email, user_type):
 @click.option("--password", prompt=True, hide_input=True, confirmation_prompt=True, help="Password")
 @click.option("--name", prompt=True, help="Full name")
 @click.option("--email", default=None, help="Email address")
-@click.option("--type", "user_type", type=click.Choice(["admin", "operador"]), default="operador", help="User type")
+@click.option("--type", "user_type", type=click.Choice(["admin", "hr", "audit"]), default="hr", help="User type")
 @with_appcontext
 @pass_context
 def users_create(ctx, username, password, name, email, user_type):

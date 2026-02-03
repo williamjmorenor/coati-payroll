@@ -125,7 +125,7 @@ def nomina(app, db_session, planilla, admin_user):
             periodo_inicio=date(2025, 1, 1),
             periodo_fin=date(2025, 1, 31),
             generado_por=admin_user.usuario,
-            estado="generado",
+            estado="generated",
         )
         db_session.add(nomina)
         db_session.commit()
@@ -429,7 +429,7 @@ def test_ver_nomina_empleado_wrong_nomina_redirects(
             planilla_id=planilla.id,
             periodo_inicio=date(2025, 2, 1),
             periodo_fin=date(2025, 2, 28),
-            estado="generado",
+            estado="generated",
         )
         db_session.add(other_nomina)
         db_session.commit()

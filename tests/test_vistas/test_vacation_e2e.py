@@ -145,7 +145,7 @@ def test_vacation_leave_request_approve_with_balance(app, client, admin_user, db
             start_date=start_date,
             end_date=end_date,
             units=Decimal("5"),
-            estado="pendiente",
+            estado="pending",
         )
         db_session.add(leave_request)
         db_session.commit()
@@ -235,7 +235,7 @@ def test_vacation_leave_request_reject(app, client, admin_user, db_session):
             start_date=start_date,
             end_date=end_date,
             units=Decimal("5"),
-            estado="pendiente",
+            estado="pending",
         )
         db_session.add(leave_request)
         db_session.commit()

@@ -481,7 +481,7 @@ def test_vacation_calendar_vs_vacation_days_distinction(app, db_session):
             start_date=friday,
             end_date=monday,
             units=vacation_days_to_deduct,  # Critical: Only 2 days, not 4
-            estado="aprobado",
+            estado="approved",
             fecha_aprobacion=date.today(),
             aprobado_por="test_user",
             observaciones=f"Calendar: {calendar_days} days, Vacation: {vacation_days_to_deduct} days",
