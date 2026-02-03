@@ -26,20 +26,20 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if estado == 'pendiente' %}active{% endif %}" 
-               href="{{ url_for('vacation.leave_request_index', estado='pendiente') }}">
+            <a class="nav-link {% if estado == 'pending' %}active{% endif %}" 
+               href="{{ url_for('vacation.leave_request_index', estado='pending') }}">
                 {{ _('Pendientes') }}
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if estado == 'aprobado' %}active{% endif %}" 
-               href="{{ url_for('vacation.leave_request_index', estado='aprobado') }}">
+            <a class="nav-link {% if estado == 'approved' %}active{% endif %}" 
+               href="{{ url_for('vacation.leave_request_index', estado='approved') }}">
                 {{ _('Aprobadas') }}
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if estado == 'rechazado' %}active{% endif %}" 
-               href="{{ url_for('vacation.leave_request_index', estado='rechazado') }}">
+            <a class="nav-link {% if estado == 'rejected' %}active{% endif %}" 
+               href="{{ url_for('vacation.leave_request_index', estado='rejected') }}">
                 {{ _('Rechazadas') }}
             </a>
         </li>
@@ -70,13 +70,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <td>{{ request.end_date.strftime('%Y-%m-%d') }}</td>
                             <td>{{ request.units }}</td>
                             <td>
-                                {% if request.estado == 'pendiente' %}
+                                {% if request.estado == 'pending' %}
                                     <span class="badge bg-warning">{{ _('Pendiente') }}</span>
-                                {% elif request.estado == 'aprobado' %}
+                                {% elif request.estado == 'approved' %}
                                     <span class="badge bg-success">{{ _('Aprobado') }}</span>
-                                {% elif request.estado == 'rechazado' %}
+                                {% elif request.estado == 'rejected' %}
                                     <span class="badge bg-danger">{{ _('Rechazado') }}</span>
-                                {% elif request.estado == 'disfrutado' %}
+                                {% elif request.estado == 'taken' %}
                                     <span class="badge bg-info">{{ _('Disfrutado') }}</span>
                                 {% endif %}
                             </td>

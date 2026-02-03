@@ -42,13 +42,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         
                         <dt class="col-sm-4">{{ _('Estado') }}</dt>
                         <dd class="col-sm-8">
-                            {% if leave_request.estado == 'pendiente' %}
+                            {% if leave_request.estado == 'pending' %}
                                 <span class="badge bg-warning">{{ _('Pendiente') }}</span>
-                            {% elif leave_request.estado == 'aprobado' %}
+                            {% elif leave_request.estado == 'approved' %}
                                 <span class="badge bg-success">{{ _('Aprobado') }}</span>
-                            {% elif leave_request.estado == 'rechazado' %}
+                            {% elif leave_request.estado == 'rejected' %}
                                 <span class="badge bg-danger">{{ _('Rechazado') }}</span>
-                            {% elif leave_request.estado == 'disfrutado' %}
+                            {% elif leave_request.estado == 'taken' %}
                                 <span class="badge bg-info">{{ _('Disfrutado') }}</span>
                             {% endif %}
                         </dd>
@@ -84,7 +84,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 </div>
             </div>
 
-            {% if leave_request.estado == 'pendiente' %}
+            {% if leave_request.estado == 'pending' %}
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">{{ _('Acciones') }}</h5>

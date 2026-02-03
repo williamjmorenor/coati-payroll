@@ -45,7 +45,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </div>
 {% endif %}
 
-{% if nomina.estado == 'calculando' %}
+{% if nomina.estado == 'calculating' %}
 <div class="card mb-4 border-primary">
     <div class="card-header bg-primary text-white">
         <h5 class="mb-0">
@@ -171,7 +171,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </div>
 {% endif %}
 
-{% if nomina.estado == 'generado' and nomina.empleados_con_error and nomina.empleados_con_error > 0 %}
+{% if nomina.estado == 'generated' and nomina.empleados_con_error and nomina.empleados_con_error > 0 %}
 <div class="alert alert-warning">
     <h5><i class="fas fa-exclamation-circle"></i> Advertencia: Algunos Empleados No Se Procesaron Correctamente</h5>
     <p>La nómina se generó exitosamente, pero {{ nomina.empleados_con_error }} empleado(s) tuvieron errores durante el cálculo.</p>
@@ -193,7 +193,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Resumen de la Nómina</h5>
             <div>
-                {% if nomina.estado == 'generado' %}
+                {% if nomina.estado == 'generated' %}
                 <form action="{{ url_for('planilla.aprobar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                       method="post" style="display: inline;">
                     {% if has_errors %}
@@ -206,7 +206,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </button>
                     {% endif %}
                 </form>
-                {% elif nomina.estado == 'aprobado' %}
+                {% elif nomina.estado == 'approved' %}
                 <form action="{{ url_for('planilla.aplicar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                       method="post" style="display: inline;">
                     <button type="submit" class="btn btn-primary" onclick="return confirm('¿Marcar como aplicada/pagada?')">
@@ -214,7 +214,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </button>
                 </form>
                 {% endif %}
-                {% if nomina.estado != 'aplicado' %}
+                {% if nomina.estado != 'applied' %}
                 <form action="{{ url_for('planilla.recalcular_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                       method="post" style="display: inline;">
                     <button type="submit" class="btn btn-warning" onclick="return confirm('¿Recalcular esta nómina? Se eliminarán los datos actuales y se generarán nuevamente.')">
@@ -228,7 +228,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 <a href="{{ url_for('planilla.ver_log_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-outline-secondary">
                     <i class="fas fa-list-alt"></i> Log de Ejecución
                 </a>
-                {% if nomina.estado in ['generado', 'aprobado', 'aplicado'] %}
+                {% if nomina.estado in ['generated', 'approved', 'applied'] %}
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-file-excel"></i> Exportar
@@ -268,13 +268,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             </div>
             <div class="col-md-2">
                 <strong>Estado:</strong><br>
-                {% if nomina.estado == 'calculando' %}
+                {% if nomina.estado == 'calculating' %}
                 <span class="badge bg-primary"><i class="fas fa-spinner fa-spin"></i> Calculando</span>
-                {% elif nomina.estado == 'generado' %}
+                {% elif nomina.estado == 'generated' %}
                 <span class="badge bg-warning">Generado</span>
-                {% elif nomina.estado == 'aprobado' %}
+                {% elif nomina.estado == 'approved' %}
                 <span class="badge bg-info">Aprobado</span>
-                {% elif nomina.estado == 'aplicado' %}
+                {% elif nomina.estado == 'applied' %}
                 <span class="badge bg-success">Aplicado</span>
                 {% elif nomina.estado == 'error' %}
                 <span class="badge bg-danger">Error</span>
@@ -378,9 +378,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     </div>
 </div>
 
-{% if nomina.estado == 'calculando' %}
+{% if nomina.estado == 'calculating' %}
 <script>
-// Auto-refresh progress for nominas in "calculando" state
+// Auto-refresh progress for nominas in "calculating" state
 (function() {
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
@@ -445,7 +445,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 }
                 
                 // If calculation is complete, reload page to show results
-                if (data.estado !== 'calculando') {
+                if (data.estado !== 'calculating') {
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
