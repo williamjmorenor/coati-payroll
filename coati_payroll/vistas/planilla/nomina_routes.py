@@ -259,7 +259,7 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
-    if nomina.estado != "generado":
+    if nomina.estado != "generated":
         flash(_("Solo se pueden aprobar nóminas en estado 'generado'."), "error")
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
@@ -292,11 +292,11 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
-    if nomina.estado != "aprobado":
+    if nomina.estado != "approved":
         flash(_("Solo se pueden aplicar nóminas en estado 'aprobado'."), "error")
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
-    nomina.estado = "aplicado"
+    nomina.estado = "applied"
     nomina.modificado_por = current_user.usuario
 
     # Actualizar estado de todas las novedades asociadas a "ejecutada"
@@ -368,7 +368,7 @@ def recalcular_nomina(planilla_id: str, nomina_id: str):
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
-    if nomina.estado == "aplicado":
+    if nomina.estado == "applied":
         flash(_("No se puede recalcular una nómina en estado 'aplicado' (pagada)."), "error")
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 

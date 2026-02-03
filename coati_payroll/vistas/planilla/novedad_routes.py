@@ -52,7 +52,7 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
-    if nomina.estado == "aplicado":
+    if nomina.estado == "applied":
         flash(_("No se pueden agregar novedades a una nómina aplicada."), "error")
         return redirect(
             url_for(
@@ -121,7 +121,7 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
             )
         )
 
-    if nomina.estado == "aplicado":
+    if nomina.estado == "applied":
         flash(_("No se pueden editar novedades de una nómina aplicada."), "error")
         return redirect(
             url_for(
@@ -200,7 +200,7 @@ def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
             )
         )
 
-    if nomina.estado == "aplicado":
+    if nomina.estado == "applied":
         flash(_("No se pueden eliminar novedades de una nómina aplicada."), "error")
         return redirect(
             url_for(

@@ -414,7 +414,7 @@ def leave_request_approve(request_id):
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
     # Update request status
-    leave_request.estado = "aprobado"
+    leave_request.estado = "approved"
     leave_request.fecha_aprobacion = date.today()
     leave_request.aprobado_por = current_user.usuario
     leave_request.modificado_por = current_user.usuario
@@ -471,7 +471,7 @@ def leave_request_reject(request_id):
     motivo_rechazo = request.form.get("motivo_rechazo", "")
 
     # Update request status
-    leave_request.estado = "rechazado"
+    leave_request.estado = "rejected"
     leave_request.motivo_rechazo = motivo_rechazo
     leave_request.modificado_por = current_user.usuario
 

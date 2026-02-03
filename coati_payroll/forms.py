@@ -549,7 +549,7 @@ class DeduccionForm(FlaskForm):
             ("general", _("General")),
             ("impuesto", _("Impuesto")),
             ("seguro_social", _("Seguro Social")),
-            ("prestamo", _("Préstamo")),
+            ("loan", _("Préstamo")),
             ("adelanto", _("Adelanto")),
             ("pension_alimenticia", _("Pensión Alimenticia")),
             ("ahorro", _("Ahorro Voluntario")),
@@ -1059,7 +1059,7 @@ class PrestamoForm(FlaskForm):
         _("Tipo"),
         choices=[
             ("adelanto", _("Adelanto de Salario")),
-            ("prestamo", _("Préstamo")),
+            ("loan", _("Préstamo")),
         ],
         validators=[DataRequired()],
         description=_("Adelanto: se descuenta rápidamente; Préstamo: cuotas a largo plazo"),
