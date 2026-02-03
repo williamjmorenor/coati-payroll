@@ -65,9 +65,7 @@ def index():
 
     # Get choices for filter dropdowns
     tipos_planilla = (
-        db.session.execute(db.select(TipoPlanilla).filter_by(activo=True).order_by(TipoPlanilla.codigo))
-        .scalars()
-        .all()
+        db.session.execute(db.select(TipoPlanilla).filter_by(activo=True).order_by(TipoPlanilla.codigo)).scalars().all()
     )
     empresas = (
         db.session.execute(db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)).scalars().all()

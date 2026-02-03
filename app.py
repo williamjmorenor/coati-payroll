@@ -19,19 +19,29 @@ from coati_payroll.log import log
 from coati_payroll.config import configuration
 from coati_payroll.wsgi_server import serve
 
-# Asegurar que por defecto use un archivo sqlite en la raíz del repositorio
-# llamado `coati_payroll.db` si no se suministra `DATABASE_URL`.
+# Base de datos SQLite para fines de desarrollo.
+# No recomendado para producción.
 repo_root = Path(__file__).resolve().parent
 default_db_path = repo_root.joinpath("coati_payroll.db")
 default_db_uri = f"sqlite:///{default_db_path}"
 
+db_url = environ.get("DATABASE_URL", None)
+if not db_url:
+    log.warning("DATABASE_URL not set, using default SQLite database")
+
 # Crear aplicación.
-app = create_app(configuration)
-app.config["SQLALCHEMY_DATABASE_URI"] = environ.get("DATABASE_URL", None) or default_db_uri
-log.trace("app module: application instance created")
+cfg = dict(configuration)
+cfg["SQLALCHEMY_DATABASE_URI"] = db_url or default_db_uri
+app = create_app(cfg)
+log.trace("App initialized")
+
+# Antes de ejecutar el servidor:
+#   export FLASK_APP=app
+#   payrollctl database init
+#   payrollctl database migrate
 
 # Puerto predefinido.
-port = environ.get("PORT", 5000)
+port = int(environ.get("PORT", 5000))
 
 if __name__ == "__main__":
     serve(app=app, host="0.0.0.0", port=port)

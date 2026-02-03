@@ -15,7 +15,6 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 # Third party libraries
 # <-------------------------------------------------------------------------> #
 
-
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
@@ -77,7 +76,8 @@ def load_config_from_file() -> dict:
 
 # < --------------------------------------------------------------------------------------------- >
 # Configuración central de la aplicación.
-VALORES_TRUE = {*["1", "true", "yes", "on"], *["development", "dev"]}
+BOOLEAN_TRUE = {"1", "true", "yes", "on", "ok"}
+VALORES_TRUE = BOOLEAN_TRUE | {"development", "dev"}
 DEBUG_VARS = ["DEBUG", "CI", "DEV", "DEVELOPMENT"]
 FRAMEWORK_VARS = ["FLASK_ENV", "DJANGO_DEBUG", "NODE_ENV"]
 GENERIC_VARS = ["ENV", "APP_ENV"]
@@ -89,7 +89,7 @@ DESARROLLO = any(
 )
 
 # Auto-migrate configuration - enables automatic database migrations on startup
-AUTO_MIGRATE = environ.get("COATI_AUTO_MIGRATE", "0").strip().lower() in VALORES_TRUE
+AUTO_MIGRATE = environ.get("COATI_AUTO_MIGRATE", "0").strip().lower() in BOOLEAN_TRUE
 
 # < --------------------------------------------------------------------------------------------- >
 # Directorios base de la aplicacion
@@ -103,7 +103,6 @@ DIRECTORIO_ARCHIVOS_BASE: str = path.join(DIRECTORIO_ACTUAL, "static")
 # Directorios personalizados para la aplicación.
 DIRECTORIO_ARCHIVOS = DIRECTORIO_ARCHIVOS_BASE
 DIRECTORIO_PLANTILLAS = DIRECTORIO_PLANTILLAS_BASE
-
 
 # < --------------------------------------------------------------------------------------------- >
 TESTING = (
@@ -184,7 +183,7 @@ if DATABASE_URL_BASE := CONFIGURACION.get("SQLALCHEMY_DATABASE_URI"):
 
     # Actualizar configuración si hubo cambio
     if DATABASE_URL_BASE != DATABASE_URL_CORREGIDA:
-        log.info(f"Database URI corrected: {DATABASE_URL_BASE} → {DATABASE_URL_CORREGIDA}")
+        log.info("Database URI corrected")
         CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL_CORREGIDA
 
 # < --------------------------------------------------------------------------------------------- >

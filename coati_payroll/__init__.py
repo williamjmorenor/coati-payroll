@@ -144,7 +144,8 @@ def create_app(config) -> Flask:
     from coati_payroll.config import DESARROLLO
 
     if not DESARROLLO and app.config.get("SECRET_KEY") == "dev":
-        log.warning("Using default SECRET_KEY in production! This can cause issues.")
+        log.critical("Using default SECRET_KEY in production — aborting startup.")
+        raise RuntimeError("SECRET_KEY must be set in production")
 
     log.trace("create_app: initializing app")
 
@@ -158,27 +159,6 @@ def create_app(config) -> Flask:
     # Initialize database and alembic
     db.init_app(app)
     alembic.init_app(app)
-
-    # Mostrar la URI de la base de datos para diagnóstico
-    try:
-        db_uri = app.config.get("SQLALCHEMY_DATABASE_URI")
-        log.trace(f"create_app: SQLALCHEMY_DATABASE_URI = {db_uri}")
-    except Exception:
-        log.trace("create_app: could not read SQLALCHEMY_DATABASE_URI from app.config")
-
-    # Garantizar que las tablas básicas, el usuario admin y la configuración inicial existan
-    try:
-        log.trace("create_app: calling ensure_database_initialized")
-        ensure_database_initialized(app)
-        log.trace("create_app: ensure_database_initialized completed")
-    except Exception as exc:
-        log.trace(f"create_app: ensure_database_initialized raised: {exc}")
-        try:
-            log.exception("create_app: ensure_database_initialized exception")
-        except Exception:
-            pass
-        # No detener el arranque si la inicialización automática falla
-        pass
 
     try:
         with app.app_context():

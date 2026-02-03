@@ -20,7 +20,6 @@ from flask_login import login_user, logout_user
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
-from coati_payroll.log import log
 from coati_payroll.model import Usuario, database
 from coati_payroll.forms import LoginForm
 from coati_payroll.i18n import _
@@ -86,7 +85,6 @@ def proteger_passwd(clave: str, /) -> bytes:
 
 def validar_acceso(usuario_id: str, acceso: str, /) -> bool:
     """Verifica el inicio de sesión del usuario."""
-    log.trace(f"Verifying access for {usuario_id}")
     registro = database.session.execute(database.select(Usuario).filter_by(usuario=usuario_id)).scalar_one_or_none()
 
     if not registro:
@@ -101,12 +99,10 @@ def validar_acceso(usuario_id: str, acceso: str, /) -> bool:
         except VerifyMismatchError:
             clave_validada = False
     else:
-        log.trace(f"User record not found for {usuario_id}")
         clave_validada = False
 
-    log.trace(f"Access validation result is {clave_validada}")
     if clave_validada:
-        registro.ultimo_acceso = datetime.now()
+        registro.ultimo_acceso = datetime.now(datetime.UTC)
         database.session.commit()
 
     return clave_validada

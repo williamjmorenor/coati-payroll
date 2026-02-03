@@ -1,17 +1,5 @@
-# Copyright 2022 - 2024 BMO Soluciones, S.A.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 """Configuración de logs."""
 
 from __future__ import annotations
@@ -64,13 +52,17 @@ numeric_level = custom_levels.get(log_level_str, logging.INFO)
 # Configurar logger raíz
 root_logger = logging.getLogger("coati_payroll")
 root_logger.setLevel(numeric_level)
+root_logger.propagate = False
 
 # Handler solo para stdout
 console_handler = logging.StreamHandler(stdout)
 console_handler.setLevel(numeric_level)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
 console_handler.setFormatter(formatter)
-root_logger.addHandler(console_handler)
+
+# Evitar agregar múltiples handlers en reload/imports repetidos
+if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+    root_logger.addHandler(console_handler)
 
 # Configurar logger de Flask y Werkzeug al mismo nivel
 logging.getLogger("flask").setLevel(numeric_level)
@@ -83,7 +75,6 @@ LOG_LEVEL = root_logger.getEffectiveLevel()
 
 log = root_logger
 logger = root_logger
-
 
 # Cached helper to avoid repeated debug/level checks on every trace call
 _TRACE_ACTIVE: bool | None = None

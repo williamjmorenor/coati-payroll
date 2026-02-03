@@ -43,8 +43,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi8 \
     fonts-dejavu-core \
     tini \
-    postgresql-client \
-    default-mysql-client \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

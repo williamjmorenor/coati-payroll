@@ -1,4 +1,6 @@
-unset DATABASER_URL
+unset DATABASE_URL
 export LOG_LEVEL=trace
+export DEVELOPMENT=True
 payrollctl database init
-flask run --debugger --reload
+payrollctl database migrate
+payrollctl --debug run --reload

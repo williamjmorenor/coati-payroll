@@ -7,6 +7,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Standard library
 # <-------------------------------------------------------------------------> #
+from typing import Any
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
@@ -38,6 +39,6 @@ def _n(singular: str, plural: str, n: int) -> str:
     return ngettext(singular, plural, n)
 
 
-def _l(text: str) -> str:
+def _l(text: str) -> str | Any:
     """Mark text for lazy translation (useful in forms)."""
     return lazy_gettext(text)

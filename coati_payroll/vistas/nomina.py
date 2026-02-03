@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from flask import Blueprint, render_template, request
 
-from coati_payroll.i18n import _
 from coati_payroll.model import Nomina, Planilla, Empresa, db
 from coati_payroll.rbac import require_read_access
 from coati_payroll.vistas.constants import PER_PAGE

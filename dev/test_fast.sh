@@ -2,6 +2,10 @@
 # Fast test execution script for quick feedback during development
 # Runs tests in parallel and excludes validation tests
 
+unset DATABASE_URL
+export LOG_LEVEL=trace
+export DEVELOPMENT=True
+
 set -e
 
 # Color output for better visibility

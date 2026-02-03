@@ -2,6 +2,10 @@
 # Full test execution script for comprehensive testing
 # Runs all tests including validation tests with coverage
 
+unset DATABASE_URL
+export LOG_LEVEL=trace
+export DEVELOPMENT=True
+
 set -e
 
 # Color output for better visibility

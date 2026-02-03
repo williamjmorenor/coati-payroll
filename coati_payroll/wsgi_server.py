@@ -16,7 +16,7 @@ from waitress import serve as wsgi_server
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
-from coati_payroll import ensure_database_initialized
+
 from coati_payroll.log import log
 
 if TYPE_CHECKING:
@@ -26,12 +26,5 @@ if TYPE_CHECKING:
 # Servidor predefinido.
 def serve(app: Optional[Flask] = None, host: str = "0.0.0.0", port: int | str = 5000):
 
-    try:
-        log.trace(f"Flask SQLALCHEMY_DATABASE_URI = {app.config.get('SQLALCHEMY_DATABASE_URI')}")
-        ensure_database_initialized(app)
-        log.trace("Database initialized")
-    except Exception as exc:
-        log.trace(f"Database init raised: {exc}")
-
-    log.trace("Starting waitress on 0.0.0.0:{port}")
+    log.trace(f"Starting waitress on {host}:{port}")
     wsgi_server(app, host=host, port=port)
