@@ -46,9 +46,30 @@ def discover_installed_plugins() -> list[DiscoveredPlugin]:
 
 
 def sync_plugin_registry() -> None:
+    """Sync the plugin registry with installed plugins.
+
+    This function queries the database to sync installed plugins.
+    If the database tables don't exist yet, it will raise an OperationalError.
+    This is expected behavior during initial setup - the application should
+    ensure the database is initialized before calling this function, or
+    handle the OperationalError gracefully.
+    """
+    from sqlalchemy.exc import OperationalError, ProgrammingError
+
     installed = {p.distribution_name: p for p in discover_installed_plugins()}
 
-    rows = db.session.execute(db.select(PluginRegistry)).scalars().all()
+    try:
+        rows = db.session.execute(db.select(PluginRegistry)).scalars().all()
+    except (OperationalError, ProgrammingError) as exc:
+        # Database tables don't exist yet - this is expected during initial setup
+        # or in test environments. Re-raise the error so the caller can handle it.
+        raise OperationalError(
+            "Cannot sync plugin registry: database tables not initialized. "
+            "Please run database initialization first.",
+            params=None,
+            orig=exc,
+        ) from exc
+
     by_name = {r.distribution_name: r for r in rows}
 
     changed = False

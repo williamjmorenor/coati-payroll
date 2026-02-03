@@ -19,6 +19,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 from coati_payroll import create_app
 from coati_payroll.model import db as _db
+from coati_payroll.log import log
 
 
 @pytest.fixture(scope="function")
@@ -116,7 +117,24 @@ def db_session(app):
         # IMPORTANT: For SQLite in-memory databases, schema is per-connection.
         # Ensure tables exist on this connection, otherwise tests will see
         # "no such table" errors.
-        _db.metadata.create_all(bind=connection)
+        # Note: Use checkfirst=False because we're on a fresh connection and want to
+        # create everything. However, we need to handle the edge case where
+        # SQLAlchemy's metadata has stale index references from a previous test run.
+        # We'll try checkfirst=False first, and if we get an index error, try again
+        # with checkfirst=True which should skip the problematic index.
+        try:
+            _db.metadata.create_all(bind=connection)
+        except Exception as exc:
+            from sqlalchemy.exc import OperationalError, ProgrammingError
+            error_msg = str(exc).lower()
+            # If we got an "index already exists" error, try again with checkfirst=True
+            if isinstance(exc, (OperationalError, ProgrammingError)) and "index" in error_msg and "already exists" in error_msg:
+                log.trace(f"Index already exists, retrying with checkfirst=True: {exc}")
+                # Try again with checkfirst=True to skip existing objects
+                _db.metadata.create_all(bind=connection, checkfirst=True)
+            else:
+                # Some other error, re-raise it
+                raise
 
         yield session
 
