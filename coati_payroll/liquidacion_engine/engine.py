@@ -74,8 +74,8 @@ class LiquidacionEngine:
         return fecha_alta - timedelta(days=1)
 
     def _get_factor_dias(self, config: ConfiguracionCalculos) -> int:
-        modo = (config.liquidacion_modo_dias or "calendario").strip().lower()
-        if modo == "laboral":
+        modo = (config.liquidacion_modo_dias or "calendar").strip().lower()
+        if modo == "working":
             return int(config.liquidacion_factor_laboral or 28)
         return int(config.liquidacion_factor_calendario or 30)
 

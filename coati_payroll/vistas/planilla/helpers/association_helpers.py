@@ -81,7 +81,7 @@ def agregar_asociacion(
     association_class = None
     filter_params = {"planilla_id": planilla_id}
 
-    if tipo_componente == "percepcion":
+    if tipo_componente == "income":
         association_class = PlanillaIngreso
         filter_params["percepcion_id"] = componente_id
     elif tipo_componente == "deduction":
@@ -102,7 +102,7 @@ def agregar_asociacion(
         return False, f"La {tipo_componente} ya está asignada a esta planilla.", None
 
     # Create association based on type
-    if tipo_componente == "percepcion":
+    if tipo_componente == "income":
         orden = datos_extra.get("orden", 0)
         association = PlanillaIngreso(
             planilla_id=planilla_id,

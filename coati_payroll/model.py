@@ -622,7 +622,7 @@ class Prestacion(database.Model, BaseTabla):
     nombre = database.Column(database.String(150), nullable=False)
     descripcion = database.Column(database.String(255), nullable=True)
 
-    tipo = database.Column(database.String(30), nullable=False, default="patronal")
+    tipo = database.Column(database.String(30), nullable=False, default="employer")
 
     formula_tipo = database.Column(database.String(50), nullable=False, default="fixed")
     monto_default = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
@@ -1286,12 +1286,12 @@ class Adelanto(database.Model, BaseTabla):
     tasa_interes = database.Column(
         database.Numeric(5, 4), nullable=True, default=Decimal("0.0000")
     )  # e.g., 0.0500 = 5%
-    tipo_interes = database.Column(database.String(20), nullable=True, default="ninguno")  # ninguno, simple, compuesto
+    tipo_interes = database.Column(database.String(20), nullable=True, default="none")  # none, simple, compound
 
     # Amortization method (for loans with interest)
     metodo_amortizacion = database.Column(
-        database.String(20), nullable=True, default="frances"
-    )  # frances (constant payment), aleman (constant amortization)
+        database.String(20), nullable=True, default="french"
+    )  # french (constant payment), german (constant amortization)
 
     # Interest tracking
     interes_acumulado = database.Column(
@@ -1488,8 +1488,8 @@ class ReglaCalculo(database.Model, BaseTabla):
 
     version = database.Column(database.String(20), nullable=False, default="1.0.0")  # Semantic versioning
 
-    # Type of rule: 'impuesto', 'deduccion', 'percepcion', 'prestacion'
-    tipo_regla = database.Column(database.String(30), nullable=False, default="impuesto")
+    # Type of rule: 'tax', 'deduction', 'income', 'benefit'
+    tipo_regla = database.Column(database.String(30), nullable=False, default="tax")
 
     # The complete JSON schema defining the calculation logic
     # Structure includes: meta, inputs, steps, tax_tables, output

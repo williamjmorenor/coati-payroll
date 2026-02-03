@@ -93,8 +93,8 @@ class ConfiguracionCalculosForm(FlaskForm):
     liquidacion_modo_dias = SelectField(
         _("Modo de Días (Liquidación)"),
         choices=[
-            ("calendario", _("Calendario")),
-            ("laboral", _("Laboral")),
+            ("calendar", _("Calendario")),
+            ("working", _("Laboral")),
         ],
         validators=[DataRequired()],
         description=_(
@@ -178,9 +178,9 @@ class EmployeeForm(FlaskForm):
         _("Género"),
         choices=[
             ("", _("Seleccionar...")),
-            ("masculino", _("Masculino")),
-            ("femenino", _("Femenino")),
-            ("otro", _("Otro")),
+            ("male", _("Masculino")),
+            ("female", _("Femenino")),
+            ("other", _("Otro")),
         ],
         validators=[Optional()],
     )
@@ -189,10 +189,10 @@ class EmployeeForm(FlaskForm):
         _("Tipo de identificación"),
         choices=[
             ("", _("Seleccionar...")),
-            ("cedula", _("Cédula")),
-            ("pasaporte", _("Pasaporte")),
-            ("carnet_residente", _("Carnet de residente")),
-            ("otro", _("Otro")),
+            ("id_card", _("Cédula")),
+            ("passport", _("Pasaporte")),
+            ("residence_card", _("Carnet de residente")),
+            ("other", _("Otro")),
         ],
         validators=[Optional()],
     )
@@ -231,11 +231,11 @@ class EmployeeForm(FlaskForm):
         _("Estado civil"),
         choices=[
             ("", _("Seleccionar...")),
-            ("soltero", _("Soltero/a")),
-            ("casado", _("Casado/a")),
-            ("divorciado", _("Divorciado/a")),
-            ("viudo", _("Viudo/a")),
-            ("union_libre", _("Unión libre")),
+            ("single", _("Soltero/a")),
+            ("married", _("Casado/a")),
+            ("divorced", _("Divorciado/a")),
+            ("widowed", _("Viudo/a")),
+            ("common_law", _("Unión libre")),
         ],
         validators=[Optional()],
     )
@@ -245,10 +245,10 @@ class EmployeeForm(FlaskForm):
         _("Tipo de contrato"),
         choices=[
             ("", _("Seleccionar...")),
-            ("indefinido", _("Indefinido")),
-            ("temporal", _("Temporal")),
-            ("por_obra", _("Por obra")),
-            ("practicas", _("Prácticas")),
+            ("permanent", _("Indefinido")),
+            ("temporary", _("Temporal")),
+            ("project_based", _("Por obra")),
+            ("internship", _("Prácticas")),
         ],
         validators=[Optional()],
     )
@@ -328,10 +328,10 @@ class CustomFieldForm(FlaskForm):
     tipo_dato = SelectField(
         _("Tipo de dato"),
         choices=[
-            ("texto", _("Texto")),
-            ("entero", _("Número entero")),
+            ("text", _("Texto")),
+            ("integer", _("Número entero")),
             ("decimal", _("Número decimal")),
-            ("booleano", _("Verdadero/Falso")),
+            ("boolean", _("Verdadero/Falso")),
         ],
         validators=[DataRequired()],
     )
@@ -385,9 +385,9 @@ class ReglaCalculoForm(FlaskForm):
     tipo_regla = SelectField(
         _("Tipo de regla"),
         choices=[
-            ("impuesto", _("Impuesto")),
+            ("tax", _("Impuesto")),
             ("deduction", _("Deducción")),
-            ("percepcion", _("Percepción")),
+            ("income", _("Percepción")),
             ("benefit", _("Prestación")),
         ],
         validators=[DataRequired()],
@@ -547,14 +547,14 @@ class DeduccionForm(FlaskForm):
         _("Tipo de Deducción"),
         choices=[
             ("general", _("General")),
-            ("impuesto", _("Impuesto")),
-            ("seguro_social", _("Seguro Social")),
+            ("tax", _("Impuesto")),
+            ("social_security", _("Seguro Social")),
             ("loan", _("Préstamo")),
             ("advance", _("Adelanto")),
-            ("pension_alimenticia", _("Pensión Alimenticia")),
-            ("ahorro", _("Ahorro Voluntario")),
-            ("sindical", _("Cuota Sindical")),
-            ("otro", _("Otro")),
+            ("alimony", _("Pensión Alimenticia")),
+            ("savings", _("Ahorro Voluntario")),
+            ("union", _("Cuota Sindical")),
+            ("other", _("Otro")),
         ],
         validators=[DataRequired()],
     )
@@ -846,13 +846,13 @@ class PrestacionForm(FlaskForm):
     tipo = SelectField(
         _("Tipo de Prestación"),
         choices=[
-            ("patronal", _("Aporte Patronal")),
-            ("seguro_social", _("Seguro Social Patronal")),
-            ("vacaciones", _("Vacaciones")),
-            ("aguinaldo", _("Aguinaldo / Treceavo Mes")),
-            ("indemnizacion", _("Indemnización")),
-            ("capacitacion", _("Capacitación")),
-            ("otro", _("Otro")),
+            ("employer", _("Aporte Patronal")),
+            ("social_security", _("Seguro Social Patronal")),
+            ("vacation", _("Vacaciones")),
+            ("bonus", _("Aguinaldo / Treceavo Mes")),
+            ("severance", _("Indemnización")),
+            ("training", _("Capacitación")),
+            ("other", _("Otro")),
         ],
         validators=[DataRequired()],
     )
@@ -979,7 +979,7 @@ class NominaNovedadForm(FlaskForm):
     tipo_concepto = SelectField(
         _("Tipo de Concepto"),
         choices=[
-            ("percepcion", _("Percepción (Ingreso)")),
+            ("income", _("Percepción (Ingreso)")),
             ("deduction", _("Deducción (Egreso)")),
         ],
         validators=[DataRequired()],
@@ -1695,7 +1695,7 @@ class VacationTakenForm(FlaskForm):
         _("Tipo de Concepto"),
         choices=[
             ("deduction", _("Deducción (Descuento)")),
-            ("percepcion", _("Percepción (Pago de Vacaciones)")),
+            ("income", _("Percepción (Pago de Vacaciones)")),
         ],
         validators=[DataRequired()],
         description=_("Tipo de concepto al que se asocia la novedad"),
