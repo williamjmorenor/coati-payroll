@@ -1,14 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+"""Plugin Manager."""
+
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from dataclasses import dataclass
 from importlib import import_module
 from importlib.metadata import distributions
 
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 from flask import Flask
 
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from coati_payroll.log import log
 from coati_payroll.model import PluginRegistry, db
 
+# ----------------------[ GLOBAL VARIABLES DEFINITION ]---------------------- #
 PLUGIN_DISTRIBUTION_PREFIX = "coati-payroll-plugin-"
 
 

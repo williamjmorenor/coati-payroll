@@ -8,9 +8,20 @@ and abuse, particularly for authentication endpoints.
 
 from __future__ import annotations
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from os import environ
+
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 
 
 def get_rate_limiter_storage():

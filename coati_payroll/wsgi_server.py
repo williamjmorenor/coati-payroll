@@ -16,7 +16,6 @@ from waitress import serve as wsgi_server
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
-
 from coati_payroll.log import log
 
 if TYPE_CHECKING:

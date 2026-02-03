@@ -30,7 +30,7 @@ from flask_login import current_user
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
 
-# Constants
+# ----------------------[ GLOBAL VARIABLES DEFINITION ]---------------------- #
 MESSAGE_LOGIN_REQUIRED = "Favor iniciar sesión para acceder al sistema."
 ROUTE_AUTH_LOGIN = "auth.login"
 
@@ -55,6 +55,7 @@ def require_role(*allowed_roles: str):
     """
 
     def decorator(f):
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
@@ -89,6 +90,7 @@ def require_read_access():
     """
 
     def decorator(f):
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
@@ -122,6 +124,7 @@ def require_write_access():
     """
 
     def decorator(f):
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:

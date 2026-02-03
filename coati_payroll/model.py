@@ -28,7 +28,7 @@ db = SQLAlchemy()
 database = db
 
 
-# Funciones de ayuda
+# -----------------------[ UTILITY FUNCTIONS ]----------------------- #
 def generador_de_codigos_unicos() -> str:
     """Genera codigo unicos basados en ULID."""
 
@@ -57,7 +57,7 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-# Foreign Key Constants
+# ----------------------[ GLOBAL VARIABLES DEFINITION ]---------------------- #
 FK_MONEDA_ID = "moneda.id"
 FK_EMPRESA_ID = "empresa.id"
 FK_PLANILLA_ID = "planilla.id"
