@@ -66,7 +66,7 @@ def tipo_planilla(app, db_session):
         tipo_planilla = TipoPlanilla(
             codigo="MONTHLY",
             descripcion="Planilla mensual",
-            periodicidad="mensual",
+            periodicidad="monthly",
             dias=30,
             periodos_por_anio=12,
             mes_inicio_fiscal=1,
@@ -239,7 +239,7 @@ def nomina_detalle_prestacion(app, db_session, nomina_empleado):
     with app.app_context():
         detalle = NominaDetalle(
             nomina_empleado_id=nomina_empleado.id,
-            tipo="prestacion",
+            tipo="benefit",
             codigo="VAC001",
             descripcion="Vacaciones",
             monto=Decimal("100.00"),
@@ -545,7 +545,7 @@ class TestExportarPrestacionesExcel:
             # Add multiple prestaciones
             detalle1 = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="prestacion",
+                tipo="benefit",
                 codigo="VAC001",
                 descripcion="Vacaciones",
                 monto=Decimal("100.00"),
@@ -553,7 +553,7 @@ class TestExportarPrestacionesExcel:
             )
             detalle2 = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="prestacion",
+                tipo="benefit",
                 codigo="BON001",
                 descripcion="Bono",
                 monto=Decimal("50.00"),

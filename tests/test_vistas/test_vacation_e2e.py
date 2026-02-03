@@ -89,7 +89,7 @@ def test_vacation_leave_request_approve_with_balance(app, client, admin_user, db
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
             dias=30,
-            periodicidad="mensual",
+            periodicidad="monthly",
             activo=True,
         )
         db_session.add(tipo_planilla)
@@ -179,7 +179,7 @@ def test_vacation_leave_request_reject(app, client, admin_user, db_session):
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
             dias=30,
-            periodicidad="mensual",
+            periodicidad="monthly",
             activo=True,
         )
         db_session.add(tipo_planilla)

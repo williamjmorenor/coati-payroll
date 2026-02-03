@@ -41,7 +41,7 @@ def _create_base_company_struct(db_session):
         codigo="MENSUAL",
         descripcion="Planilla Mensual",
         dias=30,
-        periodicidad="mensual",
+        periodicidad="monthly",
         activo=True,
     )
     db_session.add(tipo_planilla)

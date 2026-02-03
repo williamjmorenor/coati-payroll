@@ -43,7 +43,7 @@ def tipo_planilla(app, db_session):
     with app.app_context():
         from coati_payroll.model import TipoPlanilla
 
-        t = TipoPlanilla(codigo="MONTHLY", descripcion="Mensual", periodicidad="mensual", dias=30, activo=True)
+        t = TipoPlanilla(codigo="MONTHLY", descripcion="Mensual", periodicidad="monthly", dias=30, activo=True)
         db_session.add(t)
         db_session.commit()
         db_session.refresh(t)

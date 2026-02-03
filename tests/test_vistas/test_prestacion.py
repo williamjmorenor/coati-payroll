@@ -175,7 +175,7 @@ def create_test_data(db_session):
     prestacion = Prestacion(
         codigo="VAC",
         nombre="Vacaciones",
-        tipo_acumulacion="mensual",
+        tipo_acumulacion="monthly",
         activo=True,
         creado_por="test",
     )

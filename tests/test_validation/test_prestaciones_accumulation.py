@@ -76,7 +76,7 @@ def test_prestaciones_accumulation_workflow(app, db_session):
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
             dias=30,
-            periodicidad="mensual",
+            periodicidad="monthly",
             mes_inicio_fiscal=1,  # January
             dia_inicio_fiscal=1,
             acumula_anual=True,
@@ -106,7 +106,7 @@ def test_prestaciones_accumulation_workflow(app, db_session):
             nombre="Aguinaldo - Treceavo Mes",
             descripcion="Provisión mensual para aguinaldo",
             tipo="aguinaldo",
-            tipo_acumulacion="anual",  # Accumulates annually
+            tipo_acumulacion="annual",  # Accumulates annually
             formula_tipo="porcentaje_salario",
             porcentaje=Decimal("8.33"),  # 1/12 of annual salary
             base_calculo="salario_base",
@@ -122,7 +122,7 @@ def test_prestaciones_accumulation_workflow(app, db_session):
             nombre="Indemnización por Antigüedad",
             descripcion="Provisión por indemnización laboral",
             tipo="indemnizacion",
-            tipo_acumulacion="vida_laboral",  # Accumulates over employment lifetime
+            tipo_acumulacion="lifetime",  # Accumulates over employment lifetime
             formula_tipo="porcentaje_salario",
             porcentaje=Decimal("8.33"),  # 1/12 of annual salary
             base_calculo="salario_base",
@@ -408,7 +408,7 @@ def test_prestaciones_monthly_settlement(app, db_session):
             codigo="MENSUAL-2",
             descripcion="Planilla Mensual 2",
             dias=30,
-            periodicidad="mensual",
+            periodicidad="monthly",
             mes_inicio_fiscal=1,
             dia_inicio_fiscal=1,
             acumula_anual=True,
@@ -438,7 +438,7 @@ def test_prestaciones_monthly_settlement(app, db_session):
             nombre="INSS Patronal",
             descripcion="Seguro Social Patronal - Liquidación Mensual",
             tipo="seguro_social",
-            tipo_acumulacion="mensual",  # Settles monthly
+            tipo_acumulacion="monthly",  # Settles monthly
             formula_tipo="porcentaje_salario",
             porcentaje=Decimal("19.00"),  # 19% employer contribution
             base_calculo="salario_base",

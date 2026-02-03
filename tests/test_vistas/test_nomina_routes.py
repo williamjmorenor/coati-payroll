@@ -26,7 +26,7 @@ def tipo_planilla(app, db_session):
         tipo = TipoPlanilla(
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
-            periodicidad="mensual",
+            periodicidad="monthly",
             dias=30,
             periodos_por_anio=12,
             mes_inicio_fiscal=1,
@@ -158,7 +158,7 @@ def nomina_detalle(app, db_session, nomina_empleado):
     with app.app_context():
         detalle = NominaDetalle(
             nomina_empleado_id=nomina_empleado.id,
-            tipo="ingreso",
+            tipo="income",
             codigo="SALARIO",
             descripcion="Salario Base",
             monto=Decimal("1000.00"),

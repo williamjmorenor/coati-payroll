@@ -48,7 +48,7 @@ class TestEmpleadoCalculo:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -122,7 +122,7 @@ class TestNominaEngineInitialization:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -179,7 +179,7 @@ class TestNominaEngineInitialization:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -223,7 +223,7 @@ class TestPlanillaValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -267,7 +267,7 @@ class TestPlanillaValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -314,7 +314,7 @@ class TestSalarioPeriodoCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -363,7 +363,7 @@ class TestSalarioPeriodoCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -412,7 +412,7 @@ class TestSalarioPeriodoCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -465,7 +465,7 @@ class TestCalculoConcepto:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -537,7 +537,7 @@ class TestCalculoConcepto:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -610,7 +610,7 @@ class TestCalculoConcepto:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -687,7 +687,7 @@ class TestHorasYDiasCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -764,7 +764,7 @@ class TestHorasYDiasCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -838,7 +838,7 @@ class TestHorasYDiasCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -918,7 +918,7 @@ class TestBadInputNominaEngine:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -991,7 +991,7 @@ class TestBadInputNominaEngine:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1064,7 +1064,7 @@ class TestBadInputNominaEngine:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1143,7 +1143,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1232,7 +1232,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1305,7 +1305,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1393,7 +1393,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1522,7 +1522,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1635,7 +1635,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1718,7 +1718,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1838,7 +1838,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,

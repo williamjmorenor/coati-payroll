@@ -31,7 +31,7 @@ def _create_minimal_planilla_context(db_session, empresa_id: str):
     db_session.add(moneda)
     db_session.flush()
 
-    tipo = TipoPlanilla(codigo="MONTHLY", descripcion="Mensual", periodicidad="mensual", dias=30, activo=True)
+    tipo = TipoPlanilla(codigo="MONTHLY", descripcion="Mensual", periodicidad="monthly", dias=30, activo=True)
     db_session.add(tipo)
     db_session.flush()
 

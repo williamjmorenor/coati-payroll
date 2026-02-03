@@ -767,9 +767,9 @@ class TipoPlanillaForm(FlaskForm):
     periodicidad = SelectField(
         _("Periodicidad"),
         choices=[
-            ("mensual", _("Mensual")),
-            ("quincenal", _("Quincenal")),
-            ("semanal", _("Semanal")),
+            ("monthly", _("Mensual")),
+            ("biweekly", _("Quincenal")),
+            ("weekly", _("Semanal")),
         ],
         validators=[DataRequired()],
         description=_("Frecuencia de pago de la planilla"),
@@ -947,12 +947,12 @@ class PrestacionForm(FlaskForm):
     tipo_acumulacion = SelectField(
         _("Tipo de Acumulación"),
         choices=[
-            ("mensual", _("Mensual - Liquida cada mes")),
-            ("anual", _("Anual - Acumula durante el año")),
-            ("vida_laboral", _("Vida Laboral - Acumula durante toda la relación laboral")),
+            ("monthly", _("Mensual - Liquida cada mes")),
+            ("annual", _("Anual - Acumula durante el año")),
+            ("lifetime", _("Vida Laboral - Acumula durante toda la relación laboral")),
         ],
         validators=[DataRequired()],
-        default="mensual",
+        default="monthly",
         description=_("Define cómo se acumula esta prestación"),
     )
     activo = BooleanField(_("Activo"), default=True)

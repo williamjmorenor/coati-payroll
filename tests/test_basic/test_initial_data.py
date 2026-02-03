@@ -461,7 +461,7 @@ def test_load_payroll_types_creates_types(app, db_session):
         assert monthly is not None
         assert monthly.codigo == "MONTHLY"
         assert monthly.dias == 30
-        assert monthly.periodicidad == "mensual"
+        assert monthly.periodicidad == "monthly"
         assert monthly.periodos_por_anio == 12
         assert monthly.activo is True
 

@@ -66,7 +66,7 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
             codigo="MENSUAL_NI",
             descripcion="Nómina mensual para empleados de Nicaragua",
             dias=30,
-            periodicidad="mensual",
+            periodicidad="monthly",
             activo=True,
         )
         db_session.add(tipo_planilla)
@@ -310,7 +310,7 @@ def test_vacation_insufficient_balance_validation(app, db_session):
         db_session.add(moneda)
 
         tipo_planilla = TipoPlanilla(
-            codigo="MONTHLY", descripcion="Monthly payroll", dias=30, periodicidad="mensual", activo=True
+            codigo="MONTHLY", descripcion="Monthly payroll", dias=30, periodicidad="monthly", activo=True
         )
         db_session.add(tipo_planilla)
         db_session.flush()
@@ -408,7 +408,7 @@ def test_vacation_calendar_vs_vacation_days_distinction(app, db_session):
         db_session.add(moneda)
 
         tipo_planilla = TipoPlanilla(
-            codigo="MONTHLY", descripcion="Monthly", dias=30, periodicidad="mensual", activo=True
+            codigo="MONTHLY", descripcion="Monthly", dias=30, periodicidad="monthly", activo=True
         )
         db_session.add(tipo_planilla)
         db_session.flush()
@@ -553,7 +553,7 @@ def test_vacation_ledger_immutability(app, db_session):
         db_session.add(moneda)
 
         tipo_planilla = TipoPlanilla(
-            codigo="MONTHLY", descripcion="Monthly", dias=30, periodicidad="mensual", activo=True
+            codigo="MONTHLY", descripcion="Monthly", dias=30, periodicidad="monthly", activo=True
         )
         db_session.add(tipo_planilla)
         db_session.flush()

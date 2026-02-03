@@ -23,7 +23,7 @@ def tipo_planilla(app, db_session):
         tipo = TipoPlanilla(
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
-            periodicidad="mensual",
+            periodicidad="monthly",
             activo=True,
         )
         db_session.add(tipo)

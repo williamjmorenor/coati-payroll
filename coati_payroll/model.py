@@ -337,7 +337,7 @@ class TipoPlanilla(database.Model, BaseTabla):
     descripcion = database.Column(database.String(150), nullable=True)
     dias = database.Column(database.Integer, nullable=False, default=30)  # días usados para prorrateos
     periodicidad = database.Column(
-        database.String(20), nullable=False, default="mensual"
+        database.String(20), nullable=False, default="monthly"
     )  # ej. mensual, quincenal, semanal
 
     # Fiscal period configuration
@@ -651,7 +651,7 @@ class Prestacion(database.Model, BaseTabla):
     # Accumulation configuration
     # Defines how this benefit accumulates: monthly settlement, annually, or lifetime
     tipo_acumulacion = database.Column(
-        database.String(20), nullable=False, default="mensual"
+        database.String(20), nullable=False, default="monthly"
     )  # mensual | anual | vida_laboral
 
     # Audit and governance fields

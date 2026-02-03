@@ -48,7 +48,7 @@ def test_exportar_liquidacion_excel_success(app, db_session):
 
         d1 = LiquidacionDetalle(
             liquidacion_id=liquidacion.id,
-            tipo="ingreso",
+            tipo="income",
             codigo="DIAS_POR_PAGAR",
             descripcion="Días por pagar",
             monto=Decimal("10.00"),

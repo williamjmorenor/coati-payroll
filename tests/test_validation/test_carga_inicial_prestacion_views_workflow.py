@@ -14,7 +14,7 @@ from tests.helpers.auth import login_user
 def _seed_minimal_entities(db_session):
     empresa = Empresa(codigo="BEN001", razon_social="Benefits Co", ruc="J-BEN", activo=True)
     moneda = Moneda(codigo="USD", nombre="Dólar", simbolo="$", activo=True)
-    prestacion = Prestacion(codigo="VAC", nombre="Vacaciones", tipo_acumulacion="mensual", activo=True)
+    prestacion = Prestacion(codigo="VAC", nombre="Vacaciones", tipo_acumulacion="monthly", activo=True)
 
     db_session.add_all([empresa, moneda, prestacion])
     db_session.flush()

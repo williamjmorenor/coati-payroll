@@ -63,7 +63,7 @@ def tipo_planilla(app, db_session):
         tipo = TipoPlanilla(
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
-            periodicidad="mensual",
+            periodicidad="monthly",
             dias=30,
             periodos_por_anio=12,
             mes_inicio_fiscal=1,
@@ -374,7 +374,7 @@ class TestRecalcularNomina:
             # Create NominaDetalle
             nomina_detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="ingreso",
+                tipo="income",
                 codigo="SALARIO",
                 descripcion="Salario Base",
                 monto=Decimal("15000.00"),
