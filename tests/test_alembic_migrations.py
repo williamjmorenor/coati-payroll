@@ -145,9 +145,22 @@ def test_alembic_stamp_and_upgrade(monkeypatch):
 
     with app.app_context():
         from coati_payroll.model import db
+        from sqlalchemy.exc import OperationalError, ProgrammingError
 
         # Crear esquema base
-        db.create_all()
+        # Use the same two-phase approach as the test fixture to handle
+        # the "index already exists" issue with SQLite metadata
+        try:
+            db.create_all()
+        except (OperationalError, ProgrammingError) as exc:
+            error_msg = str(exc).lower()
+            # If we got an "index already exists" error, try again with metadata.create_all
+            if "index" in error_msg and "already exists" in error_msg:
+                # Use metadata.create_all with checkfirst=True to skip existing indexes
+                db.metadata.create_all(bind=db.engine, checkfirst=True)
+            else:
+                raise
+        
         ensure_database_initialized(app)
 
         # Marcar como actualizada
@@ -194,9 +207,20 @@ def test_alembic_current_command(monkeypatch):
 
     with app.app_context():
         from coati_payroll.model import db
+        from sqlalchemy.exc import OperationalError, ProgrammingError
 
         # Crear esquema y marcar como actualizada
-        db.create_all()
+        # Use the same two-phase approach to handle "index already exists" errors
+        try:
+            db.create_all()
+        except (OperationalError, ProgrammingError) as exc:
+            error_msg = str(exc).lower()
+            if "index" in error_msg and "already exists" in error_msg:
+                # Use metadata.create_all with checkfirst=True to skip existing indexes
+                db.metadata.create_all(bind=db.engine, checkfirst=True)
+            else:
+                raise
+        
         ensure_database_initialized(app)
         alembic.stamp("head")
         db.session.commit()
