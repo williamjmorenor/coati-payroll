@@ -50,7 +50,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         <label for="estado" class="form-label">{{ _('Estado') }}</label>
                         <select class="form-select" id="estado" name="estado">
                             <option value="">{{ _('Todos') }}</option>
-                            <option value="calculando" {% if estado == 'calculando' %}selected{% endif %}>{{ _('Calculando') }}</option>
+                            <option value="calculating" {% if estado == 'calculating' %}selected{% endif %}>{{ _('Calculando') }}</option>
                             <option value="generated" {% if estado == 'generated' %}selected{% endif %}>{{ _('Generado') }}</option>
                             <option value="approved" {% if estado == 'approved' %}selected{% endif %}>{{ _('Aprobado') }}</option>
                             <option value="applied" {% if estado == 'applied' %}selected{% endif %}>{{ _('Aplicado') }}</option>
@@ -120,7 +120,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             </td>
                             <td>{{ nomina.fecha_generacion.strftime('%d/%m/%Y %H:%M') }}</td>
                             <td>
-                                {% if nomina.estado == 'calculando' %}
+                                {% if nomina.estado == 'calculating' %}
                                 <span class="badge bg-primary">
                                     <i class="bi bi-hourglass-split"></i> {{ _('Calculando') }}
                                     {% if nomina.total_empleados and nomina.total_empleados > 0 %}

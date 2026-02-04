@@ -45,7 +45,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </div>
 {% endif %}
 
-{% if nomina.estado == 'calculando' %}
+{% if nomina.estado == 'calculating' %}
 <div class="card mb-4 border-primary">
     <div class="card-header bg-primary text-white">
         <h5 class="mb-0">
@@ -268,7 +268,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             </div>
             <div class="col-md-2">
                 <strong>Estado:</strong><br>
-                {% if nomina.estado == 'calculando' %}
+                {% if nomina.estado == 'calculating' %}
                 <span class="badge bg-primary"><i class="fas fa-spinner fa-spin"></i> Calculando</span>
                 {% elif nomina.estado == 'generated' %}
                 <span class="badge bg-warning">Generado</span>
@@ -378,9 +378,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     </div>
 </div>
 
-{% if nomina.estado == 'calculando' %}
+{% if nomina.estado == 'calculating' %}
 <script>
-// Auto-refresh progress for nominas in "calculando" state
+// Auto-refresh progress for nominas in "calculating" state
 (function() {
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
@@ -445,7 +445,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 }
                 
                 // If calculation is complete, reload page to show results
-                if (data.estado !== 'calculando') {
+                if (data.estado !== 'calculating') {
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);

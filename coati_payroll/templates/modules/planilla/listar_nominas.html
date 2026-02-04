@@ -42,7 +42,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </td>
                     <td>{{ nomina.fecha_generacion.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td>
-                        {% if nomina.estado == 'calculando' %}
+                        {% if nomina.estado == 'calculating' %}
                         <span class="badge bg-primary">
                             <i class="fas fa-spinner fa-spin"></i> Calculando
                             {% if nomina.total_empleados and nomina.total_empleados > 0 %}
