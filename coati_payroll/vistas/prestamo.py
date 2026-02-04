@@ -321,11 +321,15 @@ def approve(prestamo_id):
                 from coati_payroll.interes_engine import calcular_cuota_frances
 
                 tasa_interes = prestamo.tasa_interes or Decimal("0.0000")
-                metodo = prestamo.metodo_amortizacion or "frances"
+                metodo = prestamo.metodo_amortizacion or "french"
+                if metodo in {"frances", "french"}:
+                    metodo = "french"
+                elif metodo in {"aleman", "german"}:
+                    metodo = "german"
 
                 # For French method, calculate constant payment
                 # For German method, payment varies so we store the first payment
-                if metodo == "frances":
+                if metodo == "french":
                     prestamo.monto_por_cuota = calcular_cuota_frances(
                         prestamo.monto_aprobado, tasa_interes, prestamo.cuotas_pactadas
                     )
