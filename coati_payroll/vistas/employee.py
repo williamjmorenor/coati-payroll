@@ -53,6 +53,7 @@ def process_custom_fields_from_request(custom_fields):
     Returns:
         Dictionary with custom field names as keys and their converted values
     """
+
     def normalize_custom_field_type(tipo_dato: str) -> str:
         return {
             "texto": "text",

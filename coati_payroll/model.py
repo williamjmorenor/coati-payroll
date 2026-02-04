@@ -1448,9 +1448,7 @@ class CampoPersonalizado(database.Model, BaseTabla):
 
     nombre_campo = database.Column(database.String(100), unique=True, nullable=False, index=True)
     etiqueta = database.Column(database.String(150), nullable=False)
-    tipo_dato = database.Column(
-        database.String(20), nullable=False, default="text"
-    )  # text, integer, decimal, boolean
+    tipo_dato = database.Column(database.String(20), nullable=False, default="text")  # text, integer, decimal, boolean
     descripcion = database.Column(database.String(255), nullable=True)
     orden = database.Column(database.Integer, nullable=False, default=0)
     activo = database.Column(database.Boolean(), default=True, nullable=False)
