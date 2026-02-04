@@ -435,12 +435,12 @@ class PercepcionForm(FlaskForm):
     formula_tipo = SelectField(
         _("Tipo de Cálculo"),
         choices=[
-            ("fijo", _("Monto Fijo")),
-            ("porcentaje_salario", _("Porcentaje del Salario Base")),
-            ("porcentaje_bruto", _("Porcentaje del Salario Bruto")),
+            ("fixed", _("Monto Fijo")),
+            ("salary_percentage", _("Porcentaje del Salario Base")),
+            ("gross_percentage", _("Porcentaje del Salario Bruto")),
             ("formula", _("Fórmula Personalizada")),
-            ("horas", _("Por Horas")),
-            ("dias", _("Por Días")),
+            ("hours", _("Por Horas")),
+            ("days", _("Por Días")),
         ],
         validators=[DataRequired()],
     )
@@ -566,9 +566,9 @@ class DeduccionForm(FlaskForm):
     formula_tipo = SelectField(
         _("Tipo de Cálculo"),
         choices=[
-            ("fijo", _("Monto Fijo")),
-            ("porcentaje_salario", _("Porcentaje del Salario Base")),
-            ("porcentaje_bruto", _("Porcentaje del Salario Bruto")),
+            ("fixed", _("Monto Fijo")),
+            ("salary_percentage", _("Porcentaje del Salario Base")),
+            ("gross_percentage", _("Porcentaje del Salario Bruto")),
             ("porcentaje_gravable", _("Porcentaje del Salario Gravable")),
             ("formula", _("Fórmula Personalizada")),
             ("tabla", _("Tabla de Impuestos")),
@@ -859,9 +859,9 @@ class PrestacionForm(FlaskForm):
     formula_tipo = SelectField(
         _("Tipo de Cálculo"),
         choices=[
-            ("fijo", _("Monto Fijo")),
-            ("porcentaje_salario", _("Porcentaje del Salario Base")),
-            ("porcentaje_bruto", _("Porcentaje del Salario Bruto")),
+            ("fixed", _("Monto Fijo")),
+            ("salary_percentage", _("Porcentaje del Salario Base")),
+            ("gross_percentage", _("Porcentaje del Salario Bruto")),
             ("formula", _("Fórmula Personalizada")),
             ("provision", _("Provisión Mensual")),
         ],

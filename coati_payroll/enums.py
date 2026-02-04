@@ -38,6 +38,25 @@ class FormulaType(StrEnum):
     HORAS = "hours"  # Based on hours
     DIAS = "days"  # Based on days
 
+    @classmethod
+    def normalize(cls, value: str | FormulaType | None) -> FormulaType | None:
+        """Normalize legacy/Spanish values to the current enum values."""
+        if value is None:
+            return None
+        if isinstance(value, FormulaType):
+            return value
+        legacy_map = {
+            "fijo": cls.FIJO,
+            "porcentaje": cls.PORCENTAJE,
+            "porcentaje_salario": cls.PORCENTAJE_SALARIO,
+            "porcentaje_bruto": cls.PORCENTAJE_BRUTO,
+            "formula": cls.FORMULA,
+            "regla_calculo": cls.REGLA_CALCULO,
+            "horas": cls.HORAS,
+            "dias": cls.DIAS,
+        }
+        return legacy_map.get(value, cls(value) if value in cls._value2member_map_ else None)
+
 
 class StepType(StrEnum):
     """Types of calculation steps in FormulaEngine schemas."""
