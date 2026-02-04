@@ -40,8 +40,8 @@ jobs:
         DEVELOPMENT: True
         SECRET_KEY: "test-secret-key"
       run: |
-        python -m pip install dramatiq[redis] huey pytest-xdist
-        python -m pytest -n auto -x -q --cov=coati_payroll --cov-report=xml --cov-report=term-missing
+        python -m pip install dramatiq[redis] huey
+        python -m pytest -x -q --cov=coati_payroll --cov-report=xml --cov-report=term-missing
     - name: Test with pytest (validation tests)
       env:
         DEVELOPMENT: True
