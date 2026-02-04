@@ -45,6 +45,7 @@ class ConceptCalculator:
         unidad_calculo: str | None = None,
     ) -> Decimal:
         """Calculate concept amount."""
+        formula_tipo = FormulaType.normalize(formula_tipo)
         # Use overrides if provided
         if monto_override:
             monto_calculado = Decimal(str(monto_override))

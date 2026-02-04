@@ -38,6 +38,27 @@ class FormulaType(StrEnum):
     HORAS = "hours"  # Based on hours
     DIAS = "days"  # Based on days
 
+    _LEGACY_ALIASES = {
+        "fijo": FIJO,
+        "porcentaje": PORCENTAJE,
+        "porcentaje_salario": PORCENTAJE_SALARIO,
+        "porcentaje_bruto": PORCENTAJE_BRUTO,
+        "formula": FORMULA,
+        "regla_calculo": REGLA_CALCULO,
+        "horas": HORAS,
+        "dias": DIAS,
+    }
+
+    @classmethod
+    def normalize(cls, value: str | "FormulaType" | None) -> str | "FormulaType" | None:
+        """Normalize legacy formula type values to current enum values."""
+        if value is None:
+            return None
+        if isinstance(value, cls):
+            return value
+        normalized = str(value).strip().lower()
+        return cls._LEGACY_ALIASES.get(normalized, normalized)
+
 
 class StepType(StrEnum):
     """Types of calculation steps in FormulaEngine schemas."""
