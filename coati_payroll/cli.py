@@ -9,6 +9,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 import sys
 import os
+import importlib.util
 import json as json_module
 import getpass
 import subprocess
@@ -1562,7 +1563,34 @@ def main():
             app_name = "app"
 
         try:
-            module = __import__(module_name, fromlist=[app_name])
+            try:
+                module = __import__(module_name, fromlist=[app_name])
+            except ImportError:
+                module = None
+                module_path = Path(module_name)
+                if module_path.suffix != ".py":
+                    module_path = module_path.with_suffix(".py")
+                repo_root = Path(__file__).resolve().parent.parent
+                candidates = [repo_root / module_path]
+                for candidate in candidates:
+                    if candidate.is_file():
+                        candidate_parent = str(candidate.parent)
+                        if candidate_parent not in sys.path:
+                            sys.path.insert(0, candidate_parent)
+                        module = __import__(module_name, fromlist=[app_name])
+                        break
+                if module is None:
+                    for candidate in candidates:
+                        if candidate.is_file():
+                            spec = importlib.util.spec_from_file_location(module_name, candidate)
+                            if spec and spec.loader:
+                                module = importlib.util.module_from_spec(spec)
+                                sys.modules[module_name] = module
+                                spec.loader.exec_module(module)
+                                break
+                if module is None:
+                    raise
+
             flask_app = getattr(module, app_name)
             flask_app.cli()
         except (ImportError, AttributeError):
