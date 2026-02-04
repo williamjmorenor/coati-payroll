@@ -819,7 +819,7 @@ def test_nueva_novedad_post_creates_novedad(
         data = {
             "empleado_id": nomina_empleado.empleado_id,
             "codigo_concepto": "BONO",
-            "tipo_concepto": "percepcion",
+            "tipo_concepto": "income",
             "percepcion_id": percepcion.id,
             "tipo_valor": "monto",
             "valor_cantidad": 500,
@@ -903,7 +903,7 @@ def test_editar_novedad_post_updates_novedad(
         data = {
             "empleado_id": nomina_empleado.empleado_id,
             "codigo_concepto": "BONO_ACT",
-            "tipo_concepto": "percepcion",
+            "tipo_concepto": "income",
             "percepcion_id": percepcion.id,
             "tipo_valor": "monto",
             "valor_cantidad": 750,

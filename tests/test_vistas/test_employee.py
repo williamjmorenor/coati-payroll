@@ -156,7 +156,7 @@ def test_employee_supports_custom_fields(app, client, admin_user, db_session):
         campo = CampoPersonalizado(
             nombre_campo="departamento",
             etiqueta="Departamento",
-            tipo_dato="texto",
+            tipo_dato="text",
             orden=1,
             activo=True,
             creado_por="admin-test",

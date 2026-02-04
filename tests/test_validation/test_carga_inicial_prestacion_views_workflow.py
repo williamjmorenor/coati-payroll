@@ -90,7 +90,7 @@ def test_carga_inicial_prestacion_create_apply_and_delete_workflow(app, client, 
         assert resp.status_code == 302
 
         db_session.refresh(carga)
-        assert carga.estado == "aplicado"
+        assert carga.estado == "applied"
 
         trans = (
             db_session.query(PrestacionAcumulada).filter(PrestacionAcumulada.carga_inicial_id == carga.id).one_or_none()

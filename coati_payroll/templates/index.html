@@ -284,15 +284,14 @@ Soluciones, S.A. -#} {% extends 'base.html' %} {% block content %}
                                         }} {% else %} - {% endif %}
                                     </td>
                                     <td>
-                                        {% if nomina.estado == 'calculating' or
-                                        nomina.estado == 'generated' %}
+                                        {% if nomina.estado == 'generated' %}
                                         <span class="badge bg-warning"
                                             >{{ _('Generada') }}</span
                                         >
                                         {% elif nomina.estado == 'applied' %}
-                                        <span class="badge bg-success"
-                                            >{{ _('Aplicada') }}</span
-                                        >
+                                    <span class="badge bg-success"
+                                        >{{ _('Aplicada') }}</span
+                                    >
                                         {% else %}
                                         <span class="badge bg-secondary"
                                             >{{ nomina.estado or '-' }}</span

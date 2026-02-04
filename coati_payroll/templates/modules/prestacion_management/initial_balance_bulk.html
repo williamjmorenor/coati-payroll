@@ -109,7 +109,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                     <li>{{ _('Los empleados deben existir en el sistema y estar activos.') }}</li>
                                     <li>{{ _('Las prestaciones deben existir en el sistema y estar activas.') }}</li>
                                     <li>{{ _('Las monedas deben existir en el sistema y estar activas.') }}</li>
-                                    <li>{{ _('Los registros se crean en estado "borrador" y deben aplicarse individualmente desde la lista de cargas.') }}</li>
+                                    <li>{{ _('Los registros se crean en estado "draft" y deben aplicarse individualmente desde la lista de cargas.') }}</li>
                                     <li><strong>{{ _('IMPORTANTE: El archivo Excel NO debe tener encabezados. Los datos comienzan en la fila 1.') }}</strong></li>
                                 </ul>
                             </div>
@@ -188,7 +188,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <div class="alert alert-primary mt-4">
                         <i class="bi bi-lightbulb"></i>
                         <strong>{{ _('Consejo:') }}</strong> 
-                        {{ _('Después de cargar el archivo, los registros estarán en estado "borrador". Revise la') }} 
+                        {{ _('Después de cargar el archivo, los registros estarán en estado "draft". Revise la') }} 
                         <a href="{{ url_for('carga_inicial_prestacion.index') }}">{{ _('lista de cargas') }}</a>
                         {{ _('y aplique cada registro individualmente para crear las transacciones en el sistema.') }}
                     </div>

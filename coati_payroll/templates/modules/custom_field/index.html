@@ -38,13 +38,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <td><strong>{{ custom_field.nombre_campo }}</strong></td>
                             <td>{{ custom_field.etiqueta }}</td>
                             <td>
-                                {% if custom_field.tipo_dato == 'texto' %}
+                                {% if custom_field.tipo_dato == 'text' %}
                                     <span class="badge bg-info">{{ _('Texto') }}</span>
-                                {% elif custom_field.tipo_dato == 'entero' %}
+                                {% elif custom_field.tipo_dato == 'integer' %}
                                     <span class="badge bg-primary">{{ _('Número entero') }}</span>
                                 {% elif custom_field.tipo_dato == 'decimal' %}
                                     <span class="badge bg-secondary">{{ _('Número decimal') }}</span>
-                                {% elif custom_field.tipo_dato == 'booleano' %}
+                                {% elif custom_field.tipo_dato == 'boolean' %}
                                     <span class="badge bg-dark">{{ _('Verdadero/Falso') }}</span>
                                 {% else %}
                                     {{ custom_field.tipo_dato }}

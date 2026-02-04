@@ -76,6 +76,12 @@ def agregar_asociacion(
     if not componente_id:
         return False, f"Debe seleccionar una {tipo_componente}.", None
 
+    tipo_componente = {
+        "percepcion": "income",
+        "deduccion": "deduction",
+        "prestacion": "benefit",
+    }.get(tipo_componente, tipo_componente)
+
     # Check for existing association based on type
     existing = None
     association_class = None

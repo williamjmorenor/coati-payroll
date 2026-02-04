@@ -218,7 +218,7 @@ def test_vacation_leave_request_approve_creates_ledger_and_deducts_balance(app, 
         assert response.status_code == 302
 
         updated_request = db_session.get(VacationNovelty, leave_request.id)
-        assert updated_request.estado == "aprobado"
+        assert updated_request.estado == "approved"
 
         updated_account = db_session.get(VacationAccount, account.id)
         assert updated_account.current_balance == Decimal("5.0000")
@@ -288,7 +288,7 @@ def test_vacation_leave_request_reject_sets_reason(app, client, admin_user, db_s
         assert response.status_code == 302
 
         updated_request = db_session.get(VacationNovelty, leave_request.id)
-        assert updated_request.estado == "rechazado"
+        assert updated_request.estado == "rejected"
         assert updated_request.motivo_rechazo == "Período no disponible"
 
 
@@ -337,7 +337,7 @@ def test_vacation_register_taken_post_requires_concept_selection(app, client, ad
                 "fecha_inicio": date.today().isoformat(),
                 "fecha_fin": (date.today() + timedelta(days=2)).isoformat(),
                 "dias_descontados": "2.00",
-                "tipo_concepto": "percepcion",
+                "tipo_concepto": "income",
                 "percepcion_id": "",
                 "deduccion_id": "",
                 "observaciones": "",

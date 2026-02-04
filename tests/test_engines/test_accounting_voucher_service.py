@@ -1015,7 +1015,7 @@ class TestAccountingBalanceValidation:
                 credito=Decimal("0.00"),
                 monto_calculado=Decimal("1000.00"),
                 concepto="Extra",
-                tipo_concepto="percepcion",
+                tipo_concepto="income",
                 concepto_codigo="EXTRA",
                 orden=orden_max + 1,
             )
@@ -1064,7 +1064,7 @@ class TestAccountingBalanceValidation:
                 credito=Decimal("0.00"),
                 monto_calculado=Decimal("5000.00"),
                 concepto="Test Debit",
-                tipo_concepto="deduccion",
+                tipo_concepto="deduction",
                 concepto_codigo="TEST_D",
                 orden=1,
             )
@@ -1084,7 +1084,7 @@ class TestAccountingBalanceValidation:
                 credito=Decimal("5000.00"),
                 monto_calculado=Decimal("5000.00"),
                 concepto="Test Credit",
-                tipo_concepto="percepcion",
+                tipo_concepto="income",
                 concepto_codigo="TEST_C",
                 orden=2,
             )
