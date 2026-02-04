@@ -60,7 +60,7 @@ def tipo_planilla(db_session):
         codigo="MONTHLY_VAC",
         descripcion="Monthly payroll for vacation tests",
         dias=30,
-        periodicidad="mensual",
+        periodicidad="monthly",
         activo=True,
     )
     db_session.add(tipo)

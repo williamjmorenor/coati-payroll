@@ -16,7 +16,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 
-from coati_payroll.enums import TipoUsuario, VacationLedgerType
+from coati_payroll.enums import TipoUsuario, VacacionEstado, VacationLedgerType
 from coati_payroll.i18n import _
 from coati_payroll.model import (
     db,
@@ -242,7 +242,7 @@ def account_detail(account_id):
     pending_requests = (
         db.session.execute(
             db.select(VacationNovelty)
-            .filter(VacationNovelty.account_id == account_id, VacationNovelty.estado == "pendiente")
+            .filter(VacationNovelty.account_id == account_id, VacationNovelty.estado == "pending")
             .order_by(VacationNovelty.start_date)
         )
         .scalars()
@@ -409,12 +409,12 @@ def leave_request_approve(request_id):
         flash(_("Solicitud no encontrada."), "warning")
         return redirect(url_for("vacation.leave_request_index"))
 
-    if leave_request.estado != "pendiente":
+    if leave_request.estado != "pending":
         flash(_("Solo se pueden aprobar solicitudes pendientes."), "warning")
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
     # Update request status
-    leave_request.estado = "aprobado"
+    leave_request.estado = "approved"
     leave_request.fecha_aprobacion = date.today()
     leave_request.aprobado_por = current_user.usuario
     leave_request.modificado_por = current_user.usuario
@@ -463,7 +463,7 @@ def leave_request_reject(request_id):
         flash(_("Solicitud no encontrada."), "warning")
         return redirect(url_for("vacation.leave_request_index"))
 
-    if leave_request.estado != "pendiente":
+    if leave_request.estado != "pending":
         flash(_("Solo se pueden rechazar solicitudes pendientes."), "warning")
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
@@ -471,7 +471,7 @@ def leave_request_reject(request_id):
     motivo_rechazo = request.form.get("motivo_rechazo", "")
 
     # Update request status
-    leave_request.estado = "rechazado"
+    leave_request.estado = "rejected"
     leave_request.motivo_rechazo = motivo_rechazo
     leave_request.modificado_por = current_user.usuario
 
@@ -559,10 +559,10 @@ def register_vacation_taken():
 
         # Validate tipo_concepto and associated percepcion/deduccion
         tipo_concepto = form.tipo_concepto.data
-        percepcion_id = form.percepcion_id.data if tipo_concepto == "percepcion" else None
-        deduccion_id = form.deduccion_id.data if tipo_concepto == "deduccion" else None
+        percepcion_id = form.percepcion_id.data if tipo_concepto == "income" else None
+        deduccion_id = form.deduccion_id.data if tipo_concepto == "deduction" else None
 
-        if tipo_concepto == "percepcion" and not percepcion_id:
+        if tipo_concepto == "income" and not percepcion_id:
             flash(_("Debe seleccionar una percepción cuando el tipo de concepto es percepción."), "danger")
             return render_template(
                 "modules/vacation/register_taken_form.html",
@@ -570,7 +570,7 @@ def register_vacation_taken():
                 titulo=_("Registrar Vacaciones Descansadas"),
             )
 
-        if tipo_concepto == "deduccion" and not deduccion_id:
+        if tipo_concepto == "deduction" and not deduccion_id:
             flash(_("Debe seleccionar una deducción cuando el tipo de concepto es deducción."), "danger")
             return render_template(
                 "modules/vacation/register_taken_form.html",
@@ -579,12 +579,12 @@ def register_vacation_taken():
             )
 
         # Get the concepto for codigo
-        if tipo_concepto == "percepcion":
+        if tipo_concepto == "income":
             concepto = db.session.get(Percepcion, percepcion_id)
-            codigo_concepto = concepto.codigo if concepto else "VACACIONES"
+            codigo_concepto = concepto.codigo if concepto else "VACATION"
         else:
             concepto = db.session.get(Deduccion, deduccion_id)
-            codigo_concepto = concepto.codigo if concepto else "AUSENCIA"
+            codigo_concepto = concepto.codigo if concepto else "ABSENCE"
 
         # Validate that employee has a vacation account
         account = db.session.execute(
@@ -622,7 +622,7 @@ def register_vacation_taken():
             start_date=form.fecha_inicio.data,
             end_date=form.fecha_fin.data,
             units=dias_descontados,  # CRITICAL: Use dias_descontados, not calendar days
-            estado="aprobado",  # Directly approved
+            estado=VacacionEstado.APROBADO,  # Directly approved
             fecha_aprobacion=date.today(),
             aprobado_por=current_user.usuario,
             observaciones=form.observaciones.data,
@@ -657,7 +657,7 @@ def register_vacation_taken():
 
         # Link ledger entry to vacation novelty
         vacation_novelty.ledger_entry_id = ledger_entry.id
-        vacation_novelty.estado = "disfrutado"
+        vacation_novelty.estado = VacacionEstado.DISFRUTADO
 
         # Create associated NominaNovedad using existing infrastructure
         # This ensures the novelty is properly processed during payroll calculation
@@ -674,7 +674,7 @@ def register_vacation_taken():
             vacation_novelty_id=vacation_novelty.id,
             fecha_inicio_descanso=form.fecha_inicio.data,
             fecha_fin_descanso=form.fecha_fin.data,
-            estado="pendiente",  # Will be processed when nomina is calculated
+            estado=VacacionEstado.PENDIENTE,  # Will be processed when nomina is calculated
             creado_por=current_user.usuario,
         )
 
@@ -717,7 +717,7 @@ def dashboard():
 
     pending_requests = (
         db.session.execute(
-            db.select(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == "pendiente")
+            db.select(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == VacacionEstado.PENDIENTE)
         ).scalar()
         or 0
     )

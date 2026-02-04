@@ -109,7 +109,7 @@ def _create_test_data(db_session):
     prestacion = Prestacion(
         codigo="VAC",
         nombre="Vacaciones",
-        tipo_acumulacion="mensual",
+        tipo_acumulacion="monthly",
         activo=True,
         creado_por="test",
     )
@@ -176,7 +176,7 @@ def test_carga_inicial_prestacion_post_creates_new_record(app, client, admin_use
         ).scalar_one_or_none()
 
         assert carga is not None
-        assert carga.estado == "borrador"
+        assert carga.estado == "draft"
         assert carga.saldo_acumulado == Decimal("1500.50")
         assert carga.saldo_convertido == Decimal("1500.50")
         assert carga.observaciones == "Test carga inicial"
@@ -201,7 +201,7 @@ def test_carga_inicial_prestacion_post_duplicate_detection(app, client, admin_us
             saldo_acumulado=Decimal("1000.00"),
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("1000.00"),
-            estado="borrador",
+            estado="draft",
             creado_por="test",
         )
         db_session.add(existing_carga)
@@ -260,7 +260,7 @@ def test_carga_inicial_prestacion_editar_get_request(app, client, admin_user, db
             saldo_acumulado=Decimal("1000.00"),
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("1000.00"),
-            estado="borrador",
+            estado="draft",
             creado_por="test",
         )
         db_session.add(carga)
@@ -290,7 +290,7 @@ def test_carga_inicial_prestacion_editar_applied_status_redirects(app, client, a
             saldo_acumulado=Decimal("1000.00"),
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("1000.00"),
-            estado="aplicado",
+            estado="applied",
             creado_por="test",
         )
         db_session.add(carga)
@@ -324,7 +324,7 @@ def test_carga_inicial_prestacion_editar_post_updates_record(app, client, admin_
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("1000.00"),
             observaciones="Original",
-            estado="borrador",
+            estado="draft",
             creado_por="test",
         )
         db_session.add(carga)
@@ -380,7 +380,7 @@ def test_carga_inicial_prestacion_aplicar_creates_transaction(app, client, admin
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("1000.00"),
             observaciones="Test application",
-            estado="borrador",
+            estado="draft",
             creado_por="test",
         )
         db_session.add(carga)
@@ -399,7 +399,7 @@ def test_carga_inicial_prestacion_aplicar_creates_transaction(app, client, admin
 
         # Verify carga status updated
         db_session.refresh(carga)
-        assert carga.estado == "aplicado"
+        assert carga.estado == "applied"
         assert carga.aplicado_por == admin_user.usuario
         assert carga.fecha_aplicacion is not None
 
@@ -434,7 +434,7 @@ def test_carga_inicial_prestacion_eliminar_deletes_draft(app, client, admin_user
             saldo_acumulado=Decimal("1000.00"),
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("1000.00"),
-            estado="borrador",
+            estado="draft",
             creado_por="test",
         )
         db_session.add(carga)
@@ -475,7 +475,7 @@ def test_carga_inicial_prestacion_eliminar_applied_redirects(app, client, admin_
             saldo_acumulado=Decimal("1000.00"),
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("1000.00"),
-            estado="aplicado",
+            estado="applied",
             creado_por="test",
         )
         db_session.add(carga)
@@ -496,7 +496,7 @@ def test_carga_inicial_prestacion_eliminar_applied_redirects(app, client, admin_
         # Verify record still exists
         still_exists = db_session.execute(select(CargaInicialPrestacion).filter_by(id=carga_id)).scalar_one_or_none()
         assert still_exists is not None
-        assert still_exists.estado == "aplicado"
+        assert still_exists.estado == "applied"
 
 
 def test_carga_inicial_prestacion_reporte_excel_requires_authentication(app, client, db_session):
@@ -539,7 +539,7 @@ def test_carga_inicial_prestacion_reporte_excel_with_data(app, client, admin_use
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("1000.00"),
             observaciones="Test for Excel export",
-            estado="borrador",
+            estado="draft",
             creado_por="test",
         )
         db_session.add(carga)

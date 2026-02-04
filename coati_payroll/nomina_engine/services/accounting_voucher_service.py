@@ -294,7 +294,7 @@ class AccountingVoucherService:
                             is_loan_advance = True
                             # Get loan control account from first active loan
                             for adelanto in adelantos:
-                                if adelanto.estado in ("aprobado", "aplicado"):
+                                if adelanto.estado in ("approved", "applied"):
                                     cuenta_control_prestamo = adelanto.cuenta_haber
                                     break
 
@@ -322,7 +322,7 @@ class AccountingVoucherService:
                         credito=Decimal("0.00"),
                         monto_calculado=detalle.monto,
                         concepto=detalle.descripcion or "Préstamo/Adelanto",
-                        tipo_concepto="prestamo",
+                        tipo_concepto="loan",
                         concepto_codigo=detalle.codigo,
                         orden=orden,
                     )
@@ -345,7 +345,7 @@ class AccountingVoucherService:
                         credito=detalle.monto,
                         monto_calculado=detalle.monto,
                         concepto=detalle.descripcion or "Préstamo/Adelanto",
-                        tipo_concepto="prestamo",
+                        tipo_concepto="loan",
                         concepto_codigo=detalle.codigo,
                         orden=orden,
                     )
@@ -354,7 +354,7 @@ class AccountingVoucherService:
 
                 else:
                     # Regular concept - use configured accounts (or NULL if missing)
-                    if detalle.tipo == "ingreso" and detalle.percepcion_id:
+                    if detalle.tipo == "income" and detalle.percepcion_id:
                         percepcion = self.session.get(Percepcion, detalle.percepcion_id)
                         if percepcion and percepcion.contabilizable:
                             # Always create debit line (even if account is NULL)
@@ -411,7 +411,7 @@ class AccountingVoucherService:
                             self.session.add(linea_haber)
                             total_creditos += detalle.monto
 
-                    elif detalle.tipo == "deduccion" and detalle.deduccion_id:
+                    elif detalle.tipo == "deduction" and detalle.deduccion_id:
                         deduccion = self.session.get(Deduccion, detalle.deduccion_id)
                         if deduccion and deduccion.contabilizable:
                             # Always create debit line (even if account is NULL)
@@ -434,7 +434,7 @@ class AccountingVoucherService:
                                 credito=Decimal("0.00"),
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or deduccion.nombre,
-                                tipo_concepto="deduccion",
+                                tipo_concepto="deduction",
                                 concepto_codigo=deduccion.codigo,
                                 orden=orden,
                             )
@@ -461,14 +461,14 @@ class AccountingVoucherService:
                                 credito=detalle.monto,
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or deduccion.nombre,
-                                tipo_concepto="deduccion",
+                                tipo_concepto="deduction",
                                 concepto_codigo=deduccion.codigo,
                                 orden=orden,
                             )
                             self.session.add(linea_haber)
                             total_creditos += detalle.monto
 
-                    elif detalle.tipo == "prestacion" and detalle.prestacion_id:
+                    elif detalle.tipo == "benefit" and detalle.prestacion_id:
                         prestacion = self.session.get(Prestacion, detalle.prestacion_id)
                         if prestacion and prestacion.contabilizable:
                             # Always create debit line (even if account is NULL)
@@ -491,7 +491,7 @@ class AccountingVoucherService:
                                 credito=Decimal("0.00"),
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or prestacion.nombre,
-                                tipo_concepto="prestacion",
+                                tipo_concepto="benefit",
                                 concepto_codigo=prestacion.codigo,
                                 orden=orden,
                             )
@@ -518,7 +518,7 @@ class AccountingVoucherService:
                                 credito=detalle.monto,
                                 monto_calculado=detalle.monto,
                                 concepto=detalle.descripcion or prestacion.nombre,
-                                tipo_concepto="prestacion",
+                                tipo_concepto="benefit",
                                 concepto_codigo=prestacion.codigo,
                                 orden=orden,
                             )

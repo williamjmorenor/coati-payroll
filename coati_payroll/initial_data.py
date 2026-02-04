@@ -309,28 +309,28 @@ PAYROLL_TYPES = [
         "codigo": "MONTHLY",
         "descripcion": _("Monthly Payroll - 30 days"),
         "dias": 30,
-        "periodicidad": "mensual",
+        "periodicidad": "monthly",
         "periodos_por_anio": 12,
     },
     {
         "codigo": "BIWEEKLY",
         "descripcion": _("Biweekly Payroll - 15 days"),
         "dias": 15,
-        "periodicidad": "quincenal",
+        "periodicidad": "biweekly",
         "periodos_por_anio": 24,
     },
     {
         "codigo": "FORTNIGHTLY",
         "descripcion": _("Fortnightly Payroll - 14 days"),
         "dias": 14,
-        "periodicidad": "catorcenal",
+        "periodicidad": "biweekly",
         "periodos_por_anio": 26,
     },
     {
         "codigo": "WEEKLY",
         "descripcion": _("Weekly Payroll - 7 days"),
         "dias": 7,
-        "periodicidad": "semanal",
+        "periodicidad": "weekly",
         "periodos_por_anio": 52,
     },
 ]
@@ -488,8 +488,8 @@ def load_benefit_concepts() -> None:
             concept.codigo = concept_data["codigo"]
             concept.nombre = str(concept_data["nombre"])
             concept.descripcion = str(concept_data["descripcion"])
-            concept.tipo = "patronal"
-            concept.formula_tipo = "fijo"
+            concept.tipo = "employer"
+            concept.formula_tipo = "fixed"
             concept.recurrente = False
             concept.activo = True
             concept.editable_en_nomina = True

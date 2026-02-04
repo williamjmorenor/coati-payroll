@@ -18,13 +18,13 @@ def test_formula_type_enum_values():
     """
     from coati_payroll.enums import FormulaType
 
-    assert FormulaType.FIJO == "fijo"
-    assert FormulaType.PORCENTAJE == "porcentaje"
-    assert FormulaType.PORCENTAJE_SALARIO == "porcentaje_salario"
-    assert FormulaType.PORCENTAJE_BRUTO == "porcentaje_bruto"
+    assert FormulaType.FIJO == "fixed"
+    assert FormulaType.PORCENTAJE == "percentage"
+    assert FormulaType.PORCENTAJE_SALARIO == "salary_percentage"
+    assert FormulaType.PORCENTAJE_BRUTO == "gross_percentage"
     assert FormulaType.FORMULA == "formula"
-    assert FormulaType.HORAS == "horas"
-    assert FormulaType.DIAS == "dias"
+    assert FormulaType.HORAS == "hours"
+    assert FormulaType.DIAS == "days"
 
 
 def test_tipo_usuario_enum_values():
@@ -43,7 +43,7 @@ def test_tipo_usuario_enum_values():
     from coati_payroll.enums import TipoUsuario
 
     assert TipoUsuario.ADMIN == "admin"
-    assert TipoUsuario.HHRR == "hhrr"
+    assert TipoUsuario.HHRR == "hr"
     assert TipoUsuario.AUDIT == "audit"
 
 
@@ -62,10 +62,10 @@ def test_nomina_estado_enum_values():
     """
     from coati_payroll.enums import NominaEstado
 
-    assert NominaEstado.CALCULANDO == "calculando"
-    assert NominaEstado.GENERADO == "generado"
-    assert NominaEstado.APROBADO == "aprobado"
-    assert NominaEstado.APLICADO == "aplicado"
+    assert NominaEstado.CALCULANDO == "calculating"
+    assert NominaEstado.GENERADO == "generated"
+    assert NominaEstado.APROBADO == "approved"
+    assert NominaEstado.APLICADO == "applied"
     assert NominaEstado.ERROR == "error"
 
 
@@ -84,8 +84,8 @@ def test_metodo_amortizacion_enum_values():
     """
     from coati_payroll.enums import MetodoAmortizacion
 
-    assert MetodoAmortizacion.FRANCES == "frances"
-    assert MetodoAmortizacion.ALEMAN == "aleman"
+    assert MetodoAmortizacion.FRANCES == "french"
+    assert MetodoAmortizacion.ALEMAN == "german"
 
 
 def test_tipo_interes_enum_values():
@@ -104,7 +104,7 @@ def test_tipo_interes_enum_values():
     from coati_payroll.enums import TipoInteres
 
     assert TipoInteres.SIMPLE == "simple"
-    assert TipoInteres.COMPUESTO == "compuesto"
+    assert TipoInteres.COMPUESTO == "compound"
 
 
 def test_enums_are_strings():

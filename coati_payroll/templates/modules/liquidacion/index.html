@@ -37,9 +37,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         <label for="estado" class="form-label">{{ _('Estado') }}</label>
                         <select class="form-select" id="estado" name="estado">
                             <option value="">{{ _('Todos') }}</option>
-                            <option value="borrador" {% if estado == 'borrador' %}selected{% endif %}>{{ _('Borrador') }}</option>
-                            <option value="aplicada" {% if estado == 'aplicada' %}selected{% endif %}>{{ _('Aplicada') }}</option>
-                            <option value="pagada" {% if estado == 'pagada' %}selected{% endif %}>{{ _('Pagada') }}</option>
+                            <option value="draft" {% if estado == 'draft' %}selected{% endif %}>{{ _('Borrador') }}</option>
+                            <option value="applied" {% if estado == 'applied' %}selected{% endif %}>{{ _('Aplicada') }}</option>
+                            <option value="paid" {% if estado == 'paid' %}selected{% endif %}>{{ _('Pagada') }}</option>
                         </select>
                     </div>
                     <div class="col-md-3">

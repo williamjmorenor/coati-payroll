@@ -89,7 +89,7 @@ def test_vacation_leave_request_approve_with_balance(app, client, admin_user, db
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
             dias=30,
-            periodicidad="mensual",
+            periodicidad="monthly",
             activo=True,
         )
         db_session.add(tipo_planilla)
@@ -145,7 +145,7 @@ def test_vacation_leave_request_approve_with_balance(app, client, admin_user, db
             start_date=start_date,
             end_date=end_date,
             units=Decimal("5"),
-            estado="pendiente",
+            estado="pending",
         )
         db_session.add(leave_request)
         db_session.commit()
@@ -161,7 +161,7 @@ def test_vacation_leave_request_approve_with_balance(app, client, admin_user, db
         assert f"/vacation/leave-requests/{request_id}" in response.location
 
         leave_request_updated = db_session.get(VacationNovelty, request_id)
-        assert leave_request_updated.estado == "aprobado"
+        assert leave_request_updated.estado == "approved"
 
 
 def test_vacation_leave_request_reject(app, client, admin_user, db_session):
@@ -179,7 +179,7 @@ def test_vacation_leave_request_reject(app, client, admin_user, db_session):
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
             dias=30,
-            periodicidad="mensual",
+            periodicidad="monthly",
             activo=True,
         )
         db_session.add(tipo_planilla)
@@ -235,7 +235,7 @@ def test_vacation_leave_request_reject(app, client, admin_user, db_session):
             start_date=start_date,
             end_date=end_date,
             units=Decimal("5"),
-            estado="pendiente",
+            estado="pending",
         )
         db_session.add(leave_request)
         db_session.commit()
@@ -254,4 +254,4 @@ def test_vacation_leave_request_reject(app, client, admin_user, db_session):
         assert response.status_code == 302
 
         leave_request_updated = db_session.get(VacationNovelty, request_id)
-        assert leave_request_updated.estado == "rechazado"
+        assert leave_request_updated.estado == "rejected"

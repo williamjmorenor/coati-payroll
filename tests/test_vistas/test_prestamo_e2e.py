@@ -47,7 +47,7 @@ def test_prestamo_index_with_filters(app, client, admin_user, db_session):
         - Create employee and loan
 
     Action:
-        - GET /prestamo/?empleado_id=X&estado=borrador&tipo=prestamo
+        - GET /prestamo/?empleado_id=X&estado=draft&tipo=prestamo
 
     Verification:
         - Page loads successfully with filters applied
@@ -95,7 +95,7 @@ def test_prestamo_index_with_filters(app, client, admin_user, db_session):
         login_user(client, admin_user.usuario, "admin-password")
 
         # Test filters
-        response = client.get(f"/prestamo/?empleado_id={empleado.id}&estado=borrador&tipo=prestamo")
+        response = client.get(f"/prestamo/?empleado_id={empleado.id}&estado=draft&tipo=prestamo")
         assert response.status_code == 200
 
 
@@ -192,8 +192,8 @@ def test_prestamo_new_post_create_loan(app, client, admin_user, db_session):
                 "moneda_id": moneda.id,
                 "cuotas_pactadas": "6",
                 "tasa_interes": "0.0000",
-                "tipo_interes": "ninguno",
-                "metodo_amortizacion": "frances",
+                "tipo_interes": "none",
+                "metodo_amortizacion": "french",
                 "motivo": "Préstamo de prueba",
             },
             follow_redirects=False,
@@ -327,8 +327,8 @@ def test_prestamo_edit_post_update_loan(app, client, admin_user, db_session):
                 "moneda_id": moneda.id,
                 "cuotas_pactadas": "8",  # Updated installments
                 "tasa_interes": "0.0000",
-                "tipo_interes": "ninguno",
-                "metodo_amortizacion": "frances",
+                "tipo_interes": "none",
+                "metodo_amortizacion": "french",
                 "motivo": "Préstamo actualizado",
             },
             follow_redirects=False,
@@ -1175,8 +1175,8 @@ def test_generar_tabla_pago_function(app, db_session):
             monto_aprobado=Decimal("6000.00"),
             fecha_aprobacion=date.today(),
             tasa_interes=Decimal("0.0000"),
-            tipo_interes="ninguno",
-            metodo_amortizacion="frances",
+            tipo_interes="none",
+            metodo_amortizacion="french",
         )
         db_session.add(prestamo)
         db_session.commit()

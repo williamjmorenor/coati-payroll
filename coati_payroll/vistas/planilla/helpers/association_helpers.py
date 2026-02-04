@@ -76,18 +76,24 @@ def agregar_asociacion(
     if not componente_id:
         return False, f"Debe seleccionar una {tipo_componente}.", None
 
+    tipo_componente = {
+        "percepcion": "income",
+        "deduccion": "deduction",
+        "prestacion": "benefit",
+    }.get(tipo_componente, tipo_componente)
+
     # Check for existing association based on type
     existing = None
     association_class = None
     filter_params = {"planilla_id": planilla_id}
 
-    if tipo_componente == "percepcion":
+    if tipo_componente == "income":
         association_class = PlanillaIngreso
         filter_params["percepcion_id"] = componente_id
-    elif tipo_componente == "deduccion":
+    elif tipo_componente == "deduction":
         association_class = PlanillaDeduccion
         filter_params["deduccion_id"] = componente_id
-    elif tipo_componente == "prestacion":
+    elif tipo_componente == "benefit":
         association_class = PlanillaPrestacion
         filter_params["prestacion_id"] = componente_id
     elif tipo_componente == "regla":
@@ -102,7 +108,7 @@ def agregar_asociacion(
         return False, f"La {tipo_componente} ya está asignada a esta planilla.", None
 
     # Create association based on type
-    if tipo_componente == "percepcion":
+    if tipo_componente == "income":
         orden = datos_extra.get("orden", 0)
         association = PlanillaIngreso(
             planilla_id=planilla_id,
@@ -112,7 +118,7 @@ def agregar_asociacion(
             activo=True,
             creado_por=usuario,
         )
-    elif tipo_componente == "deduccion":
+    elif tipo_componente == "deduction":
         prioridad = datos_extra.get("prioridad", 100)
         es_obligatoria = datos_extra.get("es_obligatoria", False)
         association = PlanillaDeduccion(
@@ -124,7 +130,7 @@ def agregar_asociacion(
             activo=True,
             creado_por=usuario,
         )
-    elif tipo_componente == "prestacion":
+    elif tipo_componente == "benefit":
         orden = datos_extra.get("orden", 0)
         association = PlanillaPrestacion(
             planilla_id=planilla_id,

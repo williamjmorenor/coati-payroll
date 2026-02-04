@@ -169,7 +169,7 @@ def recalcular(liquidacion_id: str):
 def aplicar(liquidacion_id: str):
     liquidacion = db.get_or_404(Liquidacion, liquidacion_id)
 
-    if liquidacion.estado != "borrador":
+    if liquidacion.estado != "draft":
         flash(_("Solo se pueden aplicar liquidaciones en borrador."), "error")
         return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
@@ -198,7 +198,7 @@ def aplicar(liquidacion_id: str):
         pe.activo = False
         pe.fecha_fin = liquidacion.fecha_calculo
 
-    liquidacion.estado = "aplicada"
+    liquidacion.estado = "applied"
     db.session.commit()
     flash(_("Liquidación aplicada. Empleado marcado como inactivo y desvinculado de planillas."), "success")
     return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
@@ -210,11 +210,11 @@ def aplicar(liquidacion_id: str):
 def pagar(liquidacion_id: str):
     liquidacion = db.get_or_404(Liquidacion, liquidacion_id)
 
-    if liquidacion.estado != "aplicada":
+    if liquidacion.estado != "applied":
         flash(_("Solo se pueden pagar liquidaciones aplicadas."), "error")
         return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
-    liquidacion.estado = "pagada"
+    liquidacion.estado = "paid"
     db.session.commit()
     flash(_("Liquidación marcada como pagada."), "success")
     return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))

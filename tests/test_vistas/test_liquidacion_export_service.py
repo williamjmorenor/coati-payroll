@@ -38,7 +38,7 @@ def test_exportar_liquidacion_excel_success(app, db_session):
             fecha_calculo=date(2025, 1, 1),
             ultimo_dia_pagado=date(2024, 12, 31),
             dias_por_pagar=1,
-            estado="borrador",
+            estado="draft",
             total_bruto=Decimal("10.00"),
             total_deducciones=Decimal("0.00"),
             total_neto=Decimal("10.00"),
@@ -48,7 +48,7 @@ def test_exportar_liquidacion_excel_success(app, db_session):
 
         d1 = LiquidacionDetalle(
             liquidacion_id=liquidacion.id,
-            tipo="ingreso",
+            tipo="income",
             codigo="DIAS_POR_PAGAR",
             descripcion="Días por pagar",
             monto=Decimal("10.00"),
@@ -80,7 +80,7 @@ def test_exportar_liquidacion_excel_missing_openpyxl(app, db_session, monkeypatc
             empleado_id="dummy",
             fecha_calculo=date(2025, 1, 1),
             dias_por_pagar=0,
-            estado="borrador",
+            estado="draft",
         )
 
         with pytest.raises(ImportError, match="openpyxl no está disponible"):

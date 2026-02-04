@@ -43,7 +43,7 @@ def tipo_planilla(app, db_session):
     with app.app_context():
         from coati_payroll.model import TipoPlanilla
 
-        t = TipoPlanilla(codigo="MONTHLY", descripcion="Mensual", periodicidad="mensual", dias=30, activo=True)
+        t = TipoPlanilla(codigo="MONTHLY", descripcion="Mensual", periodicidad="monthly", dias=30, activo=True)
         db_session.add(t)
         db_session.commit()
         db_session.refresh(t)
@@ -126,7 +126,7 @@ def test_crear_y_ver_liquidacion(client, app, db_session, admin_user, empleado, 
         from coati_payroll.model import Liquidacion
 
         liq = db_session.execute(db.select(Liquidacion).where(Liquidacion.empleado_id == empleado.id)).scalars().one()
-        assert liq.estado == "borrador"
+        assert liq.estado == "draft"
 
         # detail page
         resp2 = client.get(f"/liquidaciones/{liq.id}")
@@ -160,7 +160,7 @@ def test_recalcular_liquidacion(client, app, db_session, admin_user, empleado, c
 
         liq2 = db_session.get(Liquidacion, liq.id)
         assert liq2 is not None
-        assert liq2.estado == "borrador"
+        assert liq2.estado == "draft"
 
 
 def test_aplicar_inactiva_empleado_y_desvincula_planillas(
@@ -210,7 +210,7 @@ def test_aplicar_inactiva_empleado_y_desvincula_planillas(
         assert pe2.fecha_fin == date(2025, 1, 1)
 
         liq2 = db_session.get(Liquidacion, liq.id)
-        assert liq2.estado == "aplicada"
+        assert liq2.estado == "applied"
 
 
 def test_pagar_liquidacion(client, app, db_session, admin_user, empleado, concepto, planilla):
@@ -247,4 +247,4 @@ def test_pagar_liquidacion(client, app, db_session, admin_user, empleado, concep
         from coati_payroll.model import Liquidacion
 
         liq2 = db_session.get(Liquidacion, liq.id)
-        assert liq2.estado == "pagada"
+        assert liq2.estado == "paid"

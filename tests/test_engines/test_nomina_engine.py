@@ -48,7 +48,7 @@ class TestEmpleadoCalculo:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -122,7 +122,7 @@ class TestNominaEngineInitialization:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -179,7 +179,7 @@ class TestNominaEngineInitialization:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -223,7 +223,7 @@ class TestPlanillaValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -267,7 +267,7 @@ class TestPlanillaValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -314,7 +314,7 @@ class TestSalarioPeriodoCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -363,7 +363,7 @@ class TestSalarioPeriodoCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -412,7 +412,7 @@ class TestSalarioPeriodoCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -465,7 +465,7 @@ class TestCalculoConcepto:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -537,7 +537,7 @@ class TestCalculoConcepto:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -610,7 +610,7 @@ class TestCalculoConcepto:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -687,7 +687,7 @@ class TestHorasYDiasCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -725,7 +725,7 @@ class TestHorasYDiasCalculation:
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("24000.00")
             emp_calculo.salario_mensual = Decimal("24000.00")
-            emp_calculo.novedades = {"HORAS_EXTRA": Decimal("10")}  # 10 overtime hours
+            emp_calculo.novedades = {"OVERTIME": Decimal("10")}  # 10 overtime hours
             emp_calculo.variables_calculo = {"novedad_HORAS_EXTRA": Decimal("10")}
 
             # Use ConceptCalculator directly
@@ -741,7 +741,7 @@ class TestHorasYDiasCalculation:
                 formula=None,
                 monto_override=None,
                 porcentaje_override=None,
-                codigo_concepto="HORAS_EXTRA",
+                codigo_concepto="OVERTIME",
             )
 
             # Hourly rate: 24000 / 30 / 8 = 100 per hour
@@ -764,7 +764,7 @@ class TestHorasYDiasCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -818,7 +818,7 @@ class TestHorasYDiasCalculation:
                 formula=None,
                 monto_override=None,
                 porcentaje_override=None,
-                codigo_concepto="HORAS_EXTRA",
+                codigo_concepto="OVERTIME",
             )
 
             assert monto == Decimal("0.00")
@@ -838,7 +838,7 @@ class TestHorasYDiasCalculation:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -876,7 +876,7 @@ class TestHorasYDiasCalculation:
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("30000.00")
             emp_calculo.salario_mensual = Decimal("30000.00")
-            emp_calculo.novedades = {"VACACIONES": Decimal("5")}  # 5 vacation days
+            emp_calculo.novedades = {"VACATION": Decimal("5")}  # 5 vacation days
             emp_calculo.variables_calculo = {"novedad_VACACIONES": Decimal("5")}
 
             # Use ConceptCalculator directly
@@ -892,7 +892,7 @@ class TestHorasYDiasCalculation:
                 formula=None,
                 monto_override=None,
                 porcentaje_override=None,
-                codigo_concepto="VACACIONES",
+                codigo_concepto="VACATION",
             )
 
             # Daily rate: 30000 / 30 = 1000 per day
@@ -918,7 +918,7 @@ class TestBadInputNominaEngine:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -991,7 +991,7 @@ class TestBadInputNominaEngine:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1064,7 +1064,7 @@ class TestBadInputNominaEngine:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1102,7 +1102,7 @@ class TestBadInputNominaEngine:
             emp_calculo = EmpleadoCalculo(empleado, planilla)
             emp_calculo.salario_base = Decimal("24000.00")
             emp_calculo.salario_mensual = Decimal("24000.00")
-            emp_calculo.novedades = {"HORAS_EXTRA": Decimal("-5")}  # Negative hours!
+            emp_calculo.novedades = {"OVERTIME": Decimal("-5")}  # Negative hours!
             emp_calculo.variables_calculo = {"novedad_HORAS_EXTRA": Decimal("-5")}
 
             # Use ConceptCalculator directly
@@ -1118,7 +1118,7 @@ class TestBadInputNominaEngine:
                 formula=None,
                 monto_override=None,
                 porcentaje_override=None,
-                codigo_concepto="HORAS_EXTRA",
+                codigo_concepto="OVERTIME",
             )
 
             # Negative hours should return 0 (calculator should handle this)
@@ -1143,7 +1143,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1232,7 +1232,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1305,7 +1305,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1393,7 +1393,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1417,7 +1417,7 @@ class TestConceptCalculatorFormulaMethods:
                 codigo="INSS",
                 nombre="INSS",
                 descripcion="Seguro Social",
-                formula_tipo="porcentaje",
+                formula_tipo="percentage",
                 porcentaje=Decimal("7.00"),
                 antes_impuesto=True,
                 activo=True,
@@ -1522,7 +1522,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1569,7 +1569,7 @@ class TestConceptCalculatorFormulaMethods:
                 codigo="IR_RULE_001",
                 nombre="Income Tax Rule",
                 descripcion="Basic income tax calculation",
-                tipo_regla="impuesto",
+                tipo_regla="tax",
                 esquema_json=esquema,
                 vigente_desde=date(2024, 1, 1),
                 activo=True,
@@ -1635,7 +1635,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1718,7 +1718,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1765,7 +1765,7 @@ class TestConceptCalculatorFormulaMethods:
                 codigo="IR_RULE_001",
                 nombre="Income Tax Rule",
                 descripcion="Basic income tax calculation",
-                tipo_regla="impuesto",
+                tipo_regla="tax",
                 esquema_json=esquema,
                 vigente_desde=date(2024, 1, 1),
                 activo=True,
@@ -1838,7 +1838,7 @@ class TestConceptCalculatorFormulaMethods:
             tipo_planilla = TipoPlanilla(
                 codigo="TEST",
                 descripcion="Test",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1885,7 +1885,7 @@ class TestConceptCalculatorFormulaMethods:
                 codigo="IR_RULE_002",
                 nombre="Income Tax Rule 2",
                 descripcion="Tax rule linked by deduccion ID",
-                tipo_regla="impuesto",
+                tipo_regla="tax",
                 esquema_json=esquema,
                 vigente_desde=date(2024, 1, 1),
                 activo=True,

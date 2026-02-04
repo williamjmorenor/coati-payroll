@@ -68,12 +68,12 @@ def crear_log_auditoria(
         deduccion_id = None
         prestacion_id = None
     elif isinstance(concepto, Deduccion):
-        tipo_concepto = "deduccion"
+        tipo_concepto = "deduction"
         percepcion_id = None
         deduccion_id = concepto.id
         prestacion_id = None
     elif isinstance(concepto, Prestacion):
-        tipo_concepto = "prestacion"
+        tipo_concepto = "benefit"
         percepcion_id = None
         deduccion_id = None
         prestacion_id = concepto.id
@@ -134,7 +134,7 @@ def aprobar_concepto(
 ) -> bool:
     """Approve a payroll concept.
 
-    Changes status from 'borrador' to 'aprobado' and records approval information.
+    Changes status from 'draft' to 'approved' and records approval information.
 
     Args:
         concepto: The concept to approve
@@ -402,7 +402,7 @@ def crear_log_auditoria_planilla(
 def aprobar_planilla(planilla: Planilla, usuario: str) -> bool:
     """Approve a planilla.
 
-    Changes status from 'borrador' to 'aprobado' and records approval information.
+    Changes status from 'draft' to 'approved' and records approval information.
 
     Args:
         planilla: The planilla to approve
@@ -550,7 +550,7 @@ def crear_log_auditoria_nomina(
 def aprobar_nomina(nomina: Nomina, usuario: str) -> bool:
     """Approve a nomina.
 
-    Changes state from 'generado' to 'aprobado' and records approval information.
+    Changes state from 'generated' to 'approved' and records approval information.
 
     Args:
         nomina: The nomina to approve
@@ -583,7 +583,7 @@ def aprobar_nomina(nomina: Nomina, usuario: str) -> bool:
 def aplicar_nomina(nomina: Nomina, usuario: str) -> bool:
     """Apply a nomina (mark as paid/executed).
 
-    Changes state from 'aprobado' to 'aplicado' and records application information.
+    Changes state from 'approved' to 'applied' and records application information.
 
     Args:
         nomina: The nomina to apply
@@ -616,7 +616,7 @@ def aplicar_nomina(nomina: Nomina, usuario: str) -> bool:
 def anular_nomina(nomina: Nomina, usuario: str, razon: str) -> bool:
     """Cancel/void a nomina.
 
-    Changes state to 'anulado' and records cancellation information.
+    Changes state to 'cancelled' and records cancellation information.
 
     Args:
         nomina: The nomina to cancel
@@ -693,7 +693,7 @@ def crear_log_auditoria_regla_calculo(
 def aprobar_regla_calculo(regla_calculo: ReglaCalculo, usuario: str) -> bool:
     """Approve a calculation rule.
 
-    Changes status from 'borrador' to 'aprobado' and records approval information.
+    Changes status from 'draft' to 'approved' and records approval information.
 
     Args:
         regla_calculo: The calculation rule to approve

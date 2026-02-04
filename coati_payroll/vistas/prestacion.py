@@ -54,7 +54,7 @@ def dashboard():
     # Count pending initial loads
     pending_loads = (
         db.session.execute(
-            db.select(func.count(CargaInicialPrestacion.id)).filter(CargaInicialPrestacion.estado == "borrador")
+            db.select(func.count(CargaInicialPrestacion.id)).filter(CargaInicialPrestacion.estado == "draft")
         ).scalar()
         or 0
     )
@@ -219,7 +219,7 @@ def initial_balance_bulk():
                         tipo_cambio=Decimal(str(tipo_cambio)),
                         saldo_convertido=saldo_convertido,
                         observaciones=str(observaciones) if observaciones else "Carga masiva de saldo inicial",
-                        estado="borrador",
+                        estado="draft",
                         creado_por=current_user.usuario if current_user.is_authenticated else None,
                     )
 

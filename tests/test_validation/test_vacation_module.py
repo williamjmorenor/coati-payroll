@@ -66,7 +66,7 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
             codigo="MENSUAL_NI",
             descripcion="Nómina mensual para empleados de Nicaragua",
             dias=30,
-            periodicidad="mensual",
+            periodicidad="monthly",
             activo=True,
         )
         db_session.add(tipo_planilla)
@@ -310,7 +310,7 @@ def test_vacation_insufficient_balance_validation(app, db_session):
         db_session.add(moneda)
 
         tipo_planilla = TipoPlanilla(
-            codigo="MONTHLY", descripcion="Monthly payroll", dias=30, periodicidad="mensual", activo=True
+            codigo="MONTHLY", descripcion="Monthly payroll", dias=30, periodicidad="monthly", activo=True
         )
         db_session.add(tipo_planilla)
         db_session.flush()
@@ -408,7 +408,7 @@ def test_vacation_calendar_vs_vacation_days_distinction(app, db_session):
         db_session.add(moneda)
 
         tipo_planilla = TipoPlanilla(
-            codigo="MONTHLY", descripcion="Monthly", dias=30, periodicidad="mensual", activo=True
+            codigo="MONTHLY", descripcion="Monthly", dias=30, periodicidad="monthly", activo=True
         )
         db_session.add(tipo_planilla)
         db_session.flush()
@@ -481,7 +481,7 @@ def test_vacation_calendar_vs_vacation_days_distinction(app, db_session):
             start_date=friday,
             end_date=monday,
             units=vacation_days_to_deduct,  # Critical: Only 2 days, not 4
-            estado="aprobado",
+            estado="approved",
             fecha_aprobacion=date.today(),
             aprobado_por="test_user",
             observaciones=f"Calendar: {calendar_days} days, Vacation: {vacation_days_to_deduct} days",
@@ -511,7 +511,7 @@ def test_vacation_calendar_vs_vacation_days_distinction(app, db_session):
 
         ledger_entry.balance_after = vacation_account.current_balance
         vacation_novelty.ledger_entry_id = ledger_entry.id
-        vacation_novelty.estado = "disfrutado"
+        vacation_novelty.estado = "taken"
 
         db_session.commit()
 
@@ -553,7 +553,7 @@ def test_vacation_ledger_immutability(app, db_session):
         db_session.add(moneda)
 
         tipo_planilla = TipoPlanilla(
-            codigo="MONTHLY", descripcion="Monthly", dias=30, periodicidad="mensual", activo=True
+            codigo="MONTHLY", descripcion="Monthly", dias=30, periodicidad="monthly", activo=True
         )
         db_session.add(tipo_planilla)
         db_session.flush()

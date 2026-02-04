@@ -42,8 +42,8 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <label for="estado" class="form-label">{{ _('Estado') }}</label>
                     <select class="form-select" id="estado" name="estado">
                         <option value="">{{ _('-- Todos --') }}</option>
-                        <option value="borrador" {% if estado_filter == 'borrador' %}selected{% endif %}>{{ _('Borrador') }}</option>
-                        <option value="aplicado" {% if estado_filter == 'aplicado' %}selected{% endif %}>{{ _('Aplicado') }}</option>
+                        <option value="draft" {% if estado_filter == 'draft' %}selected{% endif %}>{{ _('Borrador') }}</option>
+                        <option value="applied" {% if estado_filter == 'applied' %}selected{% endif %}>{{ _('Aplicado') }}</option>
                     </select>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
@@ -86,15 +86,15 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 <td class="text-end">{{ "%.2f"|format(carga.saldo_acumulado) }}</td>
                                 <td class="text-end">{{ "%.2f"|format(carga.saldo_convertido) }}</td>
                                 <td>
-                                    {% if carga.estado == 'borrador' %}
+                                    {% if carga.estado == 'draft' %}
                                         <span class="badge bg-warning">{{ _('Borrador') }}</span>
-                                    {% elif carga.estado == 'aplicado' %}
+                                    {% elif carga.estado == 'applied' %}
                                         <span class="badge bg-success">{{ _('Aplicado') }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        {% if carga.estado == 'borrador' %}
+                                        {% if carga.estado == 'draft' %}
                                             <a href="{{ url_for('carga_inicial_prestacion.editar', carga_id=carga.id) }}" 
                                                class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
                                                 <i class="bi bi-pencil"></i>

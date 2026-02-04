@@ -184,9 +184,9 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
     )
 
     # Separate by type
-    percepciones = [d for d in detalles if d.tipo == "ingreso"]
-    deducciones = [d for d in detalles if d.tipo == "deduccion"]
-    prestaciones = [d for d in detalles if d.tipo == "prestacion"]
+    percepciones = [d for d in detalles if d.tipo == "income"]
+    deducciones = [d for d in detalles if d.tipo == "deduction"]
+    prestaciones = [d for d in detalles if d.tipo == "benefit"]
 
     return render_template(
         "modules/planilla/ver_nomina_empleado.html",
@@ -259,8 +259,8 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
-    if nomina.estado != "generado":
-        flash(_("Solo se pueden aprobar nóminas en estado 'generado'."), "error")
+    if nomina.estado != "generated":
+        flash(_("Solo se pueden aprobar nóminas en estado 'generated'."), "error")
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     # Check for errors in the processing log - cannot approve with errors
@@ -274,7 +274,7 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
         )
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
-    nomina.estado = "aprobado"
+    nomina.estado = "approved"
     nomina.modificado_por = current_user.usuario
     db.session.commit()
 
@@ -292,11 +292,11 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
-    if nomina.estado != "aprobado":
-        flash(_("Solo se pueden aplicar nóminas en estado 'aprobado'."), "error")
+    if nomina.estado != "approved":
+        flash(_("Solo se pueden aplicar nóminas en estado 'approved'."), "error")
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
-    nomina.estado = "aplicado"
+    nomina.estado = "applied"
     nomina.modificado_por = current_user.usuario
 
     # Actualizar estado de todas las novedades asociadas a "ejecutada"
@@ -368,8 +368,8 @@ def recalcular_nomina(planilla_id: str, nomina_id: str):
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
-    if nomina.estado == "aplicado":
-        flash(_("No se puede recalcular una nómina en estado 'aplicado' (pagada)."), "error")
+    if nomina.estado == "applied":
+        flash(_("No se puede recalcular una nómina en estado 'applied' (paid)."), "error")
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     new_nomina, errors, warnings = NominaService.recalcular_nomina(nomina, planilla, current_user.usuario)
@@ -443,7 +443,7 @@ def regenerar_comprobante_contable(planilla_id: str, nomina_id: str):
     if nomina.estado not in (NominaEstado.APLICADO, NominaEstado.PAGADO):
         flash(
             _(
-                "Solo se puede regenerar el comprobante contable para nóminas en estado 'aplicado' o 'pagado'. "
+                "Solo se puede regenerar el comprobante contable para nóminas en estado 'applied' o 'paid'. "
                 "Para nóminas en otros estados, use 'recalcular'."
             ),
             "error",

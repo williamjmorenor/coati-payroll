@@ -175,7 +175,7 @@ def create_test_data(db_session):
     prestacion = Prestacion(
         codigo="VAC",
         nombre="Vacaciones",
-        tipo_acumulacion="mensual",
+        tipo_acumulacion="monthly",
         activo=True,
         creado_por="test",
     )
@@ -421,7 +421,7 @@ def test_initial_balance_bulk_post_duplicate_entry(app, client, admin_user, db_s
             tipo_cambio=Decimal("1.0"),
             saldo_convertido=Decimal("100.0"),
             observaciones="Existing",
-            estado="borrador",
+            estado="draft",
             creado_por="test",
         )
         db_session.add(existing_carga)
@@ -480,7 +480,7 @@ def test_initial_balance_bulk_post_successful_upload(app, client, admin_user, db
         assert cargas[0].tipo_cambio == Decimal("1.0")
         assert cargas[0].saldo_convertido == Decimal("100.0")
         assert cargas[0].observaciones == "Test upload"
-        assert cargas[0].estado == "borrador"
+        assert cargas[0].estado == "draft"
 
 
 def test_initial_balance_bulk_post_default_tipo_cambio(app, client, admin_user, db_session):

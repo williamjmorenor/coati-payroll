@@ -36,7 +36,7 @@ class TestPeriodoDuplicadoValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -118,7 +118,7 @@ class TestPeriodoDuplicadoValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -199,7 +199,7 @@ class TestPeriodoDuplicadoValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -280,7 +280,7 @@ class TestPeriodoDuplicadoValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -361,7 +361,7 @@ class TestPeriodoDuplicadoValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -442,7 +442,7 @@ class TestPeriodoDuplicadoValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -522,7 +522,7 @@ class TestPeriodoDuplicadoValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,
@@ -602,7 +602,7 @@ class TestPeriodoDuplicadoValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="QUINCENAL",
                 descripcion="Quincenal",
-                periodicidad="quincenal",
+                periodicidad="biweekly",
                 dias=15,
                 periodos_por_anio=24,
                 mes_inicio_fiscal=1,

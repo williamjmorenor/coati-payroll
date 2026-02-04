@@ -21,7 +21,7 @@ def test_custom_field_index_lists_fields(app, client, admin_user, db_session):
         field1 = CampoPersonalizado(
             nombre_campo="employee_id_card",
             etiqueta="Employee ID Card",
-            tipo_dato="texto",
+            tipo_dato="text",
             orden=1,
             activo=True,
             creado_por="admin-test",
@@ -29,7 +29,7 @@ def test_custom_field_index_lists_fields(app, client, admin_user, db_session):
         field2 = CampoPersonalizado(
             nombre_campo="years_experience",
             etiqueta="Years of Experience",
-            tipo_dato="entero",
+            tipo_dato="integer",
             orden=2,
             activo=True,
             creado_por="admin-test",
@@ -54,7 +54,7 @@ def test_custom_field_new_creates_field(app, client, admin_user, db_session):
             data={
                 "nombre_campo": "department_code",
                 "etiqueta": "Department Code",
-                "tipo_dato": "texto",
+                "tipo_dato": "text",
                 "descripcion": "Employee department code",
                 "orden": 10,
                 "activo": "y",
@@ -71,7 +71,7 @@ def test_custom_field_new_creates_field(app, client, admin_user, db_session):
             ).scalar_one_or_none()
             assert field is not None
             assert field.etiqueta == "Department Code"
-            assert field.tipo_dato == "texto"
+            assert field.tipo_dato == "text"
             assert field.orden == 10
             assert field.activo is True
 
@@ -83,7 +83,7 @@ def test_custom_field_edit_updates_field(app, client, admin_user, db_session):
         field = CampoPersonalizado(
             nombre_campo="skill_level",
             etiqueta="Skill Level",
-            tipo_dato="entero",
+            tipo_dato="integer",
             orden=5,
             activo=True,
             creado_por="admin-test",
@@ -99,7 +99,7 @@ def test_custom_field_edit_updates_field(app, client, admin_user, db_session):
             data={
                 "nombre_campo": "skill_level",
                 "etiqueta": "Skill Level (Updated)",
-                "tipo_dato": "entero",
+                "tipo_dato": "integer",
                 "descripcion": "Updated description",
                 "orden": 15,
                 "activo": "y",
@@ -123,7 +123,7 @@ def test_custom_field_delete_removes_field(app, client, admin_user, db_session):
         field = CampoPersonalizado(
             nombre_campo="temp_field",
             etiqueta="Temporary Field",
-            tipo_dato="texto",
+            tipo_dato="text",
             orden=1,
             activo=True,
             creado_por="admin-test",
@@ -150,10 +150,10 @@ def test_custom_field_supports_different_data_types(app, client, admin_user, db_
         login_user(client, admin_user.usuario, "admin-password")
 
         data_types = [
-            ("text_field", "texto", "Text Field"),
-            ("integer_field", "entero", "Integer Field"),
+            ("text_field", "text", "Text Field"),
+            ("integer_field", "integer", "Integer Field"),
             ("decimal_field", "decimal", "Decimal Field"),
-            ("boolean_field", "booleano", "Boolean Field"),
+            ("boolean_field", "boolean", "Boolean Field"),
         ]
 
         for nombre, tipo, etiqueta in data_types:
@@ -183,7 +183,7 @@ def test_custom_field_ordering_works(app, client, admin_user, db_session):
         field1 = CampoPersonalizado(
             nombre_campo="field_c",
             etiqueta="Field C",
-            tipo_dato="texto",
+            tipo_dato="text",
             orden=30,
             activo=True,
             creado_por="admin-test",
@@ -191,7 +191,7 @@ def test_custom_field_ordering_works(app, client, admin_user, db_session):
         field2 = CampoPersonalizado(
             nombre_campo="field_a",
             etiqueta="Field A",
-            tipo_dato="texto",
+            tipo_dato="text",
             orden=10,
             activo=True,
             creado_por="admin-test",
@@ -199,7 +199,7 @@ def test_custom_field_ordering_works(app, client, admin_user, db_session):
         field3 = CampoPersonalizado(
             nombre_campo="field_b",
             etiqueta="Field B",
-            tipo_dato="texto",
+            tipo_dato="text",
             orden=20,
             activo=True,
             creado_por="admin-test",
@@ -225,7 +225,7 @@ def test_custom_field_can_be_inactive(app, client, admin_user, db_session):
             data={
                 "nombre_campo": "inactive_field",
                 "etiqueta": "Inactive Field",
-                "tipo_dato": "texto",
+                "tipo_dato": "text",
                 "orden": 1,
                 # Not sending activo means False
             },
@@ -254,7 +254,7 @@ def test_custom_field_workflow_create_edit_delete(app, client, admin_user, db_se
             data={
                 "nombre_campo": "test_workflow",
                 "etiqueta": "Test Workflow",
-                "tipo_dato": "texto",
+                "tipo_dato": "text",
                 "descripcion": "Test description",
                 "orden": 5,
                 "activo": "y",
@@ -276,7 +276,7 @@ def test_custom_field_workflow_create_edit_delete(app, client, admin_user, db_se
                 data={
                     "nombre_campo": "test_workflow",
                     "etiqueta": "Test Workflow (Updated)",
-                    "tipo_dato": "texto",
+                    "tipo_dato": "text",
                     "orden": 10,
                     # Not sending activo means False
                 },

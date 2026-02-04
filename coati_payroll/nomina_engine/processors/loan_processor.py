@@ -77,7 +77,7 @@ class LoanProcessor:
                 monto=monto_aplicar,
                 prioridad=prioridad_prestamos,
                 es_obligatoria=False,
-                tipo="prestamo",
+                tipo="loan",
             )
             deductions.append(item)
             saldo_disponible -= monto_aplicar
@@ -124,7 +124,7 @@ class LoanProcessor:
                 monto=monto_aplicar,
                 prioridad=prioridad_adelantos,
                 es_obligatoria=False,
-                tipo="adelanto",
+                tipo="advance",
             )
             deductions.append(item)
             saldo_disponible -= monto_aplicar

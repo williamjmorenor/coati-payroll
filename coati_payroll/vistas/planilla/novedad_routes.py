@@ -52,7 +52,7 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
-    if nomina.estado == "aplicado":
+    if nomina.estado == "applied":
         flash(_("No se pueden agregar novedades a una nómina aplicada."), "error")
         return redirect(
             url_for(
@@ -121,7 +121,7 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
             )
         )
 
-    if nomina.estado == "aplicado":
+    if nomina.estado == "applied":
         flash(_("No se pueden editar novedades de una nómina aplicada."), "error")
         return redirect(
             url_for(
@@ -137,10 +137,10 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
     # Set tipo_concepto based on existing data
     if request.method == "GET":
         if novedad.percepcion_id:
-            form.tipo_concepto.data = "percepcion"
+            form.tipo_concepto.data = "income"
             form.percepcion_id.data = novedad.percepcion_id
         elif novedad.deduccion_id:
-            form.tipo_concepto.data = "deduccion"
+            form.tipo_concepto.data = "deduction"
             form.deduccion_id.data = novedad.deduccion_id
 
     if form.validate_on_submit():
@@ -200,7 +200,7 @@ def eliminar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
             )
         )
 
-    if nomina.estado == "aplicado":
+    if nomina.estado == "applied":
         flash(_("No se pueden eliminar novedades de una nómina aplicada."), "error")
         return redirect(
             url_for(

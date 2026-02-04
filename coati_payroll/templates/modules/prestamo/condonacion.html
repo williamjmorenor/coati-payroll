@@ -37,7 +37,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <p><strong>{{ _('Empleado:') }}</strong> {{ prestamo.empleado.primer_nombre }} {{ prestamo.empleado.primer_apellido }}</p>
                     <p><strong>{{ _('Código:') }}</strong> {{ prestamo.empleado.codigo_empleado }}</p>
                     <p><strong>{{ _('Tipo:') }}</strong> 
-                        {% if prestamo.tipo == 'adelanto' %}
+                        {% if prestamo.tipo == 'advance' %}
                             {{ _('Adelanto de Salario') }}
                         {% else %}
                             {{ _('Préstamo') }}

@@ -48,7 +48,7 @@ class TestRollbackMechanism:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -110,7 +110,7 @@ class TestRollbackMechanism:
             # Create nomina_detalle
             detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="ingreso",
+                tipo="income",
                 codigo="SALARIO",
                 descripcion="Salario Base",
                 monto=Decimal("15000.00"),
@@ -142,7 +142,7 @@ class TestRollbackMechanism:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -247,7 +247,7 @@ class TestRetryFailedNomina:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -305,7 +305,7 @@ class TestRetryFailedNomina:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -363,7 +363,7 @@ class TestProcessLargePayrollRollback:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,

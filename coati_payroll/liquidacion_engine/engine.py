@@ -74,8 +74,12 @@ class LiquidacionEngine:
         return fecha_alta - timedelta(days=1)
 
     def _get_factor_dias(self, config: ConfiguracionCalculos) -> int:
-        modo = (config.liquidacion_modo_dias or "calendario").strip().lower()
-        if modo == "laboral":
+        modo = (config.liquidacion_modo_dias or "calendar").strip().lower()
+        if modo in {"calendario", "calendar"}:
+            modo = "calendar"
+        elif modo in {"laboral", "working"}:
+            modo = "working"
+        if modo == "working":
             return int(config.liquidacion_factor_laboral or 28)
         return int(config.liquidacion_factor_calendario or 30)
 
@@ -109,7 +113,7 @@ class LiquidacionEngine:
         if liquidacion.dias_por_pagar > 0 and monto_dias > 0:
             liquidacion.detalles.append(
                 LiquidacionDetalle(
-                    tipo="ingreso",
+                    tipo="income",
                     codigo="DIAS_POR_PAGAR",
                     descripcion="Días por pagar",
                     monto=monto_dias,
@@ -156,7 +160,7 @@ class LiquidacionEngine:
             total_deducciones += item.monto
             liquidacion.detalles.append(
                 LiquidacionDetalle(
-                    tipo="deduccion",
+                    tipo="deduction",
                     codigo=item.codigo,
                     descripcion=item.nombre,
                     monto=item.monto,
@@ -187,7 +191,7 @@ def recalcular_liquidacion(liquidacion_id: str, fecha_calculo: date | None = Non
     if not liquidacion:
         return None, ["Liquidación no encontrada."], []
 
-    if liquidacion.estado != "borrador":
+    if liquidacion.estado != "draft":
         return None, ["Solo se pueden recalcular liquidaciones en borrador."], []
 
     empleado = db.session.get(Empleado, liquidacion.empleado_id)
@@ -206,8 +210,8 @@ def recalcular_liquidacion(liquidacion_id: str, fecha_calculo: date | None = Non
             adelanto.saldo_pendiente = (
                 Decimal(str(adelanto.saldo_pendiente)) + Decimal(str(abono.monto_abonado))
             ).quantize(Decimal("0.01"))
-            if adelanto.saldo_pendiente > 0 and adelanto.estado == "pagado":
-                adelanto.estado = "aprobado"
+            if adelanto.saldo_pendiente > 0 and adelanto.estado == "paid":
+                adelanto.estado = "approved"
         db.session.delete(abono)
 
     # Remove existing details
@@ -240,7 +244,7 @@ def ejecutar_liquidacion(
         empleado_id=empleado.id,
         concepto_id=concepto_id,
         fecha_calculo=fecha_calculo or date.today(),
-        estado="borrador",
+        estado="draft",
     )
     db.session.add(liquidacion)
     db.session.flush()

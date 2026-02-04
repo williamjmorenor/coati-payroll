@@ -31,7 +31,7 @@ def _create_minimal_planilla_context(db_session, empresa_id: str):
     db_session.add(moneda)
     db_session.flush()
 
-    tipo = TipoPlanilla(codigo="MONTHLY", descripcion="Mensual", periodicidad="mensual", dias=30, activo=True)
+    tipo = TipoPlanilla(codigo="MONTHLY", descripcion="Mensual", periodicidad="monthly", dias=30, activo=True)
     db_session.add(tipo)
     db_session.flush()
 
@@ -170,7 +170,7 @@ def test_deducciones_adelantos_y_recalculo_no_duplica_abonos(app, db_session):
             empresa_id=empresa.id,
             pais_id=None,
             activo=True,
-            liquidacion_modo_dias="calendario",
+            liquidacion_modo_dias="calendar",
             liquidacion_factor_calendario=30,
             liquidacion_factor_laboral=28,
         )
@@ -193,9 +193,9 @@ def test_deducciones_adelantos_y_recalculo_no_duplica_abonos(app, db_session):
         ded = Deduccion(
             codigo="DED1",
             nombre="Deduccion Prestamo",
-            tipo="prestamo",
+            tipo="loan",
             es_impuesto=False,
-            formula_tipo="fijo",
+            formula_tipo="fixed",
             antes_impuesto=False,
             recurrente=False,
             activo=True,
@@ -206,7 +206,7 @@ def test_deducciones_adelantos_y_recalculo_no_duplica_abonos(app, db_session):
         prestamo = Adelanto(
             empleado_id=empleado.id,
             deduccion_id=ded.id,
-            tipo="prestamo",
+            tipo="loan",
             estado=AdelantoEstado.APROBADO,
             saldo_pendiente=Decimal("5.00"),
             monto_por_cuota=Decimal("5.00"),
@@ -216,7 +216,7 @@ def test_deducciones_adelantos_y_recalculo_no_duplica_abonos(app, db_session):
         adelanto = Adelanto(
             empleado_id=empleado.id,
             deduccion_id=None,
-            tipo="adelanto",
+            tipo="advance",
             estado=AdelantoEstado.APROBADO,
             saldo_pendiente=Decimal("3.00"),
             monto_por_cuota=Decimal("3.00"),

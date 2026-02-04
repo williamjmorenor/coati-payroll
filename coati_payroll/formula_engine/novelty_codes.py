@@ -8,188 +8,188 @@ calculation behavior (perception/deduction, gravable, etc.).
 
 # ................................ CONTANTES ................................ #
 NOVELTY_CODES = {
-    "HORAS_EXTRA": {
-        "tipo": "percepcion",
+    "OVERTIME": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Horas extra trabajadas",
     },
-    "HORAS_EXTRA_DOBLES": {
-        "tipo": "percepcion",
+    "OVERTIME_DOUBLE": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Horas extra dobles (feriados/domingos)",
     },
-    "AUSENCIA": {
-        "tipo": "deduccion",
+    "ABSENCE": {
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Ausencia no justificada",
     },
-    "INCAPACIDAD": {
-        "tipo": "deduccion",
+    "DISABILITY": {
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Incapacidad médica",
     },
-    "COMISION": {
-        "tipo": "percepcion",
+    "COMMISSION": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Comisiones por ventas",
     },
-    "BONIFICACION": {
-        "tipo": "percepcion",
+    "BONUS": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Bonificación",
     },
-    "VIATICO": {
-        "tipo": "percepcion",
+    "ALLOWANCE": {
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Viáticos",
     },
-    "VACACIONES": {
-        "tipo": "percepcion",
+    "VACATION": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Pago de vacaciones",
     },
-    "ADELANTO": {
-        "tipo": "deduccion",
+    "ADVANCE": {
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Adelanto de salario",
     },
-    "PRESTAMO": {
-        "tipo": "deduccion",
+    "LOAN": {
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Cuota de préstamo",
     },
     # A. Compensación Base y Directa
-    "BONO_OBJETIVOS": {
-        "tipo": "percepcion",
+    "BONUS_OBJECTIVES": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Bono por cumplimiento de objetivos",
     },
-    "BONO_ANUAL": {
-        "tipo": "percepcion",
+    "BONUS_ANNUAL": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Bono anual o trimestral",
     },
-    "PLUS_PELIGROSIDAD": {
-        "tipo": "percepcion",
+    "HAZARD_PAY": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Plus por peligrosidad o toxicidad",
     },
-    "PLUS_NOCTURNO": {
-        "tipo": "percepcion",
+    "NIGHT_SHIFT": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Plus por trabajo nocturno",
     },
-    "PLUS_ANTIGUEDAD": {
-        "tipo": "percepcion",
+    "SENIORITY_PAY": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Plus por antigüedad",
     },
     # B. Compensaciones en Especie y Beneficios
-    "USO_VEHICULO": {
-        "tipo": "percepcion",
+    "VEHICLE_USE": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Uso de vehículo de empresa",
     },
-    "SEGURO_SALUD": {
-        "tipo": "percepcion",
+    "HEALTH_INSURANCE": {
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Seguro de salud privado",
     },
-    "APORTE_PENSION": {
-        "tipo": "percepcion",
+    "PENSION_CONTRIBUTION": {
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Aporte patronal a pensión/retiro",
     },
     "STOCK_OPTIONS": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Opciones de compra de acciones",
     },
-    "SUBSIDIO_ALIMENTACION": {
-        "tipo": "percepcion",
+    "FOOD_ALLOWANCE": {
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Subsidio de alimentación",
     },
-    "SUBSIDIO_TRANSPORTE": {
-        "tipo": "percepcion",
+    "TRANSPORT_ALLOWANCE": {
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Subsidio de transporte",
     },
-    "SUBSIDIO_GUARDERIA": {
-        "tipo": "percepcion",
+    "CHILDCARE_ALLOWANCE": {
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Subsidio de guardería",
     },
     # C. Compensaciones por Tiempo y Bienestar
-    "PAGO_FESTIVOS": {
-        "tipo": "percepcion",
+    "HOLIDAY_PAY": {
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Pago por días festivos trabajados",
     },
     "THIRTEENTH_SALARY": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Aguinaldo o gratificación anual",
     },
     "UTILIDADES": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Participación en utilidades",
     },
     "PERMISO_PAGADO": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Permisos pagados (enfermedad, maternidad, etc.)",
     },
     "FONDO_AHORRO_EMPRESA": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Aporte empresa a fondo de ahorro",
     },
     "FONDO_AHORRO_EMPLEADO": {
-        "tipo": "deduccion",
+        "tipo": "deduction",
         "gravable": False,
         "descripcion": "Aporte empleado a fondo de ahorro",
     },
     # D. Reembolsos y Dietas
     "GASTOS_REPRESENTACION": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Gastos de representación",
     },
     "REEMBOLSO_FORMACION": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Reembolso de gastos de formación",
     },
     "REEMBOLSO_MEDICO": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Reembolso de gastos médicos",
     },
     # E. Pagos por Eventos Específicos
     "INDEMNIZACION": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Indemnización por despido",
     },
     "COMPENSACION_REUBICACION": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Compensación por reubicación",
     },
     "PREMIO_PUNTUALIDAD": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Premio por puntualidad/asistencia",
     },
     "PREMIO_INNOVACION": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": True,
         "descripcion": "Premio por ideas innovadoras",
     },
     "AYUDA_FALLECIMIENTO": {
-        "tipo": "percepcion",
+        "tipo": "income",
         "gravable": False,
         "descripcion": "Ayuda por fallecimiento de familiar",
     },

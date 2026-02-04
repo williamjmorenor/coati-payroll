@@ -23,7 +23,7 @@ def tipo_planilla(app, db_session):
         tipo = TipoPlanilla(
             codigo="MENSUAL",
             descripcion="Planilla Mensual",
-            periodicidad="mensual",
+            periodicidad="monthly",
             activo=True,
         )
         db_session.add(tipo)
@@ -119,7 +119,7 @@ def percepcion(app, db_session):
             codigo="BONO",
             nombre="Bono Mensual",
             descripcion="Bono mensual por desempeño",
-            formula_tipo="fijo",
+            formula_tipo="fixed",
             activo=True,
         )
         db_session.add(percepcion)
@@ -138,7 +138,7 @@ def deduccion(app, db_session):
             codigo="INSS",
             nombre="INSS Laboral",
             descripcion="Seguro Social Laboral",
-            formula_tipo="porcentaje",
+            formula_tipo="percentage",
             activo=True,
         )
         db_session.add(deduccion)
@@ -750,7 +750,7 @@ def nomina(app, db_session, planilla, admin_user):
             periodo_inicio=date.today(),
             periodo_fin=date.today() + timedelta(days=14),
             generado_por=admin_user.usuario,
-            estado="generado",
+            estado="generated",
         )
         db_session.add(nomina)
         db_session.commit()
@@ -819,7 +819,7 @@ def test_nueva_novedad_post_creates_novedad(
         data = {
             "empleado_id": nomina_empleado.empleado_id,
             "codigo_concepto": "BONO",
-            "tipo_concepto": "percepcion",
+            "tipo_concepto": "income",
             "percepcion_id": percepcion.id,
             "tipo_valor": "monto",
             "valor_cantidad": 500,
@@ -903,7 +903,7 @@ def test_editar_novedad_post_updates_novedad(
         data = {
             "empleado_id": nomina_empleado.empleado_id,
             "codigo_concepto": "BONO_ACT",
-            "tipo_concepto": "percepcion",
+            "tipo_concepto": "income",
             "percepcion_id": percepcion.id,
             "tipo_valor": "monto",
             "valor_cantidad": 750,

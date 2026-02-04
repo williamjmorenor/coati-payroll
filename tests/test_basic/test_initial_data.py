@@ -396,7 +396,7 @@ def test_load_benefit_concepts_creates_concepts(app, db_session):
 
         assert vacation_provision is not None
         assert vacation_provision.codigo == "PAID_VACATION_PROVISION"
-        assert vacation_provision.tipo == "patronal"
+        assert vacation_provision.tipo == "employer"
         assert vacation_provision.activo is True
 
 
@@ -461,7 +461,7 @@ def test_load_payroll_types_creates_types(app, db_session):
         assert monthly is not None
         assert monthly.codigo == "MONTHLY"
         assert monthly.dias == 30
-        assert monthly.periodicidad == "mensual"
+        assert monthly.periodicidad == "monthly"
         assert monthly.periodos_por_anio == 12
         assert monthly.activo is True
 

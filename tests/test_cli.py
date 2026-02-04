@@ -235,14 +235,14 @@ def test_users_create(app, db_session):
     from coati_payroll.cli import _users_create
 
     with app.app_context():
-        _users_create("testuser", "password123", "Test User", "test@example.com", "operador")
+        _users_create("testuser", "password123", "Test User", "test@example.com", "hr")
 
         user = db.session.execute(db.select(Usuario).filter_by(usuario="testuser")).scalar_one_or_none()
         assert user is not None
         assert user.nombre == "Test"
         assert user.apellido == "User"
         assert user.correo_electronico == "test@example.com"
-        assert user.tipo == "operador"
+        assert user.tipo == "hr"
         assert user.activo is True
 
 
@@ -325,7 +325,7 @@ def test_users_set_admin_existing_user(app, db_session, admin_user):
         user.acceso = proteger_passwd("password")
         user.nombre = "Regular"
         user.apellido = "User"
-        user.tipo = "operador"
+        user.tipo = "hr"
         user.activo = True
         db_session.add(user)
         db_session.commit()
@@ -611,7 +611,7 @@ def test_users_create_single_name(app, db_session):
     from coati_payroll.cli import _users_create
 
     with app.app_context():
-        _users_create("singlename", "password123", "SingleName", None, "operador")
+        _users_create("singlename", "password123", "SingleName", None, "hr")
 
         user = db.session.execute(db.select(Usuario).filter_by(usuario="singlename")).scalar_one_or_none()
         assert user is not None

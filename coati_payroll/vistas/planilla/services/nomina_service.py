@@ -84,7 +84,7 @@ class NominaService:
 
         # Determine if we should process in background
         if num_empleados > threshold:
-            # Create nomina record with "calculando" status
+            # Create nomina record with "calculating" status
             nomina = Nomina(
                 planilla_id=planilla.id,
                 periodo_inicio=periodo_inicio,

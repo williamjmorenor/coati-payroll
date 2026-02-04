@@ -11,6 +11,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for,
 from flask_login import current_user
 from sqlalchemy import and_
 
+from coati_payroll.enums import CargaInicialEstado
 from coati_payroll.forms import CargaInicialPrestacionForm
 from coati_payroll.i18n import _
 from coati_payroll.model import (
@@ -105,7 +106,7 @@ def nueva():
             tipo_cambio=form.tipo_cambio.data if form.tipo_cambio.data is not None else Decimal("1.0"),
             saldo_convertido=form.saldo_convertido.data if form.saldo_convertido.data is not None else Decimal("0.00"),
             observaciones=form.observaciones.data,
-            estado="borrador",
+            estado="draft",
             creado_por=current_user.usuario if current_user.is_authenticated else None,
         )
 
@@ -124,7 +125,7 @@ def editar(carga_id):
     """Edit an initial benefit balance load (only if in draft status)."""
     carga = CargaInicialPrestacion.query.get_or_404(carga_id)
 
-    if carga.estado == "aplicado":
+    if carga.estado == "applied":
         flash(_("No se puede editar una carga inicial ya aplicada."), "warning")
         return redirect(url_for("carga_inicial_prestacion.index"))
 
@@ -174,7 +175,7 @@ def aplicar(carga_id):
     """Apply an initial balance load - creates transaction in prestacion_acumulada."""
     carga = CargaInicialPrestacion.query.get_or_404(carga_id)
 
-    if carga.estado == "aplicado":
+    if carga.estado == CargaInicialEstado.APLICADO:
         flash(_("Esta carga inicial ya ha sido aplicada."), "warning")
         return redirect(url_for("carga_inicial_prestacion.index"))
 
@@ -200,7 +201,7 @@ def aplicar(carga_id):
         db.session.add(transaccion)
 
         # Update carga status
-        carga.estado = "aplicado"
+        carga.estado = CargaInicialEstado.APLICADO
         carga.fecha_aplicacion = datetime.now()
         carga.aplicado_por = current_user.usuario if current_user.is_authenticated else None
         carga.modificado_por = current_user.usuario if current_user.is_authenticated else None
@@ -222,7 +223,7 @@ def eliminar(carga_id):
     """Delete an initial balance load (only if in draft status)."""
     carga = CargaInicialPrestacion.query.get_or_404(carga_id)
 
-    if carga.estado == "aplicado":
+    if carga.estado == CargaInicialEstado.APLICADO:
         flash(_("No se puede eliminar una carga inicial ya aplicada."), "warning")
         return redirect(url_for("carga_inicial_prestacion.index"))
 

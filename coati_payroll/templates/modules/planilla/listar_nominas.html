@@ -42,18 +42,18 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </td>
                     <td>{{ nomina.fecha_generacion.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td>
-                        {% if nomina.estado == 'calculando' %}
+                        {% if nomina.estado == 'calculating' %}
                         <span class="badge bg-primary">
                             <i class="fas fa-spinner fa-spin"></i> Calculando
                             {% if nomina.total_empleados and nomina.total_empleados > 0 %}
                             ({{ nomina.empleados_procesados }}/{{ nomina.total_empleados }})
                             {% endif %}
                         </span>
-                        {% elif nomina.estado == 'generado' %}
+                        {% elif nomina.estado == 'generated' %}
                         <span class="badge bg-warning">Generado</span>
-                        {% elif nomina.estado == 'aprobado' %}
+                        {% elif nomina.estado == 'approved' %}
                         <span class="badge bg-info">Aprobado</span>
-                        {% elif nomina.estado == 'aplicado' %}
+                        {% elif nomina.estado == 'applied' %}
                         <span class="badge bg-success">Aplicado</span>
                         {% elif nomina.estado == 'error' %}
                         <span class="badge bg-danger">Error</span>

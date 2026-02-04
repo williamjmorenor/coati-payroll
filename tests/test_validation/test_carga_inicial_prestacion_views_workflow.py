@@ -14,7 +14,7 @@ from tests.helpers.auth import login_user
 def _seed_minimal_entities(db_session):
     empresa = Empresa(codigo="BEN001", razon_social="Benefits Co", ruc="J-BEN", activo=True)
     moneda = Moneda(codigo="USD", nombre="Dólar", simbolo="$", activo=True)
-    prestacion = Prestacion(codigo="VAC", nombre="Vacaciones", tipo_acumulacion="mensual", activo=True)
+    prestacion = Prestacion(codigo="VAC", nombre="Vacaciones", tipo_acumulacion="monthly", activo=True)
 
     db_session.add_all([empresa, moneda, prestacion])
     db_session.flush()
@@ -83,14 +83,14 @@ def test_carga_inicial_prestacion_create_apply_and_delete_workflow(app, client, 
             .one_or_none()
         )
         assert carga is not None
-        assert carga.estado == "borrador"
+        assert carga.estado == "draft"
 
         # Apply
         resp = client.post(f"/carga-inicial-prestaciones/{carga.id}/aplicar", follow_redirects=False)
         assert resp.status_code == 302
 
         db_session.refresh(carga)
-        assert carga.estado == "aplicado"
+        assert carga.estado == "applied"
 
         trans = (
             db_session.query(PrestacionAcumulada).filter(PrestacionAcumulada.carga_inicial_id == carga.id).one_or_none()

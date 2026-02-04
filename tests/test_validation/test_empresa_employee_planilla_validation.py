@@ -49,7 +49,7 @@ class TestNominaEngineEmpresaValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 activo=True,
             )
@@ -117,7 +117,7 @@ class TestNominaEngineEmpresaValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 activo=True,
             )
@@ -179,7 +179,7 @@ class TestNominaEngineEmpresaValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 activo=True,
             )
@@ -251,7 +251,7 @@ class TestPlanillaEmpleadoAssociationValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 activo=True,
             )
@@ -317,7 +317,7 @@ class TestPlanillaEmpleadoAssociationValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 activo=True,
             )
@@ -383,7 +383,7 @@ class TestPlanillaEmpleadoAssociationValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 activo=True,
             )
@@ -458,7 +458,7 @@ class TestConfigEmpleadosFiltering:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 activo=True,
             )

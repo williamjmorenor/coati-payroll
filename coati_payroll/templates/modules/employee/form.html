@@ -201,7 +201,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     {% for field in custom_fields %}
                     <div class="col-md-4">
                         <div class="mb-3">
-                            {% if field.tipo_dato == 'booleano' %}
+                            {% if field.tipo_dato == 'boolean' %}
                                 {# Checkbox for boolean fields #}
                                 <div class="form-check">
                                     <input type="checkbox" 
@@ -217,13 +217,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 <label class="form-label" for="custom_{{ field.nombre_campo }}">
                                     {{ field.etiqueta }}
                                 </label>
-                                {% if field.tipo_dato == 'texto' %}
+                                {% if field.tipo_dato == 'text' %}
                                     <input type="text" 
                                            class="form-control" 
                                            name="custom_{{ field.nombre_campo }}" 
                                            id="custom_{{ field.nombre_campo }}"
                                            value="{{ custom_values.get(field.nombre_campo) or '' }}">
-                                {% elif field.tipo_dato == 'entero' %}
+                                {% elif field.tipo_dato == 'integer' %}
                                     <input type="number" 
                                            class="form-control" 
                                            name="custom_{{ field.nombre_campo }}" 

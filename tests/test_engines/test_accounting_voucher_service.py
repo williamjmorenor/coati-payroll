@@ -57,7 +57,7 @@ class TestAccountingConfigurationValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -85,7 +85,7 @@ class TestAccountingConfigurationValidation:
             percepcion = Percepcion(
                 codigo="BONO",
                 nombre="Bono Producción",
-                formula_tipo="fijo",
+                formula_tipo="fixed",
                 activo=True,
                 contabilizable=True,
                 codigo_cuenta_debe="5102",
@@ -125,7 +125,7 @@ class TestAccountingConfigurationValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -168,7 +168,7 @@ class TestAccountingConfigurationValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -193,7 +193,7 @@ class TestAccountingConfigurationValidation:
             deduccion = Deduccion(
                 codigo="INSS",
                 nombre="INSS Laboral",
-                formula_tipo="porcentaje",
+                formula_tipo="percentage",
                 activo=True,
                 contabilizable=True,
                 codigo_cuenta_debe=None,  # Missing
@@ -237,7 +237,7 @@ class TestAccountingVoucherGeneration:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -339,7 +339,7 @@ class TestAccountingVoucherGeneration:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -416,7 +416,7 @@ class TestAccountingVoucherGeneration:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -456,7 +456,7 @@ class TestAccountingVoucherGeneration:
             deduccion_prestamo = Deduccion(
                 codigo="PREST",
                 nombre="Préstamo",
-                formula_tipo="fijo",
+                formula_tipo="fixed",
                 activo=True,
                 contabilizable=True,
             )
@@ -467,7 +467,7 @@ class TestAccountingVoucherGeneration:
             adelanto = Adelanto(
                 empleado_id=empleado.id,
                 deduccion_id=deduccion_prestamo.id,
-                tipo="prestamo",
+                tipo="loan",
                 monto_aprobado=Decimal("10000.00"),
                 saldo_pendiente=Decimal("8000.00"),
                 cuotas_pactadas=10,
@@ -502,7 +502,7 @@ class TestAccountingVoucherGeneration:
             # Add loan deduction detail
             nomina_detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="deduccion",
+                tipo="deduction",
                 codigo="PREST",
                 descripcion="Cuota Préstamo",
                 monto=Decimal("1000.00"),
@@ -523,7 +523,7 @@ class TestAccountingVoucherGeneration:
             assert len(lineas) >= 4
 
             # Find loan lines
-            loan_lines = [l for l in lineas if l.tipo_concepto == "prestamo"]
+            loan_lines = [l for l in lineas if l.tipo_concepto == "loan"]
             assert len(loan_lines) == 2
 
             # Check loan debit (salary payable)
@@ -755,7 +755,7 @@ class TestAccountingAuditTrail:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -834,7 +834,7 @@ class TestAccountingAuditTrail:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -930,7 +930,7 @@ class TestAccountingBalanceValidation:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
@@ -1015,7 +1015,7 @@ class TestAccountingBalanceValidation:
                 credito=Decimal("0.00"),
                 monto_calculado=Decimal("1000.00"),
                 concepto="Extra",
-                tipo_concepto="percepcion",
+                tipo_concepto="income",
                 concepto_codigo="EXTRA",
                 orden=orden_max + 1,
             )
@@ -1064,7 +1064,7 @@ class TestAccountingBalanceValidation:
                 credito=Decimal("0.00"),
                 monto_calculado=Decimal("5000.00"),
                 concepto="Test Debit",
-                tipo_concepto="deduccion",
+                tipo_concepto="deduction",
                 concepto_codigo="TEST_D",
                 orden=1,
             )
@@ -1084,7 +1084,7 @@ class TestAccountingBalanceValidation:
                 credito=Decimal("5000.00"),
                 monto_calculado=Decimal("5000.00"),
                 concepto="Test Credit",
-                tipo_concepto="percepcion",
+                tipo_concepto="income",
                 concepto_codigo="TEST_C",
                 orden=2,
             )
@@ -1175,7 +1175,7 @@ class TestIncompleteAccountingConfiguration:
             tipo_planilla = TipoPlanilla(
                 codigo="MENSUAL",
                 descripcion="Mensual",
-                periodicidad="mensual",
+                periodicidad="monthly",
                 dias=30,
                 periodos_por_anio=12,
                 mes_inicio_fiscal=1,
