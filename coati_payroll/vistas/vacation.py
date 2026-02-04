@@ -16,7 +16,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 
-from coati_payroll.enums import TipoUsuario, VacationLedgerType
+from coati_payroll.enums import TipoUsuario, VacacionEstado, VacationLedgerType
 from coati_payroll.i18n import _
 from coati_payroll.model import (
     db,
@@ -622,7 +622,7 @@ def register_vacation_taken():
             start_date=form.fecha_inicio.data,
             end_date=form.fecha_fin.data,
             units=dias_descontados,  # CRITICAL: Use dias_descontados, not calendar days
-            estado="approved",  # Directly approved
+            estado=VacacionEstado.APROBADO,  # Directly approved
             fecha_aprobacion=date.today(),
             aprobado_por=current_user.usuario,
             observaciones=form.observaciones.data,
@@ -657,7 +657,7 @@ def register_vacation_taken():
 
         # Link ledger entry to vacation novelty
         vacation_novelty.ledger_entry_id = ledger_entry.id
-        vacation_novelty.estado = "taken"
+        vacation_novelty.estado = VacacionEstado.DISFRUTADO
 
         # Create associated NominaNovedad using existing infrastructure
         # This ensures the novelty is properly processed during payroll calculation
@@ -674,7 +674,7 @@ def register_vacation_taken():
             vacation_novelty_id=vacation_novelty.id,
             fecha_inicio_descanso=form.fecha_inicio.data,
             fecha_fin_descanso=form.fecha_fin.data,
-            estado="pending",  # Will be processed when nomina is calculated
+            estado=VacacionEstado.PENDIENTE,  # Will be processed when nomina is calculated
             creado_por=current_user.usuario,
         )
 
@@ -717,7 +717,7 @@ def dashboard():
 
     pending_requests = (
         db.session.execute(
-            db.select(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == "pending")
+            db.select(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == VacacionEstado.PENDIENTE)
         ).scalar()
         or 0
     )

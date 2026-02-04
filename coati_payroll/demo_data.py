@@ -23,6 +23,7 @@ from dateutil.relativedelta import relativedelta
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
+from coati_payroll.enums import NominaEstado, NovedadEstado
 from coati_payroll.model import (
     db,
     Empresa,
@@ -652,7 +653,7 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
     nomina.planilla_id = planilla.id
     nomina.periodo_inicio = next_month_start
     nomina.periodo_fin = next_month_end
-    nomina.estado = "generated"
+    nomina.estado = NominaEstado.GENERADO
     nomina.total_bruto = Decimal("0.00")
     nomina.total_deducciones = Decimal("0.00")
     nomina.total_neto = Decimal("0.00")
@@ -715,7 +716,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                         novedad.valor_cantidad = Decimal("8.0")  # 8 hours overtime
                         novedad.fecha_novedad = date.today() - timedelta(days=5)
                         novedad.percepcion_id = overtime.id
-                        novedad.estado = "pending"
+                        novedad.estado = NovedadEstado.PENDIENTE
                         db.session.add(novedad)
                         log.trace(f"Created overtime novedad for {empleado.codigo_empleado}")
 
@@ -742,7 +743,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                         novedad.valor_cantidad = Decimal("1.0")  # 1 day absence
                         novedad.fecha_novedad = date.today() - timedelta(days=3)
                         novedad.deduccion_id = absence.id
-                        novedad.estado = "pending"
+                        novedad.estado = NovedadEstado.PENDIENTE
                         db.session.add(novedad)
                         log.trace(f"Created absence novedad for {empleado.codigo_empleado}")
 

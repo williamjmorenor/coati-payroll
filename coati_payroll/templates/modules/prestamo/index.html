@@ -36,8 +36,8 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <label for="tipo" class="form-label">{{ _('Tipo') }}</label>
                     <select name="tipo" id="tipo" class="form-select">
                         <option value="">{{ _('-- Todos --') }}</option>
-                        <option value="adelanto" {% if filtro_tipo == 'adelanto' %}selected{% endif %}>{{ _('Adelanto') }}</option>
-                        <option value="prestamo" {% if filtro_tipo == 'prestamo' %}selected{% endif %}>{{ _('Préstamo') }}</option>
+                        <option value="advance" {% if filtro_tipo == 'advance' %}selected{% endif %}>{{ _('Adelanto') }}</option>
+                        <option value="loan" {% if filtro_tipo == 'loan' %}selected{% endif %}>{{ _('Préstamo') }}</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -87,7 +87,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 <small class="text-muted">{{ prestamo.empleado.codigo_empleado }}</small>
                             </td>
                             <td>
-                                {% if prestamo.tipo == 'adelanto' %}
+                                {% if prestamo.tipo == 'advance' %}
                                     <span class="badge bg-info">{{ _('Adelanto') }}</span>
                                 {% else %}
                                     <span class="badge bg-primary">{{ _('Préstamo') }}</span>

@@ -111,7 +111,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <td class="text-end">{{ "{:,.2f}".format(novedad.valor_cantidad|float) }}</td>
                     <td>{{ novedad.fecha_novedad.strftime('%d/%m/%Y') if novedad.fecha_novedad else '-' }}</td>
                     <td>
-                        {% if novedad.estado == 'ejecutada' %}
+                        {% if novedad.estado == 'executed' %}
                         <span class="badge bg-success">{{ _('Ejecutada') }}</span>
                         {% else %}
                         <span class="badge bg-warning text-dark">{{ _('Pendiente') }}</span>

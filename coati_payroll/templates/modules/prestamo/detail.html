@@ -51,7 +51,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <div class="row mb-2">
                         <div class="col-6 fw-bold">{{ _('Tipo:') }}</div>
                         <div class="col-6">
-                            {% if prestamo.tipo == 'adelanto' %}
+                            {% if prestamo.tipo == 'advance' %}
                                 <span class="badge bg-info">{{ _('Adelanto de Salario') }}</span>
                             {% else %}
                                 <span class="badge bg-primary">{{ _('Préstamo') }}</span>
@@ -152,9 +152,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <div class="row mb-2">
                         <div class="col-6 fw-bold">{{ _('Método de Amortización:') }}</div>
                         <div class="col-6">
-                            {% if prestamo.metodo_amortizacion == 'frances' %}
+                            {% if prestamo.metodo_amortizacion == 'french' %}
                                 {{ _('Francés - Cuota Constante') }}
-                            {% elif prestamo.metodo_amortizacion == 'aleman' %}
+                            {% elif prestamo.metodo_amortizacion == 'german' %}
                                 {{ _('Alemán - Amortización Constante') }}
                             {% else %}
                                 {{ prestamo.metodo_amortizacion|title }}

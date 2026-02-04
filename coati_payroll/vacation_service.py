@@ -369,6 +369,7 @@ class VacationService:
         Returns:
             Total vacation days/hours used
         """
+        from coati_payroll.enums import VacacionEstado
         from coati_payroll.model import db, VacationNovelty, VacationLedger, NominaNovedad
 
         total_usado = Decimal("0.00")
@@ -394,7 +395,7 @@ class VacationService:
 
             vac_novelty = db.session.get(VacationNovelty, nomina_novedad.vacation_novelty_id)
 
-            if not vac_novelty or vac_novelty.estado != "approved":
+            if not vac_novelty or vac_novelty.estado != VacacionEstado.APROBADO:
                 continue
 
             # Skip if already processed (has ledger entry)
@@ -425,7 +426,7 @@ class VacationService:
 
             # Link ledger entry to novelty
             vac_novelty.ledger_entry_id = ledger_entry.id
-            vac_novelty.estado = "taken"
+            vac_novelty.estado = VacacionEstado.DISFRUTADO
 
             db.session.add(ledger_entry)
             db.session.flush()

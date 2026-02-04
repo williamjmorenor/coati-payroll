@@ -23,6 +23,7 @@ from ulid import ULID
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
+from coati_payroll.enums import NominaEstado
 
 db = SQLAlchemy()
 database = db
@@ -810,8 +811,8 @@ class Nomina(database.Model, BaseTabla):
     periodo_fin = database.Column(database.Date, nullable=False)
     generado_por = database.Column(database.String(150), nullable=True)
     estado = database.Column(
-        database.String(30), nullable=False, default="generated"
-    )  # calculating, generated, approved, applied, paid, cancelled, error (all are valid permanent states)
+        database.String(30), nullable=False, default=NominaEstado.GENERADO
+    )  # calculando, generado, aprobado, aplicado, pagado, anulado, error (all are valid permanent states)
 
     total_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     total_deducciones = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
