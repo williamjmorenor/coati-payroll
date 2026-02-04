@@ -38,26 +38,24 @@ class FormulaType(StrEnum):
     HORAS = "hours"  # Based on hours
     DIAS = "days"  # Based on days
 
-    _LEGACY_ALIASES = {
-        "fijo": FIJO,
-        "porcentaje": PORCENTAJE,
-        "porcentaje_salario": PORCENTAJE_SALARIO,
-        "porcentaje_bruto": PORCENTAJE_BRUTO,
-        "formula": FORMULA,
-        "regla_calculo": REGLA_CALCULO,
-        "horas": HORAS,
-        "dias": DIAS,
-    }
-
     @classmethod
-    def normalize(cls, value: str | "FormulaType" | None) -> str | "FormulaType" | None:
-        """Normalize legacy formula type values to current enum values."""
+    def normalize(cls, value: str | FormulaType | None) -> FormulaType | None:
+        """Normalize legacy/Spanish values to the current enum values."""
         if value is None:
             return None
-        if isinstance(value, cls):
+        if isinstance(value, FormulaType):
             return value
-        normalized = str(value).strip().lower()
-        return cls._LEGACY_ALIASES.get(normalized, normalized)
+        legacy_map = {
+            "fijo": cls.FIJO,
+            "porcentaje": cls.PORCENTAJE,
+            "porcentaje_salario": cls.PORCENTAJE_SALARIO,
+            "porcentaje_bruto": cls.PORCENTAJE_BRUTO,
+            "formula": cls.FORMULA,
+            "regla_calculo": cls.REGLA_CALCULO,
+            "horas": cls.HORAS,
+            "dias": cls.DIAS,
+        }
+        return legacy_map.get(value, cls(value) if value in cls._value2member_map_ else None)
 
 
 class StepType(StrEnum):
