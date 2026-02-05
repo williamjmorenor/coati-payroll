@@ -589,9 +589,13 @@ def _database_init(app):
     Returns:
         str: Admin username that was created/initialized
     """
+    from sqlalchemy import inspect
+
     from coati_payroll import ensure_database_initialized
 
-    db.create_all()
+    inspector = inspect(db.engine)
+    if not inspector.get_table_names():
+        db.create_all()
     ensure_database_initialized(app)
 
     return os.environ.get("ADMIN_USER", "coati-admin")
@@ -622,9 +626,13 @@ def database_init(ctx):
 
 def _database_seed():
     """Seed database with initial data."""
+    from sqlalchemy import inspect
+
     from coati_payroll.initial_data import load_initial_data
 
-    db.create_all()
+    inspector = inspect(db.engine)
+    if not inspector.get_table_names():
+        db.create_all()
     load_initial_data()
 
 
