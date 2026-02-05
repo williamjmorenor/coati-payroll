@@ -26,7 +26,11 @@ default_db_path = repo_root.joinpath("coati_payroll.db")
 default_db_uri = f"sqlite:///{default_db_path}"
 
 db_url = environ.get("DATABASE_URL", None)
+flask_env = environ.get("FLASK_ENV", "").lower()
 if not db_url:
+    if flask_env == "production":
+        log.error("DATABASE_URL not set in production environment")
+        raise RuntimeError("DATABASE_URL must be set when FLASK_ENV=production")
     log.warning("DATABASE_URL not set, using default SQLite database")
 
 # Crear aplicación.
