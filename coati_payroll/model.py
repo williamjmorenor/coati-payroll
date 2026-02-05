@@ -18,11 +18,13 @@ from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import TypeDecorator, JSON
 from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.orm import validates
 from ulid import ULID
 
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
+
 from coati_payroll.enums import (
     AccrualFrequency,
     AccrualMethod,
@@ -33,6 +35,7 @@ from coati_payroll.enums import (
     NominaEstado,
     Periodicidad,
     TipoAcumulacionPrestacion,
+    TipoUsuario,
 )
 
 db = SQLAlchemy()
@@ -141,9 +144,23 @@ class Usuario(database.Model, BaseTabla, UserMixin):
     nombre = database.Column(database.String(100))
     apellido = database.Column(database.String(100))
     correo_electronico = database.Column(database.String(150))
-    tipo = database.Column(database.String(20))
+    tipo = database.Column(database.String(20), nullable=False, default=TipoUsuario.HHRR.value)
     activo = database.Column(database.Boolean(), default=True)
     ultimo_acceso = database.Column(database.DateTime, nullable=True)
+
+    @validates("tipo")
+    def validate_tipo(self, key, value):
+        """Normalize and validate user role values."""
+        if value is None:
+            raise ValueError("Invalid role: None")
+        if isinstance(value, TipoUsuario):
+            return value.value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            allowed_values = {role.value for role in TipoUsuario}
+            if normalized in allowed_values:
+                return normalized
+        raise ValueError(f"Invalid role: {value}")
 
 
 # Gestión de empresas/entidades
@@ -1864,7 +1881,9 @@ class CargaInicialPrestacion(database.Model, BaseTabla):
     saldo_convertido = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
 
     # Status: draft (draft) or applied (applied)
-    estado = database.Column(database.String(20), nullable=False, default=CargaInicialEstado.BORRADOR)  # draft | applied
+    estado = database.Column(
+        database.String(20), nullable=False, default=CargaInicialEstado.BORRADOR
+    )  # draft | applied
 
     # Application tracking
     fecha_aplicacion = database.Column(database.DateTime, nullable=True)

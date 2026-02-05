@@ -7,7 +7,7 @@ access control throughout the application.
 
 User Types:
     - admin: Full access to all functionalities
-    - hhrr: HR personnel with access to employee and payroll management
+    - hr: HR personnel with access to employee and payroll management
     - audit: Read-only access for auditing purposes
 """
 
@@ -17,6 +17,7 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from functools import wraps
+from typing import TypeAlias
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
@@ -30,16 +31,18 @@ from flask_login import current_user
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
 
+Role: TypeAlias = TipoUsuario | str
+
 # ----------------------[ GLOBAL VARIABLES DEFINITION ]---------------------- #
 MESSAGE_LOGIN_REQUIRED = "Favor iniciar sesión para acceder al sistema."
 ROUTE_AUTH_LOGIN = "auth.login"
 
 
-def require_role(*allowed_roles: str):
+def require_role(*allowed_roles: Role):
     """Decorator to restrict access to specific user roles.
 
     Args:
-        *allowed_roles: Variable number of allowed role strings (admin, hhrr, audit)
+        *allowed_roles: Variable number of allowed role strings (admin, hr, audit)
 
     Returns:
         Decorated function that checks user role before execution
@@ -53,6 +56,7 @@ def require_role(*allowed_roles: str):
         def admin_or_hr_view():
             pass
     """
+    normalized_roles = tuple(normalize_role(role) for role in allowed_roles)
 
     def decorator(f):
 
@@ -63,7 +67,7 @@ def require_role(*allowed_roles: str):
                 return redirect(url_for(ROUTE_AUTH_LOGIN))
 
             # Check if user has required role
-            if current_user.tipo not in allowed_roles:
+            if current_user.tipo not in normalized_roles:
                 flash(_("No tiene permisos para acceder a esta funcionalidad."), "danger")
                 abort(403)
 
@@ -72,6 +76,18 @@ def require_role(*allowed_roles: str):
         return decorated_function
 
     return decorator
+
+
+def normalize_role(role: Role) -> str:
+    """Normalize and validate role values to canonical strings."""
+    if isinstance(role, TipoUsuario):
+        return role.value
+    if isinstance(role, str):
+        normalized = role.strip().lower()
+        allowed_values = {allowed_role.value for allowed_role in TipoUsuario}
+        if normalized in allowed_values:
+            return normalized
+    raise ValueError(f"Invalid role: {role}")
 
 
 def require_read_access():
@@ -123,24 +139,7 @@ def require_write_access():
             pass
     """
 
-    def decorator(f):
-
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated:
-                flash(_(MESSAGE_LOGIN_REQUIRED), "warning")
-                return redirect(url_for(ROUTE_AUTH_LOGIN))
-
-            # Only admin and hhrr can write
-            if current_user.tipo not in [TipoUsuario.ADMIN, TipoUsuario.HHRR]:
-                flash(_("No tiene permisos para modificar datos. Su rol es de solo lectura."), "danger")
-                abort(403)
-
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
+    return require_role(TipoUsuario.ADMIN, TipoUsuario.HHRR)
 
 
 def is_admin() -> bool:
@@ -149,7 +148,7 @@ def is_admin() -> bool:
     Returns:
         True if current user has admin role, False otherwise
     """
-    return current_user.is_authenticated and current_user.tipo == TipoUsuario.ADMIN
+    return current_user.is_authenticated and current_user.tipo == TipoUsuario.ADMIN.value
 
 
 def is_hhrr() -> bool:
@@ -158,7 +157,7 @@ def is_hhrr() -> bool:
     Returns:
         True if current user has hhrr role, False otherwise
     """
-    return current_user.is_authenticated and current_user.tipo == TipoUsuario.HHRR
+    return current_user.is_authenticated and current_user.tipo == TipoUsuario.HHRR.value
 
 
 def is_audit() -> bool:
@@ -167,7 +166,7 @@ def is_audit() -> bool:
     Returns:
         True if current user has audit role, False otherwise
     """
-    return current_user.is_authenticated and current_user.tipo == TipoUsuario.AUDIT
+    return current_user.is_authenticated and current_user.tipo == TipoUsuario.AUDIT.value
 
 
 def can_write() -> bool:
@@ -176,4 +175,4 @@ def can_write() -> bool:
     Returns:
         True if current user is admin or hhrr, False otherwise
     """
-    return current_user.is_authenticated and current_user.tipo in [TipoUsuario.ADMIN, TipoUsuario.HHRR]
+    return current_user.is_authenticated and current_user.tipo in [TipoUsuario.ADMIN.value, TipoUsuario.HHRR.value]

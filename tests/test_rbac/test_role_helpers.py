@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 """Tests for RBAC helper functions."""
 
+import pytest
+
 from coati_payroll.enums import TipoUsuario
 from tests.factories.user_factory import create_user
 from tests.helpers.auth import login_user
@@ -233,3 +235,84 @@ def test_require_read_access_allows_all_authenticated(app, client, db_session):
 
     response = client.get("/read_only")
     assert response.status_code in [200, 302]
+
+
+def test_require_role_accepts_enum(app, client, db_session):
+    """require_role should accept TipoUsuario enum values."""
+    from coati_payroll.rbac import require_role
+    from flask import Blueprint
+
+    with app.app_context():
+        create_user(db_session, "admin_enum", "pass", tipo=TipoUsuario.ADMIN)
+
+    test_bp = Blueprint("test_rbac_enum", __name__)
+
+    @test_bp.route("/admin_only_enum")
+    @require_role(TipoUsuario.ADMIN)
+    def admin_only_enum():
+        return "Admin access granted"
+
+    app.register_blueprint(test_bp)
+
+    login_user(client, "admin_enum", "pass")
+
+    response = client.get("/admin_only_enum")
+    assert response.status_code in [200, 302]
+
+
+def test_require_role_accepts_string(app, client, db_session):
+    """require_role should accept canonical strings with normalization."""
+    from coati_payroll.rbac import require_role
+    from flask import Blueprint
+
+    with app.app_context():
+        create_user(db_session, "admin_string", "pass", tipo=TipoUsuario.ADMIN)
+
+    test_bp = Blueprint("test_rbac_string", __name__)
+
+    @test_bp.route("/admin_only_string")
+    @require_role("ADMIN")
+    def admin_only_string():
+        return "Admin access granted"
+
+    app.register_blueprint(test_bp)
+
+    login_user(client, "admin_string", "pass")
+
+    response = client.get("/admin_only_string")
+    assert response.status_code in [200, 302]
+
+
+def test_require_role_rejects_invalid_string():
+    """require_role should fail fast on invalid roles."""
+    from coati_payroll.rbac import require_role
+
+    with pytest.raises(ValueError, match="Invalid role"):
+        require_role("operador")
+
+
+def test_require_write_access_uses_admin_hr_only(app, client, db_session):
+    """require_write_access should allow admin/hr and block audit."""
+    from coati_payroll.rbac import require_write_access
+    from flask import Blueprint
+
+    with app.app_context():
+        create_user(db_session, "hhrr_write", "pass", tipo=TipoUsuario.HHRR)
+        create_user(db_session, "audit_write", "pass", tipo=TipoUsuario.AUDIT)
+
+    test_bp = Blueprint("test_rbac_write_access", __name__)
+
+    @test_bp.route("/write_access")
+    @require_write_access()
+    def write_access():
+        return "Write access granted"
+
+    app.register_blueprint(test_bp)
+
+    login_user(client, "hhrr_write", "pass")
+    response = client.get("/write_access")
+    assert response.status_code in [200, 302]
+
+    login_user(client, "audit_write", "pass")
+    response = client.get("/write_access")
+    assert response.status_code in [302, 403]
