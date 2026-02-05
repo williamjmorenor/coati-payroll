@@ -7,6 +7,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
+from coati_payroll.enums import TipoAcumulacionPrestacion, TipoDetalle
 from coati_payroll.model import db, Nomina, NominaEmpleado, NominaDetalle, Prestacion, PrestacionAcumulada
 from ..domain.employee_calculation import EmpleadoCalculo
 
@@ -41,7 +42,7 @@ class AccountingProcessor:
             orden += 1
             detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="income",
+                tipo=TipoDetalle.INGRESO,
                 codigo=percepcion.codigo,
                 descripcion=percepcion.nombre,
                 monto=percepcion.monto,
@@ -55,7 +56,7 @@ class AccountingProcessor:
             orden += 1
             detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="deduction",
+                tipo=TipoDetalle.DEDUCCION,
                 codigo=deduccion.codigo,
                 descripcion=deduccion.nombre,
                 monto=deduccion.monto,
@@ -69,7 +70,7 @@ class AccountingProcessor:
             orden += 1
             detalle = NominaDetalle(
                 nomina_empleado_id=nomina_empleado.id,
-                tipo="benefit",
+                tipo=TipoDetalle.PRESTACION,
                 codigo=prestacion.codigo,
                 descripcion=prestacion.nombre,
                 monto=prestacion.monto,
@@ -126,7 +127,7 @@ class AccountingProcessor:
             saldo_anterior = ultima_transaccion.saldo_nuevo if ultima_transaccion else Decimal("0.00")
 
             # For monthly settlement benefits, reset balance if new month
-            if prestacion.tipo_acumulacion == "mensual":
+            if prestacion.tipo_acumulacion == TipoAcumulacionPrestacion.MENSUAL:
                 if ultima_transaccion and (
                     ultima_transaccion.anio != periodo_anio or ultima_transaccion.mes != periodo_mes
                 ):

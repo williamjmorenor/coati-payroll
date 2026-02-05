@@ -84,6 +84,14 @@ class NominaEstado(StrEnum):
     ERROR = "error"  # Error during calculation (valid permanent state, can be retried)
 
 
+class LiquidacionEstado(StrEnum):
+    """States of a termination settlement (Liquidacion)."""
+
+    BORRADOR = "draft"  # Draft - not yet applied
+    APLICADO = "applied"  # Applied/executed
+    PAGADO = "paid"  # Paid out
+
+
 class AdelantoEstado(StrEnum):
     """States of a loan or salary advance."""
 

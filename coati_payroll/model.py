@@ -23,7 +23,17 @@ from ulid import ULID
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
-from coati_payroll.enums import NominaEstado
+from coati_payroll.enums import (
+    AccrualFrequency,
+    AccrualMethod,
+    AdelantoEstado,
+    CargaInicialEstado,
+    EstadoAprobacion,
+    LiquidacionEstado,
+    NominaEstado,
+    Periodicidad,
+    TipoAcumulacionPrestacion,
+)
 
 db = SQLAlchemy()
 database = db
@@ -338,7 +348,7 @@ class TipoPlanilla(database.Model, BaseTabla):
     descripcion = database.Column(database.String(150), nullable=True)
     dias = database.Column(database.Integer, nullable=False, default=30)  # días usados para prorrateos
     periodicidad = database.Column(
-        database.String(20), nullable=False, default="monthly"
+        database.String(20), nullable=False, default=Periodicidad.MENSUAL
     )  # ej. mensual, quincenal, semanal
 
     # Fiscal period configuration
@@ -453,7 +463,9 @@ class Planilla(database.Model, BaseTabla):
     )
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
+    estado_aprobacion = database.Column(
+        database.String(20), nullable=False, default=EstadoAprobacion.BORRADOR, index=True
+    )
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -489,7 +501,6 @@ class Percepcion(database.Model, BaseTabla):
     codigo = database.Column(database.String(50), unique=True, nullable=False, index=True)
     nombre = database.Column(database.String(150), nullable=False)
     descripcion = database.Column(database.String(255), nullable=True)
-    unidad_calculo = database.Column(database.String(20), nullable=True)  # ej. 'hora', 'dia', 'mes', etc.
 
     # tipo de cálculo: 'fijo', 'porcentaje_salario', 'porcentaje_bruto', 'formula', 'horas', etc.
     formula_tipo = database.Column(database.String(50), nullable=False, default="fixed")
@@ -522,7 +533,9 @@ class Percepcion(database.Model, BaseTabla):
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
+    estado_aprobacion = database.Column(
+        database.String(20), nullable=False, default=EstadoAprobacion.BORRADOR, index=True
+    )
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -579,7 +592,9 @@ class Deduccion(database.Model, BaseTabla):
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
+    estado_aprobacion = database.Column(
+        database.String(20), nullable=False, default=EstadoAprobacion.BORRADOR, index=True
+    )
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -652,11 +667,13 @@ class Prestacion(database.Model, BaseTabla):
     # Accumulation configuration
     # Defines how this benefit accumulates: monthly settlement, annually, or lifetime
     tipo_acumulacion = database.Column(
-        database.String(20), nullable=False, default="monthly"
-    )  # mensual | anual | vida_laboral
+        database.String(20), nullable=False, default=TipoAcumulacionPrestacion.MENSUAL
+    )  # monthly | annual | lifetime
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
+    estado_aprobacion = database.Column(
+        database.String(20), nullable=False, default=EstadoAprobacion.BORRADOR, index=True
+    )
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -900,7 +917,7 @@ class NominaDetalle(database.Model, BaseTabla):
     __tablename__ = "nomina_detalle"
 
     nomina_empleado_id = database.Column(database.String(26), database.ForeignKey("nomina_empleado.id"), nullable=False)
-    tipo = database.Column(database.String(15), nullable=False)  # 'ingreso' | 'deduccion' | 'prestacion'
+    tipo = database.Column(database.String(15), nullable=False)  # income | deduction | benefit
     codigo = database.Column(database.String(50), nullable=False)
     descripcion = database.Column(database.String(255), nullable=True)
     monto = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -939,7 +956,9 @@ class Liquidacion(database.Model, BaseTabla):
     ultimo_dia_pagado = database.Column(database.Date, nullable=True)
     dias_por_pagar = database.Column(database.Integer, nullable=False, default=0)
 
-    estado = database.Column(database.String(30), nullable=False, default="draft")  # draft, applied, paid
+    estado = database.Column(
+        database.String(30), nullable=False, default=LiquidacionEstado.BORRADOR
+    )  # draft, applied, paid
 
     total_bruto = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     total_deducciones = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
@@ -959,7 +978,7 @@ class LiquidacionDetalle(database.Model, BaseTabla):
     liquidacion_id = database.Column(
         database.String(26), database.ForeignKey("liquidacion.id"), nullable=False, index=True
     )
-    tipo = database.Column(database.String(15), nullable=False)  # 'ingreso' | 'deduccion' | 'prestacion'
+    tipo = database.Column(database.String(15), nullable=False)  # income | deduction | benefit
     codigo = database.Column(database.String(50), nullable=False)
     descripcion = database.Column(database.String(255), nullable=True)
     monto = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
@@ -1307,7 +1326,7 @@ class Adelanto(database.Model, BaseTabla):
     descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
 
     # Estado: draft, pending, approved, applied (paid), rejected, cancelled
-    estado = database.Column(database.String(30), nullable=False, default="draft")
+    estado = database.Column(database.String(30), nullable=False, default=AdelantoEstado.BORRADOR)
     motivo = database.Column(database.String(500), nullable=True)
     aprobado_por = database.Column(database.String(150), nullable=True)
     rechazado_por = database.Column(database.String(150), nullable=True)
@@ -1506,7 +1525,9 @@ class ReglaCalculo(database.Model, BaseTabla):
     prestacion_id = database.Column(database.String(26), database.ForeignKey(FK_PRESTACION_ID), nullable=True)
 
     # Audit and governance fields
-    estado_aprobacion = database.Column(database.String(20), nullable=False, default="draft", index=True)
+    estado_aprobacion = database.Column(
+        database.String(20), nullable=False, default=EstadoAprobacion.BORRADOR, index=True
+    )
     aprobado_por = database.Column(database.String(150), nullable=True)
     aprobado_en = database.Column(database.DateTime, nullable=True)
     creado_por_plugin = database.Column(database.Boolean(), default=False, nullable=False)
@@ -1712,9 +1733,9 @@ class PrestacionAcumulada(database.Model, BaseTabla):
     - ajuste: Adjustment (can be positive or negative) - manual corrections
 
     The accumulation respects the tipo_acumulacion setting:
-    - mensual: Settled and reset monthly (e.g., INSS, INATEC)
-    - anual: Accumulated annually based on payroll configuration
-    - vida_laboral: Accumulated over the employee's entire tenure (e.g., severance)
+    - monthly: Settled and reset monthly (e.g., INSS, INATEC)
+    - annual: Accumulated annually based on payroll configuration
+    - lifetime: Accumulated over the employee's entire tenure (e.g., severance)
     """
 
     __tablename__ = "prestacion_acumulada"
@@ -1843,7 +1864,7 @@ class CargaInicialPrestacion(database.Model, BaseTabla):
     saldo_convertido = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
 
     # Status: draft (draft) or applied (applied)
-    estado = database.Column(database.String(20), nullable=False, default="draft")  # draft | applied
+    estado = database.Column(database.String(20), nullable=False, default=CargaInicialEstado.BORRADOR)  # draft | applied
 
     # Application tracking
     fecha_aplicacion = database.Column(database.DateTime, nullable=True)
@@ -1905,7 +1926,7 @@ class VacationPolicy(database.Model, BaseTabla):
     # ---- Accrual Configuration ----
     # How vacation is earned
     accrual_method = database.Column(
-        database.String(20), nullable=False, default="periodic"
+        database.String(20), nullable=False, default=AccrualMethod.PERIODIC
     )  # periodic | proportional | seniority
 
     # Amount earned per period (for periodic method)
@@ -1913,7 +1934,7 @@ class VacationPolicy(database.Model, BaseTabla):
 
     # How often accrual happens
     accrual_frequency = database.Column(
-        database.String(20), nullable=False, default="monthly"
+        database.String(20), nullable=False, default=AccrualFrequency.MONTHLY
     )  # monthly | biweekly | annual
 
     # Basis for proportional calculation

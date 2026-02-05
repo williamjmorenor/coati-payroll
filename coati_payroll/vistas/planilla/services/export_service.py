@@ -3,6 +3,8 @@
 """Service for Excel export operations."""
 
 from io import BytesIO
+
+from coati_payroll.enums import TipoDetalle
 from coati_payroll.model import (
     db,
     Planilla,
@@ -207,7 +209,9 @@ class ExportService:
         prestaciones_set = set()
         for ne in nomina_empleados:
             detalles = (
-                db.session.execute(db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id, tipo="prestacion"))
+                db.session.execute(
+                    db.select(NominaDetalle).filter_by(nomina_empleado_id=ne.id, tipo=TipoDetalle.PRESTACION)
+                )
                 .scalars()
                 .all()
             )
@@ -239,7 +243,7 @@ class ExportService:
             detalles = (
                 db.session.execute(
                     db.select(NominaDetalle)
-                    .filter_by(nomina_empleado_id=ne.id, tipo="prestacion")
+                    .filter_by(nomina_empleado_id=ne.id, tipo=TipoDetalle.PRESTACION)
                     .order_by(NominaDetalle.orden)
                 )
                 .scalars()

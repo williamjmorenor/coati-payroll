@@ -77,9 +77,9 @@ class UserForm(FlaskForm):
     tipo = SelectField(
         _("Tipo de usuario"),
         choices=[
-            (TipoUsuario.ADMIN, _("Administrador")),
-            (TipoUsuario.HHRR, _("Recursos Humanos")),
-            (TipoUsuario.AUDIT, _("Auditoría")),
+            (TipoUsuario.ADMIN.value, _("Administrador")),
+            (TipoUsuario.HHRR.value, _("Recursos Humanos")),
+            (TipoUsuario.AUDIT.value, _("Auditoría")),
         ],
         validators=[DataRequired()],
     )
