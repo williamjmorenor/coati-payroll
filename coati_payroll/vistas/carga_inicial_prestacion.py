@@ -7,7 +7,7 @@ from __future__ import annotations
 from decimal import Decimal
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for, Response
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for, Response
 from flask_login import current_user
 from sqlalchemy import and_
 
@@ -123,7 +123,9 @@ def nueva():
 @require_write_access()
 def editar(carga_id):
     """Edit an initial benefit balance load (only if in draft status)."""
-    carga = CargaInicialPrestacion.query.get_or_404(carga_id)
+    carga = db.session.get(CargaInicialPrestacion, carga_id)
+    if carga is None:
+        abort(404)
 
     if carga.estado == "applied":
         flash(_("No se puede editar una carga inicial ya aplicada."), "warning")
@@ -173,7 +175,9 @@ def editar(carga_id):
 @require_write_access()
 def aplicar(carga_id):
     """Apply an initial balance load - creates transaction in prestacion_acumulada."""
-    carga = CargaInicialPrestacion.query.get_or_404(carga_id)
+    carga = db.session.get(CargaInicialPrestacion, carga_id)
+    if carga is None:
+        abort(404)
 
     if carga.estado == CargaInicialEstado.APLICADO:
         flash(_("Esta carga inicial ya ha sido aplicada."), "warning")
@@ -221,7 +225,9 @@ def aplicar(carga_id):
 @require_write_access()
 def eliminar(carga_id):
     """Delete an initial balance load (only if in draft status)."""
-    carga = CargaInicialPrestacion.query.get_or_404(carga_id)
+    carga = db.session.get(CargaInicialPrestacion, carga_id)
+    if carga is None:
+        abort(404)
 
     if carga.estado == CargaInicialEstado.APLICADO:
         flash(_("No se puede eliminar una carga inicial ya aplicada."), "warning")
