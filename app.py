@@ -27,10 +27,15 @@ default_db_uri = f"sqlite:///{default_db_path}"
 
 db_url = environ.get("DATABASE_URL", None)
 flask_env = environ.get("FLASK_ENV", "").lower()
-if not db_url:
-    if flask_env == "production":
+
+if flask_env == "production":
+    secret_key = environ.get("SECRET_KEY", None)
+    if not db_url:
         log.error("DATABASE_URL not set in production environment")
         raise RuntimeError("DATABASE_URL must be set when FLASK_ENV=production")
+    if not secret_key:
+        log.error("SECRET_KEY not set in production environment")
+        raise RuntimeError("SECRET_KEY must be set when FLASK_ENV=production")
     log.warning("DATABASE_URL not set, using default SQLite database")
 
 # Crear aplicación.
