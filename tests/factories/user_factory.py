@@ -7,7 +7,7 @@ from coati_payroll.model import Usuario
 
 
 def create_user(
-    db_session, usuario, password, nombre="Test", apellido="User", correo_electronico=None, tipo="user", activo=True
+    db_session, usuario, password, nombre="Test", apellido="User", correo_electronico=None, tipo="admin", activo=True
 ):
     """
     Create a user in the database.
@@ -22,7 +22,7 @@ def create_user(
         nombre: First name (default: "Test")
         apellido: Last name (default: "User")
         correo_electronico: Email address (optional)
-        tipo: User type (default: "user")
+        tipo: User type (default: "admin")
         activo: Active status (default: True)
 
     Returns:
