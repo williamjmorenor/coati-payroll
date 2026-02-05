@@ -89,11 +89,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form action="{{ url_for('empresa.toggle_active', empresa_id=empresa.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ _('Activar/Desactivar') }}">
                                         <i class="bi bi-toggle-on"></i>
                                     </button>
                                 </form>
                                 <form action="{{ url_for('empresa.delete', empresa_id=empresa.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar esta empresa?') }}');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Eliminar') }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
