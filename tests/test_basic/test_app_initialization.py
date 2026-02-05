@@ -104,7 +104,7 @@ def test_session_isolation(app, db_session):
         user.acceso = proteger_passwd("password")
         user.nombre = "Test"
         user.apellido = "Isolation"
-        user.tipo = "user"
+        user.tipo = "admin"
         user.activo = True
 
         db_session.add(user)

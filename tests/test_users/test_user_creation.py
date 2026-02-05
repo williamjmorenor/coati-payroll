@@ -30,7 +30,7 @@ def test_create_user_with_factory(app, db_session):
             nombre="John",
             apellido="Doe",
             correo_electronico="john@example.com",
-            tipo="user",
+            tipo="admin",
         )
 
         # Verify user was created
@@ -39,7 +39,7 @@ def test_create_user_with_factory(app, db_session):
         assert user.nombre == "John"
         assert user.apellido == "Doe"
         assert user.correo_electronico == "john@example.com"
-        assert user.tipo == "user"
+        assert user.tipo == "admin"
         assert user.activo is True
 
 
@@ -160,7 +160,7 @@ def test_user_with_minimal_data(app, db_session):
         assert user.usuario == "minimaluser"
         assert user.nombre == "Test"  # Default
         assert user.apellido == "User"  # Default
-        assert user.tipo == "user"  # Default
+        assert user.tipo == "admin"  # Default
         assert user.activo is True  # Default
 
 
