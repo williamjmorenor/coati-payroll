@@ -99,7 +99,8 @@ class ConfiguracionCalculosForm(FlaskForm):
         validators=[DataRequired()],
         description=_(
             "Define qué factor se usará como base de días para prorrateos en liquidaciones. "
-            "Calendario usa el factor calendario; Laboral usa el factor laboral."
+            "Calendario: usa el Factor Días Calendario (salario_mensual / factor_calendario). "
+            "Laboral: usa el Factor Días Laborales (salario_mensual / factor_laboral)."
         ),
     )
 
@@ -443,6 +444,15 @@ class PercepcionForm(FlaskForm):
             ("days", _("Por Días")),
         ],
         validators=[DataRequired()],
+        description=_(
+            "Cómo se calcula el monto. "
+            "Monto Fijo: usa Monto Predeterminado. "
+            "Porcentaje del Salario Base: salario_base × porcentaje. "
+            "Porcentaje del Salario Bruto: salario_bruto × porcentaje. "
+            "Fórmula Personalizada: usa el esquema de fórmula. "
+            "Por Horas/Por Días: toma la novedad del concepto y calcula la tasa según la Base de Cálculo; "
+            "el porcentaje actúa como factor sobre la tasa."
+        ),
     )
     monto_default = DecimalField(
         _("Monto Predeterminado"),
@@ -464,6 +474,11 @@ class PercepcionForm(FlaskForm):
             ("salario_neto", _("Salario Neto")),
         ],
         validators=[Optional()],
+        description=_(
+            "Solo aplica cuando el Tipo de Cálculo es Por Horas o Por Días. "
+            "Salario Bruto: la tasa se calcula con salario_bruto. "
+            "Cualquier otra opción usa salario_mensual como base."
+        ),
     )
     unidad_calculo = SelectField(
         _("Unidad de Cálculo"),
@@ -474,6 +489,7 @@ class PercepcionForm(FlaskForm):
             ("mes", _("Por Mes")),
         ],
         validators=[Optional()],
+        description=_("Unidad informativa para reportes/UI; no cambia el cálculo."),
     )
     gravable = BooleanField(
         _("Gravable"),
@@ -557,6 +573,7 @@ class DeduccionForm(FlaskForm):
             ("other", _("Otro")),
         ],
         validators=[DataRequired()],
+        description=_("Clasificación del egreso para reportes y validaciones; no altera el cálculo automático."),
     )
     es_impuesto = BooleanField(
         _("Es Impuesto"),
@@ -574,6 +591,15 @@ class DeduccionForm(FlaskForm):
             ("tabla", _("Tabla de Impuestos")),
         ],
         validators=[DataRequired()],
+        description=_(
+            "Cómo se calcula el monto. "
+            "Monto Fijo: usa Monto Predeterminado. "
+            "Porcentaje del Salario Base: salario_base × porcentaje. "
+            "Porcentaje del Salario Bruto: salario_bruto × porcentaje. "
+            "Fórmula Personalizada: usa el esquema de fórmula. "
+            "Porcentaje del Salario Gravable y Tabla de Impuestos requieren una fórmula/regla que lo implemente; "
+            "si no hay esquema configurado, no hay cálculo automático."
+        ),
     )
     monto_default = DecimalField(
         _("Monto Predeterminado"),
@@ -595,6 +621,10 @@ class DeduccionForm(FlaskForm):
             ("salario_neto", _("Salario Neto")),
         ],
         validators=[Optional()],
+        description=_(
+            "Se conserva como referencia para fórmulas. "
+            "El motor base solo usa esta base en cálculos por horas/días (no disponibles en deducciones)."
+        ),
     )
     unidad_calculo = SelectField(
         _("Unidad de Cálculo"),
@@ -605,6 +635,7 @@ class DeduccionForm(FlaskForm):
             ("mes", _("Por Mes")),
         ],
         validators=[Optional()],
+        description=_("Unidad informativa para reportes/UI; no cambia el cálculo."),
     )
     antes_impuesto = BooleanField(
         _("Antes de Impuesto"),
@@ -772,7 +803,14 @@ class TipoPlanillaForm(FlaskForm):
             ("weekly", _("Semanal")),
         ],
         validators=[DataRequired()],
-        description=_("Frecuencia de pago de la planilla"),
+        description=_(
+            "Frecuencia de pago y lógica de prorrateo. "
+            "Mensual: si el período cubre el mes completo, paga salario completo; "
+            "si no, prorratea por días. "
+            "Quincenal: si el período tiene los días configurados, paga salario/quincena; "
+            "si no, prorratea por días. "
+            "Semanal: siempre prorratea por días."
+        ),
     )
     dias = IntegerField(
         _("Días"),
@@ -799,7 +837,10 @@ class TipoPlanillaForm(FlaskForm):
         validators=[DataRequired()],
         coerce=int,
         default=1,
-        description=_("Mes en que inicia el año fiscal"),
+        description=_(
+            "Mes en que inicia el año fiscal. Define el inicio del período fiscal para acumulados "
+            "y el cálculo de meses restantes del año."
+        ),
     )
     dia_inicio_fiscal = IntegerField(
         _("Día Inicio Fiscal"),
@@ -866,6 +907,15 @@ class PrestacionForm(FlaskForm):
             ("provision", _("Provisión Mensual")),
         ],
         validators=[DataRequired()],
+        description=_(
+            "Cómo se calcula el monto. "
+            "Monto Fijo: usa Monto Predeterminado. "
+            "Porcentaje del Salario Base: salario_base × porcentaje. "
+            "Porcentaje del Salario Bruto: salario_bruto × porcentaje. "
+            "Fórmula Personalizada: usa el esquema de fórmula. "
+            "Provisión Mensual requiere una fórmula/regla que lo implemente; "
+            "si no hay esquema configurado, no hay cálculo automático."
+        ),
     )
     monto_default = DecimalField(
         _("Monto Predeterminado"),
@@ -886,6 +936,10 @@ class PrestacionForm(FlaskForm):
             ("salario_gravable", _("Salario Gravable")),
         ],
         validators=[Optional()],
+        description=_(
+            "Se conserva como referencia para fórmulas. "
+            "El motor base solo usa esta base en cálculos por horas/días (no disponibles en prestaciones)."
+        ),
     )
     unidad_calculo = SelectField(
         _("Unidad de Cálculo"),
@@ -896,6 +950,7 @@ class PrestacionForm(FlaskForm):
             ("mes", _("Por Mes")),
         ],
         validators=[Optional()],
+        description=_("Unidad informativa para reportes/UI; no cambia el cálculo."),
     )
     tope_aplicacion = DecimalField(
         _("Tope de Aplicación"),
@@ -953,7 +1008,12 @@ class PrestacionForm(FlaskForm):
         ],
         validators=[DataRequired()],
         default="monthly",
-        description=_("Define cómo se acumula esta prestación"),
+        description=_(
+            "Define cómo se acumula la prestación. "
+            "Mensual: el saldo se reinicia al iniciar un nuevo mes. "
+            "Anual: acumula durante el año fiscal. "
+            "Vida Laboral: acumula sin reinicio mientras dure la relación laboral."
+        ),
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
@@ -983,7 +1043,11 @@ class NominaNovedadForm(FlaskForm):
             ("deduction", _("Deducción (Egreso)")),
         ],
         validators=[DataRequired()],
-        description=_("Tipo de concepto al que se asocia la novedad"),
+        description=_(
+            "Define a qué catálogo se asociará la novedad. "
+            "Percepción: requiere seleccionar una percepción y suma al salario. "
+            "Deducción: requiere seleccionar una deducción y resta al salario."
+        ),
     )
     percepcion_id = SelectField(
         _("Percepción"),
@@ -1012,7 +1076,14 @@ class NominaNovedadForm(FlaskForm):
             ("porcentaje", _("Porcentaje")),
         ],
         validators=[DataRequired()],
-        description=_("Tipo de valor de la novedad"),
+        description=_(
+            "Cómo interpretar el valor registrado. "
+            "Monto Fijo: se interpreta como dinero. "
+            "Horas/Días: se interpreta como unidades para conceptos por horas/días. "
+            "Cantidad: unidades genéricas. "
+            "Porcentaje: porcentaje aplicado por la fórmula del concepto. "
+            "Nota: el motor suma valor_cantidad por código; debe alinearse con el Tipo de Cálculo del concepto."
+        ),
     )
     valor_cantidad = DecimalField(
         _("Valor / Cantidad"),
@@ -1102,7 +1173,12 @@ class PrestamoForm(FlaskForm):
         ],
         validators=[Optional()],
         default="none",
-        description=_("Tipo de cálculo de interés"),
+        description=_(
+            "Tipo de cálculo de interés. "
+            "Sin Interés: no se calcula interés. "
+            "Interés Simple: interés proporcional a días sobre el saldo. "
+            "Interés Compuesto: capitaliza intereses sobre el saldo."
+        ),
     )
     metodo_amortizacion = SelectField(
         _("Método de Amortización"),
@@ -1112,7 +1188,11 @@ class PrestamoForm(FlaskForm):
         ],
         validators=[Optional()],
         default="french",
-        description=_("Método para calcular las cuotas (solo aplica si hay interés)"),
+        description=_(
+            "Método para calcular las cuotas (solo aplica si hay interés). "
+            "Francés: cuota total constante; cambia la proporción capital/interés. "
+            "Alemán: amortización de capital constante; cuota total disminuye."
+        ),
     )
     cuenta_debe = StringField(
         _("Cuenta Contable Débito"),
@@ -1469,7 +1549,12 @@ class VacationPolicyForm(FlaskForm):
             ("seniority", _("Por Antigüedad")),
         ],
         validators=[DataRequired()],
-        description=_("Cómo se acumulan las vacaciones"),
+        description=_(
+            "Cómo se acumulan las vacaciones. "
+            "Periódico: acumula una tasa fija por período. "
+            "Proporcional: acumula según días/horas trabajadas. "
+            "Por Antigüedad: acumula según tramos de años de servicio."
+        ),
     )
     accrual_rate = DecimalField(
         _("Tasa de Acumulación"),
@@ -1485,7 +1570,11 @@ class VacationPolicyForm(FlaskForm):
             ("annual", _("Anual")),
         ],
         validators=[DataRequired()],
-        description=_("Con qué frecuencia se acumula"),
+        description=_(
+            "Con qué frecuencia se acumula. "
+            "Mensual/Quincenal/Anual: define el período esperado para prorrateo "
+            "cuando el período real no coincide."
+        ),
     )
     accrual_basis = SelectField(
         _("Base de Acumulación"),
@@ -1495,7 +1584,11 @@ class VacationPolicyForm(FlaskForm):
             ("hours_worked", _("Horas Trabajadas")),
         ],
         validators=[Optional()],
-        description=_("Base para cálculo proporcional (opcional)"),
+        description=_(
+            "Base para cálculo proporcional (solo cuando el método es Proporcional). "
+            "Días Trabajados: usa días del período. "
+            "Horas Trabajadas: usa horas estándar por día × días del período."
+        ),
     )
     min_service_days = IntegerField(
         _("Días Mínimos de Servicio"),
@@ -1531,7 +1624,10 @@ class VacationPolicyForm(FlaskForm):
             ("custom_date", _("Fecha Personalizada")),
         ],
         validators=[DataRequired()],
-        description=_("Cuándo vencen las vacaciones no usadas"),
+        description=_(
+            "Cuándo vencen las vacaciones no usadas. "
+            "Se guarda como política; no aplica vencimientos automáticos si no hay proceso configurado."
+        ),
     )
     expiration_months = IntegerField(
         _("Meses para Vencimiento"),
@@ -1559,7 +1655,7 @@ class VacationPolicyForm(FlaskForm):
             ("hours", _("Horas")),
         ],
         validators=[DataRequired()],
-        description=_("Unidad para medir vacaciones"),
+        description=_("Unidad para medir saldos y solicitudes; se muestra en reportes y formularios."),
     )
     count_weekends = BooleanField(
         _("Contar Fines de Semana"),
@@ -1584,7 +1680,10 @@ class VacationPolicyForm(FlaskForm):
             ("down", _("Hacia Abajo")),
         ],
         validators=[Optional()],
-        description=_("Cómo redondear unidades parciales"),
+        description=_(
+            "Cómo redondear unidades parciales. "
+            "Se guarda como política; requiere un proceso que aplique el redondeo."
+        ),
     )
     accrue_during_leave = BooleanField(
         _("Acumular Durante Vacaciones"),
@@ -1698,7 +1797,11 @@ class VacationTakenForm(FlaskForm):
             ("income", _("Percepción (Pago de Vacaciones)")),
         ],
         validators=[DataRequired()],
-        description=_("Tipo de concepto al que se asocia la novedad"),
+        description=_(
+            "Define si las vacaciones generan un descuento o un pago. "
+            "Deducción: requiere seleccionar una deducción. "
+            "Percepción: requiere seleccionar una percepción."
+        ),
     )
     percepcion_id = SelectField(
         _("Percepción"),
