@@ -15,7 +15,7 @@ from datetime import datetime, UTC
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, render_template, redirect, url_for, flash
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, login_required
 
 # <-------------------------------------------------------------------------> #
 # Local modules
@@ -23,11 +23,13 @@ from flask_login import login_user, logout_user
 from coati_payroll.model import Usuario, database
 from coati_payroll.forms import LoginForm
 from coati_payroll.i18n import _
+from coati_payroll.rate_limiting import limiter
 
 auth = Blueprint("auth", __name__)
 
 
 @auth.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def login():
     """Mostrar y procesar el formulario de inicio de sesión.
 
@@ -62,7 +64,8 @@ def login():
     return render_template("auth/login.html", form=form)
 
 
-@auth.route("/logout")
+@auth.route("/logout", methods=["POST"])
+@login_required
 def logout():
     """Cerrar sesión del usuario."""
     logout_user()

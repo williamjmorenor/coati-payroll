@@ -30,12 +30,17 @@ flask_env = environ.get("FLASK_ENV", "").lower()
 
 if flask_env == "production":
     secret_key = environ.get("SECRET_KEY", None)
+    admin_user = environ.get("ADMIN_USER", None)
+    admin_password = environ.get("ADMIN_PASSWORD", None)
     if not db_url:
         log.error("DATABASE_URL not set in production environment")
         raise RuntimeError("DATABASE_URL must be set when FLASK_ENV=production")
     if not secret_key:
         log.error("SECRET_KEY not set in production environment")
         raise RuntimeError("SECRET_KEY must be set when FLASK_ENV=production")
+    if not admin_user or not admin_password:
+        log.error("ADMIN_USER/ADMIN_PASSWORD not set in production environment")
+        raise RuntimeError("ADMIN_USER and ADMIN_PASSWORD must be set when FLASK_ENV=production")
     log.warning("DATABASE_URL not set, using default SQLite database")
 
 # Crear aplicación.

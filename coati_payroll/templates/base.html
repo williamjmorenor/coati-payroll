@@ -88,10 +88,24 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
-                            <i class="bi bi-box-arrow-right"></i>
-                            {{ _('Cerrar Sesión') }}
-                        </a>
+                        <form
+                            method="POST"
+                            action="{{ url_for('auth.logout') }}"
+                            class="d-inline"
+                        >
+                            <input
+                                type="hidden"
+                                name="csrf_token"
+                                value="{{ csrf_token() }}"
+                            />
+                            <button
+                                type="submit"
+                                class="nav-link btn btn-link p-0"
+                            >
+                                <i class="bi bi-box-arrow-right"></i>
+                                {{ _('Cerrar Sesión') }}
+                            </button>
+                        </form>
                     </li>
                 </ul>
             </div>
@@ -255,13 +269,23 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a
-                                class="nav-link d-flex align-items-center"
-                                href="{{ url_for('auth.logout') }}"
+                            <form
+                                method="POST"
+                                action="{{ url_for('auth.logout') }}"
                             >
-                                <i class="bi bi-box-arrow-right me-2"></i>
-                                <span>{{ _('Cerrar Sesión') }}</span>
-                            </a>
+                                <input
+                                    type="hidden"
+                                    name="csrf_token"
+                                    value="{{ csrf_token() }}"
+                                />
+                                <button
+                                    type="submit"
+                                    class="nav-link d-flex align-items-center btn btn-link w-100 text-start"
+                                >
+                                    <i class="bi bi-box-arrow-right me-2"></i>
+                                    <span>{{ _('Cerrar Sesión') }}</span>
+                                </button>
+                            </form>
                         </li>
                     </ul>
                 </div>

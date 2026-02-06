@@ -7,7 +7,7 @@ from coati_payroll.auth import validar_acceso
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.model import Usuario
 from tests.factories.user_factory import create_user
-from tests.helpers.auth import login_user
+from tests.helpers.auth import login_user, logout_user
 
 
 def test_user_index_requires_admin(app, client, db_session):
@@ -680,7 +680,7 @@ def test_user_workflow_admin_creates_user_user_updates_profile(app, client, admi
         )
 
         # Logout
-        client.get("/auth/logout")
+        logout_user(client)
 
         # User logs in and updates profile
         login_user(client, "workflowuser", "initialpass")

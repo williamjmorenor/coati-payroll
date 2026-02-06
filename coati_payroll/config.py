@@ -129,6 +129,8 @@ else:
 CONFIGURACION: dict[str, str | bool | Path] = {}
 CONFIGURACION["SECRET_KEY"] = environ.get("SECRET_KEY") or "dev"  # nosec
 CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = environ.get("DATABASE_URL") or SQLITE  # nosec
+# Upload size limit (bytes). Default ~2 MB, roughly ~1000 Excel rows for typical uploads.
+CONFIGURACION["MAX_CONTENT_LENGTH"] = int(environ.get("MAX_CONTENT_LENGTH", str(2 * 1024 * 1024)))
 # Opciones comunes de configuración.
 CONFIGURACION["PRESERVE_CONTEXT_ON_EXCEPTION"] = False
 

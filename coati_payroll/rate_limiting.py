@@ -44,6 +44,20 @@ def get_rate_limiter_storage():
         return "memory://"
 
 
+# Default configuration for rate limiting
+DEFAULT_RATE_LIMITS = ["200 per day", "50 per hour"]
+DEFAULT_STORAGE_OPTIONS = {"socket_connect_timeout": 30}
+DEFAULT_STRATEGY = "fixed-window"
+
+# Global limiter instance (initialized via init_app in configure_rate_limiting)
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=DEFAULT_RATE_LIMITS,
+    storage_options=DEFAULT_STORAGE_OPTIONS,
+    strategy=DEFAULT_STRATEGY,
+)
+
+
 def configure_rate_limiting(app):
     """Configure rate limiting for the Flask application.
 
@@ -59,7 +73,8 @@ def configure_rate_limiting(app):
     """
     from coati_payroll.log import log
 
-    storage_uri = get_rate_limiter_storage()
+    storage_uri = app.config.get("RATELIMIT_STORAGE_URI") or get_rate_limiter_storage()
+    app.config["RATELIMIT_STORAGE_URI"] = storage_uri
 
     # Log which storage backend we're using
     if storage_uri.startswith("redis"):
@@ -67,14 +82,7 @@ def configure_rate_limiting(app):
     else:
         log.info("Rate limiting configured with memory storage (development mode)")
 
-    limiter = Limiter(
-        app=app,
-        key_func=get_remote_address,
-        storage_uri=storage_uri,
-        default_limits=["200 per day", "50 per hour"],  # Global limits
-        storage_options={"socket_connect_timeout": 30},
-        strategy="fixed-window",  # Count resets at fixed intervals
-    )
+    limiter.init_app(app)
 
     # Note: Specific endpoint rate limits can be applied using decorators in the blueprints.
     # For the login endpoint, we apply a stricter limit (5 per minute) to prevent brute force.
