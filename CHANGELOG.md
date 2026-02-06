@@ -5,19 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## unreleased
+## [1.0.1] - 2026-02-06
 
-### Changed:
+### Security
 
- - Removed implicit database initialization during application startup and WSGI bootstrap
- - Schema management is now explicit via CLI commands.
- - Enforced mandatory SECRET_KEY configuration in production to prevent insecure deployments.
- - Normalized environment variable parsing for development and auto-migration flags.
- - Improved logging to avoid duplicated handlers and noisy reload output.
- - Reduced sensitive authentication logging and switched last-login timestamps to UTC.
- - Pinned Python dependencies for reproducible builds and removed unnecessary runtime packages from Docker images.
- - Simplified CI linting rules and injected test-only secrets for stable pipelines.
- - Minor typing fixes and code cleanup across views and i18n helpers.
+- Hardened production startup checks and configuration validation to prevent insecure deployments.
+- Enforced rate limiting and upload size safeguards in production while keeping tests isolated.
+
+### Changed
+
+- Upgraded the data layer and normalized enum persistence for more consistent behavior.
+- Improved RBAC, auditing, and workflow handling across payroll, loans, and vacation flows.
+- Refined CLI, logging, and bootstrap routines to reduce noise and require explicit schema management.
+
+### Fixed
+
+- Resolved edge cases in payroll calculations, loan handling, and vacation workflows.
+- Corrected database initialization and connection handling in Docker/runtime environments.
+
+### Documentation
+
+- Expanded operational guides and documented calculation options and edge cases.
 
 ## [1.0.0] - 2026-02-02
 
