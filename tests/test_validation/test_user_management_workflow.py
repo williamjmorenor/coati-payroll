@@ -359,10 +359,9 @@ def test_user_type_segregation_and_permissions(client, app, db_session, admin_us
         ]
 
         for usuario, password, expected_tipo in test_credentials:
-            # Reset rate limiter to avoid hitting the login limit during tests
-            # The login endpoint has a "5 per minute" rate limit to prevent brute force attacks
-            from coati_payroll.rate_limiting import limiter
-            limiter.reset()
+            # Note: Rate limiting is disabled in testing mode (app.config["TESTING"]=True)
+            # so we don't need to reset the limiter here. This prevents blocking
+            # multiple login attempts during tests.
             
             # Login
             login_response = login_user(client, usuario, password)
