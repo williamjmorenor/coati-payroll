@@ -163,6 +163,12 @@ Configure cálculos complejos usando esquemas estructurados:
 
 [:octicons-arrow-right-24: Guía de Reglas de Cálculo](guia/reglas-calculo.md)
 
+### Configuración de Cálculos
+
+Parámetros globales que afectan el prorrateo de liquidaciones y otros factores base.
+
+[:octicons-arrow-right-24: Configuración de Cálculos](guia/configuracion-calculos.md)
+
 ### Gestión de Vacaciones
 
 Módulo completo para gestionar vacaciones de empleados:

@@ -72,6 +72,23 @@ Las deducciones incluyen:
 | **Tabla de Impuestos** | Usa tabla progresiva | IR Nicaragua |
 | **Fórmula Personalizada** | Cálculo con fórmula JSON | Cálculos complejos |
 
+#### Efecto detallado por opción
+
+- **Monto Fijo**: usa el valor de **Monto Predeterminado**.
+- **Porcentaje del Salario Base**: `salario_base × porcentaje`.
+- **Porcentaje del Salario Bruto**: `salario_bruto × porcentaje`.
+- **Porcentaje del Salario Gravable** y **Tabla de Impuestos**: requieren una regla o fórmula que implemente el cálculo; sin esquema configurado no hay cálculo automático.
+- **Fórmula Personalizada**: requiere un esquema de fórmula configurado; sin esquema no hay cálculo automático.
+
+#### Base de Cálculo
+
+La base se conserva como referencia para fórmulas. El motor base de deducciones no usa la base salvo que una regla/fórmula la considere explícitamente.
+
+#### Casos límite y opciones sin efecto directo
+
+- **Porcentaje del Salario Gravable** y **Tabla de Impuestos** requieren una regla o fórmula configurada; sin esquema no hay cálculo automático.
+- **Base de Cálculo** no altera el cálculo estándar; solo tiene efecto si una fórmula/regla la usa explícitamente.
+
 ### Configuración Adicional
 
 | Campo | Descripción |

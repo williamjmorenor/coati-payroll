@@ -105,7 +105,13 @@ Para empresas con muchos empleados:
      - `Por Antigüedad`: Escalonado por años de servicio
    - **Tasa de Acumulación**: Cantidad que se acumula por período
    - **Frecuencia**: Mensual, Quincenal o Anual
+   - **Base de Acumulación** (solo si el método es proporcional):
+     - **Días Trabajados**: usa los días del período como base
+     - **Horas Trabajadas**: usa horas estándar por día × días del período
    - **Días Mínimos de Servicio**: Días antes de comenzar a acumular
+
+   **Efecto de la frecuencia**:
+   - **Mensual/Quincenal/Anual** determinan el período esperado; si el período real no coincide, el sistema prorratea.
 
 5. Configure los **Límites**:
    - **Balance Máximo**: Límite total de vacaciones acumulables
@@ -115,12 +121,33 @@ Para empresas con muchos empleados:
 6. Configure el **Vencimiento**:
    - **Regla de Vencimiento**: Cuándo expiran las vacaciones no usadas
    - **Meses para Vencimiento**: Tiempo antes de expirar
+   - **Fecha Personalizada**: Fecha exacta para vencimiento (si aplica)
+
+   **Efecto de la regla de vencimiento**:
+   - **Nunca**: no caducan por política.
+   - **Fin de Año Fiscal**: caducan al cierre del año fiscal.
+   - **Aniversario**: caducan en el aniversario del empleado.
+   - **Fecha Personalizada**: caducan en la fecha indicada.
+
+   > Nota: la regla queda registrada en la política y se aplica cuando el proceso de vencimientos está habilitado.
 
 7. Configure el **Uso**:
    - **Tipo de Unidad**: Días u Horas
    - **Contar Fines de Semana**: Si se incluyen en el cálculo
    - **Contar Feriados**: Si se incluyen en el cálculo
+   - **Permitir Unidades Parciales**: Si se permiten fracciones
+   - **Regla de Redondeo**: Más cercano, hacia arriba o hacia abajo
    - **Pagar al Terminar**: Si se pagan vacaciones al terminar relación laboral
+
+   **Efecto de las opciones de uso**:
+   - **Tipo de Unidad**: define cómo se registran saldos y solicitudes (días u horas).
+   - **Contar Fines de Semana / Feriados**: define si esos días se incluyen en el conteo.
+   - **Permitir Unidades Parciales**: habilita el uso de fracciones.
+   - **Regla de Redondeo**: se usa cuando hay fracciones y se aplica al registrar o calcular las unidades.
+
+   **Casos límite**:
+   - Las reglas de **vencimiento** y **redondeo** requieren un proceso activo que las aplique.
+   - Si no se ejecuta dicho proceso, la política queda registrada pero no afecta el saldo automáticamente.
 
 8. Haga clic en **Guardar**
 

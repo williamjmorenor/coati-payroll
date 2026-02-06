@@ -46,6 +46,28 @@ El módulo de adelantos está disponible en la gestión de empleados o como mód
 | Motivo | Razón del préstamo |
 | Deducción | Deducción asociada (para préstamos) |
 
+### Interés y amortización
+
+| Campo | Opciones | Efecto |
+|-------|----------|--------|
+| **Tipo de Interés** | Sin Interés, Interés Simple, Interés Compuesto | Define si se calcula interés y cómo se acumula. |
+| **Método de Amortización** | Francés, Alemán | Define cómo se calculan las cuotas cuando hay interés. |
+
+**Detalles:**
+
+- **Sin Interés**: no se calcula interés, la cuota es `monto / cuotas`.
+- **Interés Simple**: interés proporcional a días sobre el saldo pendiente.
+- **Interés Compuesto**: capitaliza interés sobre el saldo pendiente.
+- **Francés**: cuota total constante; varía la proporción capital/interés.
+- **Alemán**: amortización de capital constante; la cuota disminuye con el tiempo.
+
+> Nota: El interés solo se calcula si la **tasa de interés** es mayor a 0.
+
+#### Casos límite
+
+- **Tipo de Interés** sin tasa (> 0) no genera intereses.
+- **Método de Amortización** solo aplica cuando hay interés; si no hay interés, la cuota es una división simple del monto.
+
 ### Paso 2: Aprobar el Préstamo
 
 1. Revise la solicitud
