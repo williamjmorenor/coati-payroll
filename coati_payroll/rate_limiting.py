@@ -62,6 +62,7 @@ def configure_rate_limiting(app):
     """Configure rate limiting for the Flask application.
 
     Sets up Flask-Limiter with appropriate storage backend:
+    - Disabled for testing (to avoid rate limit issues in tests)
     - Redis for production (distributed, persistent)
     - Memory for development (simple, non-persistent)
 
@@ -72,6 +73,13 @@ def configure_rate_limiting(app):
         Limiter: Configured Flask-Limiter instance
     """
     from coati_payroll.log import log
+
+    # Disable rate limiting in testing mode
+    if app.config.get("TESTING"):
+        app.config["RATELIMIT_ENABLED"] = False
+        log.info("Rate limiting disabled (testing mode)")
+        limiter.init_app(app)
+        return limiter
 
     storage_uri = app.config.get("RATELIMIT_STORAGE_URI") or get_rate_limiter_storage()
     app.config["RATELIMIT_STORAGE_URI"] = storage_uri

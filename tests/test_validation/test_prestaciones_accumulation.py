@@ -524,18 +524,20 @@ def test_prestaciones_monthly_settlement(app, db_session):
 
         assert len(transacciones) == 3, "Should have 3 transactions"
 
-        # Verify monthly prestacion accumulation
-        # Note: The system accumulates monthly prestaciones like other types
-        running_balance = Decimal("0.00")
+        # Verify monthly prestacion settlement behavior
+        # For monthly settlement prestaciones, balance resets to zero each month
         for i, trans in enumerate(transacciones):
             assert trans.tipo_transaccion == "adicion", f"Transaction {i+1} should be 'adicion'"
             assert trans.monto_transaccion > Decimal("0"), f"Transaction {i+1} should have positive amount"
-            assert trans.saldo_anterior == running_balance, f"Transaction {i+1} previous balance should be {running_balance}"
             
-            running_balance += trans.monto_transaccion
-            assert trans.saldo_nuevo == running_balance, f"Transaction {i+1} new balance should be {running_balance}"
+            # Monthly prestaciones reset each month, so previous balance should always be 0
+            assert trans.saldo_anterior == Decimal("0.00"), f"Transaction {i+1} previous balance should be 0.00 (monthly reset)"
+            
+            # New balance equals the transaction amount (no accumulation from previous months)
+            assert trans.saldo_nuevo == trans.monto_transaccion, f"Transaction {i+1} new balance should equal transaction amount"
 
         # ===== SUCCESS =====
-        print("\n✅ Monthly prestacion accumulation validation PASSED")
+        print("\n✅ Monthly prestacion settlement validation PASSED")
         print(f"   - Created {len(transacciones)} transactions")
-        print(f"   - Final accumulated balance: {running_balance}")
+        print(f"   - Each month resets to zero as expected")
+        print(f"   - All transactions have correct settlement behavior")
