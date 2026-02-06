@@ -54,6 +54,34 @@ Las percepciones incluyen:
 | **Por Días** | Valor por día | Viáticos diarios |
 | **Fórmula Personalizada** | Cálculo con fórmula JSON | Cálculos complejos |
 
+#### Efecto detallado por opción
+
+- **Monto Fijo**: usa el valor de **Monto Predeterminado**.
+- **Porcentaje del Salario Base**: `salario_base × porcentaje`.
+- **Porcentaje del Salario Bruto**: `salario_bruto × porcentaje`.
+- **Por Horas / Por Días**:
+  - Requiere una **novedad** con el código del concepto (ej: HRS_EXTRA).
+  - Calcula la tasa por hora o día y multiplica por la cantidad registrada.
+  - El **porcentaje** actúa como factor sobre la tasa (ej: 150% para horas extras).
+- **Fórmula Personalizada**: requiere un esquema de fórmula configurado; sin esquema no hay cálculo automático.
+
+#### Base de Cálculo
+
+La base solo afecta cálculos **Por Horas** o **Por Días**:
+
+- **Salario Bruto**: la tasa usa `salario_bruto`.
+- **Cualquier otra opción**: la tasa usa `salario_mensual`.
+
+#### Unidad de Cálculo
+
+La **Unidad de Cálculo** es informativa para reportes/UI; no cambia el cálculo.
+
+#### Casos límite y opciones sin efecto directo
+
+- **Unidad de Cálculo** no altera el cálculo; solo afecta la presentación.
+- **Base de Cálculo** solo impacta **Por Horas** o **Por Días**.
+- Si no existe **novedad** para el código del concepto, el monto por horas/días será **0**.
+
 ### Configuración Adicional
 
 | Campo | Descripción |

@@ -34,6 +34,24 @@ Una planilla define:
 | Moneda | Moneda de pago | Sí |
 | Activo | Si la planilla está activa | Sí |
 
+### Tipo de Planilla: periodicidad y año fiscal
+
+El **Tipo de Planilla** define la periodicidad de pago y el inicio del año fiscal. Estas opciones afectan los prorrateos y los acumulados:
+
+#### Periodicidad
+
+| Opción | Efecto en el cálculo |
+|--------|----------------------|
+| **Mensual** | Si el período cubre el mes completo, paga salario completo. Si no, prorratea por días. |
+| **Quincenal** | Si el período tiene los días configurados, paga salario/quincena. Si no, prorratea por días. |
+| **Semanal** | Siempre prorratea por días. |
+
+#### Mes de inicio fiscal
+
+El **Mes Inicio Fiscal** determina desde qué mes se acumulan los valores anuales y cómo se calcula el período fiscal del empleado.
+
+Ejemplo: Si el año fiscal inicia en abril, el sistema considera abril como mes 1 del período fiscal al calcular acumulados y meses restantes.
+
 ### Período Fiscal
 
 | Campo | Descripción |

@@ -235,6 +235,18 @@ Las novedades son eventos o ajustes que afectan la nómina de un empleado en un 
 | **Cantidad** | Unidades producidas | Para bonos por producción |
 | **Porcentaje** | Bonus del 5% | Aplica porcentaje sobre base |
 
+**Importante**:
+
+- El sistema **suma el valor/cantidad por código de concepto** dentro del período.
+- El **Tipo de Valor** debe coincidir con el **Tipo de Cálculo** del concepto:
+  - **Horas/Días** solo afectan conceptos configurados como **Por Horas** o **Por Días**.
+  - **Porcentaje** requiere una fórmula/regla que lo interprete.
+  - **Monto/Cantidad** son valores directos y se aplican según el concepto.
+
+**Casos límite**:
+
+- Si el concepto no tiene fórmula compatible con el **Tipo de Valor**, la novedad puede no afectar el cálculo.
+
 ### Asociación con Conceptos
 
 Las novedades se pueden asociar a:

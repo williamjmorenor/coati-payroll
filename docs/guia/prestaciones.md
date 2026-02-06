@@ -69,6 +69,33 @@ Las prestaciones permiten:
 | **Provisión Mensual** | 1/12 del salario (provisión) | Aguinaldo, vacaciones |
 | **Fórmula Personalizada** | Cálculo con fórmula JSON | Cálculos complejos |
 
+#### Efecto detallado por opción
+
+- **Monto Fijo**: usa el valor de **Monto Predeterminado**.
+- **Porcentaje del Salario Base**: `salario_base × porcentaje`.
+- **Porcentaje del Salario Bruto**: `salario_bruto × porcentaje`.
+- **Provisión Mensual**: requiere una fórmula/regla configurada que implemente la provisión.
+- **Fórmula Personalizada**: requiere un esquema de fórmula configurado; sin esquema no hay cálculo automático.
+
+#### Base de Cálculo
+
+La base se conserva como referencia para fórmulas. El motor base de prestaciones no usa la base salvo que una regla/fórmula la considere explícitamente.
+
+### Tipo de Acumulación
+
+El **Tipo de Acumulación** define cómo se guarda el saldo acumulado de la prestación:
+
+| Opción | Efecto en el saldo |
+|--------|-------------------|
+| **Mensual** | El saldo se reinicia al iniciar un nuevo mes. |
+| **Anual** | El saldo se acumula durante el año fiscal. |
+| **Vida Laboral** | El saldo se acumula durante toda la relación laboral. |
+
+#### Casos límite y opciones sin efecto directo
+
+- **Provisión Mensual** requiere una fórmula/regla configurada; sin esquema no hay cálculo automático.
+- **Base de Cálculo** no altera el cálculo estándar; solo tiene efecto si una fórmula/regla la usa explícitamente.
+
 ### Tope de Aplicación
 
 Algunas prestaciones tienen un tope (techo salarial). Por ejemplo, el INSS patronal en Nicaragua se calcula sobre un máximo salarial:
