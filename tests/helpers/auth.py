@@ -35,4 +35,4 @@ def logout_user(client):
     Returns:
         Response: Response from the logout request
     """
-    return client.get("/auth/logout", follow_redirects=False)
+    return client.post("/auth/logout", follow_redirects=False)
