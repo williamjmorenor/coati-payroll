@@ -42,6 +42,7 @@ EMP004    12.0    31/12/2024    Empleado con 2 años de antigüedad
 ```
 
 **Nota**: La primera fila debe contener datos (no encabezados).
+**Límite de carga**: El archivo está limitado a ~1000 filas por carga (configurable vía `MAX_CONTENT_LENGTH`).
 
 ## Validaciones del Sistema
 

@@ -119,6 +119,7 @@ export DATABASE_URL="postgresql://coati_user:contraseña@localhost:5432/coati_db
 export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
 export ADMIN_USER="admin"
 export ADMIN_PASSWORD="tu_contraseña_segura"
+export MAX_CONTENT_LENGTH=2097152  # ~2 MB (~1000 filas Excel típicas)
 export PORT=5000
 ```
 
