@@ -145,7 +145,7 @@ class ExpressionEvaluator:
             self._validate_ast_security(tree.body)
             self._validate_ast_depth(tree.body)
 
-            visitor = SafeASTVisitor(self.variables)
+            visitor = SafeASTVisitor(self.variables, strict_mode=self.strict_mode)
             result = visitor.visit(tree.body)
             final_result = to_decimal(result)
 
