@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
+from ..exceptions import CalculationError
 from ..tables.table_lookup import TableLookup
 from .base_step import Step
 
@@ -38,7 +39,12 @@ class TaxLookupStep(Step):
         """
         table_name = self.config.get("table", "")
         input_var = self.config.get("input", "")
-        input_value = context.variables.get(input_var, Decimal("0"))
+        if input_var in context.variables:
+            input_value = context.variables[input_var]
+        else:
+            if context.strict_mode:
+                raise CalculationError(f"Missing required input variable '{input_var}' for tax lookup")
+            input_value = Decimal("0")
 
-        table_lookup = TableLookup(context.tax_tables, context.trace_callback)
+        table_lookup = TableLookup(context.tax_tables, context.trace_callback, strict_mode=context.strict_mode)
         return table_lookup.lookup(table_name, input_value)

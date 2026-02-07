@@ -37,5 +37,9 @@ class CalculationStep(Step):
             Calculated result as Decimal
         """
         formula = self.config.get("formula", "")
-        evaluator = ExpressionEvaluator(variables=context.variables, trace_callback=context.trace_callback)
+        evaluator = ExpressionEvaluator(
+            variables=context.variables,
+            trace_callback=context.trace_callback,
+            strict_mode=context.strict_mode,
+        )
         return evaluator.evaluate(formula)

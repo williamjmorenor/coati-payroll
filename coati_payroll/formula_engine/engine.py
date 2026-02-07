@@ -44,12 +44,12 @@ class FormulaEngine:
     Prestaciones are employer costs calculated separately.
     """
 
-    def __init__(self, schema: dict[str, Any], strict_mode: bool = False):
+    def __init__(self, schema: dict[str, Any], strict_mode: bool = True):
         """Initialize the formula engine with a calculation schema.
 
         Args:
             schema: JSON schema defining the calculation rules
-            strict_mode: If True, warnings are treated as errors. Default: False
+            strict_mode: If True, warnings are treated as errors. Default: True
 
         Raises:
             ValidationError: If schema is invalid
@@ -115,6 +115,7 @@ class FormulaEngine:
         context = ExecutionContext(
             variables=initial_vars,
             tax_tables=self.schema.get("tax_tables", {}),
+            strict_mode=self.strict_mode,
             trace_callback=self._trace,
         )
 
