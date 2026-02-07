@@ -160,13 +160,24 @@ class TestExpressionEvaluation:
         assert result["output"] == "25.00"
 
     def test_evaluate_division_by_zero(self):
-        """Test division by zero returns 0."""
+        """Test division by zero raises CalculationError in strict mode (default)."""
         schema = {
             "inputs": [{"name": "x", "default": 100}],
             "steps": [{"name": "result", "type": "calculation", "formula": "x / 0"}],
             "output": "result",
         }
-        engine = FormulaEngine(schema)
+        engine = FormulaEngine(schema)  # strict_mode=True by default
+        with pytest.raises(CalculationError, match="Division by zero"):
+            engine.execute({"x": 100})
+
+    def test_evaluate_division_by_zero_non_strict(self):
+        """Test division by zero returns 0 in non-strict mode."""
+        schema = {
+            "inputs": [{"name": "x", "default": 100}],
+            "steps": [{"name": "result", "type": "calculation", "formula": "x / 0"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema, strict_mode=False)
         result = engine.execute({"x": 100})
         assert result["output"] == "0.00"
 
