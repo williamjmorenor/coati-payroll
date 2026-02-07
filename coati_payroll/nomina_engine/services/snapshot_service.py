@@ -215,7 +215,7 @@ class SnapshotService:
 
         # Also capture linked ReglaCalculo for reproducibility
         from coati_payroll.model import ReglaCalculo
-        
+
         reglas_by_deduccion = {}
         if deducciones_ids:
             reglas = (

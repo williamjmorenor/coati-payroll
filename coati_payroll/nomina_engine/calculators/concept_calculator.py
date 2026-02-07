@@ -216,28 +216,34 @@ class ConceptCalculator:
         # First try to get ReglaCalculo from snapshot (for reproducibility)
         regla_schema = None
         regla_codigo = None
-        
+
         if self.deducciones_snapshot and codigo_concepto:
             deduccion_data = self.deducciones_snapshot.get(codigo_concepto)
             if deduccion_data and "regla_calculo" in deduccion_data:
                 regla_schema = deduccion_data["regla_calculo"]["esquema_json"]
                 regla_codigo = deduccion_data["regla_calculo"]["codigo"]
-        
+
         # Fallback to live DB if not in snapshot (backward compatibility)
         if not regla_schema:
             from sqlalchemy import select
 
             # Find the ReglaCalculo linked to this deduction
             regla = db.session.execute(
-                select(ReglaCalculo).filter_by(deduccion_id=codigo_concepto).filter(ReglaCalculo.activo.is_(True))
+                select(ReglaCalculo)
+                .filter_by(deduccion_id=codigo_concepto)
+                .filter(ReglaCalculo.activo.is_(True))
             ).scalar_one_or_none()
 
             if not regla:
                 # Try finding by deduccion_id matching deduccion's id
-                deduccion_obj = db.session.execute(select(Deduccion).filter_by(codigo=codigo_concepto)).scalar_one_or_none()
+                deduccion_obj = db.session.execute(
+                    select(Deduccion).filter_by(codigo=codigo_concepto)
+                ).scalar_one_or_none()
                 if deduccion_obj:
                     regla = db.session.execute(
-                        select(ReglaCalculo).filter_by(deduccion_id=deduccion_obj.id).filter(ReglaCalculo.activo.is_(True))
+                        select(ReglaCalculo)
+                        .filter_by(deduccion_id=deduccion_obj.id)
+                        .filter(ReglaCalculo.activo.is_(True))
                     ).scalar_one_or_none()
 
             if regla and regla.esquema_json:
