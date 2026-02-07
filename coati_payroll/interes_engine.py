@@ -61,6 +61,7 @@ def _obtener_config_default(empresa_id: str | None = None) -> "ConfiguracionCalc
     # Only try to access database if we have an application context
     if has_app_context():
         from coati_payroll.model import db
+        from sqlalchemy.exc import SQLAlchemyError
 
         try:
             # Try to find company-specific configuration
@@ -92,7 +93,7 @@ def _obtener_config_default(empresa_id: str | None = None) -> "ConfiguracionCalc
             )
             if config:
                 return config
-        except RuntimeError:
+        except (RuntimeError, SQLAlchemyError):
             # No application context, fall through to defaults
             pass
 
@@ -175,11 +176,13 @@ def calcular_interes_compuesto(
 
     For daily compounding:
         n = dias_anio_financiero (compounds daily)
+        t = dias / dias_anio_financiero
+        n*t is treated as the integer number of days provided
 
     Args:
         principal: Loan balance
         tasa_anual: Annual interest rate as percentage (e.g., 5.0 for 5%)
-        dias: Number of days to calculate interest for
+        dias: Number of days to calculate interest for (integer periods)
         config: Optional configuration object (if not provided, will fetch defaults)
         empresa_id: Optional company ID to get company-specific config
 
@@ -199,18 +202,10 @@ def calcular_interes_compuesto(
     # For simplicity, we compound daily using configured financial year days
     dias_anio = Decimal(str(config.dias_anio_financiero))
     n = dias_anio
-    tiempo_anios = Decimal(dias) / dias_anio
-
     # A = P * (1 + r/n)^(n*t)
-    # Use iterative multiplication to maintain decimal precision
-    # This is more precise than float conversion for financial calculations
     base = Decimal("1") + (tasa_decimal / n)
-    num_periodos = int(n * tiempo_anios)
-
-    # Calculate factor iteratively to maintain precision
-    factor = Decimal("1")
-    for _ in range(num_periodos):
-        factor *= base
+    num_periodos = int(dias)
+    factor = base ** num_periodos
 
     monto_final = principal * factor
 
@@ -232,12 +227,12 @@ def calcular_cuota_frances(
     Where:
         C = constant payment
         P = principal
-        r = periodic interest rate (monthly)
+        r = periodic interest rate (monthly, derived from nominal annual rate)
         n = number of periods
 
     Args:
         principal: Loan amount
-        tasa_anual: Annual interest rate as percentage
+        tasa_anual: Annual nominal interest rate as percentage
         num_cuotas: Number of installments
         config: Optional configuration object (if not provided, will fetch defaults)
         empresa_id: Optional company ID to get company-specific config
@@ -284,36 +279,42 @@ def generar_tabla_amortizacion(
     tasa_anual: Decimal,
     num_cuotas: int,
     fecha_inicio: date,
-    metodo: str = MetodoAmortizacion.FRANCES,
-    tipo_interes: str = TipoInteres.SIMPLE,
+    fecha_desembolso: date | None = None,
+    metodo: MetodoAmortizacion = MetodoAmortizacion.FRANCES,
+    tipo_interes: TipoInteres = TipoInteres.SIMPLE,
 ) -> list[CuotaPrestamo]:
     """Generate complete amortization schedule for a loan.
 
     Args:
         principal: Loan amount
-        tasa_anual: Annual interest rate as percentage
+        tasa_anual: Annual nominal interest rate as percentage
         num_cuotas: Number of installments
         fecha_inicio: Start date for first payment
+        fecha_desembolso: Optional disbursement date. If not provided, the
+            first period is assumed to span one month before fecha_inicio.
         metodo: Amortization method (frances or aleman)
-        tipo_interes: Interest type (simple or compuesto)
+        tipo_interes: Interest type (simple or compuesto). Interest is calculated
+            using the exact days between scheduled payment dates. The constant
+            installment for French method is derived from a nominal monthly rate,
+            so day-based interest can create small differences versus traditional
+            monthly tables. Each installment is rounded to cents before being
+            stored in the schedule, and negative day spans are treated as zero.
 
     Returns:
         List of loan installments
+
+    Raises:
+        ValueError: If French method results in negative amortization.
     """
     if principal <= 0 or num_cuotas <= 0:
         return []
 
     tabla: list[CuotaPrestamo] = []
     saldo = principal
-    # Get configuration for interest calculations
+    # Get configuration for interest calculations.
+    # Note: This function doesn't have empresa_id, so we use defaults.
     config = _obtener_config_default(None)
-    tasa_decimal = tasa_anual / Decimal("100")
-    meses_anio = Decimal(str(config.meses_anio_financiero))
-    tasa_mensual = tasa_decimal / meses_anio
-
-    # Get configuration for interest calculations
-    # Note: This function doesn't have empresa_id, so we use defaults
-    config = _obtener_config_default(None)
+    fecha_prev = fecha_desembolso or (fecha_inicio - relativedelta(months=1))
 
     # Calculate based on method
     if metodo == MetodoAmortizacion.FRANCES:
@@ -322,37 +323,47 @@ def generar_tabla_amortizacion(
 
         for i in range(num_cuotas):
             numero = i + 1
+            fecha_estimada = fecha_inicio + relativedelta(months=numero - 1)
+            dias = max((fecha_estimada - fecha_prev).days, 0)
 
             # Calculate interest for this period
-            if tasa_anual > 0:
-                interes = (saldo * tasa_mensual).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if tipo_interes == TipoInteres.COMPUESTO:
+                interes = calcular_interes_compuesto(saldo, tasa_anual, dias, config=config)
             else:
-                interes = Decimal("0.00")
+                interes = calcular_interes_simple(saldo, tasa_anual, dias, config=config)
+            interes_q = interes.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+            if cuota_constante <= interes_q and numero != num_cuotas:
+                raise ValueError(
+                    "La cuota constante no cubre el interés; la amortización sería negativa."
+                )
 
             # For last payment, adjust to clear remaining balance
             if numero == num_cuotas:
                 capital = saldo
-                cuota_total = capital + interes
+                cuota_total = capital + interes_q
             else:
-                capital = cuota_constante - interes
-                cuota_total = cuota_constante
+                capital = cuota_constante - interes_q
+                cuota_total = capital + interes_q
 
-            saldo_nuevo = saldo - capital
-
-            fecha_estimada = fecha_inicio + relativedelta(months=numero)
+            capital_q = capital.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            cuota_total_q = cuota_total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            saldo_nuevo = saldo - capital_q
+            saldo_q = max(saldo_nuevo, Decimal("0.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
             tabla.append(
                 CuotaPrestamo(
                     numero=numero,
                     fecha_estimada=fecha_estimada,
-                    cuota_total=cuota_total,
-                    interes=interes,
-                    capital=capital,
-                    saldo=max(saldo_nuevo, Decimal("0.00")),
+                    cuota_total=cuota_total_q,
+                    interes=interes_q,
+                    capital=capital_q,
+                    saldo=saldo_q,
                 )
             )
 
-            saldo = saldo_nuevo
+            saldo = saldo_q
+            fecha_prev = fecha_estimada
 
     elif metodo == MetodoAmortizacion.ALEMAN:
         # German method: constant principal amortization
@@ -360,12 +371,15 @@ def generar_tabla_amortizacion(
 
         for i in range(num_cuotas):
             numero = i + 1
+            fecha_estimada = fecha_inicio + relativedelta(months=numero - 1)
+            dias = max((fecha_estimada - fecha_prev).days, 0)
 
             # Calculate interest for this period
-            if tasa_anual > 0:
-                interes = (saldo * tasa_mensual).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if tipo_interes == TipoInteres.COMPUESTO:
+                interes = calcular_interes_compuesto(saldo, tasa_anual, dias, config=config)
             else:
-                interes = Decimal("0.00")
+                interes = calcular_interes_simple(saldo, tasa_anual, dias, config=config)
+            interes_q = interes.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
             # For last payment, adjust to clear remaining balance
             if numero == num_cuotas:
@@ -373,23 +387,25 @@ def generar_tabla_amortizacion(
             else:
                 capital = capital_constante
 
-            cuota_total = capital + interes
-            saldo_nuevo = saldo - capital
-
-            fecha_estimada = fecha_inicio + relativedelta(months=numero)
+            capital_q = capital.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            cuota_total = capital_q + interes_q
+            cuota_total_q = cuota_total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            saldo_nuevo = saldo - capital_q
+            saldo_q = max(saldo_nuevo, Decimal("0.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
             tabla.append(
                 CuotaPrestamo(
                     numero=numero,
                     fecha_estimada=fecha_estimada,
-                    cuota_total=cuota_total,
-                    interes=interes,
-                    capital=capital,
-                    saldo=max(saldo_nuevo, Decimal("0.00")),
+                    cuota_total=cuota_total_q,
+                    interes=interes_q,
+                    capital=capital_q,
+                    saldo=saldo_q,
                 )
             )
 
-            saldo = saldo_nuevo
+            saldo = saldo_q
+            fecha_prev = fecha_estimada
 
     return tabla
 
@@ -399,7 +415,7 @@ def calcular_interes_periodo(
     tasa_anual: Decimal,
     fecha_desde: date,
     fecha_hasta: date,
-    tipo_interes: str = TipoInteres.SIMPLE,
+    tipo_interes: TipoInteres = TipoInteres.SIMPLE,
     config: "ConfiguracionCalculos | None" = None,
     empresa_id: str | None = None,
 ) -> tuple[Decimal, int]:
