@@ -213,23 +213,51 @@ class SnapshotService:
         else:
             deducciones = []
 
-        for d in deducciones:
-            snapshot["deducciones"].append(
-                {
-                    "id": d.id,
-                    "codigo": d.codigo,
-                    "nombre": d.nombre,
-                    "descripcion": d.descripcion,
-                    "formula_tipo": d.formula_tipo,
-                    "formula": d.formula,
-                    "monto_default": str(d.monto_default) if d.monto_default else None,
-                    "porcentaje": str(d.porcentaje) if d.porcentaje else None,
-                    "es_impuesto": d.es_impuesto,
-                    "antes_impuesto": d.antes_impuesto,
-                    "base_calculo": d.base_calculo,
-                    "estado_aprobacion": d.estado_aprobacion,
-                }
+        # Also capture linked ReglaCalculo for reproducibility
+        from coati_payroll.model import ReglaCalculo
+
+        reglas_by_deduccion = {}
+        if deducciones_ids:
+            reglas = (
+                self.session.execute(
+                    db.select(ReglaCalculo).filter(
+                        ReglaCalculo.deduccion_id.in_(deducciones_ids),
+                        ReglaCalculo.activo.is_(True),
+                    )
+                )
+                .scalars()
+                .all()
             )
+            for regla in reglas:
+                if regla.deduccion_id:
+                    reglas_by_deduccion[regla.deduccion_id] = {
+                        "id": regla.id,
+                        "codigo": regla.codigo,
+                        "nombre": regla.nombre,
+                        "esquema_json": regla.esquema_json,
+                        "vigente_desde": regla.vigente_desde.isoformat() if regla.vigente_desde else None,
+                        "vigente_hasta": regla.vigente_hasta.isoformat() if regla.vigente_hasta else None,
+                    }
+
+        for d in deducciones:
+            deduccion_data = {
+                "id": d.id,
+                "codigo": d.codigo,
+                "nombre": d.nombre,
+                "descripcion": d.descripcion,
+                "formula_tipo": d.formula_tipo,
+                "formula": d.formula,
+                "monto_default": str(d.monto_default) if d.monto_default else None,
+                "porcentaje": str(d.porcentaje) if d.porcentaje else None,
+                "es_impuesto": d.es_impuesto,
+                "antes_impuesto": d.antes_impuesto,
+                "base_calculo": d.base_calculo,
+                "estado_aprobacion": d.estado_aprobacion,
+            }
+            # Include ReglaCalculo if linked
+            if d.id in reglas_by_deduccion:
+                deduccion_data["regla_calculo"] = reglas_by_deduccion[d.id]
+            snapshot["deducciones"].append(deduccion_data)
 
         # Capture Prestaciones linked to this planilla
         from coati_payroll.model import PlanillaPrestacion

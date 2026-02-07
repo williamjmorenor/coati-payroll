@@ -90,7 +90,9 @@ class EmployeeProcessingService:
             "antiguedad_anios": Decimal(str(antiguedad_anios)),
             # Fiscal calculations
             "meses_restantes": Decimal(str(meses_restantes)),
-            "periodos_por_anio": Decimal(str(tipo_planilla.periodos_por_anio if tipo_planilla else meses_anio_financiero)),
+            "periodos_por_anio": Decimal(
+                str(tipo_planilla.periodos_por_anio if tipo_planilla else meses_anio_financiero)
+            ),
             # Accumulated values (will be populated from AcumuladoAnual)
             "salario_acumulado": Decimal("0.00"),
             "impuesto_acumulado": Decimal("0.00"),

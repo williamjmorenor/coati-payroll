@@ -4,6 +4,20 @@
 
 from __future__ import annotations
 
+from typing import Protocol
+
+
+class WarningCollectorProtocol(Protocol):
+    """Protocol for objects that collect warnings."""
+
+    def append(self, warning: str) -> None:
+        """Append a warning message."""
+        ...
+
+    def extend(self, warnings: list[str]) -> None:
+        """Extend with multiple warning messages."""
+        ...
+
 
 class WarningCollector:
     """Centralized warning collector to avoid mutable list sharing."""
@@ -24,7 +38,7 @@ class WarningCollector:
         return len(self._warnings)
 
     def __bool__(self) -> bool:
-        return True
+        return len(self._warnings) > 0
 
     def to_list(self) -> list[str]:
         return list(self._warnings)

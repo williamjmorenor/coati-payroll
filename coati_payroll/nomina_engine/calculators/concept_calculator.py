@@ -23,12 +23,13 @@ from coati_payroll.enums import FormulaType
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
 from coati_payroll.model import db, Deduccion, ReglaCalculo
 from ..domain.employee_calculation import EmpleadoCalculo
+from ..results.warning_collector import WarningCollectorProtocol
 
 
 class ConceptCalculator:
     """Calculator for payroll concepts using Strategy pattern."""
 
-    def __init__(self, config_repository, warnings: list[str]):
+    def __init__(self, config_repository, warnings: WarningCollectorProtocol):
         self.config_repo = config_repository
         self.warnings = warnings
         self.deducciones_snapshot: dict[str, Any] | None = None
@@ -211,23 +212,45 @@ class ConceptCalculator:
             return Decimal("0.00")
 
     def _calculate_regla_calculo(self, emp_calculo: EmpleadoCalculo, codigo_concepto: str | None) -> Decimal:
-        """Calculate using ReglaCalculo."""
-        from sqlalchemy import select
+        """Calculate using ReglaCalculo from snapshot (if available) or live DB."""
+        # First try to get ReglaCalculo from snapshot (for reproducibility)
+        regla_schema = None
+        regla_codigo = None
 
-        # Find the ReglaCalculo linked to this deduction
-        regla = db.session.execute(
-            select(ReglaCalculo).filter_by(deduccion_id=codigo_concepto).filter(ReglaCalculo.activo.is_(True))
-        ).scalar_one_or_none()
+        if self.deducciones_snapshot and codigo_concepto:
+            deduccion_data = self.deducciones_snapshot.get(codigo_concepto)
+            if deduccion_data and "regla_calculo" in deduccion_data:
+                regla_schema = deduccion_data["regla_calculo"]["esquema_json"]
+                regla_codigo = deduccion_data["regla_calculo"]["codigo"]
 
-        if not regla:
-            # Try finding by deduccion_id matching deduccion's id
-            deduccion_obj = db.session.execute(select(Deduccion).filter_by(codigo=codigo_concepto)).scalar_one_or_none()
-            if deduccion_obj:
-                regla = db.session.execute(
-                    select(ReglaCalculo).filter_by(deduccion_id=deduccion_obj.id).filter(ReglaCalculo.activo.is_(True))
+        # Fallback to live DB if not in snapshot (backward compatibility)
+        if not regla_schema:
+            from sqlalchemy import select
+
+            # Find the ReglaCalculo linked to this deduction
+            regla = db.session.execute(
+                select(ReglaCalculo)
+                .filter_by(deduccion_id=codigo_concepto)
+                .filter(ReglaCalculo.activo.is_(True))
+            ).scalar_one_or_none()
+
+            if not regla:
+                # Try finding by deduccion_id matching deduccion's id
+                deduccion_obj = db.session.execute(
+                    select(Deduccion).filter_by(codigo=codigo_concepto)
                 ).scalar_one_or_none()
+                if deduccion_obj:
+                    regla = db.session.execute(
+                        select(ReglaCalculo)
+                        .filter_by(deduccion_id=deduccion_obj.id)
+                        .filter(ReglaCalculo.activo.is_(True))
+                    ).scalar_one_or_none()
 
-        if not regla or not regla.esquema_json:
+            if regla and regla.esquema_json:
+                regla_schema = regla.esquema_json
+                regla_codigo = regla.codigo
+
+        if not regla_schema:
             self.warnings.append(f"ReglaCalculo no encontrada para deducción {codigo_concepto}")
             return Decimal("0.00")
 
@@ -253,11 +276,11 @@ class ConceptCalculator:
             inputs["pre_tax_deductions"] = deducciones_antes_impuesto_periodo
             inputs["social_security_deduction"] = deducciones_antes_impuesto_periodo
 
-            engine = FormulaEngine(regla.esquema_json)
+            engine = FormulaEngine(regla_schema)
             result = engine.execute(inputs)
             return Decimal(str(result.get("output", 0))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         except FormulaEngineError as e:
-            self.warnings.append(f"Error en ReglaCalculo {regla.codigo}: {str(e)}")
+            self.warnings.append(f"Error en ReglaCalculo {regla_codigo}: {str(e)}")
             return Decimal("0.00")
 
     def _get_deduccion_metadata(self, deduccion_id: str) -> dict[str, Any] | None:
