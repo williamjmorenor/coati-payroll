@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-02-07
+
+### Executive Summary
+
+Release 1.0.2 consolidates refactors across payroll processing, accounting vouchers, and liquidation flows to improve determinism, validation strictness, and operational resilience. It also expands the formula engine safety surface and strengthens queue processing and recovery behavior, with supporting test coverage updates.
+
+### Changed
+
+- Refactored queue processing, accounting voucher generation, and payroll execution for clearer error handling and progress tracking.
+- Hardened formula engine evaluation, lookup validation, and rounding utilities to improve determinism and type safety.
+- Updated liquidation, interest, and vacation services with tighter workflows and consistent snapshot and policy handling.
+- Refined UI flows and planilla export/service behaviors to align with revised validation and state transitions.
+
+### Tests
+
+- Extended unit and integration coverage for formula engine, payroll defensive mechanisms, vouchers, vacations, and routes.
+
 ## [1.0.1] - 2026-02-06
 
 ### Security
