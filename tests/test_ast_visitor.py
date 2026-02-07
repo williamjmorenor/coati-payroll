@@ -107,8 +107,8 @@ class TestSafeASTVisitorExceptionHandling:
             visitor.visit_binop(binop_node)
 
     def test_visit_binop_division_by_zero_returns_zero(self):
-        """Test that division by zero returns 0 safely."""
-        visitor = SafeASTVisitor({})
+        """Test that division by zero returns 0 safely in non-strict mode."""
+        visitor = SafeASTVisitor({}, strict_mode=False)
 
         # Division by zero
         binop_node = ast.BinOp(left=ast.Constant(value=100), op=ast.Div(), right=ast.Constant(value=0))
@@ -117,8 +117,8 @@ class TestSafeASTVisitorExceptionHandling:
         assert result == Decimal("0")
 
     def test_visit_binop_floor_division_by_zero_returns_zero(self):
-        """Test that floor division by zero returns 0 safely."""
-        visitor = SafeASTVisitor({})
+        """Test that floor division by zero returns 0 safely in non-strict mode."""
+        visitor = SafeASTVisitor({}, strict_mode=False)
 
         # Floor division by zero
         binop_node = ast.BinOp(left=ast.Constant(value=100), op=ast.FloorDiv(), right=ast.Constant(value=0))
@@ -127,14 +127,44 @@ class TestSafeASTVisitorExceptionHandling:
         assert result == Decimal("0")
 
     def test_visit_binop_modulo_by_zero_returns_zero(self):
-        """Test that modulo by zero returns 0 safely."""
-        visitor = SafeASTVisitor({})
+        """Test that modulo by zero returns 0 safely in non-strict mode."""
+        visitor = SafeASTVisitor({}, strict_mode=False)
 
         # Modulo by zero
         binop_node = ast.BinOp(left=ast.Constant(value=100), op=ast.Mod(), right=ast.Constant(value=0))
 
         result = visitor.visit_binop(binop_node)
         assert result == Decimal("0")
+
+    def test_visit_binop_division_by_zero_raises_in_strict_mode(self):
+        """Test that division by zero raises CalculationError in strict mode."""
+        visitor = SafeASTVisitor({}, strict_mode=True)
+
+        # Division by zero
+        binop_node = ast.BinOp(left=ast.Constant(value=100), op=ast.Div(), right=ast.Constant(value=0))
+
+        with pytest.raises(CalculationError, match="Division by zero detected"):
+            visitor.visit_binop(binop_node)
+
+    def test_visit_binop_floor_division_by_zero_raises_in_strict_mode(self):
+        """Test that floor division by zero raises CalculationError in strict mode."""
+        visitor = SafeASTVisitor({}, strict_mode=True)
+
+        # Floor division by zero
+        binop_node = ast.BinOp(left=ast.Constant(value=100), op=ast.FloorDiv(), right=ast.Constant(value=0))
+
+        with pytest.raises(CalculationError, match="Division by zero detected"):
+            visitor.visit_binop(binop_node)
+
+    def test_visit_binop_modulo_by_zero_raises_in_strict_mode(self):
+        """Test that modulo by zero raises CalculationError in strict mode."""
+        visitor = SafeASTVisitor({}, strict_mode=True)
+
+        # Modulo by zero
+        binop_node = ast.BinOp(left=ast.Constant(value=100), op=ast.Mod(), right=ast.Constant(value=0))
+
+        with pytest.raises(CalculationError, match="Division by zero detected"):
+            visitor.visit_binop(binop_node)
 
     def test_visit_unaryop_unsupported_operator(self):
         """Test that unsupported unary operators raise CalculationError."""
@@ -271,6 +301,24 @@ class TestSafeASTVisitorExceptionHandling:
 
         error_msg = str(exc_info.value)
         assert "precision must be between 0 and 10" in error_msg
+
+    def test_visit_call_round_precision_non_integer(self):
+        """Test that round() with non-integer precision raises CalculationError."""
+        visitor = SafeASTVisitor({"x": Decimal("123.456")})
+
+        # Create a Call node for round() with non-integer precision (2.9)
+        call_node = ast.Call(
+            func=ast.Name(id="round", ctx=ast.Load()),
+            args=[ast.Name(id="x", ctx=ast.Load()), ast.Constant(value=2.9)],
+            keywords=[],
+        )
+
+        with pytest.raises(CalculationError) as exc_info:
+            visitor.visit_call(call_node)
+
+        error_msg = str(exc_info.value)
+        assert "precision must be an integer" in error_msg
+        assert "2.9" in error_msg
 
     def test_visit_call_invalid_value_error(self):
         """Test that ValueError in function call raises CalculationError."""
