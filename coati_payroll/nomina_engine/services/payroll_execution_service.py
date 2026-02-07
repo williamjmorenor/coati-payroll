@@ -105,7 +105,7 @@ class PayrollExecutionService:
             return None, [], errors, warnings.to_list()
 
         # Capture configuration snapshots for recalculation consistency
-        snapshot = self.snapshot_service.capture_complete_snapshot(planilla, fecha_calculo)
+        snapshot = self.snapshot_service.capture_complete_snapshot(planilla, periodo_inicio, periodo_fin, fecha_calculo)
         deducciones_snapshot = {
             deduccion["id"]: deduccion for deduccion in snapshot.get("catalogos", {}).get("deducciones", [])
         }
@@ -120,13 +120,15 @@ class PayrollExecutionService:
                     Nomina.planilla_id == planilla.id,
                     Nomina.periodo_inicio == periodo_inicio,
                     Nomina.periodo_fin == periodo_fin,
-                    Nomina.estado.in_([
-                        NominaEstado.CALCULANDO,
-                        NominaEstado.GENERADO,
-                        NominaEstado.APROBADO,
-                        NominaEstado.APLICADO,
-                        NominaEstado.PAGADO,
-                    ]),
+                    Nomina.estado.in_(
+                        [
+                            NominaEstado.CALCULANDO,
+                            NominaEstado.GENERADO,
+                            NominaEstado.APROBADO,
+                            NominaEstado.APLICADO,
+                            NominaEstado.PAGADO,
+                        ]
+                    ),
                 )
             )
             .scalars()
@@ -205,7 +207,11 @@ class PayrollExecutionService:
         self._calculate_totals(nomina, empleados_calculo)
 
         if not errors:
-            vacation_processor = VacationProcessor(planilla, periodo_inicio, periodo_fin, usuario, warnings)
+            vacation_snapshot = snapshot.get("vacaciones", {}).copy()
+            vacation_snapshot["configuracion"] = snapshot.get("configuracion")
+            vacation_processor = VacationProcessor(
+                planilla, periodo_inicio, periodo_fin, usuario, warnings, snapshot=vacation_snapshot
+            )
 
             for emp_calculo in empleados_calculo:
                 self._apply_employee_side_effects(
@@ -263,12 +269,25 @@ class PayrollExecutionService:
         # Log successful employee processing
         for emp_calculo in empleados_calculo:
             empleado = emp_calculo.empleado
+            resumen_vacaciones = getattr(emp_calculo, "vacaciones_resumen", None)
+            resumen_texto = ""
+            if resumen_vacaciones and resumen_vacaciones.get("policy_codigo"):
+                resumen_texto = (
+                    " Vacaciones: accrued {accrued}, used {used}, "
+                    "balance_before {balance_before}, balance_after {balance_after}, policy {policy}."
+                ).format(
+                    accrued=resumen_vacaciones.get("accrued"),
+                    used=resumen_vacaciones.get("used"),
+                    balance_before=resumen_vacaciones.get("balance_before"),
+                    balance_after=resumen_vacaciones.get("balance_after"),
+                    policy=resumen_vacaciones.get("policy_codigo"),
+                )
             log_entries.append(
                 {
                     "timestamp": timestamp,
                     "empleado": f"{empleado.primer_nombre} {empleado.primer_apellido}",
                     "status": "success",
-                    "message": f"Procesado correctamente. Salario neto: {emp_calculo.salario_neto}",
+                    "message": f"Procesado correctamente. Salario neto: {emp_calculo.salario_neto}.{resumen_texto}",
                 }
             )
 
@@ -423,7 +442,9 @@ class PayrollExecutionService:
         self.accounting_processor.create_prestacion_transactions(
             emp_calculo, nomina, planilla, periodo_fin, fecha_calculo
         )
-        vacation_processor.process_vacations(emp_calculo.empleado, emp_calculo, nomina_empleado)
+        emp_calculo.vacaciones_resumen = vacation_processor.process_vacations(
+            emp_calculo.empleado, emp_calculo, nomina_empleado
+        )
 
     def _calculate_totals(self, nomina: Nomina, empleados_calculo: list[EmpleadoCalculo]) -> None:
         """Calculate grand totals for the nomina."""

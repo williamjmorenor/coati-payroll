@@ -74,9 +74,7 @@ class AccumulationProcessor:
         for deduccion in emp_calculo.deducciones:
             if not deduccion.deduccion_id:
                 continue
-            deduccion_metadata = (
-                deducciones_snapshot.get(deduccion.deduccion_id) if deducciones_snapshot else None
-            )
+            deduccion_metadata = deducciones_snapshot.get(deduccion.deduccion_id) if deducciones_snapshot else None
             if not deduccion_metadata:
                 deduccion_obj = db.session.get(Deduccion, deduccion.deduccion_id)
                 if deduccion_obj:

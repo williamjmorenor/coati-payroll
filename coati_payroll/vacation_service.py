@@ -12,7 +12,8 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP, ROUND_UP, ROUND_DOWN
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 # <-------------------------------------------------------------------------> #
@@ -24,6 +25,7 @@ from typing import TYPE_CHECKING
 # <-------------------------------------------------------------------------> #
 from coati_payroll.enums import VacationLedgerType, AccrualMethod, AccrualFrequency
 from coati_payroll.log import log
+from coati_payroll.nomina_engine.validators import ValidationError, NominaEngineError
 
 if TYPE_CHECKING:
     from coati_payroll.model import (
@@ -39,17 +41,75 @@ if TYPE_CHECKING:
 class VacationService:
     """Service for vacation accrual and usage during payroll execution."""
 
-    def __init__(self, planilla: Planilla, periodo_inicio: date, periodo_fin: date):
+    ACCRUAL_PRECISION = Decimal("0.0001")
+    ROUNDING_RULES = {
+        "up": ROUND_UP,
+        "down": ROUND_DOWN,
+        "nearest": ROUND_HALF_UP,
+        None: ROUND_HALF_UP,
+    }
+    SUPPORTED_ACCRUAL_BASIS = {"days_worked", "hours_worked"}
+    SUPPORTED_ROUNDING_RULES = {None, "up", "down", "nearest"}
+
+    def __init__(
+        self,
+        planilla: Planilla,
+        periodo_inicio: date,
+        periodo_fin: date,
+        snapshot: dict | None = None,
+        apply_side_effects: bool = True,
+    ):
         """Initialize vacation service.
 
         Args:
             planilla: The payroll being executed
             periodo_inicio: Start date of payroll period
             periodo_fin: End date of payroll period
+            snapshot: Optional snapshot data for reproducible processing
+            apply_side_effects: Whether to write ledger entries and update balances
         """
         self.planilla = planilla
         self.periodo_inicio = periodo_inicio
         self.periodo_fin = periodo_fin
+        self.snapshot = snapshot
+        self.apply_side_effects = apply_side_effects
+        if self.periodo_inicio and self.periodo_fin and self.periodo_inicio > self.periodo_fin:
+            raise ValidationError(f"Período inválido: inicio {self.periodo_inicio} posterior a fin {self.periodo_fin}.")
+
+    def _quantize_amount(self, amount: Decimal) -> Decimal:
+        """Normalize amounts to the configured precision."""
+        return amount.quantize(self.ACCRUAL_PRECISION, rounding=ROUND_HALF_UP)
+
+    def _config_from_snapshot(self, snapshot_config: dict) -> ConfiguracionCalculos:
+        """Build a ConfiguracionCalculos-like object from snapshot data."""
+        return SimpleNamespace(
+            empresa_id=snapshot_config.get("empresa_id"),
+            pais_id=snapshot_config.get("pais_id"),
+            dias_mes_nomina=snapshot_config.get("dias_mes_nomina"),
+            dias_anio_nomina=snapshot_config.get("dias_anio_nomina"),
+            horas_jornada_diaria=Decimal(str(snapshot_config.get("horas_jornada_diaria"))),
+            dias_mes_vacaciones=snapshot_config.get("dias_mes_vacaciones"),
+            dias_anio_vacaciones=snapshot_config.get("dias_anio_vacaciones"),
+            considerar_bisiesto_vacaciones=snapshot_config.get("considerar_bisiesto_vacaciones"),
+            dias_anio_financiero=snapshot_config.get("dias_anio_financiero"),
+            meses_anio_financiero=snapshot_config.get("meses_anio_financiero"),
+            dias_quincena=snapshot_config.get("dias_quincena"),
+            dias_mes_antiguedad=snapshot_config.get("dias_mes_antiguedad"),
+            dias_anio_antiguedad=snapshot_config.get("dias_anio_antiguedad"),
+            activo=snapshot_config.get("activo", True),
+        )
+
+    def _validar_configuracion(self, config: ConfiguracionCalculos) -> None:
+        if config.dias_mes_vacaciones <= 0:
+            raise ValidationError("Configuración inválida: dias_mes_vacaciones debe ser mayor que cero.")
+        if config.dias_anio_vacaciones <= 0:
+            raise ValidationError("Configuración inválida: dias_anio_vacaciones debe ser mayor que cero.")
+        if config.dias_quincena <= 0:
+            raise ValidationError("Configuración inválida: dias_quincena debe ser mayor que cero.")
+        if config.meses_anio_financiero <= 0:
+            raise ValidationError("Configuración inválida: meses_anio_financiero debe ser mayor que cero.")
+        if config.dias_anio_antiguedad <= 0:
+            raise ValidationError("Configuración inválida: dias_anio_antiguedad debe ser mayor que cero.")
 
     def _obtener_config_calculos(self) -> ConfiguracionCalculos:
         """Get calculation configuration for the current planilla.
@@ -61,6 +121,11 @@ class VacationService:
             ConfiguracionCalculos instance with appropriate values
         """
         from coati_payroll.model import db, ConfiguracionCalculos
+
+        if self.snapshot and self.snapshot.get("configuracion"):
+            config = self._config_from_snapshot(self.snapshot["configuracion"])
+            self._validar_configuracion(config)
+            return config
 
         empresa_id = self.planilla.empresa_id if self.planilla else None
 
@@ -77,6 +142,7 @@ class VacationService:
                 .first()
             )
             if config:
+                self._validar_configuracion(config)
                 return config
 
         # Try to find global default (no empresa_id, no pais_id)
@@ -92,6 +158,7 @@ class VacationService:
             .first()
         )
         if config:
+            self._validar_configuracion(config)
             return config
 
         # If no configuration exists, return a default instance (not saved to DB)
@@ -115,6 +182,138 @@ class VacationService:
             activo=True,
         )
 
+    def _obtener_balance(self, account: VacationAccount) -> Decimal:
+        from coati_payroll.model import db, VacationLedger
+
+        balance = db.session.execute(
+            db.select(db.func.coalesce(db.func.sum(VacationLedger.quantity), 0)).filter(
+                VacationLedger.account_id == account.id
+            )
+        ).scalar_one()
+        return self._quantize_amount(Decimal(str(balance)))
+
+    def _recalcular_balance(self, account: VacationAccount) -> Decimal:
+        balance_decimal = self._obtener_balance(account)
+        account.current_balance = balance_decimal
+        return balance_decimal
+
+    def _resolver_cuenta_vacaciones(self, empleado: Empleado) -> tuple[VacationAccount | None, str | None]:
+        from coati_payroll.model import db, VacationAccount, VacationPolicy
+
+        if not self.planilla:
+            return None, None
+
+        if empleado.empresa_id and self.planilla.empresa_id and empleado.empresa_id != self.planilla.empresa_id:
+            raise ValidationError(f"Empleado {empleado.codigo_empleado} pertenece a empresa distinta a la planilla.")
+
+        filtros_base = [
+            VacationAccount.empleado_id == empleado.id,
+            VacationAccount.activo.is_(True),
+            VacationPolicy.activo.is_(True),
+        ]
+
+        scopes = [
+            (
+                "planilla",
+                VacationPolicy.planilla_id == self.planilla.id,
+                db.or_(VacationPolicy.empresa_id.is_(None), VacationPolicy.empresa_id == self.planilla.empresa_id),
+            ),
+            ("empresa", VacationPolicy.planilla_id.is_(None), VacationPolicy.empresa_id == self.planilla.empresa_id),
+            (
+                "global",
+                VacationPolicy.planilla_id.is_(None),
+                VacationPolicy.empresa_id.is_(None),
+            ),
+        ]
+
+        for scope in scopes:
+            scope_name = scope[0]
+            scope_filters = scope[1:]
+            accounts = (
+                db.session.execute(
+                    db.select(VacationAccount).join(VacationAccount.policy).filter(*filtros_base).filter(*scope_filters)
+                )
+                .scalars()
+                .all()
+            )
+            if len(accounts) > 1:
+                raise ValidationError(
+                    f"Más de una cuenta/política de vacaciones encontrada para empleado {empleado.codigo_empleado} "
+                    f"en scope {scope_name}."
+                )
+            if len(accounts) == 1:
+                account = accounts[0]
+                log.info(
+                    "Vacation policy/account resolved: policy_id=%s policy_codigo=%s account_id=%s "
+                    "scope=%s planilla_id=%s empresa_id=%s",
+                    account.policy_id,
+                    account.policy.codigo,
+                    account.id,
+                    scope_name,
+                    self.planilla.id,
+                    self.planilla.empresa_id,
+                )
+                return account, scope_name
+
+        return None, None
+
+    def _validar_empleado_en_planilla(self, empleado: Empleado) -> None:
+        from coati_payroll.model import db, PlanillaEmpleado
+
+        if not self.planilla:
+            raise ValidationError("No hay planilla activa para validar el empleado.")
+
+        existe = db.session.execute(
+            db.select(db.func.count())
+            .select_from(PlanillaEmpleado)
+            .filter(
+                PlanillaEmpleado.planilla_id == self.planilla.id,
+                PlanillaEmpleado.empleado_id == empleado.id,
+                PlanillaEmpleado.activo.is_(True),
+            )
+        ).scalar_one()
+        if existe <= 0:
+            raise ValidationError(
+                f"Empleado {empleado.codigo_empleado} no está asignado a la planilla {self.planilla.id}."
+            )
+
+    def _validar_policy(self, policy: VacationPolicy) -> None:
+        if policy.accrual_rate is not None and Decimal(str(policy.accrual_rate)) < 0:
+            raise ValidationError(f"Policy {policy.codigo}: accrual_rate no puede ser negativo.")
+        if policy.max_balance is not None and Decimal(str(policy.max_balance)) < 0:
+            raise ValidationError(f"Policy {policy.codigo}: max_balance no puede ser negativo.")
+        if not policy.partial_units_allowed and policy.rounding_rule not in self.SUPPORTED_ROUNDING_RULES:
+            raise ValidationError(f"Policy {policy.codigo}: rounding_rule inválido ({policy.rounding_rule}).")
+        if policy.accrual_method == AccrualMethod.PROPORTIONAL:
+            if policy.accrual_basis not in self.SUPPORTED_ACCRUAL_BASIS:
+                raise ValidationError(f"Policy {policy.codigo}: accrual_basis inválido ({policy.accrual_basis}).")
+
+    def _empleado_tiene_vacaciones_en_periodo(self, empleado: Empleado) -> bool:
+        from coati_payroll.model import db, NominaNovedad
+
+        existe = db.session.execute(
+            db.select(db.func.count())
+            .select_from(NominaNovedad)
+            .filter(
+                NominaNovedad.empleado_id == empleado.id,
+                NominaNovedad.es_descanso_vacaciones.is_(True),
+                NominaNovedad.fecha_novedad >= self.periodo_inicio,
+                NominaNovedad.fecha_novedad <= self.periodo_fin,
+            )
+        ).scalar_one()
+        return existe > 0
+
+    def obtener_resumen_vacaciones(self, empleado: Empleado) -> dict[str, Decimal | str] | None:
+        self._validar_empleado_en_planilla(empleado)
+        account, _scope = self._resolver_cuenta_vacaciones(empleado)
+        if not account:
+            return None
+        balance = self._obtener_balance(account)
+        return {
+            "policy_codigo": account.policy.codigo,
+            "balance": balance,
+        }
+
     def acumular_vacaciones_empleado(
         self, empleado: Empleado, nomina_empleado: NominaEmpleado, usuario: str | None = None
     ) -> Decimal:
@@ -133,20 +332,9 @@ class VacationService:
         """
         from coati_payroll.model import db, VacationAccount, VacationLedger
 
-        # Get active vacation account for this employee and payroll
-        account = db.session.execute(
-            db.select(VacationAccount)
-            .filter(
-                VacationAccount.empleado_id == empleado.id,
-                VacationAccount.activo.is_(True),
-            )
-            .join(VacationAccount.policy)
-            .filter(
-                (VacationAccount.policy.has(planilla_id=self.planilla.id))
-                | (VacationAccount.policy.has(empresa_id=self.planilla.empresa_id))
-                | ((VacationAccount.policy.has(planilla_id=None)) & (VacationAccount.policy.has(empresa_id=None)))
-            )
-        ).scalar_one_or_none()
+        self._validar_empleado_en_planilla(empleado)
+
+        account, scope = self._resolver_cuenta_vacaciones(empleado)
 
         if not account:
             log.debug(
@@ -156,6 +344,39 @@ class VacationService:
             return Decimal("0.00")
 
         policy = account.policy
+        self._validar_policy(policy)
+        if policy.unit_type not in ("days", "hours"):
+            raise ValidationError(f"Tipo de unidad inválida en policy {policy.codigo}: {policy.unit_type}.")
+
+        if not policy.accrue_during_leave and self._empleado_tiene_vacaciones_en_periodo(empleado):
+            log.info(
+                "Skipping accrual for employee %s due to vacation leave in period (policy=%s).",
+                empleado.codigo_empleado,
+                policy.codigo,
+            )
+            return Decimal("0.00")
+
+        existing_entry = (
+            db.session.execute(
+                db.select(VacationLedger).filter(
+                    VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+                    VacationLedger.source == "payroll",
+                    VacationLedger.reference_type == "nomina_empleado",
+                    VacationLedger.reference_id == nomina_empleado.id,
+                    VacationLedger.account_id == account.id,
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if existing_entry:
+            log.info(
+                "Accrual already applied for employee %s on nomina %s (ledger=%s).",
+                empleado.codigo_empleado,
+                nomina_empleado.id,
+                existing_entry.id,
+            )
+            return Decimal("0.00")
 
         # Check if employee meets minimum service requirement
         if empleado.fecha_alta:
@@ -173,17 +394,43 @@ class VacationService:
         if accrual_amount <= 0:
             return Decimal("0.00")
 
+        if self.apply_side_effects:
+            account = db.session.execute(
+                db.select(VacationAccount).filter(VacationAccount.id == account.id).with_for_update()
+            ).scalar_one()
+            balance_before = self._recalcular_balance(account)
+        else:
+            balance_before = self._obtener_balance(account)
+
         # Check max balance limit
         if policy.max_balance:
-            if account.current_balance + accrual_amount > policy.max_balance:
+            max_balance = self._quantize_amount(Decimal(str(policy.max_balance)))
+            if balance_before + accrual_amount > max_balance:
                 # Cap at max balance
-                accrual_amount = policy.max_balance - account.current_balance
+                accrual_amount = max_balance - balance_before
                 if accrual_amount <= 0:
                     log.debug(
                         f"Employee {empleado.codigo_empleado} has reached max vacation balance "
-                        f"({account.current_balance} >= {policy.max_balance})"
+                        f"({balance_before} >= {max_balance})"
                     )
                     return Decimal("0.00")
+
+        accrual_amount = self._quantize_amount(accrual_amount)
+        if not policy.partial_units_allowed:
+            rounding = self.ROUNDING_RULES.get(policy.rounding_rule, ROUND_HALF_UP)
+            accrual_amount = accrual_amount.quantize(Decimal("1"), rounding=rounding)
+            if accrual_amount <= 0:
+                return Decimal("0.00")
+
+        if not self.apply_side_effects:
+            log.info(
+                "Accrual calculated (no side effects) for employee %s policy=%s amount=%s balance_before=%s",
+                empleado.codigo_empleado,
+                policy.codigo,
+                accrual_amount,
+                balance_before,
+            )
+            return accrual_amount
 
         # Create ledger entry for accrual
         ledger_entry = VacationLedger(
@@ -199,19 +446,25 @@ class VacationService:
             creado_por=usuario,
         )
 
-        # Update account balance
-        account.current_balance = account.current_balance + accrual_amount
+        # Update account balance (derived from ledger)
         account.last_accrual_date = self.periodo_fin
         account.modificado_por = usuario
-
-        ledger_entry.balance_after = account.current_balance
 
         db.session.add(ledger_entry)
         db.session.flush()
 
+        balance_after = self._recalcular_balance(account)
+        ledger_entry.balance_after = balance_after
+
         log.info(
-            f"Accrued {accrual_amount} {policy.unit_type} vacation for employee "
-            f"{empleado.codigo_empleado} (new balance: {account.current_balance})"
+            "Accrued %s %s vacation for employee %s policy=%s scope=%s " "balance_before=%s balance_after=%s",
+            accrual_amount,
+            policy.unit_type,
+            empleado.codigo_empleado,
+            policy.codigo,
+            scope,
+            balance_before,
+            balance_after,
         )
 
         return accrual_amount
@@ -271,12 +524,10 @@ class VacationService:
 
         # Prorate if period doesn't match frequency
         if dias_periodo == dias_esperados:
-            return policy.accrual_rate
+            return self._quantize_amount(policy.accrual_rate)
         else:
             # Prorate based on days
-            return (policy.accrual_rate * Decimal(dias_periodo) / Decimal(dias_esperados)).quantize(
-                Decimal("0.0001"), rounding=ROUND_HALF_UP
-            )
+            return self._quantize_amount(policy.accrual_rate * Decimal(dias_periodo) / Decimal(dias_esperados))
 
     def _calcular_acumulacion_proporcional(
         self, empleado: Empleado, policy: VacationPolicy, nomina_empleado: NominaEmpleado
@@ -299,15 +550,15 @@ class VacationService:
         if policy.accrual_basis == "days_worked":
             # Assume full days worked for now (could be enhanced to track absences)
             dias_trabajados = Decimal(dias_periodo)
-            return (policy.accrual_rate * dias_trabajados).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            return self._quantize_amount(policy.accrual_rate * dias_trabajados)
         elif policy.accrual_basis == "hours_worked":
             # Calculate based on hours (would need hours tracking in payroll)
             # For now, estimate based on standard hours from configuration
             config = self._obtener_config_calculos()
             horas_estandar = Decimal(str(config.horas_jornada_diaria)) * Decimal(dias_periodo)
-            return (policy.accrual_rate * horas_estandar).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            return self._quantize_amount(policy.accrual_rate * horas_estandar)
         else:
-            return Decimal("0.00")
+            raise ValidationError(f"Policy {policy.codigo}: accrual_basis inválido ({policy.accrual_basis}).")
 
     def _calcular_acumulacion_antiguedad(self, empleado: Empleado, policy: VacationPolicy) -> Decimal:
         """Calculate seniority-based accrual (tiered by years of service).
@@ -331,12 +582,12 @@ class VacationService:
         if config.considerar_bisiesto_vacaciones:
             # Use 365.25 to account for leap years
             dias_anio = Decimal("365.25")
-        anos_servicio = (self.periodo_fin - empleado.fecha_alta).days / float(dias_anio)
+        anos_servicio = Decimal((self.periodo_fin - empleado.fecha_alta).days) / dias_anio
 
         # Find applicable tier
         rate = Decimal("0.00")
         for tier in sorted(policy.seniority_tiers, key=lambda t: t.get("years", 0), reverse=True):
-            if anos_servicio >= tier.get("years", 0):
+            if anos_servicio >= Decimal(str(tier.get("years", 0))):
                 rate = Decimal(str(tier.get("rate", 0)))
                 break
 
@@ -347,11 +598,11 @@ class VacationService:
         if policy.accrual_frequency == AccrualFrequency.ANNUAL:
             dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
             dias_anio = Decimal(str(config.dias_anio_vacaciones))
-            return (rate * Decimal(dias_periodo) / dias_anio).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            return self._quantize_amount(rate * Decimal(dias_periodo) / dias_anio)
         else:
             # If frequency is monthly/biweekly, divide rate accordingly
             meses_anio = Decimal(str(config.meses_anio_financiero))
-            return (rate / meses_anio).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            return self._quantize_amount(rate / meses_anio)
 
     def procesar_novedades_vacaciones(
         self, empleado: Empleado, novedades: dict | list, usuario: str | None = None
@@ -363,46 +614,142 @@ class VacationService:
 
         Args:
             empleado: The employee
-            novedades: Dictionary or list of novelties to process
+            novedades: Dictionary or list of novelties to process (ignored for determinism)
             usuario: Username executing the payroll
 
         Returns:
             Total vacation days/hours used
         """
         from coati_payroll.enums import VacacionEstado
-        from coati_payroll.model import db, VacationNovelty, VacationLedger, NominaNovedad
+        from coati_payroll.model import db, VacationNovelty, VacationLedger, NominaNovedad, VacationAccount
 
         total_usado = Decimal("0.00")
 
+        self._validar_empleado_en_planilla(empleado)
+
+        if novedades:
+            log.debug("Ignoring novedades parameter for vacation processing; using audit-safe sources.")
+
         # Query vacation-related novedades for this employee in this period
-        nomina_novedades = (
-            db.session.execute(
-                db.select(NominaNovedad).filter(
+        if self.snapshot and self.snapshot.get("vacation_novelty_ids"):
+            vacation_novelty_ids = self.snapshot["vacation_novelty_ids"]
+            stmt = db.select(NominaNovedad).filter(
+                NominaNovedad.vacation_novelty_id.in_(vacation_novelty_ids),
+                NominaNovedad.empleado_id == empleado.id,
+            )
+            if self.apply_side_effects:
+                stmt = stmt.with_for_update()
+            nomina_novedades = db.session.execute(stmt).scalars().all()
+        else:
+            from coati_payroll.model import PlanillaEmpleado
+
+            stmt = (
+                db.select(NominaNovedad)
+                .join(PlanillaEmpleado, PlanillaEmpleado.empleado_id == NominaNovedad.empleado_id)
+                .filter(
+                    PlanillaEmpleado.planilla_id == self.planilla.id,
+                    PlanillaEmpleado.activo.is_(True),
                     NominaNovedad.empleado_id == empleado.id,
                     NominaNovedad.es_descanso_vacaciones.is_(True),
                     NominaNovedad.fecha_novedad >= self.periodo_inicio,
                     NominaNovedad.fecha_novedad <= self.periodo_fin,
                 )
             )
-            .scalars()
-            .all()
-        )
+            if self.apply_side_effects:
+                stmt = stmt.with_for_update()
+            nomina_novedades = db.session.execute(stmt).scalars().all()
 
         for nomina_novedad in nomina_novedades:
             # Get the associated vacation novelty
             if not nomina_novedad.vacation_novelty_id:
                 continue
 
-            vac_novelty = db.session.get(VacationNovelty, nomina_novedad.vacation_novelty_id)
+            if self.apply_side_effects:
+                vac_novelty = (
+                    db.session.execute(
+                        db.select(VacationNovelty)
+                        .filter(VacationNovelty.id == nomina_novedad.vacation_novelty_id)
+                        .with_for_update()
+                    )
+                    .scalars()
+                    .first()
+                )
+            else:
+                vac_novelty = db.session.get(VacationNovelty, nomina_novedad.vacation_novelty_id)
 
             if not vac_novelty or vac_novelty.estado != VacacionEstado.APROBADO:
                 continue
 
-            # Skip if already processed (has ledger entry)
-            if vac_novelty.ledger_entry_id:
+            account = vac_novelty.account
+            policy = account.policy
+            self._validar_policy(policy)
+
+            # Skip if already processed (has ledger entry) or ledger already exists
+            existing_usage = (
+                db.session.execute(
+                    db.select(VacationLedger).filter(
+                        VacationLedger.entry_type == VacationLedgerType.USAGE,
+                        VacationLedger.source == "novelty",
+                        VacationLedger.reference_type == "vacation_novelty",
+                        VacationLedger.reference_id == vac_novelty.id,
+                        VacationLedger.account_id == account.id,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+            if vac_novelty.ledger_entry_id or existing_usage:
                 continue
 
-            account = vac_novelty.account
+            if vac_novelty.start_date > vac_novelty.end_date:
+                raise ValidationError(
+                    f"Vacaciones inválidas para empleado {empleado.codigo_empleado}: fecha inicio mayor a fin."
+                )
+            if vac_novelty.units <= 0:
+                raise ValidationError(f"Vacaciones inválidas para empleado {empleado.codigo_empleado}: unidades <= 0.")
+            if policy.unit_type not in ("days", "hours"):
+                raise ValidationError(f"Tipo de unidad inválida en policy {policy.codigo}: {policy.unit_type}.")
+
+            units = self._quantize_amount(Decimal(str(vac_novelty.units)))
+            if not policy.partial_units_allowed:
+                rounding = self.ROUNDING_RULES.get(policy.rounding_rule, ROUND_HALF_UP)
+                units = units.quantize(Decimal("1"), rounding=rounding)
+                if units <= 0:
+                    raise ValidationError(
+                        f"Vacaciones inválidas para empleado {empleado.codigo_empleado}: unidades redondeadas <= 0."
+                    )
+
+            if policy.unit_type == "days":
+                log.debug(
+                    "Vacation units treated as pre-approved days for employee %s policy=%s.",
+                    empleado.codigo_empleado,
+                    policy.codigo,
+                )
+
+            if self.apply_side_effects:
+                account = db.session.execute(
+                    db.select(VacationAccount).filter(VacationAccount.id == account.id).with_for_update()
+                ).scalar_one()
+                balance_before = self._recalcular_balance(account)
+            else:
+                balance_before = self._obtener_balance(account)
+
+            if not policy.allow_negative and balance_before - units < 0:
+                raise NominaEngineError(
+                    f"Saldo insuficiente para vacaciones en empleado {empleado.codigo_empleado} "
+                    f"(policy {policy.codigo})."
+                )
+
+            if not self.apply_side_effects:
+                log.info(
+                    "Usage calculated (no side effects) for employee %s policy=%s units=%s balance_before=%s",
+                    empleado.codigo_empleado,
+                    policy.codigo,
+                    units,
+                    balance_before,
+                )
+                total_usado = total_usado + units
+                continue
 
             # Create ledger entry for usage
             ledger_entry = VacationLedger(
@@ -410,7 +757,7 @@ class VacationService:
                 empleado_id=empleado.id,
                 fecha=self.periodo_fin,
                 entry_type=VacationLedgerType.USAGE,
-                quantity=-abs(vac_novelty.units),  # Negative for usage
+                quantity=-abs(units),  # Negative for usage
                 source="novelty",
                 reference_id=vac_novelty.id,
                 reference_type="vacation_novelty",
@@ -418,24 +765,27 @@ class VacationService:
                 creado_por=usuario,
             )
 
-            # Update account balance
-            account.current_balance = account.current_balance - abs(vac_novelty.units)
             account.modificado_por = usuario
-
-            ledger_entry.balance_after = account.current_balance
-
-            # Link ledger entry to novelty
-            vac_novelty.ledger_entry_id = ledger_entry.id
-            vac_novelty.estado = VacacionEstado.DISFRUTADO
 
             db.session.add(ledger_entry)
             db.session.flush()
 
-            total_usado = total_usado + abs(vac_novelty.units)
+            # Link ledger entry to novelty (after flush for real ID)
+            vac_novelty.ledger_entry_id = ledger_entry.id
+            vac_novelty.estado = VacacionEstado.DISFRUTADO
+
+            balance_after = self._recalcular_balance(account)
+            ledger_entry.balance_after = balance_after
+
+            total_usado = total_usado + abs(units)
 
             log.info(
-                f"Processed vacation usage of {abs(vac_novelty.units)} for employee "
-                f"{empleado.codigo_empleado} (new balance: {account.current_balance})"
+                "Processed vacation usage of %s for employee %s policy=%s " "balance_before=%s balance_after=%s",
+                abs(units),
+                empleado.codigo_empleado,
+                policy.codigo,
+                balance_before,
+                balance_after,
             )
 
         return total_usado

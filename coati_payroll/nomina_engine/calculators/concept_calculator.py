@@ -229,9 +229,7 @@ class ConceptCalculator:
 
             # Find the ReglaCalculo linked to this deduction
             regla = db.session.execute(
-                select(ReglaCalculo)
-                .filter_by(deduccion_id=codigo_concepto)
-                .filter(ReglaCalculo.activo.is_(True))
+                select(ReglaCalculo).filter_by(deduccion_id=codigo_concepto).filter(ReglaCalculo.activo.is_(True))
             ).scalar_one_or_none()
 
             if not regla:

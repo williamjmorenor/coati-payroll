@@ -39,7 +39,7 @@ El `SnapshotService` captura snapshots inmutables de:
 - **Catálogos**: Fórmulas completas de percepciones, deducciones y prestaciones
 
 ```python
-snapshot = snapshot_service.capture_complete_snapshot(planilla, fecha_calculo)
+snapshot = snapshot_service.capture_complete_snapshot(planilla, periodo_inicio, periodo_fin, fecha_calculo)
 ```
 
 ### 3. Integración en Ejecución de Nómina
@@ -50,7 +50,7 @@ Al ejecutar una nómina, se capturan automáticamente todos los snapshots:
 
 ```python
 # Capture configuration snapshots for recalculation consistency
-snapshot = self.snapshot_service.capture_complete_snapshot(planilla, fecha_calculo)
+snapshot = self.snapshot_service.capture_complete_snapshot(planilla, periodo_inicio, periodo_fin, fecha_calculo)
 
 nomina = Nomina(
     # ... otros campos ...
@@ -60,6 +60,10 @@ nomina = Nomina(
     catalogos_snapshot=snapshot["catalogos"],
 )
 ```
+
+> Nota: el snapshot de vacaciones se almacena en `snapshot["vacaciones"]` y se replica en
+> `snapshot["catalogos"]["vacaciones"]` solo para inspección/exportación; el motor usa la
+> clave `snapshot["vacaciones"]` como fuente de verdad en recálculos.
 
 ### 4. Lógica de Recálculo Consistente
 

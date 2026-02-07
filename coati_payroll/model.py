@@ -2076,6 +2076,14 @@ class VacationLedger(database.Model, BaseTabla):
 
     __tablename__ = "vacation_ledger"
     __table_args__ = (
+        database.UniqueConstraint(
+            "entry_type",
+            "source",
+            "reference_type",
+            "reference_id",
+            "account_id",
+            name="uq_vacation_ledger_idempotency",
+        ),
         database.Index("ix_vacation_ledger_account", "account_id"),
         database.Index("ix_vacation_ledger_fecha", "fecha"),
         database.Index("ix_vacation_ledger_type", "entry_type"),

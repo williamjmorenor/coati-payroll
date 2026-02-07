@@ -138,9 +138,7 @@ class TableLookup:
             if len(matched_brackets) > 1:
                 # Multiple brackets match - this indicates an overlap
                 if self.strict_mode:
-                    raise CalculationError(
-                        f"Multiple tax brackets match value {input_value} in table '{table_name}'"
-                    )
+                    raise CalculationError(f"Multiple tax brackets match value {input_value} in table '{table_name}'")
                 self.trace_callback(
                     _(
                         "ADVERTENCIA CRÍTICA: múltiples tramos coinciden para valor %(value)s en tabla '%(table)s'. "

@@ -20,43 +20,63 @@ class VacationProcessor:
         periodo_fin,
         usuario: str | None = None,
         warnings: WarningCollectorProtocol | None = None,
+        apply_side_effects: bool = True,
+        snapshot: dict | None = None,
     ):
         self.planilla = planilla
         self.periodo_inicio = periodo_inicio
         self.periodo_fin = periodo_fin
         self.usuario = usuario
         self.warnings = warnings if warnings is not None else []
+        self.apply_side_effects = apply_side_effects
+        self.snapshot = snapshot
 
     def process_vacations(
         self, empleado: Empleado, emp_calculo: EmpleadoCalculo, nomina_empleado: NominaEmpleado
-    ) -> None:
+    ) -> dict | None:
         """Process vacation accrual and usage for an employee."""
         try:
             from coati_payroll.vacation_service import VacationService
+            from coati_payroll.nomina_engine.validators import ValidationError, NominaEngineError
 
             vacation_service = VacationService(
                 planilla=self.planilla,
                 periodo_inicio=self.periodo_inicio,
                 periodo_fin=self.periodo_fin,
+                apply_side_effects=self.apply_side_effects,
+                snapshot=self.snapshot,
             )
 
+            resumen_before = vacation_service.obtener_resumen_vacaciones(empleado)
+
             # Accumulate vacation time
-            vacation_service.acumular_vacaciones_empleado(
+            accrued = vacation_service.acumular_vacaciones_empleado(
                 empleado=empleado,
                 nomina_empleado=nomina_empleado,
                 usuario=self.usuario,
             )
 
             # Process vacation novelties (time off taken)
-            vacation_service.procesar_novedades_vacaciones(
+            used = vacation_service.procesar_novedades_vacaciones(
                 empleado=empleado,
                 novedades=emp_calculo.novedades,
                 usuario=self.usuario,
             )
+            resumen_after = vacation_service.obtener_resumen_vacaciones(empleado)
+            return {
+                "accrued": str(accrued),
+                "used": str(used),
+                "balance_before": str(resumen_before["balance"]) if resumen_before else None,
+                "balance_after": str(resumen_after["balance"]) if resumen_after else None,
+                "policy_codigo": resumen_after["policy_codigo"] if resumen_after else None,
+            }
 
+        except (ValidationError, NominaEngineError):
+            raise
         except Exception as e:
             log.error(f"Error procesando vacaciones para empleado {empleado.codigo_empleado}: {str(e)}")
             self.warnings.append(
                 f"No se pudieron procesar vacaciones para {empleado.primer_nombre} "
                 f"{empleado.primer_apellido}: {str(e)}"
             )
+            return None
