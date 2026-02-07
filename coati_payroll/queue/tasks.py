@@ -96,7 +96,32 @@ def _is_recoverable_error(error: Exception) -> bool:
     if isinstance(error, ValueError):
         return False
 
-    return False
+    message = str(error).lower()
+    non_recoverable_keywords = (
+        "validation",
+        "integrity",
+        "constraint",
+        "missing required",
+        "invalid",
+        "schema",
+    )
+    recoverable_keywords = (
+        "connection",
+        "timeout",
+        "network",
+        "broken pipe",
+        "temporar",
+        "deadlock",
+        "lock wait",
+        "unavailable",
+    )
+
+    if any(keyword in message for keyword in non_recoverable_keywords):
+        return False
+    if any(keyword in message for keyword in recoverable_keywords):
+        return True
+
+    return True
 
 
 def _get_tracking_session():
@@ -905,9 +930,8 @@ def process_large_payroll(
                 "empleados_procesados_antes_fallo": processed_count,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
-            if not is_recoverable:
-                nomina.estado = NominaEstado.ERROR
-                _clear_nomina_job_lock(nomina_id)
+            nomina.estado = NominaEstado.GENERADO_CON_ERRORES
+            _clear_nomina_job_lock(nomina_id)
             nomina.empleados_procesados = processed_count
             nomina.empleados_con_error = error_count
             log_entries.append(
@@ -961,7 +985,7 @@ def process_large_payroll(
         try:
             nomina = db.session.get(NominaModel, nomina_id)
             if nomina:
-                nomina.estado = NominaEstado.ERROR
+                nomina.estado = NominaEstado.GENERADO_CON_ERRORES
                 nomina.errores_calculo = {"critical_error": str(e)}
                 _clear_nomina_job_lock(nomina_id)
                 db.session.commit()

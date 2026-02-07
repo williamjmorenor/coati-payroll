@@ -178,8 +178,6 @@ class LiquidacionEngine:
         liquidacion.total_bruto = total_bruto
         liquidacion.total_deducciones = total_deducciones
         liquidacion.total_neto = total_neto
-        if liquidacion.estado in {LiquidacionEstado.BORRADOR, LiquidacionEstado.CALCULADA}:
-            liquidacion.estado = LiquidacionEstado.CALCULADA
 
         liquidacion.errores_calculo = {"errors": self.errors} if self.errors else {}
         liquidacion.advertencias_calculo = list(self.warnings)

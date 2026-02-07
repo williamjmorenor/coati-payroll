@@ -404,6 +404,18 @@ class ExportService:
         if not comprobante:
             raise ValueError("No existe comprobante contable para esta nómina")
 
+        balance = comprobante.balance
+        if balance is None:
+            total_debitos = comprobante.total_debitos or 0
+            total_creditos = comprobante.total_creditos or 0
+            balance = total_debitos - total_creditos
+
+        if balance != 0:
+            raise ValueError(
+                "El comprobante no esta balanceado. "
+                f"Debitos: {comprobante.total_debitos}, Creditos: {comprobante.total_creditos}."
+            )
+
         # Get summarized entries - will raise ValueError if accounts are NULL
         accounting_service = AccountingVoucherService(db.session)
         accounting_service.validate_line_integrity(comprobante)
