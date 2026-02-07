@@ -13,13 +13,18 @@ class VacationProcessor:
     """Processor for vacation accrual and usage."""
 
     def __init__(
-        self, planilla: Planilla, periodo_inicio, periodo_fin, usuario: str | None = None, warnings: list[str] = None
+        self,
+        planilla: Planilla,
+        periodo_inicio,
+        periodo_fin,
+        usuario: str | None = None,
+        warnings: list[str] | None = None,
     ):
         self.planilla = planilla
         self.periodo_inicio = periodo_inicio
         self.periodo_fin = periodo_fin
         self.usuario = usuario
-        self.warnings = warnings or []
+        self.warnings = warnings if warnings is not None else []
 
     def process_vacations(
         self, empleado: Empleado, emp_calculo: EmpleadoCalculo, nomina_empleado: NominaEmpleado

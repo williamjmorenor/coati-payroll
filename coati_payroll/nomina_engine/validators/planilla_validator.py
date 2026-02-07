@@ -61,10 +61,12 @@ class PlanillaValidator(BaseValidator):
                     Nomina.planilla_id == planilla.id,
                     Nomina.estado.in_(
                         [
+                            NominaEstado.CALCULANDO,
                             NominaEstado.GENERADO,
                             NominaEstado.APROBADO,
                             NominaEstado.APLICADO,
                             NominaEstado.PAGADO,
+                            NominaEstado.ERROR,
                         ]
                     ),
                     or_(

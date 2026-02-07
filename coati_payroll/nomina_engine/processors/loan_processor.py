@@ -24,6 +24,7 @@ class LoanProcessor:
         periodo_fin: date,
         liquidacion: Liquidacion | None = None,
         calcular_interes: bool = True,
+        apply_side_effects: bool = True,
     ):
         self.nomina = nomina
         self.liquidacion = liquidacion
@@ -31,6 +32,8 @@ class LoanProcessor:
         self.periodo_inicio = periodo_inicio
         self.periodo_fin = periodo_fin
         self.calcular_interes = calcular_interes
+        self.apply_side_effects = apply_side_effects
+        self._pending_actions: list[tuple[Adelanto, Decimal, bool]] = []
 
     def process_loans(
         self, empleado_id: str, saldo_disponible: Decimal, aplicar_prestamos: bool, prioridad_prestamos: int
@@ -62,7 +65,7 @@ class LoanProcessor:
                 break
 
             # Calculate and apply interest if applicable
-            if self.calcular_interes:
+            if self.calcular_interes and self.apply_side_effects:
                 self._calculate_interest(prestamo)
 
             monto_cuota = Decimal(str(prestamo.monto_por_cuota or 0))
@@ -83,7 +86,10 @@ class LoanProcessor:
             saldo_disponible -= monto_aplicar
 
             # Record the payment
-            self._record_payment(prestamo, monto_aplicar)
+            if self.apply_side_effects:
+                self._record_payment(prestamo, monto_aplicar)
+            else:
+                self._pending_actions.append((prestamo, monto_aplicar, True))
 
         return deductions
 
@@ -130,7 +136,10 @@ class LoanProcessor:
             saldo_disponible -= monto_aplicar
 
             # Record the payment
-            self._record_payment(adelanto, monto_aplicar)
+            if self.apply_side_effects:
+                self._record_payment(adelanto, monto_aplicar)
+            else:
+                self._pending_actions.append((adelanto, monto_aplicar, False))
 
         return deductions
 
@@ -138,6 +147,15 @@ class LoanProcessor:
         """Calculate and apply interest for a loan."""
         from coati_payroll.interes_engine import calcular_interes_periodo
         from coati_payroll.model import InteresAdelanto
+
+        if not self.nomina:
+            return
+
+        existing = db.session.execute(
+            db.select(InteresAdelanto).filter_by(adelanto_id=prestamo.id, nomina_id=self.nomina.id)
+        ).scalar_one_or_none()
+        if existing:
+            return
 
         tasa_interes = prestamo.tasa_interes or Decimal("0.0000")
         if tasa_interes <= 0:
@@ -195,6 +213,13 @@ class LoanProcessor:
 
     def _record_payment(self, adelanto: Adelanto, monto: Decimal) -> None:
         """Record a payment towards a loan/advance."""
+        if self.nomina:
+            existing = db.session.execute(
+                db.select(AdelantoAbono).filter_by(adelanto_id=adelanto.id, nomina_id=self.nomina.id)
+            ).scalar_one_or_none()
+            if existing:
+                return
+
         saldo_anterior = Decimal(str(adelanto.saldo_pendiente))
         saldo_posterior = saldo_anterior - monto
 
@@ -214,3 +239,13 @@ class LoanProcessor:
         adelanto.saldo_pendiente = max(saldo_posterior, Decimal("0.00"))
         if adelanto.saldo_pendiente <= 0:
             adelanto.estado = AdelantoEstado.PAGADO
+
+    def apply_pending_effects(self) -> None:
+        """Apply deferred loan/advance side effects after successful payroll."""
+        if self.apply_side_effects or not self._pending_actions:
+            return
+
+        for adelanto, monto, requires_interest in self._pending_actions:
+            if requires_interest and self.calcular_interes:
+                self._calculate_interest(adelanto)
+            self._record_payment(adelanto, monto)

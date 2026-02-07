@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from typing import Any
 
 from coati_payroll.model import Empleado, Planilla
 from ..repositories.exchange_rate_repository import ExchangeRateRepository
@@ -17,13 +18,24 @@ class ExchangeRateCalculator:
     def __init__(self, exchange_rate_repository: ExchangeRateRepository):
         self.exchange_rate_repo = exchange_rate_repository
 
-    def get_exchange_rate(self, empleado: Empleado, planilla: Planilla, fecha_calculo: date) -> Decimal:
+    def get_exchange_rate(
+        self,
+        empleado: Empleado,
+        planilla: Planilla,
+        fecha_calculo: date,
+        tipos_cambio_snapshot: dict[str, Any] | None = None,
+    ) -> Decimal:
         """Get exchange rate for employee's currency to planilla currency."""
         if not empleado.moneda_id:
             return Decimal("1.00")
 
         if empleado.moneda_id == planilla.moneda_id:
             return Decimal("1.00")
+
+        if tipos_cambio_snapshot:
+            snapshot_rate = tipos_cambio_snapshot.get(empleado.moneda_id)
+            if snapshot_rate and snapshot_rate.get("tasa"):
+                return Decimal(str(snapshot_rate["tasa"]))
 
         rate = self.exchange_rate_repo.get_rate(empleado.moneda_id, planilla.moneda_id, fecha_calculo)
         if rate is None:

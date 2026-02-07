@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 from decimal import Decimal, ROUND_HALF_UP
+from typing import Any
 
 from coati_payroll.enums import FormulaType
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
@@ -30,6 +31,8 @@ class ConceptCalculator:
     def __init__(self, config_repository, warnings: list[str]):
         self.config_repo = config_repository
         self.warnings = warnings
+        self.deducciones_snapshot: dict[str, Any] | None = None
+        self.configuracion_snapshot: dict[str, Any] | None = None
 
     def calculate(
         self,
@@ -122,7 +125,7 @@ class ConceptCalculator:
             base = emp_calculo.salario_mensual
 
         # Calculate hourly rate using configuration
-        config = self.config_repo.get_for_empresa(emp_calculo.planilla.empresa_id)
+        config = self._get_config(emp_calculo.planilla.empresa_id)
         dias_base = Decimal(str(config.dias_mes_nomina))
         horas_dia = Decimal(str(config.horas_jornada_diaria))
         tasa_hora = (base / dias_base / horas_dia).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -158,7 +161,7 @@ class ConceptCalculator:
             base = emp_calculo.salario_mensual
 
         # Calculate daily rate using configuration
-        config = self.config_repo.get_for_empresa(emp_calculo.planilla.empresa_id)
+        config = self._get_config(emp_calculo.planilla.empresa_id)
         dias_base = Decimal(str(config.dias_mes_nomina))
         tasa_dia = (base / dias_base).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
@@ -188,10 +191,11 @@ class ConceptCalculator:
             # Calculate before-tax deductions already processed in this period
             deducciones_antes_impuesto_periodo = Decimal("0.00")
             for ded in emp_calculo.deducciones:
-                if ded.deduccion_id:
-                    ded_obj = db.session.get(Deduccion, ded.deduccion_id)
-                    if ded_obj and ded_obj.antes_impuesto:
-                        deducciones_antes_impuesto_periodo += ded.monto
+                if not ded.deduccion_id:
+                    continue
+                ded_metadata = self._get_deduccion_metadata(ded.deduccion_id)
+                if ded_metadata and ded_metadata.get("antes_impuesto"):
+                    deducciones_antes_impuesto_periodo += ded.monto
             inputs["deducciones_antes_impuesto_periodo"] = deducciones_antes_impuesto_periodo
             # Legacy alias for backward compatibility (deprecated but kept to avoid breaking existing schemas)
             inputs["inss_periodo"] = deducciones_antes_impuesto_periodo
@@ -237,10 +241,11 @@ class ConceptCalculator:
             # Calculate before-tax deductions already processed
             deducciones_antes_impuesto_periodo = Decimal("0.00")
             for ded in emp_calculo.deducciones:
-                if ded.deduccion_id:
-                    ded_obj = db.session.get(Deduccion, ded.deduccion_id)
-                    if ded_obj and ded_obj.antes_impuesto:
-                        deducciones_antes_impuesto_periodo += ded.monto
+                if not ded.deduccion_id:
+                    continue
+                ded_metadata = self._get_deduccion_metadata(ded.deduccion_id)
+                if ded_metadata and ded_metadata.get("antes_impuesto"):
+                    deducciones_antes_impuesto_periodo += ded.monto
             inputs["deducciones_antes_impuesto_periodo"] = deducciones_antes_impuesto_periodo
             # Legacy alias for backward compatibility (deprecated but kept to avoid breaking existing schemas)
             inputs["inss_periodo"] = deducciones_antes_impuesto_periodo
@@ -254,3 +259,24 @@ class ConceptCalculator:
         except FormulaEngineError as e:
             self.warnings.append(f"Error en ReglaCalculo {regla.codigo}: {str(e)}")
             return Decimal("0.00")
+
+    def _get_deduccion_metadata(self, deduccion_id: str) -> dict[str, Any] | None:
+        if self.deducciones_snapshot and deduccion_id in self.deducciones_snapshot:
+            return self.deducciones_snapshot[deduccion_id]
+
+        deduccion_obj = db.session.get(Deduccion, deduccion_id)
+        if not deduccion_obj:
+            return None
+
+        return {
+            "antes_impuesto": deduccion_obj.antes_impuesto,
+            "es_impuesto": deduccion_obj.es_impuesto,
+        }
+
+    def _get_config(self, empresa_id: str) -> Any:
+        if self.configuracion_snapshot:
+            from types import SimpleNamespace
+
+            return SimpleNamespace(**self.configuracion_snapshot)
+
+        return self.config_repo.get_for_empresa(empresa_id)

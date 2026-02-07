@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
+from typing import Any
+from types import SimpleNamespace
 
 from coati_payroll.model import Planilla, ConfiguracionCalculos
 from ..repositories.config_repository import ConfigRepository
@@ -18,7 +20,14 @@ class SalaryCalculator:
         self.config_repo = config_repository
 
     def calculate_period_salary(
-        self, salario_mensual: Decimal, planilla: Planilla, periodo_inicio: date, periodo_fin: date, fecha_calculo: date
+        self,
+        salario_mensual: Decimal,
+        planilla: Planilla,
+        periodo_inicio: date,
+        periodo_fin: date,
+        fecha_calculo: date,
+        configuracion_snapshot: dict[str, Any] | None = None,
+        rounding: bool = True,
     ) -> Decimal:
         """Calculate salary for the pay period based on actual days."""
         if not planilla or not planilla.tipo_planilla:
@@ -53,20 +62,30 @@ class SalaryCalculator:
                 return salario_mensual
 
         elif periodicidad == "quincenal":
-            config = self.config_repo.get_for_empresa(planilla.empresa_id)
+            config = self._get_config(planilla.empresa_id, configuracion_snapshot)
             dias_configurados = tipo_planilla.dias or config.dias_quincena
             if dias_periodo == dias_configurados:
                 divisor = Decimal(str(config.dias_mes_nomina)) / Decimal(str(config.dias_quincena))
-                return (salario_mensual / divisor).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                salario_periodo = salario_mensual / divisor
+                if rounding:
+                    return salario_periodo.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                return salario_periodo
 
-        config = self.config_repo.get_for_empresa(planilla.empresa_id)
+        config = self._get_config(planilla.empresa_id, configuracion_snapshot)
         dias_base = Decimal(str(config.dias_mes_nomina))
-        salario_diario = (salario_mensual / dias_base).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        salario_periodo = (salario_diario * Decimal(str(dias_periodo))).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        salario_diario = salario_mensual / dias_base
+        salario_periodo = salario_diario * Decimal(str(dias_periodo))
+        if rounding:
+            salario_diario = salario_diario.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            salario_periodo = salario_periodo.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         return salario_periodo
+
+    def _get_config(self, empresa_id: str, configuracion_snapshot: dict[str, Any] | None) -> Any:
+        if configuracion_snapshot:
+            return SimpleNamespace(**configuracion_snapshot)
+
+        return self.config_repo.get_for_empresa(empresa_id)
 
     def calculate_hourly_rate(self, salario_mensual: Decimal, config: ConfiguracionCalculos) -> Decimal:
         """Calculate hourly rate from monthly salary."""

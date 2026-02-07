@@ -224,6 +224,7 @@ class SnapshotService:
                     "formula": d.formula,
                     "monto_default": str(d.monto_default) if d.monto_default else None,
                     "porcentaje": str(d.porcentaje) if d.porcentaje else None,
+                    "es_impuesto": d.es_impuesto,
                     "antes_impuesto": d.antes_impuesto,
                     "base_calculo": d.base_calculo,
                     "estado_aprobacion": d.estado_aprobacion,

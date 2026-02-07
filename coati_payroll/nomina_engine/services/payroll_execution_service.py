@@ -33,6 +33,7 @@ from ..processors.novelty_processor import NoveltyProcessor
 from ..processors.accounting_processor import AccountingProcessor
 from ..services.employee_processing_service import EmployeeProcessingService
 from ..services.snapshot_service import SnapshotService
+from ..results.warning_collector import WarningCollector
 from ..services.accounting_voucher_service import AccountingVoucherService
 
 
@@ -81,7 +82,7 @@ class PayrollExecutionService:
     ) -> tuple[Nomina | None, list[EmpleadoCalculo], list[str], list[str]]:
         """Execute a complete payroll run."""
         errors: list[str] = []
-        warnings: list[str] = []
+        warnings = WarningCollector()
 
         # Update warnings list for calculators (they need shared reference)
         self.concept_calculator.warnings = warnings
@@ -101,10 +102,32 @@ class PayrollExecutionService:
         validation_result = self.planilla_validator.validate(context)
         if not validation_result.is_valid:
             errors.extend(validation_result.errors)
-            return None, [], errors, warnings
+            return None, [], errors, warnings.to_list()
 
         # Capture configuration snapshots for recalculation consistency
         snapshot = self.snapshot_service.capture_complete_snapshot(planilla, fecha_calculo)
+        deducciones_snapshot = {
+            deduccion["id"]: deduccion for deduccion in snapshot.get("catalogos", {}).get("deducciones", [])
+        }
+        self.concept_calculator.deducciones_snapshot = deducciones_snapshot
+        self.concept_calculator.configuracion_snapshot = snapshot.get("configuracion") or None
+
+        # Prevent duplicate execution for the same period
+        existing = (
+            self.planilla_repo.session.execute(
+                db.select(Nomina).filter(
+                    Nomina.planilla_id == planilla.id,
+                    Nomina.periodo_inicio == periodo_inicio,
+                    Nomina.periodo_fin == periodo_fin,
+                    Nomina.estado != NominaEstado.ANULADO,
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if existing:
+            errors.append("Ya existe una nómina para este período.")
+            return None, [], errors, warnings.to_list()
 
         # Create the Nomina record
         nomina = Nomina(
@@ -112,7 +135,7 @@ class PayrollExecutionService:
             periodo_inicio=periodo_inicio,
             periodo_fin=periodo_fin,
             generado_por=usuario,
-            estado=NominaEstado.GENERADO,
+            estado=NominaEstado.CALCULANDO,
             total_bruto=Decimal("0.00"),
             total_deducciones=Decimal("0.00"),
             total_neto=Decimal("0.00"),
@@ -125,8 +148,9 @@ class PayrollExecutionService:
         db.session.flush()
 
         # Initialize processors that need nomina
-        loan_processor = LoanProcessor(nomina, fecha_calculo, periodo_inicio, periodo_fin)
-        vacation_processor = VacationProcessor(planilla, periodo_inicio, periodo_fin, usuario, warnings)
+        loan_processor = LoanProcessor(
+            nomina, fecha_calculo, periodo_inicio, periodo_fin, calcular_interes=True, apply_side_effects=False
+        )
 
         # Update warnings reference for calculators (shared list)
         self.concept_calculator.warnings = warnings
@@ -153,9 +177,9 @@ class PayrollExecutionService:
                     periodo_inicio,
                     periodo_fin,
                     fecha_calculo,
-                    nomina,
                     loan_processor,
-                    vacation_processor,
+                    snapshot.get("configuracion"),
+                    snapshot.get("tipos_cambio"),
                 )
                 empleados_calculo.append(emp_calculo)
             except (NominaEngineError, FormulaEngineError) as e:
@@ -173,21 +197,44 @@ class PayrollExecutionService:
         # Calculate totals
         self._calculate_totals(nomina, empleados_calculo)
 
-        # Update planilla last execution
-        planilla.ultima_ejecucion = datetime.now(timezone.utc)
+        if not errors:
+            vacation_processor = VacationProcessor(planilla, periodo_inicio, periodo_fin, usuario, warnings)
+
+            for emp_calculo in empleados_calculo:
+                self._apply_employee_side_effects(
+                    emp_calculo,
+                    nomina,
+                    planilla,
+                    periodo_fin,
+                    fecha_calculo,
+                    vacation_processor,
+                    deducciones_snapshot,
+                )
+
+            loan_processor.apply_pending_effects()
+
+            nomina.estado = NominaEstado.GENERADO
+
+            # Update planilla last execution
+            planilla.ultima_ejecucion = datetime.now(timezone.utc)
+
+            # Generate accounting voucher
+            try:
+                self.accounting_voucher_service.generate_accounting_voucher(nomina, planilla, fecha_calculo, usuario)
+                db.session.flush()
+            except Exception as e:
+                # Don't fail the payroll if voucher generation fails
+                warnings.append(f"Advertencia al generar comprobante contable: {str(e)}")
+
+        if errors:
+            nomina.estado = NominaEstado.ERROR
+            db.session.rollback()
+            return None, empleados_calculo, errors, warnings.to_list()
 
         # Save errors and warnings to log_procesamiento for transparency
-        self._save_log_entries(nomina, errors, warnings, empleados_calculo)
+        self._save_log_entries(nomina, errors, warnings.to_list(), empleados_calculo)
 
-        # Generate accounting voucher
-        try:
-            self.accounting_voucher_service.generate_accounting_voucher(nomina, planilla, fecha_calculo, usuario)
-            db.session.flush()
-        except Exception as e:
-            # Don't fail the payroll if voucher generation fails
-            warnings.append(f"Advertencia al generar comprobante contable: {str(e)}")
-
-        return nomina, empleados_calculo, errors, warnings
+        return nomina, empleados_calculo, errors, warnings.to_list()
 
     def _save_log_entries(
         self,
@@ -247,9 +294,9 @@ class PayrollExecutionService:
         periodo_inicio: date,
         periodo_fin: date,
         fecha_calculo: date,
-        nomina: Nomina,
         loan_processor: LoanProcessor,
-        vacation_processor: VacationProcessor,
+        configuracion_snapshot: dict[str, Any] | None,
+        tipos_cambio_snapshot: dict[str, Any] | None,
     ) -> EmpleadoCalculo:
         """Process a single employee's payroll."""
         # Validate employee
@@ -264,21 +311,34 @@ class PayrollExecutionService:
         emp_calculo = EmpleadoCalculo(empleado, planilla)
 
         # Get exchange rate
-        emp_calculo.tipo_cambio = self.exchange_rate_calculator.get_exchange_rate(empleado, planilla, fecha_calculo)
-
-        # Apply exchange rate to convert employee salary to planilla currency
-        salario_mensual = emp_calculo.salario_base
-        if emp_calculo.tipo_cambio != Decimal("1.00"):
-            salario_mensual = (salario_mensual * emp_calculo.tipo_cambio).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
-
-        # Calculate salary for the pay period
-        emp_calculo.salario_base = self.salary_calculator.calculate_period_salary(
-            salario_mensual, planilla, periodo_inicio, periodo_fin, fecha_calculo
+        emp_calculo.tipo_cambio = self.exchange_rate_calculator.get_exchange_rate(
+            empleado, planilla, fecha_calculo, tipos_cambio_snapshot
         )
 
-        # Store the monthly salary for use in calculations
+        salario_mensual_origen = emp_calculo.salario_base
+
+        salario_periodo_origen = self.salary_calculator.calculate_period_salary(
+            salario_mensual_origen,
+            planilla,
+            periodo_inicio,
+            periodo_fin,
+            fecha_calculo,
+            configuracion_snapshot=configuracion_snapshot,
+            rounding=False,
+        )
+
+        if emp_calculo.tipo_cambio != Decimal("1.00"):
+            salario_mensual = (salario_mensual_origen * emp_calculo.tipo_cambio).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+            salario_periodo = (salario_periodo_origen * emp_calculo.tipo_cambio).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        else:
+            salario_mensual = salario_mensual_origen
+            salario_periodo = salario_periodo_origen.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        emp_calculo.salario_base = salario_periodo
         emp_calculo.salario_mensual = salario_mensual
 
         # Load employee novelties
@@ -286,7 +346,7 @@ class PayrollExecutionService:
 
         # Build calculation variables
         emp_calculo.variables_calculo = self.employee_processing_service.build_calculation_variables(
-            emp_calculo, planilla, periodo_inicio, periodo_fin, fecha_calculo
+            emp_calculo, planilla, periodo_inicio, periodo_fin, fecha_calculo, configuracion_snapshot
         )
 
         # Process perceptions
@@ -324,28 +384,36 @@ class PayrollExecutionService:
         # Ensure net salary is not negative
         # Note: warnings list is shared via loan_processor context, so warnings will be added there
         if emp_calculo.salario_neto < 0:
-            emp_calculo.salario_neto = Decimal("0.00")
+            raise NominaEngineError(
+                f"Neto negativo para empleado {empleado.codigo_empleado}: {emp_calculo.salario_neto}"
+            )
 
         # Process employer benefits
         prestaciones = self.benefit_calculator.calculate(emp_calculo, planilla, fecha_calculo)
         emp_calculo.prestaciones = prestaciones
         emp_calculo.total_prestaciones = sum(p.monto for p in prestaciones)
 
-        # Create NominaEmpleado record and update accumulados
+        return emp_calculo
+
+    def _apply_employee_side_effects(
+        self,
+        emp_calculo: EmpleadoCalculo,
+        nomina: Nomina,
+        planilla: Planilla,
+        periodo_fin: date,
+        fecha_calculo: date,
+        vacation_processor: VacationProcessor,
+        deducciones_snapshot: dict[str, dict],
+    ) -> None:
+        """Apply persistence side effects for a successful payroll run."""
         nomina_empleado = self.accounting_processor.create_nomina_empleado(emp_calculo, nomina)
-
-        # Update accumulated annual values
-        self.accumulation_processor.update_accumulations(emp_calculo, planilla, periodo_fin, fecha_calculo)
-
-        # Create prestacion accumulation transactions
+        self.accumulation_processor.update_accumulations(
+            emp_calculo, planilla, periodo_fin, fecha_calculo, deducciones_snapshot
+        )
         self.accounting_processor.create_prestacion_transactions(
             emp_calculo, nomina, planilla, periodo_fin, fecha_calculo
         )
-
-        # Process vacation accrual and usage
-        vacation_processor.process_vacations(empleado, emp_calculo, nomina_empleado)
-
-        return emp_calculo
+        vacation_processor.process_vacations(emp_calculo.empleado, emp_calculo, nomina_empleado)
 
     def _calculate_totals(self, nomina: Nomina, empleados_calculo: list[EmpleadoCalculo]) -> None:
         """Calculate grand totals for the nomina."""
@@ -358,6 +426,6 @@ class PayrollExecutionService:
             total_deducciones += emp_calculo.total_deducciones
             total_neto += emp_calculo.salario_neto
 
-        nomina.total_bruto = total_bruto
-        nomina.total_deducciones = total_deducciones
-        nomina.total_neto = total_neto
+        nomina.total_bruto = total_bruto.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        nomina.total_deducciones = total_deducciones.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        nomina.total_neto = total_neto.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
