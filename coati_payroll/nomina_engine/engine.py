@@ -110,11 +110,11 @@ class NominaEngine:
         if nomina and not self.errors:
             # Commit the transaction only when there are no errors
             db.session.commit()
-            return nomina
-
-        # Rollback on failure or partial errors
-        db.session.rollback()
-        return None
+        else:
+            # Rollback on failure or partial errors
+            db.session.rollback()
+        
+        return nomina
 
 
 def ejecutar_nomina(

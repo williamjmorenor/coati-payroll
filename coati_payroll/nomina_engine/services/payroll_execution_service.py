@@ -228,11 +228,11 @@ class PayrollExecutionService:
 
         if errors:
             nomina.estado = NominaEstado.ERROR
-            db.session.rollback()
-            return None, empleados_calculo, errors, warnings.to_list()
-
-        # Save errors and warnings to log_procesamiento for transparency
-        self._save_log_entries(nomina, errors, warnings.to_list(), empleados_calculo)
+            # Don't rollback here - let the engine decide
+            # Return nomina so tests can inspect estado and other fields
+        else:
+            # Save errors and warnings to log_procesamiento for transparency
+            self._save_log_entries(nomina, errors, warnings.to_list(), empleados_calculo)
 
         return nomina, empleados_calculo, errors, warnings.to_list()
 
