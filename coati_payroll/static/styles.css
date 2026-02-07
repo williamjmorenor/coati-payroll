@@ -98,15 +98,15 @@ body{
 }
 
 /* Fix alignment for logout button to match nav-links */
-.navbar .nav-link.btn.btn-link {
-  padding: 0.4rem 0.75rem !important;
+.navbar .navbar-nav .nav-link.btn.btn-link {
+  padding: 0.4rem 0.75rem;
   text-decoration: none;
   border: none;
   background: none;
   vertical-align: middle;
   line-height: inherit;
 }
-.navbar .nav-link.btn.btn-link:hover {
+.navbar .navbar-nav .nav-link.btn.btn-link:hover {
   text-decoration: none;
   background: none;
 }
