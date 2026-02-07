@@ -124,7 +124,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"a": 10, "b": 5})
-        assert result["output"] == 15.0
+        assert result["output"] == "15.00"
 
     def test_evaluate_subtraction(self):
         """Test subtraction."""
@@ -135,7 +135,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"a": 100})
-        assert result["output"] == 75.0
+        assert result["output"] == "75.00"
 
     def test_evaluate_multiplication(self):
         """Test multiplication."""
@@ -146,7 +146,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"base": 1000})
-        assert result["output"] == 150.0
+        assert result["output"] == "150.00"
 
     def test_evaluate_division(self):
         """Test division."""
@@ -157,18 +157,29 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"total": 100})
-        assert result["output"] == 25.0
+        assert result["output"] == "25.00"
 
     def test_evaluate_division_by_zero(self):
-        """Test division by zero returns 0."""
+        """Test division by zero raises CalculationError in strict mode (default)."""
         schema = {
             "inputs": [{"name": "x", "default": 100}],
             "steps": [{"name": "result", "type": "calculation", "formula": "x / 0"}],
             "output": "result",
         }
-        engine = FormulaEngine(schema)
+        engine = FormulaEngine(schema)  # strict_mode=True by default
+        with pytest.raises(CalculationError, match="Division by zero"):
+            engine.execute({"x": 100})
+
+    def test_evaluate_division_by_zero_non_strict(self):
+        """Test division by zero returns 0 in non-strict mode."""
+        schema = {
+            "inputs": [{"name": "x", "default": 100}],
+            "steps": [{"name": "result", "type": "calculation", "formula": "x / 0"}],
+            "output": "result",
+        }
+        engine = FormulaEngine(schema, strict_mode=False)
         result = engine.execute({"x": 100})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_evaluate_complex_expression(self):
         """Test complex expression with operator precedence."""
@@ -180,7 +191,7 @@ class TestExpressionEvaluation:
         engine = FormulaEngine(schema)
         result = engine.execute({"x": 10})
         # (10 * 2) + 5 - 3 = 20 + 5 - 3 = 22
-        assert result["output"] == 22.0
+        assert result["output"] == "22.00"
 
     def test_evaluate_parentheses(self):
         """Test expression with parentheses."""
@@ -192,7 +203,7 @@ class TestExpressionEvaluation:
         engine = FormulaEngine(schema)
         result = engine.execute({"x": 10})
         # (10 + 5) * 2 = 15 * 2 = 30
-        assert result["output"] == 30.0
+        assert result["output"] == "30.00"
 
     def test_evaluate_power(self):
         """Test power operation."""
@@ -203,7 +214,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"base": 2})
-        assert result["output"] == 8.0
+        assert result["output"] == "8.00"
 
     def test_evaluate_modulo(self):
         """Test modulo operation."""
@@ -214,7 +225,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"x": 17})
-        assert result["output"] == 2.0
+        assert result["output"] == "2.00"
 
     def test_evaluate_with_safe_functions(self):
         """Test evaluation with safe functions."""
@@ -225,7 +236,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"a": 10, "b": 20})
-        assert result["output"] == 20.0
+        assert result["output"] == "20.00"
 
     def test_evaluate_min_function(self):
         """Test min function."""
@@ -236,7 +247,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"x": 100, "limit": 50})
-        assert result["output"] == 50.0
+        assert result["output"] == "50.00"
 
     def test_evaluate_abs_function(self):
         """Test abs function."""
@@ -247,7 +258,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"x": -25})
-        assert result["output"] == 25.0
+        assert result["output"] == "25.00"
 
     def test_evaluate_round_function(self):
         """Test round function."""
@@ -258,7 +269,7 @@ class TestExpressionEvaluation:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"x": 123.456})
-        assert result["output"] == 123.46
+        assert result["output"] == "123.46"
 
     def test_evaluate_undefined_variable(self):
         """Test that undefined variable raises CalculationError."""
@@ -329,7 +340,7 @@ class TestConditionalLogic:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"salary": 5000})
-        assert result["output"] == 500.0
+        assert result["output"] == "500.00"
 
     def test_conditional_false_branch(self):
         """Test conditional taking false branch."""
@@ -348,7 +359,7 @@ class TestConditionalLogic:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"salary": 2000})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_conditional_equals(self):
         """Test conditional with equality operator."""
@@ -367,7 +378,7 @@ class TestConditionalLogic:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"status": 100})
-        assert result["output"] == 1.0
+        assert result["output"] == "1.00"
 
     def test_conditional_not_equals(self):
         """Test conditional with not-equals operator."""
@@ -386,7 +397,7 @@ class TestConditionalLogic:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"x": 5})
-        assert result["output"] == 100.0
+        assert result["output"] == "100.00"
 
     def test_conditional_greater_equals(self):
         """Test conditional with >= operator."""
@@ -405,7 +416,7 @@ class TestConditionalLogic:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"age": 18})
-        assert result["output"] == 1.0
+        assert result["output"] == "1.00"
 
     def test_conditional_less_than(self):
         """Test conditional with < operator."""
@@ -424,7 +435,7 @@ class TestConditionalLogic:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"score": 50})
-        assert result["output"] == 1.0
+        assert result["output"] == "1.00"
 
 
 class TestTaxTableLookup:
@@ -438,14 +449,14 @@ class TestTaxTableLookup:
             "tax_tables": {
                 "tax_table": [
                     {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
-                    {"min": 100001, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                    {"min": 100000.01, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
                 ]
             },
             "output": "tax",
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"income": 50000})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_tax_lookup_second_bracket(self):
         """Test tax lookup in second bracket."""
@@ -455,7 +466,7 @@ class TestTaxTableLookup:
             "tax_tables": {
                 "tax_table": [
                     {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
-                    {"min": 100001, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                    {"min": 100000.01, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
                 ]
             },
             "output": "tax",
@@ -463,7 +474,7 @@ class TestTaxTableLookup:
         engine = FormulaEngine(schema)
         result = engine.execute({"income": 150000})
         # (150000 - 100000) * 0.15 = 7500
-        assert result["output"] == 7500.0
+        assert result["output"] == "7500.00"
 
     def test_tax_lookup_with_fixed_amount(self):
         """Test tax lookup with fixed base amount."""
@@ -473,8 +484,8 @@ class TestTaxTableLookup:
             "tax_tables": {
                 "tax_table": [
                     {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
-                    {"min": 100001, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
-                    {"min": 200001, "max": 300000, "rate": 0.20, "fixed": 15000, "over": 200000},
+                    {"min": 100000.01, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                    {"min": 200000.01, "max": 300000, "rate": 0.20, "fixed": 15000, "over": 200000},
                 ]
             },
             "output": "tax",
@@ -482,7 +493,7 @@ class TestTaxTableLookup:
         engine = FormulaEngine(schema)
         result = engine.execute({"income": 250000})
         # 15000 + (250000 - 200000) * 0.20 = 15000 + 10000 = 25000
-        assert result["output"] == 25000.0
+        assert result["output"] == "25000.00"
 
     def test_tax_lookup_open_ended_bracket(self):
         """Test tax lookup in open-ended (highest) bracket."""
@@ -492,8 +503,8 @@ class TestTaxTableLookup:
             "tax_tables": {
                 "tax_table": [
                     {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
-                    {"min": 100001, "max": 500000, "rate": 0.15, "fixed": 0, "over": 100000},
-                    {"min": 500001, "max": None, "rate": 0.30, "fixed": 60000, "over": 500000},
+                    {"min": 100000.01, "max": 500000, "rate": 0.15, "fixed": 0, "over": 100000},
+                    {"min": 500000.01, "max": None, "rate": 0.30, "fixed": 60000, "over": 500000},
                 ]
             },
             "output": "tax",
@@ -501,10 +512,10 @@ class TestTaxTableLookup:
         engine = FormulaEngine(schema)
         result = engine.execute({"income": 600000})
         # 60000 + (600000 - 500000) * 0.30 = 60000 + 30000 = 90000
-        assert result["output"] == 90000.0
+        assert result["output"] == "90000.00"
 
-    def test_tax_lookup_no_matching_bracket(self):
-        """Test tax lookup with no matching bracket returns zeros."""
+    def test_tax_lookup_no_matching_bracket_strict_default(self):
+        """Test tax lookup with no matching bracket raises CalculationError in strict mode (default)."""
         schema = {
             "inputs": [{"name": "income", "default": -100}],
             "steps": [{"name": "tax", "type": "tax_lookup", "table": "tax_table", "input": "income"}],
@@ -512,8 +523,20 @@ class TestTaxTableLookup:
             "output": "tax",
         }
         engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="No tax bracket"):
+            engine.execute({"income": -100})
+
+    def test_tax_lookup_no_matching_bracket_non_strict(self):
+        """Test tax lookup with no matching bracket returns 0 in non-strict mode."""
+        schema = {
+            "inputs": [{"name": "income", "default": -100}],
+            "steps": [{"name": "tax", "type": "tax_lookup", "table": "tax_table", "input": "income"}],
+            "tax_tables": {"tax_table": [{"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0}]},
+            "output": "tax",
+        }
+        engine = FormulaEngine(schema, strict_mode=False)
         result = engine.execute({"income": -100})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_tax_lookup_missing_table(self):
         """Test that missing tax table raises CalculationError."""
@@ -545,7 +568,7 @@ class TestTaxTableValidation:
             "steps": [],
             "tax_tables": {
                 "tax_table": [
-                    {"min": 100001, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
+                    {"min": 100000.01, "max": 200000, "rate": 0.15, "fixed": 0, "over": 100000},
                     {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
                 ]
             },
@@ -579,7 +602,7 @@ class TestTaxTableValidation:
             },
         }
         # Should not raise error, but will log warning
-        engine = FormulaEngine(schema)
+        engine = FormulaEngine(schema, strict_mode=False)
         assert engine is not None
 
     def test_small_gap_in_brackets_no_warning(self):
@@ -673,7 +696,7 @@ class TestTaxTableValidation:
             "tax_tables": {
                 "tax_table": [
                     {"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0},
-                    {"min": 100001, "max": None, "rate": 0.15, "fixed": 0, "over": 100000},
+                    {"min": 100000.01, "max": None, "rate": 0.15, "fixed": 0, "over": 100000},
                 ]
             },
         }
@@ -714,11 +737,11 @@ class TestTaxTableValidation:
             "output": "tax",
         }
         # Gaps should generate warning but not error (unless strict_mode)
-        engine = FormulaEngine(schema_gap)
+        engine = FormulaEngine(schema_gap, strict_mode=False)
         assert engine is not None
         # Value in gap should return zeros
         result = engine.execute({"income": 125000})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_defensive_lookup_handles_empty_table(self):
         """Test that defensive lookup handles empty table gracefully."""
@@ -808,10 +831,10 @@ class TestCompleteExecution:
         result = engine.execute({"base_salary": 10000, "bonus_rate": 0.1})
 
         # base = 10000, bonus = 1000, gross = 11000, tax = 1650, net = 9350
-        assert result["output"] == 9350.0
-        assert result["variables"]["bonus"] == 1000.0
-        assert result["variables"]["gross"] == 11000.0
-        assert result["variables"]["tax"] == 1650.0
+        assert result["output"] == "9350.00"
+        assert result["variables"]["bonus"] == "1000.00"
+        assert result["variables"]["gross"] == "11000.00"
+        assert result["variables"]["tax"] == "1650.00"
 
     def test_execute_with_defaults(self):
         """Test execution using default input values."""
@@ -822,7 +845,7 @@ class TestCompleteExecution:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({})  # No inputs provided, use defaults
-        assert result["output"] == 150.0
+        assert result["output"] == "150.00"
 
     def test_execute_with_assignment_step(self):
         """Test execution with assignment step."""
@@ -836,7 +859,7 @@ class TestCompleteExecution:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"base": 1000})
-        assert result["output"] == 2500.0
+        assert result["output"] == "2500.00"
 
     def test_execute_progressive_tax_calculation(self):
         """Test realistic progressive tax calculation."""
@@ -850,9 +873,9 @@ class TestCompleteExecution:
             "tax_tables": {
                 "progressive_rates": [
                     {"min": 0, "max": 50000, "rate": 0, "fixed": 0, "over": 0},
-                    {"min": 50001, "max": 100000, "rate": 0.10, "fixed": 0, "over": 50000},
-                    {"min": 100001, "max": 200000, "rate": 0.20, "fixed": 5000, "over": 100000},
-                    {"min": 200001, "max": None, "rate": 0.30, "fixed": 25000, "over": 200000},
+                    {"min": 50000.01, "max": 100000, "rate": 0.10, "fixed": 0, "over": 50000},
+                    {"min": 100000.01, "max": 200000, "rate": 0.20, "fixed": 5000, "over": 100000},
+                    {"min": 200000.01, "max": None, "rate": 0.30, "fixed": 25000, "over": 200000},
                 ]
             },
             "output": "monthly_tax",
@@ -862,7 +885,7 @@ class TestCompleteExecution:
 
         # Tax calculation: 5000 + (150000 - 100000) * 0.20 = 5000 + 10000 = 15000
         # Monthly: 15000 / 12 = 1250
-        assert result["output"] == 1250.0
+        assert result["output"] == "1250.00"
 
     def test_execute_returns_all_variables(self):
         """Test that execute returns all intermediate variables."""
@@ -878,9 +901,9 @@ class TestCompleteExecution:
         result = engine.execute({"x": 10})
 
         assert "variables" in result
-        assert result["variables"]["x"] == 10.0
-        assert result["variables"]["step1"] == 20.0
-        assert result["variables"]["step2"] == 25.0
+        assert result["variables"]["x"] == "10.00"
+        assert result["variables"]["step1"] == "20.00"
+        assert result["variables"]["step2"] == "25.00"
 
     def test_execute_step_error_provides_context(self):
         """Test that step errors include helpful context."""
@@ -920,7 +943,7 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         # Pass string that represents a valid number
         result = engine.execute({"salary": "10000"})
-        assert result["output"] == 1500.0
+        assert result["output"] == "1500.00"
 
     def test_execute_with_invalid_string_input(self):
         """Test that invalid string input raises ValidationError."""
@@ -943,7 +966,7 @@ class TestBadInputHandling:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"bonus": None})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_execute_with_empty_string_input(self):
         """Test handling of empty string input."""
@@ -965,7 +988,7 @@ class TestBadInputHandling:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"adjustment": -50})
-        assert result["output"] == 50.0
+        assert result["output"] == "50.00"
 
     def test_execute_with_very_large_numbers(self):
         """Test handling of very large numbers."""
@@ -976,7 +999,7 @@ class TestBadInputHandling:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"big_num": 999999999999})
-        assert result["output"] == 1000000000.0
+        assert result["output"] == "1000000000.00"
 
     def test_execute_with_very_small_decimals(self):
         """Test handling of very small decimal numbers."""
@@ -987,7 +1010,7 @@ class TestBadInputHandling:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"tiny": 0.000001})
-        assert result["output"] == 1.0
+        assert result["output"] == "1.00"
 
     def test_execute_with_special_float_values(self):
         """Test handling of special float values like infinity."""
@@ -999,7 +1022,7 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         # float('inf') should convert to Decimal but might cause issues
         result = engine.execute({"x": 100})
-        assert result["output"] == 200.0
+        assert result["output"] == "200.00"
 
     def test_execute_with_list_input(self):
         """Test that list input raises appropriate error."""
@@ -1033,10 +1056,10 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         # True should convert to 1, False to 0
         result = engine.execute({"flag": True})
-        assert result["output"] == 100.0
+        assert result["output"] == "100.00"
 
         result = engine.execute({"flag": False})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_execute_with_mixed_type_operations(self):
         """Test operations with mixed types."""
@@ -1051,7 +1074,7 @@ class TestBadInputHandling:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"int_val": 100, "float_val": 50.5, "str_val": "25.25"})
-        assert result["output"] == 175.75
+        assert result["output"] == "175.75"
 
     def test_tax_lookup_with_invalid_input_type(self):
         """Test tax lookup with invalid input type."""
@@ -1064,7 +1087,7 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         # String that can be converted should work
         result = engine.execute({"income": "50000"})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_conditional_with_invalid_operator(self):
         """Test conditional with invalid comparison operator."""
@@ -1108,7 +1131,7 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         result = engine.execute({"x": 10})
         # Empty formula should return 0
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_whitespace_only_formula(self):
         """Test evaluation of whitespace-only formula."""
@@ -1119,7 +1142,7 @@ class TestBadInputHandling:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"x": 10})
-        assert result["output"] == 0.0
+        assert result["output"] == "0.00"
 
     def test_malformed_tax_table_structure(self):
         """Test tax lookup with malformed table structure."""
@@ -1143,7 +1166,7 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         # Only provide 'required', 'optional' should use default
         result = engine.execute({"required": 200})
-        assert result["output"] == 250.0
+        assert result["output"] == "250.00"
 
     def test_extra_inputs_are_ignored(self):
         """Test that extra inputs that aren't in schema are ignored."""
@@ -1155,7 +1178,7 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         # Provide extra input that isn't in schema
         result = engine.execute({"x": 10, "extra": 999, "another": "ignored"})
-        assert result["output"] == 20.0
+        assert result["output"] == "20.00"
 
     def test_scientific_notation_input(self):
         """Test handling of scientific notation numbers."""
@@ -1166,7 +1189,7 @@ class TestBadInputHandling:
         }
         engine = FormulaEngine(schema)
         result = engine.execute({"scientific": 1.5e6})
-        assert result["output"] == 3000000.0
+        assert result["output"] == "3000000.00"
 
     def test_decimal_precision_preservation(self):
         """Test that decimal precision is preserved in calculations."""
@@ -1178,7 +1201,7 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         result = engine.execute({"precise": "123.456789"})
         # Check that precision is maintained
-        assert result["output"] == 370.37
+        assert result["output"] == "370.37"
 
     def test_unicode_in_variable_names(self):
         """Test that unicode characters in input keys don't break execution."""
@@ -1190,7 +1213,7 @@ class TestBadInputHandling:
         engine = FormulaEngine(schema)
         # Unicode in input keys that aren't used shouldn't cause issues
         result = engine.execute({"normal_var": 100, "unicode_key_ñ": 50})
-        assert result["output"] == 200.0
+        assert result["output"] == "200.00"
 
     def test_assignment_with_invalid_value_type(self):
         """Test assignment step with invalid value type."""

@@ -78,14 +78,17 @@ class SafeASTVisitor(ASTVisitor):
     any possibility of method injection or unexpected behavior.
     """
 
-    def __init__(self, variables: dict[str, Decimal]):
+    def __init__(self, variables: dict[str, Decimal], strict_mode: bool = False):
         """Initialize visitor with variable context.
 
         Args:
             variables: Dictionary of variable names to Decimal values.
                       This dictionary is not modified during evaluation.
+            strict_mode: If True, raises CalculationError on division by zero.
+                        If False, returns Decimal("0") for backward compatibility.
         """
         self.variables = variables
+        self.strict_mode = strict_mode
 
     def visit(self, node: ast.AST) -> Decimal:
         """Visit and evaluate an AST node using explicit dispatch.
@@ -176,6 +179,8 @@ class SafeASTVisitor(ASTVisitor):
             )
 
         if op_type in (ast.Div, ast.FloorDiv, ast.Mod) and right == 0:
+            if self.strict_mode:
+                raise CalculationError("Division by zero detected while evaluating expression.")
             return Decimal("0")
 
         try:
@@ -243,9 +248,13 @@ class SafeASTVisitor(ASTVisitor):
 
         try:
             if func_name == "round" and len(args) > 1:
-                if args[1] < 0 or args[1] > 10:
-                    raise CalculationError(f"round() precision must be between 0 and 10, got {args[1]}")
-                result = SAFE_FUNCTIONS[func_name](args[0], int(args[1]))
+                # Validate that precision is an exact integer
+                if args[1] != args[1].to_integral_value():
+                    raise CalculationError(f"round() precision must be an integer, got {args[1]}")
+                prec = int(args[1])
+                if prec < 0 or prec > 10:
+                    raise CalculationError(f"round() precision must be between 0 and 10, got {prec}")
+                result = SAFE_FUNCTIONS[func_name](args[0], prec)
             else:
                 result = SAFE_FUNCTIONS[func_name](*args)
             return to_decimal(result)

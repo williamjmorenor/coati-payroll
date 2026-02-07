@@ -26,15 +26,22 @@ from .bracket_calculator import BracketCalculator
 class TableLookup:
     """Handles lookups in tax tables."""
 
-    def __init__(self, tax_tables: dict[str, Any], trace_callback: Callable[[str], None] | None = None):
+    def __init__(
+        self,
+        tax_tables: dict[str, Any],
+        trace_callback: Callable[[str], None] | None = None,
+        strict_mode: bool = False,
+    ):
         """Initialize table lookup.
 
         Args:
             tax_tables: Dictionary of tax table names to table definitions
             trace_callback: Optional callback for trace logging
+            strict_mode: If True, treats table warnings as errors
         """
         self.tax_tables = tax_tables
         self.trace_callback = trace_callback or (lambda _: None)
+        self.strict_mode = strict_mode
 
     def lookup(self, table_name: str, input_value: Decimal) -> dict[str, Decimal]:
         """Look up tax bracket in a tax table.
@@ -50,14 +57,15 @@ class TableLookup:
             CalculationError: If table not found or lookup fails
         """
         if table_name not in self.tax_tables:
-            raise CalculationError(f"Tax table '{table_name}' not found")
+            raise CalculationError(f"Tax table '{table_name}' not found for input value {input_value}")
 
         table = self.tax_tables[table_name]
         if not isinstance(table, list):
-            raise CalculationError(f"Tax table '{table_name}' must be a list")
+            raise CalculationError(f"Tax table '{table_name}' must be a list for input value {input_value}")
 
         if not table:
-            # Defensive: empty table
+            if self.strict_mode:
+                raise CalculationError(f"Tax table '{table_name}' is empty for input value {input_value}")
             self.trace_callback(
                 _("Advertencia: tabla de impuestos '%(table)s' está vacía, devolviendo ceros") % {"table": table_name}
             )
@@ -77,12 +85,20 @@ class TableLookup:
         try:
             sorted_table = sorted(table, key=lambda b: to_decimal(b.get("min", 0)))
             if sorted_table != table:
+                if self.strict_mode:
+                    raise CalculationError(
+                        f"Tax table '{table_name}' is not ordered by 'min' values for input value {input_value}"
+                    )
                 self.trace_callback(
                     _("Advertencia: tabla '%(table)s' no estaba ordenada, ordenando automáticamente")
                     % {"table": table_name}
                 )
                 table = sorted_table
         except Exception as e:
+            if self.strict_mode:
+                raise CalculationError(
+                    f"Failed to validate ordering for table '{table_name}' with input value {input_value}: {e}"
+                ) from e
             self.trace_callback(
                 _("Advertencia: no se pudo ordenar la tabla '%(table)s': %(error)s")
                 % {"table": table_name, "error": str(e)}
@@ -121,6 +137,10 @@ class TableLookup:
         if matched_brackets:
             if len(matched_brackets) > 1:
                 # Multiple brackets match - this indicates an overlap
+                if self.strict_mode:
+                    raise CalculationError(
+                        f"Multiple tax brackets match value {input_value} in table '{table_name}'"
+                    )
                 self.trace_callback(
                     _(
                         "ADVERTENCIA CRÍTICA: múltiples tramos coinciden para valor %(value)s en tabla '%(table)s'. "
@@ -151,6 +171,8 @@ class TableLookup:
             )
             % {"value": input_value, "table": table_name}
         )
+        if self.strict_mode:
+            raise CalculationError(f"No tax bracket found for value {input_value} in table '{table_name}'")
         return {
             "tax": Decimal("0"),
             "rate": Decimal("0"),

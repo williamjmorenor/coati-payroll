@@ -35,10 +35,10 @@ class ExecutionResult:
     def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary format with 2 decimal places rounding."""
 
-        def _round_to_two(value: Decimal) -> float:
-            """Round Decimal to 2 decimal places."""
+        def _round_to_two(value: Decimal) -> str:
+            """Round Decimal to 2 decimal places and return as string."""
             rounded = value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            return float(rounded)
+            return format(rounded, "f")
 
         # Procesar variables
         processed_vars = {}

@@ -71,7 +71,12 @@ class ExpressionEvaluator:
     modified during evaluation. Each evaluation creates a new visitor instance.
     """
 
-    def __init__(self, variables: dict[str, Decimal], trace_callback: Callable[[str], None] | None = None):
+    def __init__(
+        self,
+        variables: dict[str, Decimal],
+        trace_callback: Callable[[str], None] | None = None,
+        strict_mode: bool = False,
+    ):
         """Initialize expression evaluator.
 
         Args:
@@ -82,6 +87,7 @@ class ExpressionEvaluator:
         """
         self.variables = variables
         self.trace_callback = trace_callback or self._default_trace
+        self.strict_mode = strict_mode
 
     def _default_trace(self, message: str) -> None:
         """Default trace callback."""
@@ -139,7 +145,7 @@ class ExpressionEvaluator:
             self._validate_ast_security(tree.body)
             self._validate_ast_depth(tree.body)
 
-            visitor = SafeASTVisitor(self.variables)
+            visitor = SafeASTVisitor(self.variables, strict_mode=self.strict_mode)
             result = visitor.visit(tree.body)
             final_result = to_decimal(result)
 
@@ -152,10 +158,12 @@ class ExpressionEvaluator:
                 f"Invalid expression syntax in '{expression}': {e}. "
                 "Check for unmatched parentheses, invalid operators, or typos."
             ) from e
-        except ZeroDivisionError:
+        except ZeroDivisionError as e:
+            if self.strict_mode:
+                raise CalculationError("Division by zero detected while evaluating expression.") from e
             return Decimal("0")
-        except CalculationError:
-            raise
+        except CalculationError as e:
+            raise CalculationError(f"Error evaluating expression '{expression}': {e}") from e
         except Exception as e:
             raise CalculationError(f"Unexpected error evaluating expression '{expression}': {e}") from e
 

@@ -107,14 +107,18 @@ class NominaEngine:
         self.errors = errors
         self.warnings = warnings
 
-        if nomina:
-            # Commit the transaction
+        if nomina and not self.errors:
+            # Commit the transaction only when there are no errors
             db.session.commit()
-            return nomina
+        elif nomina and self.errors:
+            # Commit ERROR nomina for audit trail (without side effects)
+            # This preserves the failed payroll record and logs for debugging/retry
+            db.session.commit()
         else:
-            # Rollback on failure
+            # Rollback if nomina creation itself failed
             db.session.rollback()
-            return None
+
+        return nomina
 
 
 def ejecutar_nomina(

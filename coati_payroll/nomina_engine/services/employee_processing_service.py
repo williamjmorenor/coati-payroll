@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import Any
 
 from coati_payroll.model import Empleado, Planilla, AcumuladoAnual
@@ -32,12 +33,13 @@ class EmployeeProcessingService:
         periodo_inicio: date,
         periodo_fin: date,
         fecha_calculo: date,
+        configuracion_snapshot: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Build the calculation variables for an employee."""
         empleado = emp_calculo.empleado
         tipo_planilla = planilla.tipo_planilla
 
-        config = self.config_repo.get_for_empresa(planilla.empresa_id)
+        config = self._resolve_config(planilla.empresa_id, configuracion_snapshot)
 
         # Calculate days in period
         dias_periodo = (periodo_fin - periodo_inicio).days + 1
@@ -50,11 +52,25 @@ class EmployeeProcessingService:
 
         # Calculate remaining months in fiscal year
         mes_inicio_fiscal = tipo_planilla.mes_inicio_fiscal if tipo_planilla else 1
-        meses_restantes = config.meses_anio_financiero - fecha_calculo.month + mes_inicio_fiscal
-        if meses_restantes > config.meses_anio_financiero:
-            meses_restantes -= config.meses_anio_financiero
+        meses_anio_financiero = int(config.meses_anio_financiero)
+        if meses_anio_financiero <= 0:
+            from ..validators import ValidationError
+
+            raise ValidationError("Configuración inválida: meses_anio_financiero debe ser mayor que cero.")
+
+        if not 1 <= mes_inicio_fiscal <= meses_anio_financiero:
+            from ..validators import ValidationError
+
+            raise ValidationError(
+                "Configuración inválida: mes_inicio_fiscal fuera del rango del año financiero configurado."
+            )
+
+        meses_transcurridos = (fecha_calculo.month - mes_inicio_fiscal) % meses_anio_financiero
+        meses_restantes = meses_anio_financiero - meses_transcurridos
         if meses_restantes <= 0:
-            meses_restantes = 1
+            from ..validators import ValidationError
+
+            raise ValidationError("Configuración inválida: meses_restantes calculado es menor o igual a cero.")
 
         # Build variables dictionary
         variables = {
@@ -75,7 +91,7 @@ class EmployeeProcessingService:
             # Fiscal calculations
             "meses_restantes": Decimal(str(meses_restantes)),
             "periodos_por_anio": Decimal(
-                str(tipo_planilla.periodos_por_anio if tipo_planilla else config.meses_anio_financiero)
+                str(tipo_planilla.periodos_por_anio if tipo_planilla else meses_anio_financiero)
             ),
             # Accumulated values (will be populated from AcumuladoAnual)
             "salario_acumulado": Decimal("0.00"),
@@ -84,12 +100,12 @@ class EmployeeProcessingService:
             "salario_acumulado_mes": Decimal("0.00"),
         }
 
-        # Add employee implementation initial values
-        if empleado.salario_acumulado:
-            variables["salario_acumulado"] = Decimal(str(empleado.salario_acumulado))
-        if empleado.impuesto_acumulado:
-            variables["impuesto_acumulado"] = Decimal(str(empleado.impuesto_acumulado))
-            variables["ir_retenido_acumulado"] = Decimal(str(empleado.impuesto_acumulado))
+        salario_base_acumulado = Decimal(str(empleado.salario_acumulado or 0))
+        impuesto_base_acumulado = Decimal(str(empleado.impuesto_acumulado or 0))
+
+        variables["salario_acumulado"] = salario_base_acumulado
+        variables["impuesto_acumulado"] = impuesto_base_acumulado
+        variables["ir_retenido_acumulado"] = impuesto_base_acumulado
 
         # Add novelties
         for codigo, valor in emp_calculo.novedades.items():
@@ -98,9 +114,9 @@ class EmployeeProcessingService:
         # Load accumulated annual values
         acumulado = self._get_acumulado_anual(empleado, planilla, fecha_calculo)
         if acumulado:
-            variables["salario_acumulado"] += Decimal(str(acumulado.salario_bruto_acumulado or 0))
-            variables["impuesto_acumulado"] += Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
-            variables["ir_retenido_acumulado"] += Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
+            variables["salario_acumulado"] = Decimal(str(acumulado.salario_bruto_acumulado or 0))
+            variables["impuesto_acumulado"] = Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
+            variables["ir_retenido_acumulado"] = Decimal(str(acumulado.impuesto_retenido_acumulado or 0))
             variables["salario_acumulado_mes"] = Decimal(str(acumulado.salario_acumulado_mes or 0))
 
             # Additional accumulated values for progressive tax calculations
@@ -118,10 +134,16 @@ class EmployeeProcessingService:
             )
 
         # Include initial accumulated values from employee
-        variables["salario_inicial_acumulado"] = Decimal(str(empleado.salario_acumulado or 0))
-        variables["impuesto_inicial_acumulado"] = Decimal(str(empleado.impuesto_acumulado or 0))
+        variables["salario_inicial_acumulado"] = salario_base_acumulado
+        variables["impuesto_inicial_acumulado"] = impuesto_base_acumulado
 
         return variables
+
+    def _resolve_config(self, empresa_id: str, configuracion_snapshot: dict[str, Any] | None) -> Any:
+        if configuracion_snapshot:
+            return SimpleNamespace(**configuracion_snapshot)
+
+        return self.config_repo.get_for_empresa(empresa_id)
 
     def _get_acumulado_anual(
         self, empleado: Empleado, planilla: Planilla, fecha_calculo: date

@@ -27,6 +27,7 @@ class ExecutionContext:
 
     variables: dict[str, Decimal]
     tax_tables: dict[str, Any]
+    strict_mode: bool = False
     trace_callback: Callable[[str], None] | None = None
     safe_operators: dict[type, Any] = field(default_factory=lambda: SAFE_OPERATORS)
     safe_functions: dict[str, Any] = field(default_factory=lambda: SAFE_FUNCTIONS)
@@ -45,6 +46,7 @@ class ExecutionContext:
         return ExecutionContext(
             variables=new_vars,
             tax_tables=self.tax_tables,
+            strict_mode=self.strict_mode,
             trace_callback=self.trace_callback,
             safe_operators=self.safe_operators,
             safe_functions=self.safe_functions,
