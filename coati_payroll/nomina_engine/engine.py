@@ -113,7 +113,7 @@ class NominaEngine:
         else:
             # Rollback on failure or partial errors
             db.session.rollback()
-        
+
         return nomina
 
 
