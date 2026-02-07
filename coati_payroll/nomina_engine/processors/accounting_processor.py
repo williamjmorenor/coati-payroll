@@ -10,6 +10,7 @@ from decimal import Decimal
 from coati_payroll.enums import TipoAcumulacionPrestacion, TipoDetalle
 from coati_payroll.model import db, Nomina, NominaEmpleado, NominaDetalle, Prestacion, PrestacionAcumulada
 from ..domain.employee_calculation import EmpleadoCalculo
+from ..utils.rounding import round_money
 
 
 class AccountingProcessor:
@@ -22,16 +23,16 @@ class AccountingProcessor:
         nomina_empleado = NominaEmpleado(
             nomina_id=nomina.id,
             empleado_id=empleado.id,
-            salario_bruto=emp_calculo.salario_bruto,
-            total_ingresos=emp_calculo.total_percepciones,
-            total_deducciones=emp_calculo.total_deducciones,
-            salario_neto=emp_calculo.salario_neto,
+            salario_bruto=round_money(emp_calculo.salario_bruto),
+            total_ingresos=round_money(emp_calculo.total_percepciones),
+            total_deducciones=round_money(emp_calculo.total_deducciones),
+            salario_neto=round_money(emp_calculo.salario_neto),
             moneda_origen_id=emp_calculo.moneda_origen_id,
             tipo_cambio_aplicado=emp_calculo.tipo_cambio,
             cargo_snapshot=empleado.cargo,
             area_snapshot=empleado.area,
             centro_costos_snapshot=empleado.centro_costos,
-            sueldo_base_historico=emp_calculo.salario_base,
+            sueldo_base_historico=round_money(emp_calculo.salario_base),
         )
         db.session.add(nomina_empleado)
         db.session.flush()
@@ -45,7 +46,7 @@ class AccountingProcessor:
                 tipo=TipoDetalle.INGRESO,
                 codigo=percepcion.codigo,
                 descripcion=percepcion.nombre,
-                monto=percepcion.monto,
+                monto=round_money(percepcion.monto),
                 orden=orden,
                 percepcion_id=percepcion.percepcion_id,
             )
@@ -59,7 +60,7 @@ class AccountingProcessor:
                 tipo=TipoDetalle.DEDUCCION,
                 codigo=deduccion.codigo,
                 descripcion=deduccion.nombre,
-                monto=deduccion.monto,
+                monto=round_money(deduccion.monto),
                 orden=orden,
                 deduccion_id=deduccion.deduccion_id,
             )
@@ -73,7 +74,7 @@ class AccountingProcessor:
                 tipo=TipoDetalle.PRESTACION,
                 codigo=prestacion.codigo,
                 descripcion=prestacion.nombre,
-                monto=prestacion.monto,
+                monto=round_money(prestacion.monto),
                 orden=orden,
                 prestacion_id=prestacion.prestacion_id,
             )
@@ -134,8 +135,8 @@ class AccountingProcessor:
                     saldo_anterior = Decimal("0.00")
 
             # Calculate new balance
-            monto_transaccion = prestacion_item.monto
-            saldo_nuevo = saldo_anterior + monto_transaccion
+            monto_transaccion = round_money(prestacion_item.monto)
+            saldo_nuevo = round_money(saldo_anterior + monto_transaccion)
 
             # Create the transaction record
             transaccion = PrestacionAcumulada(

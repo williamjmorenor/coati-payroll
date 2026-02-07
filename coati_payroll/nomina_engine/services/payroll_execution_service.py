@@ -5,12 +5,13 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from typing import Any
 
 from coati_payroll.model import db, Planilla, Empleado, Nomina
 from coati_payroll.enums import NominaEstado
 from coati_payroll.formula_engine import FormulaEngineError
+from coati_payroll.log import log
 from ..domain.employee_calculation import EmpleadoCalculo
 from ..repositories.planilla_repository import PlanillaRepository
 from ..repositories.config_repository import ConfigRepository
@@ -35,6 +36,7 @@ from ..services.employee_processing_service import EmployeeProcessingService
 from ..services.snapshot_service import SnapshotService
 from ..results.warning_collector import WarningCollector
 from ..services.accounting_voucher_service import AccountingVoucherService
+from ..utils.rounding import round_money
 
 
 class PayrollExecutionService:
@@ -231,11 +233,48 @@ class PayrollExecutionService:
 
             # Generate accounting voucher
             try:
-                self.accounting_voucher_service.generate_accounting_voucher(nomina, planilla, fecha_calculo, usuario)
+                self.accounting_voucher_service.generate_audit_voucher(nomina, planilla, fecha_calculo, usuario)
                 db.session.flush()
             except Exception as e:
                 # Don't fail the payroll if voucher generation fails
-                warnings.append(f"Advertencia al generar comprobante contable: {str(e)}")
+                error_message = (
+                    "Advertencia al generar comprobante contable de auditoría: "
+                    f"{type(e).__name__}: {str(e)}"
+                )
+                warnings.append(error_message)
+                log.error(
+                    "Fallo al generar comprobante contable de auditoría",
+                    extra={
+                        "nomina_id": nomina.id,
+                        "planilla_id": planilla.id,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    },
+                )
+                nomina.errores_calculo = nomina.errores_calculo or {}
+                nomina.errores_calculo["audit_voucher_error"] = error_message
+                try:
+                    from coati_payroll.queue import get_queue_driver
+
+                    queue = get_queue_driver()
+                    task_id = queue.enqueue(
+                        "generate_audit_voucher",
+                        nomina_id=nomina.id,
+                        planilla_id=planilla.id,
+                        fecha_calculo=(fecha_calculo.isoformat() if fecha_calculo else None),
+                        usuario=usuario or nomina.generado_por,
+                    )
+                    nomina.errores_calculo["audit_voucher_retry_task_id"] = task_id
+                except Exception as enqueue_error:
+                    log.error(
+                        "No se pudo encolar el reintento del comprobante contable de auditoría",
+                        extra={
+                            "nomina_id": nomina.id,
+                            "planilla_id": planilla.id,
+                            "error": str(enqueue_error),
+                            "error_type": type(enqueue_error).__name__,
+                        },
+                    )
 
         if errors:
             nomina.estado = NominaEstado.ERROR
@@ -356,16 +395,12 @@ class PayrollExecutionService:
         )
 
         if emp_calculo.tipo_cambio != Decimal("1.00"):
-            salario_mensual = (salario_mensual_origen * emp_calculo.tipo_cambio).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
-            salario_periodo = (salario_periodo_origen * emp_calculo.tipo_cambio).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
+            salario_mensual = round_money(salario_mensual_origen * emp_calculo.tipo_cambio, planilla.moneda)
+            salario_periodo = round_money(salario_periodo_origen * emp_calculo.tipo_cambio, planilla.moneda)
         else:
             # Always quantize to ensure consistent decimal precision
-            salario_mensual = salario_mensual_origen.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            salario_periodo = salario_periodo_origen.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            salario_mensual = round_money(salario_mensual_origen, planilla.moneda)
+            salario_periodo = round_money(salario_periodo_origen, planilla.moneda)
 
         emp_calculo.salario_base = salario_periodo
         emp_calculo.salario_mensual = salario_mensual
@@ -457,6 +492,6 @@ class PayrollExecutionService:
             total_deducciones += emp_calculo.total_deducciones
             total_neto += emp_calculo.salario_neto
 
-        nomina.total_bruto = total_bruto.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        nomina.total_deducciones = total_deducciones.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        nomina.total_neto = total_neto.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        nomina.total_bruto = round_money(total_bruto, nomina.planilla.moneda if nomina.planilla else None)
+        nomina.total_deducciones = round_money(total_deducciones, nomina.planilla.moneda if nomina.planilla else None)
+        nomina.total_neto = round_money(total_neto, nomina.planilla.moneda if nomina.planilla else None)

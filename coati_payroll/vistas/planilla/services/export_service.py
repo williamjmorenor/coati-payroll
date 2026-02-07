@@ -3,6 +3,7 @@
 """Service for Excel export operations."""
 
 from io import BytesIO
+from decimal import Decimal
 
 from coati_payroll.enums import TipoDetalle
 from coati_payroll.model import (
@@ -401,8 +402,18 @@ class ExportService:
         if not comprobante:
             raise ValueError("No existe comprobante contable para esta nómina")
 
+        if not comprobante.moneda_id:
+            raise ValueError("Comprobante sin moneda configurada")
+
+        if comprobante.balance != Decimal("0.00"):
+            raise ValueError(
+                "No se puede exportar el comprobante resumido porque el balance no es 0. "
+                f"Balance actual: {comprobante.balance}"
+            )
+
         # Get summarized entries - will raise ValueError if accounts are NULL
         accounting_service = AccountingVoucherService(db.session)
+        accounting_service.validate_line_integrity(comprobante)
         try:
             summarized_entries = accounting_service.summarize_voucher(comprobante)
         except ValueError as e:

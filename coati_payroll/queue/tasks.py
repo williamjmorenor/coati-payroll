@@ -33,6 +33,7 @@ from coati_payroll.model import (
     InteresAdelanto,
 )
 from coati_payroll.nomina_engine import NominaEngine
+from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
 from coati_payroll.queue import get_queue_driver
 
 # Error messages
@@ -443,10 +444,46 @@ def process_payroll_parallel(
 
     except Exception as e:
         log.error(f"Error processing parallel payroll: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-        }
+    return {
+        "success": False,
+        "error": str(e),
+    }
+
+
+def generate_audit_voucher(
+    nomina_id: str,
+    planilla_id: str,
+    fecha_calculo: str | None = None,
+    usuario: str | None = None,
+) -> dict[str, bool | str]:
+    """Generate audit accounting voucher in background."""
+    try:
+        log.info(f"Generating audit voucher for nomina {nomina_id}")
+
+        nomina = db.session.get(NominaModel, nomina_id)
+        if not nomina:
+            return {"success": False, "error": "Nomina not found"}
+
+        planilla = db.session.get(Planilla, planilla_id)
+        if not planilla:
+            return {"success": False, "error": ERROR_PLANILLA_NOT_FOUND}
+
+        fecha_calculo_date = date.fromisoformat(fecha_calculo) if fecha_calculo else None
+
+        AccountingVoucherService(db.session).generate_audit_voucher(
+            nomina,
+            planilla,
+            fecha_calculo=fecha_calculo_date,
+            usuario=usuario,
+        )
+        db.session.commit()
+
+        log.info(f"Audit voucher generated successfully for nomina {nomina_id}")
+        return {"success": True, "message": "Audit voucher generated"}
+    except Exception as e:
+        log.error(f"Error generating audit voucher for nomina {nomina_id}: {e}")
+        db.session.rollback()
+        return {"success": False, "error": str(e)}
 
 
 def process_large_payroll(
@@ -753,4 +790,12 @@ retry_failed_nomina_task = queue.register_task(
     max_retries=1,  # Manual retry, no automatic retries needed
     min_backoff=0,
     max_backoff=0,
+)
+
+generate_audit_voucher_task = queue.register_task(
+    generate_audit_voucher,
+    name="generate_audit_voucher",
+    max_retries=2,
+    min_backoff=60000,  # 1 minute
+    max_backoff=3600000,  # 1 hour
 )

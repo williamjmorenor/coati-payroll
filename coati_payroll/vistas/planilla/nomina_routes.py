@@ -459,7 +459,7 @@ def regenerar_comprobante_contable(planilla_id: str, nomina_id: str):
         # Regenerate voucher using existing nomina data
         fecha_calculo = nomina.fecha_calculo_original or nomina.periodo_fin
         usuario = current_user.nombre_usuario if current_user and current_user.is_authenticated else None
-        comprobante = accounting_service.generate_accounting_voucher(nomina, planilla, fecha_calculo, usuario)
+        comprobante = accounting_service.generate_audit_voucher(nomina, planilla, fecha_calculo, usuario)
 
         db.session.commit()
 
