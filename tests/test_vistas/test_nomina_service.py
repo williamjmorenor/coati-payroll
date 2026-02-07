@@ -252,6 +252,7 @@ class TestEjecutarNomina:
             call_args = mock_queue.enqueue.call_args
             assert call_args[0][0] == "process_large_payroll"
             assert call_args[1]["nomina_id"] == nomina.id
+            assert "job_id" in call_args[1]
             assert call_args[1]["planilla_id"] == planilla.id
 
             # Verify engine was NOT called for background processing

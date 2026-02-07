@@ -64,6 +64,7 @@ def test_nomina_estado_enum_values():
 
     assert NominaEstado.CALCULANDO == "calculating"
     assert NominaEstado.GENERADO == "generated"
+    assert NominaEstado.GENERADO_CON_ERRORES == "generated_with_errors"
     assert NominaEstado.APROBADO == "approved"
     assert NominaEstado.APLICADO == "applied"
     assert NominaEstado.ERROR == "error"

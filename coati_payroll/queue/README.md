@@ -11,6 +11,7 @@ Sistema de colas de procesos para ejecutar tareas en segundo plano sin bloquear 
 - ✅ **Thread-Safe**: Ejecución segura con múltiples workers
 - ✅ **Reintentos Automáticos**: Backoff exponencial en caso de errores
 - ✅ **Seguridad**: Validación de IDs y ubicación segura de archivos
+- ✅ **Idempotencia**: Bloqueo por nómina y job_id para evitar doble procesamiento
 
 ## Inicio Rápido
 
@@ -74,6 +75,9 @@ export QUEUE_ENABLED=1
 
 # Ruta personalizada para Huey (opcional)
 export COATI_QUEUE_PATH=/var/lib/coati/queue
+
+# Evitar uso accidental del driver Noop (tests)
+export COATI_ALLOW_NOOP_QUEUE=1
 ```
 
 ### Ejecutar Workers
@@ -87,6 +91,8 @@ dramatiq coati_payroll.queue.tasks --threads 8 --processes 4
 ```bash
 huey_consumer coati_payroll.queue.drivers.huey_driver.huey --workers 4
 ```
+
+> ⚠️ En producción se requiere Dramatiq+Redis. El fallback a Huey está deshabilitado.
 
 ## Estructura del Módulo
 
@@ -140,7 +146,7 @@ print(f"Tareas registradas: {stats['registered_tasks']}")
 ## Troubleshooting
 
 ### Redis no disponible
-El sistema automáticamente cambia a Huey. Para usar Dramatiq:
+En producción se bloquea el fallback a Huey. Para usar Dramatiq:
 1. Instalar Redis: `apt-get install redis-server` o `brew install redis`
 2. Configurar: `export REDIS_URL=redis://localhost:6379/0`
 3. Iniciar: `redis-server`
@@ -160,3 +166,12 @@ Si ve advertencias sobre permisos:
 Para reportar problemas o solicitar ayuda:
 - GitHub Issues: https://github.com/williamjmorenor/coati/issues
 - Documentación: `/docs/queue_system.md`
+
+## Idempotencia y Concurrencia
+
+Invariantes del sistema:
+
+- Solo un job activo por nómina (lock por `nomina_id` + `job_id`).
+- La ejecución solo continúa si la nómina está en estado `CALCULANDO` y el `job_id` coincide.
+- Los reintentos reutilizan el mismo `job_id` para evitar duplicaciones.
+- El progreso se registra fuera de la transacción de cálculo para evitar mezclas con rollback.

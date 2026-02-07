@@ -77,6 +77,7 @@ class NominaEstado(StrEnum):
 
     CALCULANDO = "calculating"  # Calculating in background
     GENERADO = "generated"  # Generated but not approved
+    GENERADO_CON_ERRORES = "generated_with_errors"  # Generated with employee errors
     APROBADO = "approved"  # Approved and ready to apply
     APLICADO = "applied"  # Applied/executed
     PAGADO = "paid"  # Paid out (synonym for APLICADO, for compatibility)

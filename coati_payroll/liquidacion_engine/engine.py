@@ -79,9 +79,7 @@ class LiquidacionEngine:
             return int(config.liquidacion_factor_calendario)
         if modo in {"laboral", "working"}:
             return int(config.liquidacion_factor_laboral)
-        self.warnings.append(
-            "Modo de días de liquidación no reconocido; se usará calendario."
-        )
+        self.warnings.append("Modo de días de liquidación no reconocido; se usará calendario.")
         return int(config.liquidacion_factor_calendario)
 
     def calcular(self, liquidacion: Liquidacion) -> Liquidacion | None:

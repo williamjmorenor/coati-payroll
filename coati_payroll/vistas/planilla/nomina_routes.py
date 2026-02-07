@@ -6,7 +6,15 @@ from datetime import date
 from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from coati_payroll.model import db, Planilla, Nomina, NominaEmpleado, NominaDetalle, NominaNovedad
+from coati_payroll.model import (
+    db,
+    Planilla,
+    Nomina,
+    NominaEmpleado,
+    NominaDetalle,
+    NominaNovedad,
+    NominaProgress,
+)
 from coati_payroll.enums import NominaEstado, NovedadEstado
 from coati_payroll.i18n import _
 from coati_payroll.rbac import require_read_access, require_write_access
@@ -114,6 +122,7 @@ def listar_nominas(planilla_id: str):
         .scalars()
         .all()
     )
+    _apply_progress_snapshots(nominas)
 
     return render_template(
         "modules/planilla/listar_nominas.html",
@@ -128,6 +137,7 @@ def ver_nomina(planilla_id: str, nomina_id: str):
     """View details of a specific nomina."""
     planilla = db.get_or_404(Planilla, planilla_id)
     nomina = db.get_or_404(Nomina, nomina_id)
+    _apply_progress_snapshots([nomina])
 
     if nomina.planilla_id != planilla_id:
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
@@ -208,21 +218,23 @@ def progreso_nomina(planilla_id: str, nomina_id: str):
     if nomina.planilla_id != planilla_id:
         return jsonify({"error": "Nomina does not belong to this planilla"}), 404
 
+    progress = _get_nomina_progress_snapshot(nomina_id)
+    snapshot = progress or nomina
     return jsonify(
         {
             "estado": nomina.estado,
-            "total_empleados": nomina.total_empleados or 0,
-            "empleados_procesados": nomina.empleados_procesados or 0,
-            "empleados_con_error": nomina.empleados_con_error or 0,
+            "total_empleados": snapshot.total_empleados or 0,
+            "empleados_procesados": snapshot.empleados_procesados or 0,
+            "empleados_con_error": snapshot.empleados_con_error or 0,
             "progreso_porcentaje": (
-                int((nomina.empleados_procesados / nomina.total_empleados) * 100)
-                if nomina.total_empleados and nomina.total_empleados > 0
+                int((snapshot.empleados_procesados / snapshot.total_empleados) * 100)
+                if snapshot.total_empleados and snapshot.total_empleados > 0
                 else 0
             ),
-            "errores_calculo": nomina.errores_calculo or {},
+            "errores_calculo": snapshot.errores_calculo or {},
             "procesamiento_en_background": nomina.procesamiento_en_background,
-            "empleado_actual": nomina.empleado_actual or "",
-            "log_procesamiento": nomina.log_procesamiento or [],
+            "empleado_actual": snapshot.empleado_actual or "",
+            "log_procesamiento": snapshot.log_procesamiento or [],
         }
     )
 
@@ -249,6 +261,32 @@ def _nomina_has_warnings(nomina: Nomina) -> bool:
     return False
 
 
+def _get_nomina_progress_snapshot(nomina_id: str) -> NominaProgress | None:
+    return db.session.execute(db.select(NominaProgress).filter(NominaProgress.nomina_id == nomina_id)).scalars().first()
+
+
+def _apply_progress_snapshots(nominas: list[Nomina]) -> None:
+    if not nominas:
+        return
+
+    nomina_ids = [nomina.id for nomina in nominas if nomina.id]
+    progress_rows = (
+        db.session.execute(db.select(NominaProgress).filter(NominaProgress.nomina_id.in_(nomina_ids))).scalars().all()
+    )
+    progress_by_nomina = {progress.nomina_id: progress for progress in progress_rows}
+
+    for nomina in nominas:
+        progress = progress_by_nomina.get(nomina.id)
+        if not progress:
+            continue
+        nomina.total_empleados = progress.total_empleados
+        nomina.empleados_procesados = progress.empleados_procesados
+        nomina.empleados_con_error = progress.empleados_con_error
+        nomina.errores_calculo = progress.errores_calculo
+        nomina.log_procesamiento = progress.log_procesamiento
+        nomina.empleado_actual = progress.empleado_actual
+
+
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aprobar", methods=["POST"])
 @require_write_access()
 def aprobar_nomina(planilla_id: str, nomina_id: str):
@@ -258,6 +296,13 @@ def aprobar_nomina(planilla_id: str, nomina_id: str):
     if nomina.planilla_id != planilla_id:
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
+
+    if nomina.estado == NominaEstado.GENERADO_CON_ERRORES:
+        flash(
+            _("Nómina calculada con errores: corrija empleados fallidos y recalcule antes de aprobar/aplicar/pagar."),
+            "error",
+        )
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     if nomina.estado != "generated":
         flash(_("Solo se pueden aprobar nóminas en estado 'generated'."), "error")
@@ -291,6 +336,13 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
     if nomina.planilla_id != planilla_id:
         flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
         return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
+
+    if nomina.estado == NominaEstado.GENERADO_CON_ERRORES:
+        flash(
+            _("Nómina calculada con errores: corrija empleados fallidos y recalcule antes de aprobar/aplicar/pagar."),
+            "error",
+        )
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     if nomina.estado != "approved":
         flash(_("Solo se pueden aplicar nóminas en estado 'approved'."), "error")

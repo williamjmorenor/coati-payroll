@@ -238,8 +238,7 @@ class PayrollExecutionService:
             except Exception as e:
                 # Don't fail the payroll if voucher generation fails
                 error_message = (
-                    "Advertencia al generar comprobante contable de auditoría: "
-                    f"{type(e).__name__}: {str(e)}"
+                    "Advertencia al generar comprobante contable de auditoría: " f"{type(e).__name__}: {str(e)}"
                 )
                 warnings.append(error_message)
                 log.error(

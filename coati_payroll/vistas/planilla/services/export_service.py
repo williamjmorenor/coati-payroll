@@ -3,9 +3,8 @@
 """Service for Excel export operations."""
 
 from io import BytesIO
-from decimal import Decimal
 
-from coati_payroll.enums import TipoDetalle
+from coati_payroll.enums import NominaEstado, TipoDetalle
 from coati_payroll.model import (
     db,
     Planilla,
@@ -394,6 +393,9 @@ class ExportService:
 
         Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
 
+        if nomina.estado == NominaEstado.GENERADO_CON_ERRORES:
+            raise ValueError("Nómina calculada con errores: corrija empleados fallidos y recalcule antes de exportar.")
+
         # Get comprobante
         comprobante = db.session.execute(
             db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)
@@ -401,15 +403,6 @@ class ExportService:
 
         if not comprobante:
             raise ValueError("No existe comprobante contable para esta nómina")
-
-        if not comprobante.moneda_id:
-            raise ValueError("Comprobante sin moneda configurada")
-
-        if comprobante.balance != Decimal("0.00"):
-            raise ValueError(
-                "No se puede exportar el comprobante resumido porque el balance no es 0. "
-                f"Balance actual: {comprobante.balance}"
-            )
 
         # Get summarized entries - will raise ValueError if accounts are NULL
         accounting_service = AccountingVoucherService(db.session)

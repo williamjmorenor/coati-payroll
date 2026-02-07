@@ -591,9 +591,7 @@ class AccountingVoucherService:
     def validate_line_integrity(self, comprobante: ComprobanteContable) -> None:
         """Validate integrity rules for voucher lines."""
         lineas = (
-            self.session.execute(
-                db.select(ComprobanteContableLinea).filter_by(comprobante_id=comprobante.id)
-            )
+            self.session.execute(db.select(ComprobanteContableLinea).filter_by(comprobante_id=comprobante.id))
             .scalars()
             .all()
         )
@@ -618,13 +616,9 @@ class AccountingVoucherService:
                 )
 
             if linea.tipo_debito_credito == "debito" and not (tiene_debito and not tiene_credito):
-                errores.append(
-                    f"Línea {linea.id}: tipo_debito_credito=debito no coincide con montos."
-                )
+                errores.append(f"Línea {linea.id}: tipo_debito_credito=debito no coincide con montos.")
             elif linea.tipo_debito_credito == "credito" and not (tiene_credito and not tiene_debito):
-                errores.append(
-                    f"Línea {linea.id}: tipo_debito_credito=credito no coincide con montos."
-                )
+                errores.append(f"Línea {linea.id}: tipo_debito_credito=credito no coincide con montos.")
             elif linea.tipo_debito_credito not in ("debito", "credito"):
                 errores.append(f"Línea {linea.id}: tipo_debito_credito inválido ({linea.tipo_debito_credito}).")
 

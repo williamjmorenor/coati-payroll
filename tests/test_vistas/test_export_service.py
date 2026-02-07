@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from coati_payroll.enums import NominaEstado
 from coati_payroll.model import (
     db,
     Empresa,
@@ -1164,7 +1165,7 @@ class TestExportarComprobanteExcel:
             - Call exportar_comprobante_excel
 
         Verification:
-            - Export succeeds even with unbalanced voucher
+            - Raises ValueError for unbalanced voucher
         """
         from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
         from coati_payroll.vistas.planilla.services.export_service import ExportService
@@ -1219,8 +1220,70 @@ class TestExportarComprobanteExcel:
 
             planilla, nomina = _prepare_objects_for_export(planilla, nomina)
 
-            output, filename = ExportService.exportar_comprobante_excel(planilla, nomina)
+            with pytest.raises(ValueError, match="balanceado"):
+                ExportService.exportar_comprobante_excel(planilla, nomina)
 
+    def test_exportar_comprobante_excel_blocks_generated_with_errors(
+        self, app, db_session, planilla, nomina, moneda, empleado
+    ):
+        """Test summarized export fails when nomina is generated with errors."""
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, NominaEmpleado
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+        with app.app_context():
+            nomina.estado = NominaEstado.GENERADO_CON_ERRORES
+            db_session.commit()
+
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("1000.00"),
+                total_ingresos=Decimal("1000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("1000.00"),
+                sueldo_base_historico=Decimal("1000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=date(2025, 1, 31),
+                concepto="Nómina Enero 2025",
+                moneda_id=moneda.id,
+                total_debitos=Decimal("1000.00"),
+                total_creditos=Decimal("1000.00"),
+                balance=Decimal("0.00"),
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=f"{empleado.primer_nombre} {empleado.primer_apellido}",
+                codigo_cuenta="5101",
+                descripcion_cuenta="Gasto por Salario",
+                tipo_debito_credito="debito",
+                debito=Decimal("1000.00"),
+                credito=Decimal("0.00"),
+                monto_calculado=Decimal("1000.00"),
+                concepto="Salario Base",
+                tipo_concepto="salario_base",
+                concepto_codigo="SALARIO_BASE",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+
+            with pytest.raises(ValueError, match="calculada con errores"):
+                ExportService.exportar_comprobante_excel(planilla, nomina)
+
+            output, filename = ExportService.exportar_comprobante_detallado_excel(planilla, nomina)
             assert isinstance(output, BytesIO)
             assert filename is not None
 

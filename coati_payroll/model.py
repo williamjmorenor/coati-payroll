@@ -860,6 +860,9 @@ class Nomina(database.Model, BaseTabla):
     procesamiento_en_background = database.Column(database.Boolean, nullable=False, default=False)
     log_procesamiento = database.Column(JSON, nullable=True)  # Stores list of log entries as JSON
     empleado_actual = database.Column(database.String(255), nullable=True)
+    job_id_activo = database.Column(database.String(64), nullable=True)
+    job_started_at = database.Column(database.DateTime, nullable=True)
+    job_completed_at = database.Column(database.DateTime, nullable=True)
 
     # Audit fields for state changes
     aprobado_por = database.Column(database.String(150), nullable=True)
@@ -898,6 +901,23 @@ class Nomina(database.Model, BaseTabla):
         back_populates="nomina",
         cascade="all, delete-orphan",
     )
+
+
+class NominaProgress(database.Model, BaseTabla):
+    __tablename__ = "nomina_progress"
+    __table_args__ = (database.UniqueConstraint("nomina_id", name="uq_nomina_progress_nomina_id"),)
+
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
+    job_id = database.Column(database.String(64), nullable=True)
+    total_empleados = database.Column(database.Integer, nullable=True, default=0)
+    empleados_procesados = database.Column(database.Integer, nullable=True, default=0)
+    empleados_con_error = database.Column(database.Integer, nullable=True, default=0)
+    errores_calculo = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)
+    log_procesamiento = database.Column(JSON, nullable=True)
+    empleado_actual = database.Column(database.String(255), nullable=True)
+    actualizado_en = database.Column(database.DateTime, nullable=True)
+
+    nomina = database.relationship("Nomina", backref="progress")
 
 
 class NominaEmpleado(database.Model, BaseTabla):
