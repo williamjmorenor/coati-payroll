@@ -23,12 +23,13 @@ from coati_payroll.enums import FormulaType
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
 from coati_payroll.model import db, Deduccion, ReglaCalculo
 from ..domain.employee_calculation import EmpleadoCalculo
+from ..results.warning_collector import WarningCollectorProtocol
 
 
 class ConceptCalculator:
     """Calculator for payroll concepts using Strategy pattern."""
 
-    def __init__(self, config_repository, warnings: list[str]):
+    def __init__(self, config_repository, warnings: WarningCollectorProtocol):
         self.config_repo = config_repository
         self.warnings = warnings
         self.deducciones_snapshot: dict[str, Any] | None = None

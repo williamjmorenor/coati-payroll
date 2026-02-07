@@ -7,6 +7,7 @@ from __future__ import annotations
 from coati_payroll.model import Planilla, Empleado, NominaEmpleado
 from coati_payroll.log import log
 from ..domain.employee_calculation import EmpleadoCalculo
+from ..results.warning_collector import WarningCollectorProtocol
 
 
 class VacationProcessor:
@@ -18,7 +19,7 @@ class VacationProcessor:
         periodo_inicio,
         periodo_fin,
         usuario: str | None = None,
-        warnings: list[str] | None = None,
+        warnings: WarningCollectorProtocol | None = None,
     ):
         self.planilla = planilla
         self.periodo_inicio = periodo_inicio
