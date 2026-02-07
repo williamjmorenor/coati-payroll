@@ -24,7 +24,7 @@ class WarningCollector:
         return len(self._warnings)
 
     def __bool__(self) -> bool:
-        return True
+        return len(self._warnings) > 0
 
     def to_list(self) -> list[str]:
         return list(self._warnings)

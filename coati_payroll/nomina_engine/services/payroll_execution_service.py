@@ -113,13 +113,20 @@ class PayrollExecutionService:
         self.concept_calculator.configuracion_snapshot = snapshot.get("configuracion") or None
 
         # Prevent duplicate execution for the same period
+        # Exclude ERROR state to allow retries
         existing = (
             self.planilla_repo.session.execute(
                 db.select(Nomina).filter(
                     Nomina.planilla_id == planilla.id,
                     Nomina.periodo_inicio == periodo_inicio,
                     Nomina.periodo_fin == periodo_fin,
-                    Nomina.estado != NominaEstado.ANULADO,
+                    Nomina.estado.in_([
+                        NominaEstado.CALCULANDO,
+                        NominaEstado.GENERADO,
+                        NominaEstado.APROBADO,
+                        NominaEstado.APLICADO,
+                        NominaEstado.PAGADO,
+                    ]),
                 )
             )
             .scalars()
@@ -213,8 +220,6 @@ class PayrollExecutionService:
 
             loan_processor.apply_pending_effects()
 
-            nomina.estado = NominaEstado.GENERADO
-
             # Update planilla last execution
             planilla.ultima_ejecucion = datetime.now(timezone.utc)
 
@@ -228,9 +233,13 @@ class PayrollExecutionService:
 
         if errors:
             nomina.estado = NominaEstado.ERROR
-            # Don't rollback here - let the engine decide
-            # Always return nomina object (even on errors) so callers can inspect estado and error details
+            # Save error logs for audit trail before any rollback
+            self._save_log_entries(nomina, errors, warnings.to_list(), empleados_calculo)
+            # Flush to persist the ERROR nomina and logs, but don't commit yet
+            # Engine will decide whether to commit (for audit trail) or rollback
+            db.session.flush()
         else:
+            nomina.estado = NominaEstado.GENERADO
             # Save errors and warnings to log_procesamiento for transparency
             self._save_log_entries(nomina, errors, warnings.to_list(), empleados_calculo)
 
@@ -335,7 +344,8 @@ class PayrollExecutionService:
                 Decimal("0.01"), rounding=ROUND_HALF_UP
             )
         else:
-            salario_mensual = salario_mensual_origen
+            # Always quantize to ensure consistent decimal precision
+            salario_mensual = salario_mensual_origen.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             salario_periodo = salario_periodo_origen.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         emp_calculo.salario_base = salario_periodo
