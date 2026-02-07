@@ -205,7 +205,7 @@ def calcular_interes_compuesto(
     # A = P * (1 + r/n)^(n*t)
     base = Decimal("1") + (tasa_decimal / n)
     num_periodos = int(dias)
-    factor = base ** num_periodos
+    factor = base**num_periodos
 
     monto_final = principal * factor
 
@@ -334,9 +334,7 @@ def generar_tabla_amortizacion(
             interes_q = interes.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
             if cuota_constante <= interes_q and numero != num_cuotas:
-                raise ValueError(
-                    "La cuota constante no cubre el interés; la amortización sería negativa."
-                )
+                raise ValueError("La cuota constante no cubre el interés; la amortización sería negativa.")
 
             # For last payment, adjust to clear remaining balance
             if numero == num_cuotas:

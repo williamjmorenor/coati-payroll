@@ -47,7 +47,7 @@ from coati_payroll.i18n import _
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
 from ..exceptions import CalculationError
 from .ast_visitor import SafeASTVisitor
-from .safe_operators import ALLOWED_AST_TYPES, MAX_EXPRESSION_LENGTH, MAX_AST_DEPTH
+from .safe_operators import ALLOWED_AST_TYPES, validate_expression_complexity
 from .type_converter import to_decimal
 
 
@@ -130,20 +130,16 @@ class ExpressionEvaluator:
         if not expression:
             return Decimal("0")
 
-        if len(expression) > MAX_EXPRESSION_LENGTH:
-            raise CalculationError(
-                f"Expression too long ({len(expression)} characters). "
-                f"Maximum allowed: {MAX_EXPRESSION_LENGTH} characters. "
-                "This limit prevents denial-of-service attacks."
-            )
-
         self.trace_callback(_("Evaluando expresión: '%(expr)s'") % {"expr": expression})
 
         try:
             tree = ast.parse(expression, mode="eval")
 
             self._validate_ast_security(tree.body)
-            self._validate_ast_depth(tree.body)
+            try:
+                validate_expression_complexity(tree, expression)
+            except ValueError as e:
+                raise CalculationError(str(e)) from e
 
             visitor = SafeASTVisitor(self.variables, strict_mode=self.strict_mode)
             result = visitor.visit(tree.body)
@@ -206,29 +202,3 @@ class ExpressionEvaluator:
                         f"Allowed functions: {', '.join(sorted(SAFE_FUNCTIONS.keys()))}. "
                         "This restriction prevents execution of arbitrary Python functions."
                     )
-
-    def _validate_ast_depth(self, node: ast.AST, current_depth: int = 0) -> None:
-        """Validate that AST depth does not exceed maximum to prevent stack overflow.
-
-        Deeply nested expressions can cause stack overflow during evaluation:
-        - Example: ((((((((((x + 1) + 1) + 1) + 1) + 1) + 1) + 1) + 1) + 1) + 1)
-
-        This validation prevents denial-of-service attacks via deeply nested
-        expressions that could exhaust the call stack.
-
-        Args:
-            node: AST node to validate
-            current_depth: Current depth in the tree (used for recursion)
-
-        Raises:
-            CalculationError: If AST depth exceeds maximum allowed
-        """
-        if current_depth > MAX_AST_DEPTH:
-            raise CalculationError(
-                f"Expression too complex: AST depth ({current_depth}) exceeds maximum ({MAX_AST_DEPTH}). "
-                "Simplify the expression by breaking it into multiple steps. "
-                "This limit prevents stack overflow attacks."
-            )
-
-        for child in ast.iter_child_nodes(node):
-            self._validate_ast_depth(child, current_depth + 1)

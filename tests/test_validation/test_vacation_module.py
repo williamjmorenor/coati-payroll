@@ -97,6 +97,7 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
             max_balance=Decimal("30.00"),
             carryover_limit=Decimal("15.00"),
             allow_negative=False,
+            partial_units_allowed=True,  # Allow fractional days (e.g., 1.25)
             count_weekends=True,
             count_holidays=True,
             payout_on_termination=True,

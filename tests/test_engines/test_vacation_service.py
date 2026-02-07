@@ -122,6 +122,7 @@ def proportional_policy(db_session, planilla):
         unit_type=VacationUnitType.DAYS,
         min_service_days=0,
         allow_negative=False,
+        partial_units_allowed=True,  # Allow fractions for testing
         activo=True,
         creado_por="test_system",
     )
@@ -143,6 +144,7 @@ def seniority_policy(db_session, planilla):
         accrual_frequency=AccrualFrequency.ANNUAL,
         unit_type=VacationUnitType.DAYS,
         min_service_days=0,
+        partial_units_allowed=True,  # Allow fractions for testing
         seniority_tiers=[
             {"years": 0, "rate": 15.0},
             {"years": 5, "rate": 20.0},
@@ -585,6 +587,16 @@ def test_procesar_novedades_vacaciones_no_novelties(app, db_session, planilla, e
     with app.app_context():
         periodo_inicio = date.today() - timedelta(days=30)
         periodo_fin = date.today()
+
+        # Link employee to planilla
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+            fecha_inicio=empleado.fecha_alta,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
 
         service = VacationService(planilla, periodo_inicio, periodo_fin)
 

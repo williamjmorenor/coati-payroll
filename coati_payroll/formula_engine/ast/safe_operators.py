@@ -50,6 +50,40 @@ MAX_AST_DEPTH = 50
 MAX_FUNCTION_ARGS = 20
 
 
+def _calculate_ast_depth(node: ast.AST) -> int:
+    """Calculate maximum depth of an AST tree."""
+    max_depth = 0
+    stack: list[tuple[ast.AST, int]] = [(node, 0)]
+    while stack:
+        current, depth = stack.pop()
+        if depth > max_depth:
+            max_depth = depth
+        for child in ast.iter_child_nodes(current):
+            stack.append((child, depth + 1))
+    return max_depth
+
+
+def validate_expression_complexity(tree: ast.AST, expression: str | None = None) -> None:
+    """Validate expression complexity limits for length and AST depth."""
+    if expression is not None:
+        if not isinstance(expression, str):
+            raise ValueError("Expression must be a string.")
+        if len(expression) > MAX_EXPRESSION_LENGTH:
+            raise ValueError(
+                f"Expression too long ({len(expression)} characters). "
+                f"Maximum allowed: {MAX_EXPRESSION_LENGTH} characters. "
+                "This limit prevents denial-of-service attacks."
+            )
+
+    max_depth = _calculate_ast_depth(tree)
+    if max_depth > MAX_AST_DEPTH:
+        raise ValueError(
+            f"Expression too complex: AST depth ({max_depth}) exceeds maximum ({MAX_AST_DEPTH}). "
+            "Simplify the expression by breaking it into multiple steps. "
+            "This limit prevents stack overflow attacks."
+        )
+
+
 def validate_safe_function_call(func_name: str, args: list[Any]) -> None:
     """Validate that a function call is safe.
 

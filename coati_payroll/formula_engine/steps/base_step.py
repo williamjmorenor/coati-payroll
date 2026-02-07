@@ -8,6 +8,7 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from abc import ABC, abstractmethod
+from decimal import Decimal
 from typing import Any, TYPE_CHECKING
 
 # <-------------------------------------------------------------------------> #
@@ -46,3 +47,11 @@ class Step(ABC):
             Step execution result
         """
         pass
+
+    def get_variable_value(self, result: Any) -> Decimal:
+        """Return the Decimal value to store for this step."""
+        from ..exceptions import CalculationError
+
+        if not isinstance(result, Decimal):
+            raise CalculationError(f"Step '{self.name}' must return Decimal, got {type(result).__name__}")
+        return result

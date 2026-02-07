@@ -16,8 +16,10 @@ from coati_payroll.model import (
     TipoPlanilla,
 )
 from tests.helpers.auth import login_user
+import pytest
 
 
+@pytest.mark.validation
 def test_vacation_policy_index_list_all_policies(app, client, admin_user, db_session):
     """Test that user can view all vacation policies."""
     with app.app_context():
@@ -26,6 +28,7 @@ def test_vacation_policy_index_list_all_policies(app, client, admin_user, db_ses
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_vacation_policy_new_get_form(app, client, admin_user, db_session):
     """Test that user can access vacation policy creation form."""
     with app.app_context():
@@ -34,6 +37,7 @@ def test_vacation_policy_new_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_vacation_account_index_list_all_accounts(app, client, admin_user, db_session):
     """Test that user can view all vacation accounts."""
     with app.app_context():
@@ -42,6 +46,7 @@ def test_vacation_account_index_list_all_accounts(app, client, admin_user, db_se
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_vacation_account_new_get_form(app, client, admin_user, db_session):
     """Test that user can access vacation account creation form."""
     with app.app_context():
@@ -50,6 +55,7 @@ def test_vacation_account_new_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_vacation_leave_request_index_list_requests(app, client, admin_user, db_session):
     """Test that user can view all vacation leave requests."""
     with app.app_context():
@@ -58,6 +64,7 @@ def test_vacation_leave_request_index_list_requests(app, client, admin_user, db_
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_vacation_leave_request_new_get_form(app, client, admin_user, db_session):
     """Test that user can access vacation leave request creation form."""
     with app.app_context():
@@ -66,6 +73,7 @@ def test_vacation_leave_request_new_get_form(app, client, admin_user, db_session
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_vacation_register_taken_get_form(app, client, admin_user, db_session):
     """Test that user can access vacation taken registration form."""
     with app.app_context():
@@ -74,6 +82,7 @@ def test_vacation_register_taken_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_vacation_leave_request_approve_with_balance(app, client, admin_user, db_session):
     """Test: User approves a pending vacation leave request."""
     with app.app_context():
@@ -164,6 +173,7 @@ def test_vacation_leave_request_approve_with_balance(app, client, admin_user, db
         assert leave_request_updated.estado == "approved"
 
 
+@pytest.mark.validation
 def test_vacation_leave_request_reject(app, client, admin_user, db_session):
     """Test: User rejects a pending vacation leave request."""
     with app.app_context():

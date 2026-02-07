@@ -134,19 +134,11 @@ class FormulaEngine:
             step_results[step.name] = result
 
             # Update context with step result
-            if isinstance(result, dict):
-                # Tax lookup result - extract tax value
-                tax_value = result.get("tax", Decimal("0"))
-                context = context.with_variable(step.name, tax_value)
-                variable_store.set(step.name, result)
-                self.variables[step.name] = tax_value
-                self.results[step.name] = result
-            else:
-                # Regular calculation result
-                context = context.with_variable(step.name, result)
-                variable_store.set(step.name, result)
-                self.variables[step.name] = result
-                self.results[step.name] = result
+            variable_value = step.get_variable_value(result)
+            context = context.with_variable(step.name, variable_value)
+            variable_store.set(step.name, variable_value, result)
+            self.variables[step.name] = variable_value
+            self.results[step.name] = result
 
             if context.trace_callback:
                 context.trace_callback(

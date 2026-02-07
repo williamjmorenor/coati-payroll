@@ -16,7 +16,7 @@ import ast
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
-from ..ast.safe_operators import ALLOWED_AST_TYPES, SAFE_FUNCTIONS
+from ..ast.safe_operators import ALLOWED_AST_TYPES, SAFE_FUNCTIONS, validate_expression_complexity
 from ..exceptions import CalculationError
 
 
@@ -33,6 +33,11 @@ class SecurityValidator:
         Raises:
             CalculationError: If unsafe operations are detected
         """
+        try:
+            validate_expression_complexity(node)
+        except ValueError as e:
+            raise CalculationError(str(e)) from e
+
         # Validate all nodes in the tree in a single pass
         for child in ast.walk(node):
             if not isinstance(child, ALLOWED_AST_TYPES):
