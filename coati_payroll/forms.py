@@ -118,6 +118,20 @@ class ConfiguracionCalculosForm(FlaskForm):
         description=_("Factor base cuando el modo es Laboral (por defecto 28)."),
     )
 
+    liquidacion_prioridad_prestamos = IntegerField(
+        _("Prioridad Préstamos (Liquidación)"),
+        validators=[DataRequired(), NumberRange(min=1, max=9999)],
+        default=250,
+        description=_("Prioridad para aplicar préstamos en liquidaciones (por defecto 250)."),
+    )
+
+    liquidacion_prioridad_adelantos = IntegerField(
+        _("Prioridad Adelantos (Liquidación)"),
+        validators=[DataRequired(), NumberRange(min=1, max=9999)],
+        default=251,
+        description=_("Prioridad para aplicar adelantos en liquidaciones (por defecto 251)."),
+    )
+
     submit = SubmitField(_("Guardar"))
 
 

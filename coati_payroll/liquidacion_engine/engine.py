@@ -11,7 +11,7 @@ from decimal import Decimal
 
 from sqlalchemy import select
 
-from coati_payroll.enums import NominaEstado
+from coati_payroll.enums import LiquidacionEstado, NominaEstado
 from coati_payroll.model import (
     ConfiguracionCalculos,
     Empleado,
@@ -76,16 +76,21 @@ class LiquidacionEngine:
     def _get_factor_dias(self, config: ConfiguracionCalculos) -> int:
         modo = (config.liquidacion_modo_dias or "calendar").strip().lower()
         if modo in {"calendario", "calendar"}:
-            modo = "calendar"
-        elif modo in {"laboral", "working"}:
-            modo = "working"
-        if modo == "working":
-            return int(config.liquidacion_factor_laboral or 28)
-        return int(config.liquidacion_factor_calendario or 30)
+            return int(config.liquidacion_factor_calendario)
+        if modo in {"laboral", "working"}:
+            return int(config.liquidacion_factor_laboral)
+        self.warnings.append(
+            "Modo de días de liquidación no reconocido; se usará calendario."
+        )
+        return int(config.liquidacion_factor_calendario)
 
     def calcular(self, liquidacion: Liquidacion) -> Liquidacion | None:
         """Calculate a liquidacion record in-place."""
         config = self._get_config()
+
+        liquidacion.total_bruto = Decimal("0.00")
+        liquidacion.total_deducciones = Decimal("0.00")
+        liquidacion.total_neto = Decimal("0.00")
 
         ultimo_dia_pagado = self.determinar_ultimo_dia_pagado()
         liquidacion.ultimo_dia_pagado = ultimo_dia_pagado
@@ -132,14 +137,16 @@ class LiquidacionEngine:
             calcular_interes=False,
         )
 
-        # Defaults match Planilla priorities; liquidation uses fixed priorities for now
+        prioridad_prestamos = config.liquidacion_prioridad_prestamos
+        prioridad_adelantos = config.liquidacion_prioridad_adelantos
+
         deducciones = []
         deducciones.extend(
             loan_processor.process_loans(
                 empleado_id=self.empleado.id,
                 saldo_disponible=saldo_disponible,
                 aplicar_prestamos=True,
-                prioridad_prestamos=250,
+                prioridad_prestamos=prioridad_prestamos,
             )
         )
         for d in deducciones:
@@ -149,7 +156,7 @@ class LiquidacionEngine:
             empleado_id=self.empleado.id,
             saldo_disponible=saldo_disponible,
             aplicar_adelantos=True,
-            prioridad_adelantos=251,
+            prioridad_adelantos=prioridad_adelantos,
         )
         deducciones.extend(deducciones_adv)
 
@@ -173,6 +180,8 @@ class LiquidacionEngine:
         liquidacion.total_bruto = total_bruto
         liquidacion.total_deducciones = total_deducciones
         liquidacion.total_neto = total_neto
+        if liquidacion.estado in {LiquidacionEstado.BORRADOR, LiquidacionEstado.CALCULADA}:
+            liquidacion.estado = LiquidacionEstado.CALCULADA
 
         liquidacion.errores_calculo = {"errors": self.errors} if self.errors else {}
         liquidacion.advertencias_calculo = list(self.warnings)
@@ -191,8 +200,8 @@ def recalcular_liquidacion(liquidacion_id: str, fecha_calculo: date | None = Non
     if not liquidacion:
         return None, ["Liquidación no encontrada."], []
 
-    if liquidacion.estado != "draft":
-        return None, ["Solo se pueden recalcular liquidaciones en borrador."], []
+    if liquidacion.estado not in {LiquidacionEstado.BORRADOR, LiquidacionEstado.CALCULADA}:
+        return None, ["Solo se pueden recalcular liquidaciones en borrador o calculadas."], []
 
     empleado = db.session.get(Empleado, liquidacion.empleado_id)
     if not empleado:
@@ -244,7 +253,7 @@ def ejecutar_liquidacion(
         empleado_id=empleado.id,
         concepto_id=concepto_id,
         fecha_calculo=fecha_calculo or date.today(),
-        estado="draft",
+        estado=LiquidacionEstado.BORRADOR,
     )
     db.session.add(liquidacion)
     db.session.flush()

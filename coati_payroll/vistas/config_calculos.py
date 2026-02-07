@@ -49,6 +49,8 @@ def index():
         config.liquidacion_modo_dias = form.liquidacion_modo_dias.data
         config.liquidacion_factor_calendario = form.liquidacion_factor_calendario.data
         config.liquidacion_factor_laboral = form.liquidacion_factor_laboral.data
+        config.liquidacion_prioridad_prestamos = form.liquidacion_prioridad_prestamos.data
+        config.liquidacion_prioridad_adelantos = form.liquidacion_prioridad_adelantos.data
         db.session.commit()
         flash(_("Configuración de cálculos actualizada."), "success")
         return redirect(url_for("config_calculos.index"))

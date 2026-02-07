@@ -1720,6 +1720,8 @@ class ConfiguracionCalculos(database.Model, BaseTabla):
     liquidacion_modo_dias = database.Column(database.String(20), nullable=False, default="calendario")
     liquidacion_factor_calendario = database.Column(database.Integer, nullable=False, default=30)
     liquidacion_factor_laboral = database.Column(database.Integer, nullable=False, default=28)
+    liquidacion_prioridad_prestamos = database.Column(database.Integer, nullable=False, default=250)
+    liquidacion_prioridad_adelantos = database.Column(database.Integer, nullable=False, default=251)
 
     # Antigüedad
     dias_mes_antiguedad = database.Column(database.Integer, nullable=False, default=30)

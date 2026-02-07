@@ -88,6 +88,8 @@ class LiquidacionEstado(StrEnum):
     """States of a termination settlement (Liquidacion)."""
 
     BORRADOR = "draft"  # Draft - not yet applied
+    CALCULADA = "calculated"  # Calculated - ready to apply
+    ERROR = "error"  # Error during calculation
     APLICADO = "applied"  # Applied/executed
     PAGADO = "paid"  # Paid out
 
