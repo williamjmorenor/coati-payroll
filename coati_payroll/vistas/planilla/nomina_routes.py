@@ -3,6 +3,7 @@
 """Routes for nomina execution and management."""
 
 from datetime import date
+from typing import Any, cast
 from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
@@ -36,28 +37,28 @@ def ejecutar_nomina(planilla_id: str):
     planilla = db.get_or_404(Planilla, planilla_id)
 
     if request.method == "POST":
-        periodo_inicio = request.form.get("periodo_inicio")
-        periodo_fin = request.form.get("periodo_fin")
-        fecha_calculo = request.form.get("fecha_calculo")
+        periodo_inicio_str = request.form.get("periodo_inicio")
+        periodo_fin_str = request.form.get("periodo_fin")
+        fecha_calculo_str = request.form.get("fecha_calculo")
 
-        if not periodo_inicio or not periodo_fin:
+        if not periodo_inicio_str or not periodo_fin_str:
             flash(_("Debe especificar el período de la nómina."), "error")
             return redirect(url_for(ROUTE_EJECUTAR_NOMINA, planilla_id=planilla_id))
 
         # Parse dates
         try:
-            periodo_inicio = date.fromisoformat(periodo_inicio)
-            periodo_fin = date.fromisoformat(periodo_fin)
-            fecha_calculo = date.fromisoformat(fecha_calculo) if fecha_calculo else date.today()
+            periodo_inicio_date = date.fromisoformat(periodo_inicio_str)
+            periodo_fin_date = date.fromisoformat(periodo_fin_str)
+            fecha_calculo_date = date.fromisoformat(fecha_calculo_str) if fecha_calculo_str else date.today()
         except ValueError:
             flash(_("Formato de fecha inválido."), "error")
             return redirect(url_for(ROUTE_EJECUTAR_NOMINA, planilla_id=planilla_id))
 
         nomina, errors, warnings = NominaService.ejecutar_nomina(
             planilla=planilla,
-            periodo_inicio=periodo_inicio,
-            periodo_fin=periodo_fin,
-            fecha_calculo=fecha_calculo,
+            periodo_inicio=periodo_inicio_date,
+            periodo_fin=periodo_fin_date,
+            fecha_calculo=fecha_calculo_date,
             usuario=current_user.usuario,
         )
 
@@ -94,7 +95,7 @@ def ejecutar_nomina(planilla_id: str):
             return redirect(url_for(ROUTE_EJECUTAR_NOMINA, planilla_id=planilla_id))
 
     # GET - show execution form
-    periodo_inicio, periodo_fin = NominaService.calcular_periodo_sugerido(planilla)
+    periodo_inicio_sugerido, periodo_fin_sugerido = NominaService.calcular_periodo_sugerido(planilla)
     hoy = date.today()
 
     # Get last nomina for reference
@@ -105,8 +106,8 @@ def ejecutar_nomina(planilla_id: str):
     return render_template(
         "modules/planilla/ejecutar_nomina.html",
         planilla=planilla,
-        periodo_inicio=periodo_inicio,
-        periodo_fin=periodo_fin,
+        periodo_inicio=periodo_inicio_sugerido,
+        periodo_fin=periodo_fin_sugerido,
         fecha_calculo=hoy,
         ultima_nomina=ultima_nomina,
     )
@@ -122,7 +123,7 @@ def listar_nominas(planilla_id: str):
         .scalars()
         .all()
     )
-    _apply_progress_snapshots(nominas)
+    _apply_progress_snapshots(cast(list[Nomina], nominas))
 
     return render_template(
         "modules/planilla/listar_nominas.html",
@@ -353,7 +354,8 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
     # Actualizar estado de todas las novedades asociadas a "ejecutada"
     planilla = db.get_or_404(Planilla, planilla_id)
-    empleado_ids = [pe.empleado_id for pe in planilla.planilla_empleados if pe.activo]
+    planilla_empleados = cast(list[Any], planilla.planilla_empleados)
+    empleado_ids = [pe.empleado_id for pe in planilla_empleados if pe.activo]
 
     # Actualizar novedades que corresponden a este período
     novedades = (

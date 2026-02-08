@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
@@ -79,8 +79,14 @@ def process_custom_fields_from_request(custom_fields):
                     datos_adicionales[field.nombre_campo] = None
             case "decimal":
                 try:
-                    datos_adicionales[field.nombre_campo] = float(raw_value) if raw_value else None
-                except ValueError:
+                    clean_value = raw_value.strip() if raw_value else ""
+                    if clean_value:
+                        decimal_value = Decimal(clean_value)
+                        # Store exact text representation to avoid float precision loss in JSON.
+                        datos_adicionales[field.nombre_campo] = format(decimal_value, "f")
+                    else:
+                        datos_adicionales[field.nombre_campo] = None
+                except (ValueError, InvalidOperation):
                     datos_adicionales[field.nombre_campo] = None
             case "boolean":
                 # Checkbox will send value only if checked

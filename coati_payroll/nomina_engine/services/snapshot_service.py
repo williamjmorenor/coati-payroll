@@ -138,7 +138,7 @@ class SnapshotService:
         Returns:
             Dictionary with all catalog items and their formulas
         """
-        snapshot = {
+        snapshot: dict[str, list[Any]] = {
             "percepciones": [],
             "deducciones": [],
             "prestaciones": [],

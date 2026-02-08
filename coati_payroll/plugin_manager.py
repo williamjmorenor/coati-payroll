@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib import import_module
 from importlib.metadata import distributions
+from typing import Mapping, cast
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
@@ -47,7 +48,8 @@ def discover_installed_plugins() -> list[DiscoveredPlugin]:
     found: list[DiscoveredPlugin] = []
 
     for dist in distributions():
-        name = (dist.metadata.get("Name") or "").strip()
+        metadata = cast(Mapping[str, str], dist.metadata)
+        name = (metadata.get("Name") or "").strip()
         if not name or not name.startswith(PLUGIN_DISTRIBUTION_PREFIX):
             continue
 

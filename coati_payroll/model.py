@@ -43,6 +43,16 @@ database = db
 
 
 # -----------------------[ UTILITY FUNCTIONS ]----------------------- #
+def _orjson_default(value):
+    """Default serializer for non-native JSON types."""
+    if isinstance(value, Decimal):
+        # Keep exact decimal representation for financial values.
+        return format(value, "f")
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 def generador_de_codigos_unicos() -> str:
     """Genera codigo unicos basados en ULID."""
 
@@ -90,7 +100,7 @@ class OrjsonType(TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         if value is not None:
-            return orjson.dumps(value).decode("utf-8")
+            return orjson.dumps(value, default=_orjson_default).decode("utf-8")
         return value
 
     def process_result_value(self, value, dialect):

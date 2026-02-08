@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 """Form helper functions for planilla views."""
 
+from typing import Any, cast
+
 from coati_payroll.model import db, TipoPlanilla, Moneda, Empresa, NominaEmpleado, Percepcion, Deduccion
 from coati_payroll.forms import PlanillaForm
 from coati_payroll.i18n import _
@@ -36,7 +38,9 @@ def populate_novedad_form_choices(form, nomina_id: str):
     # Get employees associated with this nomina with eager loading
     nomina_empleados = (
         db.session.execute(
-            db.select(NominaEmpleado).filter_by(nomina_id=nomina_id).options(joinedload(NominaEmpleado.empleado))
+            db.select(NominaEmpleado)
+            .filter_by(nomina_id=nomina_id)
+            .options(joinedload(cast(Any, NominaEmpleado.empleado)))
         )
         .scalars()
         .all()

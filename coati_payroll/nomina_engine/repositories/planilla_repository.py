@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional, cast
 from sqlalchemy.orm import joinedload
 
 from coati_payroll.model import Planilla, PlanillaEmpleado, PlanillaIngreso, PlanillaDeduccion, PlanillaPrestacion
@@ -22,12 +22,18 @@ class PlanillaRepository(BaseRepository[Planilla]):
             self.session.execute(
                 select(Planilla)
                 .options(
-                    joinedload(Planilla.tipo_planilla),
-                    joinedload(Planilla.moneda),
-                    joinedload(Planilla.planilla_empleados).joinedload(PlanillaEmpleado.empleado),
-                    joinedload(Planilla.planilla_percepciones).joinedload(PlanillaIngreso.percepcion),
-                    joinedload(Planilla.planilla_deducciones).joinedload(PlanillaDeduccion.deduccion),
-                    joinedload(Planilla.planilla_prestaciones).joinedload(PlanillaPrestacion.prestacion),
+                    joinedload(cast(Any, Planilla.tipo_planilla)),
+                    joinedload(cast(Any, Planilla.moneda)),
+                    joinedload(cast(Any, Planilla.planilla_empleados)).joinedload(cast(Any, PlanillaEmpleado.empleado)),
+                    joinedload(cast(Any, Planilla.planilla_percepciones)).joinedload(
+                        cast(Any, PlanillaIngreso.percepcion)
+                    ),
+                    joinedload(cast(Any, Planilla.planilla_deducciones)).joinedload(
+                        cast(Any, PlanillaDeduccion.deduccion)
+                    ),
+                    joinedload(cast(Any, Planilla.planilla_prestaciones)).joinedload(
+                        cast(Any, PlanillaPrestacion.prestacion)
+                    ),
                 )
                 .filter(Planilla.id == planilla_id)
             )

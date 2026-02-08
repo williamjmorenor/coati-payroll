@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any, cast
 
 from coati_payroll.model import db, Planilla, Nomina
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
@@ -151,13 +152,15 @@ def ejecutar_nomina(
         db.session.execute(
             select(Planilla)
             .options(
-                joinedload(Planilla.planilla_percepciones).joinedload(PlanillaIngreso.percepcion),
-                joinedload(Planilla.planilla_deducciones).joinedload(PlanillaDeduccion.deduccion),
-                joinedload(Planilla.planilla_prestaciones).joinedload(PlanillaPrestacion.prestacion),
-                joinedload(Planilla.planilla_empleados).joinedload(PlanillaEmpleado.empleado),
-                joinedload(Planilla.planilla_reglas_calculo),
-                joinedload(Planilla.tipo_planilla),
-                joinedload(Planilla.moneda),
+                joinedload(cast(Any, Planilla.planilla_percepciones)).joinedload(cast(Any, PlanillaIngreso.percepcion)),
+                joinedload(cast(Any, Planilla.planilla_deducciones)).joinedload(cast(Any, PlanillaDeduccion.deduccion)),
+                joinedload(cast(Any, Planilla.planilla_prestaciones)).joinedload(
+                    cast(Any, PlanillaPrestacion.prestacion)
+                ),
+                joinedload(cast(Any, Planilla.planilla_empleados)).joinedload(cast(Any, PlanillaEmpleado.empleado)),
+                joinedload(cast(Any, Planilla.planilla_reglas_calculo)),
+                joinedload(cast(Any, Planilla.tipo_planilla)),
+                joinedload(cast(Any, Planilla.moneda)),
             )
             .filter(Planilla.id == planilla_id)
         )

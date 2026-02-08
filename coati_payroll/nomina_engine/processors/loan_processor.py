@@ -6,9 +6,10 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from typing import cast
 
 from coati_payroll.model import db, Adelanto, AdelantoAbono, Nomina, Liquidacion
-from coati_payroll.enums import AdelantoEstado
+from coati_payroll.enums import AdelantoEstado, TipoInteres
 from coati_payroll.i18n import _
 from ..domain.calculation_items import DeduccionItem
 
@@ -39,7 +40,7 @@ class LoanProcessor:
         self, empleado_id: str, saldo_disponible: Decimal, aplicar_prestamos: bool, prioridad_prestamos: int
     ) -> list[DeduccionItem]:
         """Process loans for an employee."""
-        deductions = []
+        deductions: list[DeduccionItem] = []
 
         if not aplicar_prestamos:
             return deductions
@@ -97,7 +98,7 @@ class LoanProcessor:
         self, empleado_id: str, saldo_disponible: Decimal, aplicar_adelantos: bool, prioridad_adelantos: int
     ) -> list[DeduccionItem]:
         """Process salary advances for an employee."""
-        deductions = []
+        deductions: list[DeduccionItem] = []
 
         if not aplicar_adelantos:
             return deductions
@@ -176,7 +177,7 @@ class LoanProcessor:
         if fecha_desde >= fecha_hasta:
             return
 
-        tipo_interes = prestamo.tipo_interes or "simple"
+        tipo_interes = cast(TipoInteres, prestamo.tipo_interes or TipoInteres.SIMPLE)
         interes_calculado, dias = calcular_interes_periodo(
             saldo=prestamo.saldo_pendiente,
             tasa_anual=tasa_interes,

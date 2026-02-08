@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any, cast
 
 from coati_payroll.model import Planilla
 from ..domain.employee_calculation import EmpleadoCalculo
@@ -21,8 +22,9 @@ class PerceptionCalculator:
     def calculate(self, emp_calculo: EmpleadoCalculo, planilla: Planilla, fecha_calculo: date) -> list[PercepcionItem]:
         """Calculate all perceptions for an employee."""
         percepciones = []
+        planilla_percepciones = cast(list[Any], planilla.planilla_percepciones)
 
-        for planilla_percepcion in planilla.planilla_percepciones:
+        for planilla_percepcion in planilla_percepciones:
             if not planilla_percepcion.activo:
                 continue
 

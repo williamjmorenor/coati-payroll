@@ -17,6 +17,7 @@ from __future__ import annotations
 import os
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from typing import Any, cast
 from uuid import uuid4
 
 from sqlalchemy import or_
@@ -147,16 +148,19 @@ def _resolve_job_id(nomina: NominaModel, job_id: str | None) -> str:
 
 
 def _acquire_nomina_job_lock(nomina_id: str, job_id: str) -> bool:
-    result = db.session.execute(
-        db.update(NominaModel)
-        .where(
-            NominaModel.id == nomina_id,
-            or_(NominaModel.job_id_activo.is_(None), NominaModel.job_id_activo == job_id),
-        )
-        .values(job_id_activo=job_id, job_started_at=datetime.now(timezone.utc))
+    result = cast(
+        Any,
+        db.session.execute(
+            db.update(NominaModel)
+            .where(
+                NominaModel.id == nomina_id,
+                or_(NominaModel.job_id_activo.is_(None), NominaModel.job_id_activo == job_id),
+            )
+            .values(job_id_activo=job_id, job_started_at=datetime.now(timezone.utc))
+        ),
     )
     db.session.flush()
-    return result.rowcount == 1
+    return bool(getattr(result, "rowcount", 0) == 1)
 
 
 def _clear_nomina_job_lock(nomina_id: str) -> None:
@@ -387,7 +391,7 @@ def calculate_employee_payroll(
     periodo_fin: str,
     fecha_calculo: str | None = None,
     usuario: str | None = None,
-) -> dict[str, str | Decimal | None]:
+) -> dict[str, Any]:
     """Calculate payroll for a single employee (background task).
 
     This task can be enqueued for background processing to avoid
@@ -447,7 +451,8 @@ def calculate_employee_payroll(
         )
 
         # Process only this employee
-        emp_calculo = engine._procesar_empleado(empleado)
+        engine_any = cast(Any, engine)
+        emp_calculo = engine_any._procesar_empleado(empleado)
 
         # Commit to database
         db.session.commit()
@@ -479,7 +484,7 @@ def process_payroll_parallel(
     fecha_calculo: str | None = None,
     usuario: str | None = None,
     job_id: str | None = None,
-) -> dict[str, bool | int | list[str]]:
+) -> dict[str, Any]:
     """Process payroll for all employees in parallel (background task).
 
     NOTE: This function now uses the same defensive mechanism as process_large_payroll
@@ -519,7 +524,8 @@ def process_payroll_parallel(
             }
 
         # Get all active employees
-        empleados = [pe.empleado for pe in planilla.planilla_empleados if pe.activo and pe.empleado.activo]
+        planilla_empleados = cast(list[Any], planilla.planilla_empleados)
+        empleados = [pe.empleado for pe in planilla_empleados if pe.activo and pe.empleado.activo]
 
         if not empleados:
             return {
@@ -611,7 +617,7 @@ def process_large_payroll(
     periodo_fin: str,
     fecha_calculo: str | None = None,
     usuario: str | None = None,
-) -> dict[str, bool | int | list[str]]:
+) -> dict[str, Any]:
     """Process large payroll in background with progress tracking.
 
     This task processes a payroll for all employees sequentially,
@@ -675,7 +681,7 @@ def process_large_payroll(
         # Load planilla with eager loading of tipo_planilla and moneda
         planilla = db.session.execute(
             db.select(Planilla)
-            .options(joinedload(Planilla.tipo_planilla), joinedload(Planilla.moneda))
+            .options(joinedload(cast(Any, Planilla.tipo_planilla)), joinedload(cast(Any, Planilla.moneda)))
             .filter_by(id=planilla_id)
         ).scalar_one_or_none()
 
@@ -691,7 +697,8 @@ def process_large_payroll(
             }
 
         # Get all active employees
-        empleados = [pe.empleado for pe in planilla.planilla_empleados if pe.activo and pe.empleado.activo]
+        planilla_empleados = cast(list[Any], planilla.planilla_empleados)
+        empleados = [pe.empleado for pe in planilla_empleados if pe.activo and pe.empleado.activo]
 
         if not empleados:
             log.warning(f"No active employees found for planilla {planilla_id}")
@@ -783,7 +790,8 @@ def process_large_payroll(
                     engine.nomina = nomina
 
                     # Process this employee (creates NominaEmpleado, NominaDetalle, etc.)
-                    emp_calculo = engine._procesar_empleado(empleado)
+                    engine_any = cast(Any, engine)
+                    emp_calculo = engine_any._procesar_empleado(empleado)
 
                     # Commit this employee's savepoint (employee processed successfully)
                     emp_savepoint.commit()
@@ -856,9 +864,10 @@ def process_large_payroll(
             savepoint.commit()
 
             # Calculate totals
-            total_bruto = sum(ne.salario_bruto for ne in nomina.nomina_empleados)
-            total_deducciones = sum(ne.total_deducciones for ne in nomina.nomina_empleados)
-            total_neto = sum(ne.salario_neto for ne in nomina.nomina_empleados)
+            nomina_empleados = cast(list[Any], nomina.nomina_empleados)
+            total_bruto = sum(ne.salario_bruto for ne in nomina_empleados)
+            total_deducciones = sum(ne.total_deducciones for ne in nomina_empleados)
+            total_neto = sum(ne.salario_neto for ne in nomina_empleados)
 
             nomina.total_bruto = total_bruto
             nomina.total_deducciones = total_deducciones

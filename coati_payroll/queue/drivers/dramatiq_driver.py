@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from coati_payroll.log import log
 from coati_payroll.queue.driver import QueueDriver
@@ -34,9 +34,9 @@ class DramatiqDriver(QueueDriver):
             redis_url: Redis connection URL (default: redis://localhost:6379/0)
         """
         self._redis_url = redis_url or "redis://localhost:6379/0"
-        self._broker = None
-        self._tasks = {}
-        self._results_backend = None
+        self._broker: Any | None = None
+        self._tasks: dict[str, Any] = {}
+        self._results_backend: Any | None = None
         self._available = self._initialize_broker()
 
     def _initialize_broker(self) -> bool:
@@ -49,8 +49,8 @@ class DramatiqDriver(QueueDriver):
             import dramatiq
             from dramatiq.brokers.redis import RedisBroker
             from dramatiq.middleware import AgeLimit, Retries, TimeLimit
-            from dramatiq.middleware import Results
-            from dramatiq.results import RedisBackend
+            import dramatiq.middleware as dramatiq_middleware
+            import dramatiq.results as dramatiq_results
 
             # Test Redis connection
             import redis
@@ -60,16 +60,21 @@ class DramatiqDriver(QueueDriver):
 
             # Configure broker with middleware
             self._broker = RedisBroker(url=self._redis_url)
+            broker = self._broker
 
             # Add middleware for retries, age limits, and time limits
-            self._broker.add_middleware(Retries(max_retries=3, min_backoff=15000, max_backoff=86400000))
-            self._broker.add_middleware(TimeLimit(time_limit=3600000))  # 1 hour max
-            self._broker.add_middleware(AgeLimit(max_age=86400000))  # 24 hours max age
-            self._results_backend = RedisBackend(url=self._redis_url)
-            self._broker.add_middleware(Results(backend=self._results_backend))
+            broker.add_middleware(Retries(max_retries=3, min_backoff=15000, max_backoff=86400000))
+            broker.add_middleware(TimeLimit(time_limit=3600000))  # 1 hour max
+            broker.add_middleware(AgeLimit(max_age=86400000))  # 24 hours max age
+
+            results_cls = cast(Any, getattr(dramatiq_middleware, "Results", None))
+            redis_backend_cls = cast(Any, getattr(dramatiq_results, "RedisBackend", None))
+            if results_cls is not None and redis_backend_cls is not None:
+                self._results_backend = redis_backend_cls(url=self._redis_url)
+                broker.add_middleware(results_cls(backend=self._results_backend))
 
             # Set as default broker
-            dramatiq.set_broker(self._broker)
+            dramatiq.set_broker(cast(Any, broker))
 
             log.info(f"Dramatiq driver initialized with Redis at {self._redis_url}")
             return True
@@ -181,7 +186,7 @@ class DramatiqDriver(QueueDriver):
             client = redis.from_url(self._redis_url)
 
             # Get basic stats from Redis
-            stats = {
+            stats: dict[str, Any] = {
                 "driver": "dramatiq",
                 "backend": "redis",
                 "available": True,

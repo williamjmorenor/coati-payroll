@@ -109,7 +109,7 @@ def validar_acceso(usuario_id: str, acceso: str, /) -> bool:
     else:
         clave_validada = False
 
-    if clave_validada:
+    if clave_validada and registro is not None:
         registro.ultimo_acceso = datetime.now(UTC)
         database.session.commit()
 

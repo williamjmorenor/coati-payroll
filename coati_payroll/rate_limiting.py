@@ -12,6 +12,7 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from os import environ
+from typing import Any, cast
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
@@ -52,8 +53,8 @@ DEFAULT_STRATEGY = "fixed-window"
 # Global limiter instance (initialized via init_app in configure_rate_limiting)
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=DEFAULT_RATE_LIMITS,
-    storage_options=DEFAULT_STORAGE_OPTIONS,
+    default_limits=cast(Any, DEFAULT_RATE_LIMITS),
+    storage_options=cast(Any, DEFAULT_STORAGE_OPTIONS),
     strategy=DEFAULT_STRATEGY,
 )
 

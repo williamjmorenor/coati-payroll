@@ -37,8 +37,8 @@ class HueyDriver(QueueDriver):
             storage_path: Path to store queue files (default: /var/lib/coati/queue)
         """
         self._storage_path = storage_path or self._get_default_storage_path()
-        self._huey = None
-        self._tasks = {}
+        self._huey: Any | None = None
+        self._tasks: dict[str, Any] = {}
         self._available = self._initialize_huey()
 
     def _get_default_storage_path(self) -> str:

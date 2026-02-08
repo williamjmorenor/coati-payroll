@@ -57,7 +57,7 @@ def add_empleado(planilla_id: str):
     empleado = db.get_or_404(Empleado, empleado_id)
     is_valid, error_message = PlanillaValidator.validar_empresa_empleado(planilla, empleado)
     if not is_valid:
-        flash(_(error_message), "error")
+        flash(_(error_message or "Empleado no válido para esta planilla."), "error")
         return redirect(url_for(ROUTE_CONFIG_EMPLEADOS, planilla_id=planilla_id))
 
     association = PlanillaEmpleado(
@@ -89,16 +89,18 @@ def remove_empleado(planilla_id: str, association_id: str):
 def add_percepcion(planilla_id: str):
     """Add a perception to the planilla."""
     orden = request.form.get("orden", 0, type=int)
+    percepcion_id = request.form.get("percepcion_id") or ""
     success, error_message, association_id = agregar_asociacion(
         planilla_id=planilla_id,
         tipo_componente="percepcion",
-        componente_id=request.form.get("percepcion_id"),
+        componente_id=percepcion_id,
         datos_extra={"orden": orden},
         usuario=current_user.usuario,
     )
 
     if not success:
-        flash(_(error_message), "error" if ERROR_NOT_FOUND in error_message else "warning")
+        error_text = error_message or "No se pudo agregar la percepción."
+        flash(_(error_text), "error" if ERROR_NOT_FOUND in error_text else "warning")
         return redirect(url_for(ROUTE_CONFIG_PERCEPCIONES, planilla_id=planilla_id))
 
     flash(_("Percepción agregada exitosamente."), "success")
@@ -122,16 +124,18 @@ def add_deduccion(planilla_id: str):
     """Add a deduction to the planilla with priority."""
     prioridad = request.form.get("prioridad", 100, type=int)
     es_obligatoria = request.form.get("es_obligatoria") == "on"
+    deduccion_id = request.form.get("deduccion_id") or ""
     success, error_message, association_id = agregar_asociacion(
         planilla_id=planilla_id,
         tipo_componente="deduccion",
-        componente_id=request.form.get("deduccion_id"),
+        componente_id=deduccion_id,
         datos_extra={"prioridad": prioridad, "es_obligatoria": es_obligatoria},
         usuario=current_user.usuario,
     )
 
     if not success:
-        flash(_(error_message), "error" if ERROR_NOT_FOUND in error_message else "warning")
+        error_text = error_message or "No se pudo agregar la deducción."
+        flash(_(error_text), "error" if ERROR_NOT_FOUND in error_text else "warning")
         return redirect(url_for(ROUTE_CONFIG_DEDUCCIONES, planilla_id=planilla_id))
 
     flash(_("Deducción agregada exitosamente."), "success")
@@ -170,16 +174,18 @@ def update_deduccion_priority(planilla_id: str, association_id: str):
 def add_prestacion(planilla_id: str):
     """Add a benefit (prestacion) to the planilla."""
     orden = request.form.get("orden", 0, type=int)
+    prestacion_id = request.form.get("prestacion_id") or ""
     success, error_message, association_id = agregar_asociacion(
         planilla_id=planilla_id,
         tipo_componente="prestacion",
-        componente_id=request.form.get("prestacion_id"),
+        componente_id=prestacion_id,
         datos_extra={"orden": orden},
         usuario=current_user.usuario,
     )
 
     if not success:
-        flash(_(error_message), "error" if ERROR_NOT_FOUND in error_message else "warning")
+        error_text = error_message or "No se pudo agregar la prestación."
+        flash(_(error_text), "error" if ERROR_NOT_FOUND in error_text else "warning")
         return redirect(url_for(ROUTE_CONFIG_PRESTACIONES, planilla_id=planilla_id))
 
     flash(_("Prestación agregada exitosamente."), "success")
@@ -202,16 +208,18 @@ def remove_prestacion(planilla_id: str, association_id: str):
 def add_regla(planilla_id: str):
     """Add a calculation rule to the planilla."""
     orden = request.form.get("orden", 0, type=int)
+    regla_calculo_id = request.form.get("regla_calculo_id") or ""
     success, error_message, association_id = agregar_asociacion(
         planilla_id=planilla_id,
         tipo_componente="regla",
-        componente_id=request.form.get("regla_calculo_id"),
+        componente_id=regla_calculo_id,
         datos_extra={"orden": orden},
         usuario=current_user.usuario,
     )
 
     if not success:
-        flash(_(error_message), "error" if ERROR_NOT_FOUND in error_message else "warning")
+        error_text = error_message or "No se pudo agregar la regla de cálculo."
+        flash(_(error_text), "error" if ERROR_NOT_FOUND in error_text else "warning")
         return redirect(url_for(ROUTE_CONFIG_REGLAS, planilla_id=planilla_id))
 
     flash(_("Regla de cálculo agregada exitosamente."), "success")

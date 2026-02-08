@@ -46,3 +46,14 @@ disable = [
 [tool.flake8]
 max-line-length = 120
 extend-ignore = ["E203", "W503"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+files = ["coati_payroll"]
+exclude = "(^|[\\\\/])tests([\\\\/]|$)"
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
+module = ["coati_payroll.model"]
+disable_error_code = ["name-defined"]

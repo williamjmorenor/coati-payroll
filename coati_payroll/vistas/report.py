@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any, cast
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for, jsonify, send_file
 from flask_login import current_user
@@ -325,7 +326,8 @@ def permissions_form(report_id: str):
         return redirect(url_for("report.admin_index"))
 
     # Get existing permissions
-    existing_permissions = {perm.role: perm for perm in report.permissions}
+    permissions = cast(list[Any], report.permissions)
+    existing_permissions = {perm.role: perm for perm in permissions}
 
     return render_template(
         "modules/report/permissions.html", report=report, existing_permissions=existing_permissions, roles=TipoUsuario

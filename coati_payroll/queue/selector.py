@@ -69,6 +69,7 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
         RuntimeError: If no driver is available
     """
     global _cached_driver
+    driver: QueueDriver
 
     # In test environments, always use Noop driver to avoid optional dependencies
     if force_backend is None and (os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("TESTING") == "True"):

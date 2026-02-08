@@ -14,7 +14,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP, ROUND_UP, ROUND_DOWN
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
@@ -82,21 +82,24 @@ class VacationService:
 
     def _config_from_snapshot(self, snapshot_config: dict) -> ConfiguracionCalculos:
         """Build a ConfiguracionCalculos-like object from snapshot data."""
-        return SimpleNamespace(
-            empresa_id=snapshot_config.get("empresa_id"),
-            pais_id=snapshot_config.get("pais_id"),
-            dias_mes_nomina=snapshot_config.get("dias_mes_nomina"),
-            dias_anio_nomina=snapshot_config.get("dias_anio_nomina"),
-            horas_jornada_diaria=Decimal(str(snapshot_config.get("horas_jornada_diaria"))),
-            dias_mes_vacaciones=snapshot_config.get("dias_mes_vacaciones"),
-            dias_anio_vacaciones=snapshot_config.get("dias_anio_vacaciones"),
-            considerar_bisiesto_vacaciones=snapshot_config.get("considerar_bisiesto_vacaciones"),
-            dias_anio_financiero=snapshot_config.get("dias_anio_financiero"),
-            meses_anio_financiero=snapshot_config.get("meses_anio_financiero"),
-            dias_quincena=snapshot_config.get("dias_quincena"),
-            dias_mes_antiguedad=snapshot_config.get("dias_mes_antiguedad"),
-            dias_anio_antiguedad=snapshot_config.get("dias_anio_antiguedad"),
-            activo=snapshot_config.get("activo", True),
+        return cast(
+            ConfiguracionCalculos,
+            SimpleNamespace(
+                empresa_id=snapshot_config.get("empresa_id"),
+                pais_id=snapshot_config.get("pais_id"),
+                dias_mes_nomina=snapshot_config.get("dias_mes_nomina"),
+                dias_anio_nomina=snapshot_config.get("dias_anio_nomina"),
+                horas_jornada_diaria=Decimal(str(snapshot_config.get("horas_jornada_diaria"))),
+                dias_mes_vacaciones=snapshot_config.get("dias_mes_vacaciones"),
+                dias_anio_vacaciones=snapshot_config.get("dias_anio_vacaciones"),
+                considerar_bisiesto_vacaciones=snapshot_config.get("considerar_bisiesto_vacaciones"),
+                dias_anio_financiero=snapshot_config.get("dias_anio_financiero"),
+                meses_anio_financiero=snapshot_config.get("meses_anio_financiero"),
+                dias_quincena=snapshot_config.get("dias_quincena"),
+                dias_mes_antiguedad=snapshot_config.get("dias_mes_antiguedad"),
+                dias_anio_antiguedad=snapshot_config.get("dias_anio_antiguedad"),
+                activo=snapshot_config.get("activo", True),
+            ),
         )
 
     def _validar_configuracion(self, config: ConfiguracionCalculos) -> None:
@@ -123,39 +126,45 @@ class VacationService:
         from coati_payroll.model import db, ConfiguracionCalculos
 
         if self.snapshot and self.snapshot.get("configuracion"):
-            config = self._config_from_snapshot(self.snapshot["configuracion"])
-            self._validar_configuracion(config)
-            return config
+            snapshot_config = self._config_from_snapshot(self.snapshot["configuracion"])
+            self._validar_configuracion(snapshot_config)
+            return snapshot_config
 
         empresa_id = self.planilla.empresa_id if self.planilla else None
 
         # Try to find company-specific configuration
         if empresa_id:
-            config = (
-                db.session.execute(
-                    db.select(ConfiguracionCalculos).filter(
-                        ConfiguracionCalculos.empresa_id == empresa_id,
-                        ConfiguracionCalculos.activo.is_(True),
+            config = cast(
+                ConfiguracionCalculos | None,
+                (
+                    db.session.execute(
+                        db.select(ConfiguracionCalculos).filter(
+                            ConfiguracionCalculos.empresa_id == empresa_id,
+                            ConfiguracionCalculos.activo.is_(True),
+                        )
                     )
-                )
-                .scalars()
-                .first()
+                    .scalars()
+                    .first()
+                ),
             )
             if config:
                 self._validar_configuracion(config)
                 return config
 
         # Try to find global default (no empresa_id, no pais_id)
-        config = (
-            db.session.execute(
-                db.select(ConfiguracionCalculos).filter(
-                    ConfiguracionCalculos.empresa_id.is_(None),
-                    ConfiguracionCalculos.pais_id.is_(None),
-                    ConfiguracionCalculos.activo.is_(True),
+        config = cast(
+            ConfiguracionCalculos | None,
+            (
+                db.session.execute(
+                    db.select(ConfiguracionCalculos).filter(
+                        ConfiguracionCalculos.empresa_id.is_(None),
+                        ConfiguracionCalculos.pais_id.is_(None),
+                        ConfiguracionCalculos.activo.is_(True),
+                    )
                 )
-            )
-            .scalars()
-            .first()
+                .scalars()
+                .first()
+            ),
         )
         if config:
             self._validar_configuracion(config)
@@ -343,7 +352,7 @@ class VacationService:
             )
             return Decimal("0.00")
 
-        policy = account.policy
+        policy = cast("VacationPolicy", account.policy)
         self._validar_policy(policy)
         if policy.unit_type not in ("days", "hours"):
             raise ValidationError(f"Tipo de unidad inválida en policy {policy.codigo}: {policy.unit_type}.")
@@ -482,7 +491,7 @@ class VacationService:
         Returns:
             Amount to accrue
         """
-        policy = account.policy
+        policy = cast("VacationPolicy", account.policy)
 
         if policy.accrual_method == AccrualMethod.PERIODIC:
             return self._calcular_acumulacion_periodica(policy)
@@ -681,7 +690,7 @@ class VacationService:
                 continue
 
             account = vac_novelty.account
-            policy = account.policy
+            policy = cast("VacationPolicy", account.policy)
             self._validar_policy(policy)
 
             # Skip if already processed (has ledger entry) or ledger already exists

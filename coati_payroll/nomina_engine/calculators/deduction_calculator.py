@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any, cast
 
 from coati_payroll.model import Planilla
 from ..domain.employee_calculation import EmpleadoCalculo
@@ -23,8 +24,9 @@ class DeductionCalculator:
     def calculate(self, emp_calculo: EmpleadoCalculo, planilla: Planilla, fecha_calculo: date) -> list[DeduccionItem]:
         """Calculate all deductions for an employee, applying priority order."""
         deducciones_pendientes: list[DeduccionItem] = []
+        planilla_deducciones = cast(list[Any], planilla.planilla_deducciones)
 
-        for planilla_deduccion in planilla.planilla_deducciones:
+        for planilla_deduccion in planilla_deducciones:
             if not planilla_deduccion.activo:
                 continue
 

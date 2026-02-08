@@ -41,7 +41,7 @@ class ExecutionResult:
             return format(rounded, "f")
 
         # Procesar variables
-        processed_vars = {}
+        processed_vars: dict[str, Any] = {}
         for key, value in self.variables.items():
             if isinstance(value, Decimal):
                 processed_vars[key] = _round_to_two(value)
@@ -49,12 +49,12 @@ class ExecutionResult:
                 processed_vars[key] = value
 
         # Procesar step_results
-        processed_results = {}
+        processed_results: dict[str, Any] = {}
         for key, value in self.step_results.items():
             if isinstance(value, Decimal):
                 processed_results[key] = _round_to_two(value)
             elif isinstance(value, dict):
-                processed_dict = {}
+                processed_dict: dict[str, Any] = {}
                 for k, v in value.items():
                     if isinstance(v, Decimal):
                         processed_dict[k] = _round_to_two(v)

@@ -35,6 +35,9 @@ jobs:
       run: |
         flake8 coati_payroll
         ruff check coati_payroll
+    - name: Type check with mypy
+      run: |
+        python -m mypy
     - name: Test with pytest (regular tests)
       env:
         DEVELOPMENT: True

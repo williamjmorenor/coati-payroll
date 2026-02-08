@@ -69,7 +69,7 @@ def nueva_novedad(planilla_id: str, nomina_id: str):
         # Validate that fecha_novedad falls within the nomina period
         is_valid, error_message = NovedadService.validar_fecha_novedad(form.fecha_novedad.data, nomina)
         if not is_valid:
-            flash(error_message, "error")
+            flash(error_message or _("Fecha de novedad inválida."), "error")
             return render_template(
                 TEMPLATE_NOVEDAD_FORM,
                 form=form,
@@ -147,7 +147,7 @@ def editar_novedad(planilla_id: str, nomina_id: str, novedad_id: str):
         # Validate that fecha_novedad falls within the nomina period
         is_valid, error_message = NovedadService.validar_fecha_novedad(form.fecha_novedad.data, nomina)
         if not is_valid:
-            flash(error_message, "error")
+            flash(error_message or _("Fecha de novedad inválida."), "error")
             return render_template(
                 TEMPLATE_NOVEDAD_FORM,
                 form=form,

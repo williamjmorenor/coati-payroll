@@ -9,7 +9,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 # <-------------------------------------------------------------------------> #
 # Third party packages
@@ -29,7 +29,7 @@ class ExecutionContext:
     tax_tables: dict[str, Any]
     strict_mode: bool = False
     trace_callback: Callable[[str], None] | None = None
-    safe_operators: dict[type, Any] = field(default_factory=lambda: SAFE_OPERATORS)
+    safe_operators: dict[type, Any] = field(default_factory=lambda: cast(dict[type, Any], SAFE_OPERATORS))
     safe_functions: dict[str, Any] = field(default_factory=lambda: SAFE_FUNCTIONS)
 
     def with_variable(self, name: str, value: Decimal) -> "ExecutionContext":

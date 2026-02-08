@@ -14,6 +14,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import cast
 from dateutil.relativedelta import relativedelta
 
 # <-------------------------------------------------------------------------> #
@@ -433,7 +434,8 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
             empleado.salario_base = emp_data["salario_base"]
             empleado.tipo_contrato = emp_data.get("tipo_contrato")
             empleado.moneda_id = moneda.id
-            empleado.empresa_id = emp_data["empresa"].id
+            empresa = cast(Empresa, emp_data["empresa"])
+            empleado.empresa_id = empresa.id
             empleado.correo = emp_data.get("correo")
             empleado.telefono = emp_data.get("telefono")
             empleado.estado_civil = "Soltero"
@@ -448,7 +450,9 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
     return empleados
 
 
-def load_demo_payrolls(empresa1: Empresa, empresa2: Empresa, empleados: list[Empleado]) -> tuple[Planilla, Planilla]:
+def load_demo_payrolls(
+    empresa1: Empresa, empresa2: Empresa, empleados: list[Empleado]
+) -> tuple[Planilla | None, Planilla | None]:
     """Create demo payrolls with assigned employees and concepts.
 
     Args:

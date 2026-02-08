@@ -15,6 +15,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from io import BytesIO
+from typing import Any, cast
 
 from flask import (
     Blueprint,
@@ -776,8 +777,8 @@ def generar_tabla_pago(prestamo: Adelanto) -> list[dict]:
         tasa_anual=tasa_interes,
         num_cuotas=prestamo.cuotas_pactadas,
         fecha_inicio=fecha_inicio,
-        metodo=metodo_amortizacion,
-        tipo_interes=tipo_interes,
+        metodo=cast(Any, metodo_amortizacion),
+        tipo_interes=cast(Any, tipo_interes),
     )
 
     # Convert to dict format for template

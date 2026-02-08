@@ -7,7 +7,8 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Standard library
 # <-------------------------------------------------------------------------> #
-from os import environ, getcwd, path, sys
+import sys
+from os import environ, getcwd, path
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
@@ -126,7 +127,7 @@ else:
 # < --------------------------------------------------------------------------------------------- >
 # Configuración de la aplicación:
 # Se siguen las recomendaciones de "Twelve Factors App" y las opciones se leen del entorno.
-CONFIGURACION: dict[str, str | bool | Path] = {}
+CONFIGURACION: dict[str, str | bool | Path | int | None] = {}
 CONFIGURACION["SECRET_KEY"] = environ.get("SECRET_KEY") or "dev"  # nosec
 CONFIGURACION["SQLALCHEMY_DATABASE_URI"] = environ.get("DATABASE_URL") or SQLITE  # nosec
 # Upload size limit (bytes). Default ~2 MB, roughly ~1000 Excel rows for typical uploads.
@@ -143,8 +144,10 @@ if DESARROLLO:
 # < --------------------------------------------------------------------------------------------- >
 # Corrige la URI de conexión a la base de datos si el usuario omite el driver apropiado.
 
-if DATABASE_URL_BASE := CONFIGURACION.get("SQLALCHEMY_DATABASE_URI"):
+database_url_base = CONFIGURACION.get("SQLALCHEMY_DATABASE_URI")
+if isinstance(database_url_base, str):
 
+    DATABASE_URL_BASE = database_url_base
     DATABASE_URL_CORREGIDA = DATABASE_URL_BASE
 
     prefix = DATABASE_URL_BASE.split(":", 1)[0]  # Extraer prefijo: "postgres", "mysql", etc.

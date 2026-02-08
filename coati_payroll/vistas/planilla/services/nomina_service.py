@@ -3,6 +3,7 @@
 """Service for nomina business logic."""
 
 from datetime import date, timedelta
+from typing import Any, cast
 from uuid import uuid4
 from flask import current_app
 from coati_payroll.model import db, Planilla, Nomina
@@ -78,7 +79,8 @@ class NominaService:
             Tuple of (nomina, errors, warnings)
         """
         # Count active employees
-        num_empleados = sum(1 for pe in planilla.planilla_empleados if pe.activo and pe.empleado.activo)
+        planilla_empleados = cast(list[Any], planilla.planilla_empleados)
+        num_empleados = len([pe for pe in planilla_empleados if pe.activo and pe.empleado.activo])
 
         # Get configurable threshold for background processing
         threshold = current_app.config.get("BACKGROUND_PAYROLL_THRESHOLD", 100)
@@ -133,8 +135,8 @@ class NominaService:
                 usuario=usuario,
             )
 
-            nomina = engine.ejecutar()
-            return nomina, engine.errors, engine.warnings
+            nomina_result = engine.ejecutar()
+            return nomina_result, engine.errors, engine.warnings
 
     @staticmethod
     def recalcular_nomina(

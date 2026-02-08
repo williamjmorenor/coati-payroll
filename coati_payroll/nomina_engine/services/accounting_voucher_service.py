@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 from collections import defaultdict
 from datetime import date
 
@@ -21,6 +21,7 @@ from coati_payroll.model import (
     Adelanto,
     ComprobanteContable,
     ComprobanteContableLinea,
+    Moneda,
 )
 from ..utils.rounding import round_money
 
@@ -121,13 +122,13 @@ class AccountingVoucherService:
         return is_valid, warnings
 
     def generate_accounting_voucher(
-        self, nomina: Nomina, planilla: Planilla, fecha_calculo: date = None, usuario: str = None
+        self, nomina: Nomina, planilla: Planilla, fecha_calculo: date | None = None, usuario: str | None = None
     ) -> ComprobanteContable:
         """Backward-compatible alias for audit voucher generation."""
         return self.generate_audit_voucher(nomina, planilla, fecha_calculo, usuario)
 
     def generate_audit_voucher(
-        self, nomina: Nomina, planilla: Planilla, fecha_calculo: date = None, usuario: str = None
+        self, nomina: Nomina, planilla: Planilla, fecha_calculo: date | None = None, usuario: str | None = None
     ) -> ComprobanteContable:
         """Generate accounting voucher for a nomina with individual lines per employee.
 
@@ -148,6 +149,7 @@ class AccountingVoucherService:
         # Use nomina's calculation date or periodo_fin
         if fecha_calculo is None:
             fecha_calculo = nomina.fecha_calculo_original or nomina.periodo_fin
+        planilla_moneda = cast(Moneda | None, planilla.moneda)
 
         # Generate voucher concept
         concepto = (
@@ -222,7 +224,7 @@ class AccountingVoucherService:
 
             # 1. Base Salary Accounting
             # Always generate lines even if accounts are missing (use NULL for missing accounts)
-            salario_base = round_money(ne.sueldo_base_historico, planilla.moneda)
+            salario_base = round_money(ne.sueldo_base_historico, planilla_moneda)
 
             # Debit: Salary Expense
             orden += 1
@@ -318,7 +320,7 @@ class AccountingVoucherService:
                     orden += 1
                     if planilla.codigo_cuenta_haber_salario is None:
                         null_account_count += 1
-                    detalle_monto = round_money(detalle.monto, planilla.moneda)
+                    detalle_monto = round_money(detalle.monto, planilla_moneda)
                     linea_debe = ComprobanteContableLinea(
                         comprobante_id=comprobante.id,
                         nomina_empleado_id=ne.id,
@@ -378,7 +380,7 @@ class AccountingVoucherService:
                             orden += 1
                             if percepcion.codigo_cuenta_debe is None:
                                 null_account_count += 1
-                            detalle_monto = round_money(detalle.monto, planilla.moneda)
+                            detalle_monto = round_money(detalle.monto, planilla_moneda)
                             linea_debe = ComprobanteContableLinea(
                                 comprobante_id=comprobante.id,
                                 nomina_empleado_id=ne.id,
@@ -440,7 +442,7 @@ class AccountingVoucherService:
                             orden += 1
                             if deduccion.codigo_cuenta_debe is None:
                                 null_account_count += 1
-                            detalle_monto = round_money(detalle.monto, planilla.moneda)
+                            detalle_monto = round_money(detalle.monto, planilla_moneda)
                             linea_debe = ComprobanteContableLinea(
                                 comprobante_id=comprobante.id,
                                 nomina_empleado_id=ne.id,
@@ -502,7 +504,7 @@ class AccountingVoucherService:
                             orden += 1
                             if prestacion.codigo_cuenta_debe is None:
                                 null_account_count += 1
-                            detalle_monto = round_money(detalle.monto, planilla.moneda)
+                            detalle_monto = round_money(detalle.monto, planilla_moneda)
                             linea_debe = ComprobanteContableLinea(
                                 comprobante_id=comprobante.id,
                                 nomina_empleado_id=ne.id,
@@ -558,9 +560,9 @@ class AccountingVoucherService:
                             total_creditos += detalle_monto
 
         # Calculate balance (should be 0 for balanced voucher)
-        total_debitos = round_money(total_debitos, planilla.moneda)
-        total_creditos = round_money(total_creditos, planilla.moneda)
-        balance = round_money(total_debitos - total_creditos, planilla.moneda)
+        total_debitos = round_money(total_debitos, planilla_moneda)
+        total_creditos = round_money(total_creditos, planilla_moneda)
+        balance = round_money(total_debitos - total_creditos, planilla_moneda)
 
         # Validate balance
         if balance != Decimal("0.00"):
@@ -590,6 +592,7 @@ class AccountingVoucherService:
 
     def validate_line_integrity(self, comprobante: ComprobanteContable) -> None:
         """Validate integrity rules for voucher lines."""
+        comprobante_moneda = cast(Moneda | None, comprobante.moneda)
         lineas = (
             self.session.execute(db.select(ComprobanteContableLinea).filter_by(comprobante_id=comprobante.id))
             .scalars()
@@ -597,9 +600,9 @@ class AccountingVoucherService:
         )
         errores = []
         for linea in lineas:
-            debito = round_money(linea.debito, comprobante.moneda)
-            credito = round_money(linea.credito, comprobante.moneda)
-            monto_calculado = round_money(linea.monto_calculado, comprobante.moneda)
+            debito = round_money(linea.debito, comprobante_moneda)
+            credito = round_money(linea.credito, comprobante_moneda)
+            monto_calculado = round_money(linea.monto_calculado, comprobante_moneda)
             tiene_debito = debito > 0
             tiene_credito = credito > 0
 
@@ -608,7 +611,7 @@ class AccountingVoucherService:
                     f"Línea {linea.id}: debe contener solo débito o crédito (debito={debito}, credito={credito})."
                 )
 
-            if monto_calculado != round_money(debito + credito, comprobante.moneda):
+            if monto_calculado != round_money(debito + credito, comprobante_moneda):
                 errores.append(
                     "Línea "
                     f"{linea.id}: monto_calculado inconsistente "
@@ -645,6 +648,7 @@ class AccountingVoucherService:
             ValueError: If comprobante has NULL accounts (incomplete configuration)
         """
         self.validate_line_integrity(comprobante)
+        comprobante_moneda = cast(Moneda | None, comprobante.moneda)
         # Dictionary to accumulate by (account, cost_center)
         summary_dict: dict[tuple[str, str | None], dict[str, Any]] = defaultdict(
             lambda: {"debito": Decimal("0.00"), "credito": Decimal("0.00"), "descripcion": ""}
@@ -675,8 +679,8 @@ class AccountingVoucherService:
                 continue  # Skip NULL accounts
 
             key = (linea.codigo_cuenta, linea.centro_costos)
-            summary_dict[key]["debito"] += round_money(linea.debito, comprobante.moneda)
-            summary_dict[key]["credito"] += round_money(linea.credito, comprobante.moneda)
+            summary_dict[key]["debito"] += round_money(linea.debito, comprobante_moneda)
+            summary_dict[key]["credito"] += round_money(linea.credito, comprobante_moneda)
             # Use first description found for this account
             if not summary_dict[key]["descripcion"]:
                 summary_dict[key]["descripcion"] = linea.descripcion_cuenta or ""
@@ -689,7 +693,7 @@ class AccountingVoucherService:
 
             # Net debits and credits
             if debito > credito:
-                monto_neto = round_money(debito - credito, comprobante.moneda)
+                monto_neto = round_money(debito - credito, comprobante_moneda)
                 summarized_entries.append(
                     {
                         "codigo_cuenta": codigo_cuenta,
@@ -700,7 +704,7 @@ class AccountingVoucherService:
                     }
                 )
             elif credito > debito:
-                monto_neto = round_money(credito - debito, comprobante.moneda)
+                monto_neto = round_money(credito - debito, comprobante_moneda)
                 summarized_entries.append(
                     {
                         "codigo_cuenta": codigo_cuenta,
@@ -757,6 +761,9 @@ class AccountingVoucherService:
                     "centro_costos": linea.centro_costos,
                     "lineas": [],
                 }
+
+            if current_entry is None:
+                continue
 
             # Add line to current employee
             current_entry["lineas"].append(

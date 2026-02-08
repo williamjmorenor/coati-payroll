@@ -225,14 +225,21 @@ def get_available_sources_for_ui() -> list[dict]:
         List of dictionaries with source information for the schema editor
     """
     sources = []
-    for category, data in AVAILABLE_DATA_SOURCES.items():
-        for field_name, field_info in data["fields"].items():
+    data_sources = AVAILABLE_DATA_SOURCES if isinstance(AVAILABLE_DATA_SOURCES, dict) else {}
+    for category, data in data_sources.items():
+        data_dict = data if isinstance(data, dict) else {}
+        fields = data_dict.get("fields", {})
+        if not isinstance(fields, dict):
+            continue
+        for field_name, field_info in fields.items():
+            if not isinstance(field_info, dict):
+                continue
             sources.append(
                 {
                     "value": f"{category}.{field_name}",
-                    "label": f"{data['label']} - {field_info['label']}",
-                    "type": field_info["type"],
-                    "description": field_info["description"],
+                    "label": f"{data_dict.get('label', category)} - {field_info.get('label', field_name)}",
+                    "type": field_info.get("type"),
+                    "description": field_info.get("description"),
                     "category": category,
                 }
             )

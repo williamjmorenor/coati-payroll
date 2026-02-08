@@ -17,6 +17,7 @@ import shutil
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 # <-------------------------------------------------------------------------> #
@@ -197,8 +198,8 @@ class PluginsCommand(click.Group):
                 output_result(ctx, f"No se pudo deshabilitar el plugin: {exc}", None, False)
                 raise click.ClickException(str(exc))
 
-        def _get_plugin_metadata(plugin_id: str) -> dict:
-            meta = {"plugin_id": plugin_id}
+        def _get_plugin_metadata(plugin_id: str) -> dict[str, Any]:
+            meta: dict[str, Any] = {"plugin_id": plugin_id}
             try:
                 # versión detectada por distribución instalada
                 discovered = {p.plugin_id: p for p in discover_installed_plugins()}
@@ -544,7 +545,7 @@ def _database_status():
 @click.command()
 @with_appcontext
 @pass_context
-def serve():
+def serve(ctx):
     """Run the application server."""
     try:
         wsgi_server(app=current_app)

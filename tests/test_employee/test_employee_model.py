@@ -232,3 +232,16 @@ def test_employee_can_be_inactive(app, db_session):
         empleado = create_employee(db_session, empresa_id=empresa.id, activo=False)
 
         assert empleado.activo is False
+
+
+def test_employee_datos_adicionales_serializes_decimal_exactly(app, db_session):
+    """JSON fields should persist Decimal values without float conversion."""
+    with app.app_context():
+        empresa = create_company(db_session, "EMP_EMP_10", "Company", "J0010")
+        empleado = create_employee(db_session, empresa_id=empresa.id)
+
+        empleado.datos_adicionales = {"tasa_bono": Decimal("0.1")}
+        db_session.commit()
+        db_session.refresh(empleado)
+
+        assert empleado.datos_adicionales["tasa_bono"] == "0.1"

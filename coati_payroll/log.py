@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from os import environ
 from sys import stdout
+from typing import Any, cast
 
 # <-------------------------------------------------------------------------> #
 # Third-party libraries
@@ -25,13 +26,20 @@ logging.addLevelName(TRACE_LEVEL_NUM, "TRACE")
 
 
 # Método adicional para usar logger.trace(...)
-def trace(self, message, *args, **kwargs):
+class TraceLogger(logging.Logger):
+    """Logger that exposes custom trace method for static typing."""
+
+    def trace(self, message: object, *args: object, **kwargs: object) -> None:
+        """Log a message with TRACE level."""
+
+
+def _trace(self: logging.Logger, message: object, *args: object, **kwargs: Any) -> None:
     """Log a message with TRACE level."""
     if self.isEnabledFor(TRACE_LEVEL_NUM):
-        self._log(TRACE_LEVEL_NUM, message, args, **kwargs)
+        self.log(TRACE_LEVEL_NUM, message, *args, **kwargs)
 
 
-logging.Logger.trace = trace
+setattr(logging.Logger, "trace", _trace)
 
 # Configurar nivel desde variable de entorno (default: INFO)
 log_level_str = environ.get("LOG_LEVEL", "INFO").upper()
@@ -73,8 +81,8 @@ logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
 
 LOG_LEVEL = root_logger.getEffectiveLevel()
 
-log = root_logger
-logger = root_logger
+log: TraceLogger = cast(TraceLogger, root_logger)
+logger: TraceLogger = log
 
 # Cached helper to avoid repeated debug/level checks on every trace call
 _TRACE_ACTIVE: bool | None = None

@@ -185,7 +185,7 @@ def delete(planilla_id: str):
 
     can_delete, error_message = PlanillaService.can_delete(planilla)
     if not can_delete:
-        flash(_(error_message), "error")
+        flash(_(error_message or "No se puede eliminar la planilla."), "error")
         return redirect(url_for("planilla.index"))
 
     db.session.delete(planilla)

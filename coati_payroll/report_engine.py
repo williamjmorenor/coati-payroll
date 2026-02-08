@@ -16,7 +16,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
@@ -449,7 +449,8 @@ def can_view_report(report: Report, user_role: str) -> bool:
         return True
 
     # Check report permissions
-    for perm in report.permissions:
+    permissions = cast(list[Any], report.permissions)
+    for perm in permissions:
         if perm.role == user_role and perm.can_view:
             return True
 
@@ -471,7 +472,8 @@ def can_execute_report(report: Report, user_role: str) -> bool:
         return True
 
     # Check report permissions
-    for perm in report.permissions:
+    permissions = cast(list[Any], report.permissions)
+    for perm in permissions:
         if perm.role == user_role and perm.can_execute:
             return True
 
@@ -493,7 +495,8 @@ def can_export_report(report: Report, user_role: str) -> bool:
         return True
 
     # Check report permissions
-    for perm in report.permissions:
+    permissions = cast(list[Any], report.permissions)
+    for perm in permissions:
         if perm.role == user_role and perm.can_export:
             return True
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Any, cast
 
 from sqlalchemy import select
 
@@ -44,7 +45,7 @@ class LiquidacionEngine:
         self.errors: list[str] = []
         self.warnings: list[str] = []
 
-        self._config_repo = ConfigRepository(db.session)
+        self._config_repo = ConfigRepository(cast(Any, db.session))
 
     def _get_config(self) -> ConfiguracionCalculos:
         return self._config_repo.get_for_empresa(self.empleado.empresa_id)

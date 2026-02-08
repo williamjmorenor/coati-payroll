@@ -105,7 +105,7 @@ class TableLookup:
             )
 
         # Find the applicable bracket
-        matched_brackets = []
+        matched_brackets: list[tuple[int, Any, Decimal, Decimal | None]] = []
         for i, bracket in enumerate(table):
             try:
                 min_val = to_decimal(bracket.get("min", 0))

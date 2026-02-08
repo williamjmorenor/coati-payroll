@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
-from coati_payroll.model import db, Planilla, Empleado, Nomina
+from coati_payroll.model import db, Planilla, Empleado, Nomina, Moneda
 from coati_payroll.enums import NominaEstado
 from coati_payroll.formula_engine import FormulaEngineError
 from coati_payroll.log import log
@@ -169,8 +169,9 @@ class PayrollExecutionService:
 
         # Process each employee
         empleados_calculo: list[EmpleadoCalculo] = []
+        planilla_empleados = cast(list[Any], planilla.planilla_empleados)
 
-        for planilla_empleado in planilla.planilla_empleados:
+        for planilla_empleado in planilla_empleados:
             if not planilla_empleado.activo:
                 continue
 
@@ -392,14 +393,15 @@ class PayrollExecutionService:
             configuracion_snapshot=configuracion_snapshot,
             rounding=False,
         )
+        planilla_moneda = cast(Moneda | None, planilla.moneda)
 
         if emp_calculo.tipo_cambio != Decimal("1.00"):
-            salario_mensual = round_money(salario_mensual_origen * emp_calculo.tipo_cambio, planilla.moneda)
-            salario_periodo = round_money(salario_periodo_origen * emp_calculo.tipo_cambio, planilla.moneda)
+            salario_mensual = round_money(salario_mensual_origen * emp_calculo.tipo_cambio, planilla_moneda)
+            salario_periodo = round_money(salario_periodo_origen * emp_calculo.tipo_cambio, planilla_moneda)
         else:
             # Always quantize to ensure consistent decimal precision
-            salario_mensual = round_money(salario_mensual_origen, planilla.moneda)
-            salario_periodo = round_money(salario_periodo_origen, planilla.moneda)
+            salario_mensual = round_money(salario_mensual_origen, planilla_moneda)
+            salario_periodo = round_money(salario_periodo_origen, planilla_moneda)
 
         emp_calculo.salario_base = salario_periodo
         emp_calculo.salario_mensual = salario_mensual
@@ -476,8 +478,10 @@ class PayrollExecutionService:
         self.accounting_processor.create_prestacion_transactions(
             emp_calculo, nomina, planilla, periodo_fin, fecha_calculo
         )
-        emp_calculo.vacaciones_resumen = vacation_processor.process_vacations(
-            emp_calculo.empleado, emp_calculo, nomina_empleado
+        setattr(
+            emp_calculo,
+            "vacaciones_resumen",
+            vacation_processor.process_vacations(emp_calculo.empleado, emp_calculo, nomina_empleado),
         )
 
     def _calculate_totals(self, nomina: Nomina, empleados_calculo: list[EmpleadoCalculo]) -> None:
@@ -491,6 +495,7 @@ class PayrollExecutionService:
             total_deducciones += emp_calculo.total_deducciones
             total_neto += emp_calculo.salario_neto
 
-        nomina.total_bruto = round_money(total_bruto, nomina.planilla.moneda if nomina.planilla else None)
-        nomina.total_deducciones = round_money(total_deducciones, nomina.planilla.moneda if nomina.planilla else None)
-        nomina.total_neto = round_money(total_neto, nomina.planilla.moneda if nomina.planilla else None)
+        nomina_moneda = cast(Moneda | None, nomina.planilla.moneda) if nomina.planilla else None
+        nomina.total_bruto = round_money(total_bruto, nomina_moneda)
+        nomina.total_deducciones = round_money(total_deducciones, nomina_moneda)
+        nomina.total_neto = round_money(total_neto, nomina_moneda)

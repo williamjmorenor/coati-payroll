@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from typing import Any, cast
 
 from coati_payroll.model import Planilla
 from ..domain.employee_calculation import EmpleadoCalculo
@@ -22,8 +23,9 @@ class BenefitCalculator:
     def calculate(self, emp_calculo: EmpleadoCalculo, planilla: Planilla, fecha_calculo: date) -> list[PrestacionItem]:
         """Calculate all benefits for an employee."""
         prestaciones = []
+        planilla_prestaciones = cast(list[Any], planilla.planilla_prestaciones)
 
-        for planilla_prestacion in planilla.planilla_prestaciones:
+        for planilla_prestacion in planilla_prestaciones:
             if not planilla_prestacion.activo:
                 continue
 

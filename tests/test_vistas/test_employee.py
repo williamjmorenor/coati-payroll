@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 """Comprehensive tests for employee CRUD operations (coati_payroll/vistas/employee.py)."""
 
+from types import SimpleNamespace
+
 from tests.helpers.auth import login_user
 
 
@@ -199,3 +201,28 @@ def test_employee_export_functionality(app, client, admin_user, db_session):
         # Try to access export endpoint if it exists
         response = client.get("/employee/export")
         assert response.status_code in [200, 404, 302]  # May not exist
+
+
+def test_process_custom_fields_decimal_preserves_precision(app):
+    """Custom decimal fields should be stored exactly, not as float."""
+    from coati_payroll.vistas.employee import process_custom_fields_from_request
+
+    custom_fields = [SimpleNamespace(nombre_campo="tasa_bono", tipo_dato="decimal")]
+
+    with app.test_request_context("/employee/new", method="POST", data={"custom_tasa_bono": "0.1"}):
+        result = process_custom_fields_from_request(custom_fields)
+
+    assert result["tasa_bono"] == "0.1"
+    assert isinstance(result["tasa_bono"], str)
+
+
+def test_process_custom_fields_decimal_invalid_value_returns_none(app):
+    """Invalid custom decimal fields should be normalized to None."""
+    from coati_payroll.vistas.employee import process_custom_fields_from_request
+
+    custom_fields = [SimpleNamespace(nombre_campo="tasa_bono", tipo_dato="decimal")]
+
+    with app.test_request_context("/employee/new", method="POST", data={"custom_tasa_bono": "abc"}):
+        result = process_custom_fields_from_request(custom_fields)
+
+    assert result["tasa_bono"] is None

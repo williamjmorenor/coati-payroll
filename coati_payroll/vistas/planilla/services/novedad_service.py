@@ -3,6 +3,7 @@
 """Service for novedad business logic."""
 
 from decimal import Decimal
+from typing import Any, cast
 from coati_payroll.model import db, Planilla, Nomina, NominaNovedad
 from coati_payroll.vistas.planilla.helpers.form_helpers import get_concepto_ids_from_form
 
@@ -22,7 +23,8 @@ class NovedadService:
             List of NominaNovedad objects
         """
         # Get all employees in this planilla
-        empleado_ids = [pe.empleado_id for pe in planilla.planilla_empleados if pe.activo]
+        planilla_empleados = cast(list[Any], planilla.planilla_empleados)
+        empleado_ids = [pe.empleado_id for pe in planilla_empleados if pe.activo]
 
         # Query novedades that fall within the nomina period and are for employees in this planilla
         novedades = (
@@ -39,7 +41,7 @@ class NovedadService:
             .all()
         )
 
-        return novedades
+        return cast(list[Any], novedades)
 
     @staticmethod
     def validar_fecha_novedad(fecha_novedad, nomina: Nomina) -> tuple[bool, str | None]:

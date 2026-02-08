@@ -462,7 +462,7 @@ def vacation_taken_by_period_report(parameters: Dict[str, Any]) -> List[Dict[str
 # ============================================================================
 
 # Metadata for each system report
-SYSTEM_REPORT_METADATA = {
+SYSTEM_REPORT_METADATA: Dict[str, Dict[str, Any]] = {
     "employee_list": {
         "name": "Listado General de Empleados",
         "description": "Lista completa de empleados con información básica",
