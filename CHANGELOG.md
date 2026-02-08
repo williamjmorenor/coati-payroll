@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.0.4] - 2026-02-08
+
+### Fixed
+
+- Preserved `NominaNovedad` records during payroll recalculation to prevent loss of payroll master data.
+- Re-linked preserved novelties to the new recalculated payroll run instead of deleting them with old calculation records.
+- Added defensive regression tests to ensure novelties are not deleted in future recalculation changes.
+
 ## [1.0.3] - 2026-02-08
 
 ### Fixed
