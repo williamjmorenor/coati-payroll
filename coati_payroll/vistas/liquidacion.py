@@ -10,6 +10,7 @@ from datetime import date
 from flask import Blueprint, flash, redirect, render_template, request, send_file, url_for
 from flask_login import login_required, current_user
 
+from coati_payroll.enums import LiquidacionEstado
 from coati_payroll.i18n import _
 from coati_payroll.model import Liquidacion, LiquidacionConcepto, Empleado, db
 from coati_payroll.model import PlanillaEmpleado
@@ -169,8 +170,8 @@ def recalcular(liquidacion_id: str):
 def aplicar(liquidacion_id: str):
     liquidacion = db.get_or_404(Liquidacion, liquidacion_id)
 
-    if liquidacion.estado != "draft":
-        flash(_("Solo se pueden aplicar liquidaciones en borrador."), "error")
+    if liquidacion.estado not in {LiquidacionEstado.BORRADOR, LiquidacionEstado.CALCULADA}:
+        flash(_("Solo se pueden aplicar liquidaciones en borrador o calculadas."), "error")
         return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
     empleado = db.session.get(Empleado, liquidacion.empleado_id)
@@ -198,7 +199,7 @@ def aplicar(liquidacion_id: str):
         pe.activo = False
         pe.fecha_fin = liquidacion.fecha_calculo
 
-    liquidacion.estado = "applied"
+    liquidacion.estado = LiquidacionEstado.APLICADO
     db.session.commit()
     flash(_("Liquidación aplicada. Empleado marcado como inactivo y desvinculado de planillas."), "success")
     return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
@@ -210,11 +211,11 @@ def aplicar(liquidacion_id: str):
 def pagar(liquidacion_id: str):
     liquidacion = db.get_or_404(Liquidacion, liquidacion_id)
 
-    if liquidacion.estado != "applied":
+    if liquidacion.estado != LiquidacionEstado.APLICADO:
         flash(_("Solo se pueden pagar liquidaciones aplicadas."), "error")
         return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))
 
-    liquidacion.estado = "paid"
+    liquidacion.estado = LiquidacionEstado.PAGADO
     db.session.commit()
     flash(_("Liquidación marcada como pagada."), "success")
     return redirect(url_for(ROUTE_LIQUIDACION_VER, liquidacion_id=liquidacion.id))

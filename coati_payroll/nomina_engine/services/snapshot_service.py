@@ -16,6 +16,10 @@ from coati_payroll.model import (
     Prestacion,
     Planilla,
     TipoCambio,
+    VacationPolicy,
+    VacationNovelty,
+    NominaNovedad,
+    PlanillaEmpleado,
     db,
 )
 
@@ -213,22 +217,51 @@ class SnapshotService:
         else:
             deducciones = []
 
-        for d in deducciones:
-            snapshot["deducciones"].append(
-                {
-                    "id": d.id,
-                    "codigo": d.codigo,
-                    "nombre": d.nombre,
-                    "descripcion": d.descripcion,
-                    "formula_tipo": d.formula_tipo,
-                    "formula": d.formula,
-                    "monto_default": str(d.monto_default) if d.monto_default else None,
-                    "porcentaje": str(d.porcentaje) if d.porcentaje else None,
-                    "antes_impuesto": d.antes_impuesto,
-                    "base_calculo": d.base_calculo,
-                    "estado_aprobacion": d.estado_aprobacion,
-                }
+        # Also capture linked ReglaCalculo for reproducibility
+        from coati_payroll.model import ReglaCalculo
+
+        reglas_by_deduccion = {}
+        if deducciones_ids:
+            reglas = (
+                self.session.execute(
+                    db.select(ReglaCalculo).filter(
+                        ReglaCalculo.deduccion_id.in_(deducciones_ids),
+                        ReglaCalculo.activo.is_(True),
+                    )
+                )
+                .scalars()
+                .all()
             )
+            for regla in reglas:
+                if regla.deduccion_id:
+                    reglas_by_deduccion[regla.deduccion_id] = {
+                        "id": regla.id,
+                        "codigo": regla.codigo,
+                        "nombre": regla.nombre,
+                        "esquema_json": regla.esquema_json,
+                        "vigente_desde": regla.vigente_desde.isoformat() if regla.vigente_desde else None,
+                        "vigente_hasta": regla.vigente_hasta.isoformat() if regla.vigente_hasta else None,
+                    }
+
+        for d in deducciones:
+            deduccion_data = {
+                "id": d.id,
+                "codigo": d.codigo,
+                "nombre": d.nombre,
+                "descripcion": d.descripcion,
+                "formula_tipo": d.formula_tipo,
+                "formula": d.formula,
+                "monto_default": str(d.monto_default) if d.monto_default else None,
+                "porcentaje": str(d.porcentaje) if d.porcentaje else None,
+                "es_impuesto": d.es_impuesto,
+                "antes_impuesto": d.antes_impuesto,
+                "base_calculo": d.base_calculo,
+                "estado_aprobacion": d.estado_aprobacion,
+            }
+            # Include ReglaCalculo if linked
+            if d.id in reglas_by_deduccion:
+                deduccion_data["regla_calculo"] = reglas_by_deduccion[d.id]
+            snapshot["deducciones"].append(deduccion_data)
 
         # Capture Prestaciones linked to this planilla
         from coati_payroll.model import PlanillaPrestacion
@@ -277,19 +310,88 @@ class SnapshotService:
 
         return snapshot
 
-    def capture_complete_snapshot(self, planilla: Planilla, fecha_calculo: date) -> dict[str, Any]:
+    def capture_vacation_snapshot(self, planilla: Planilla, periodo_inicio: date, periodo_fin: date) -> dict[str, Any]:
+        """Capture vacation-specific snapshot data for reproducible processing."""
+        snapshot: dict[str, Any] = {"vacation_policies": [], "vacation_novelty_ids": []}
+
+        policies = (
+            self.session.execute(
+                db.select(VacationPolicy).filter(
+                    VacationPolicy.activo.is_(True),
+                    db.or_(
+                        VacationPolicy.planilla_id == planilla.id,
+                        VacationPolicy.empresa_id == planilla.empresa_id,
+                        db.and_(
+                            VacationPolicy.planilla_id.is_(None),
+                            VacationPolicy.empresa_id.is_(None),
+                        ),
+                    ),
+                )
+            )
+            .scalars()
+            .all()
+        )
+        snapshot["vacation_policies"] = [
+            {
+                "id": policy.id,
+                "codigo": policy.codigo,
+                "planilla_id": policy.planilla_id,
+                "empresa_id": policy.empresa_id,
+                "unit_type": policy.unit_type,
+                "accrual_method": policy.accrual_method,
+                "accrual_rate": str(policy.accrual_rate),
+                "accrual_frequency": policy.accrual_frequency,
+                "min_service_days": policy.min_service_days,
+                "max_balance": str(policy.max_balance) if policy.max_balance is not None else None,
+                "allow_negative": policy.allow_negative,
+                "partial_units_allowed": policy.partial_units_allowed,
+                "rounding_rule": policy.rounding_rule,
+                "accrue_during_leave": policy.accrue_during_leave,
+            }
+            for policy in policies
+        ]
+
+        novelties = (
+            self.session.execute(
+                db.select(VacationNovelty.id)
+                .join(NominaNovedad, NominaNovedad.vacation_novelty_id == VacationNovelty.id)
+                .join(PlanillaEmpleado, PlanillaEmpleado.empleado_id == NominaNovedad.empleado_id)
+                .filter(
+                    PlanillaEmpleado.planilla_id == planilla.id,
+                    PlanillaEmpleado.activo.is_(True),
+                    NominaNovedad.es_descanso_vacaciones.is_(True),
+                    NominaNovedad.fecha_novedad >= periodo_inicio,
+                    NominaNovedad.fecha_novedad <= periodo_fin,
+                )
+            )
+            .scalars()
+            .all()
+        )
+        snapshot["vacation_novelty_ids"] = novelties
+        return snapshot
+
+    def capture_complete_snapshot(
+        self, planilla: Planilla, periodo_inicio: date, periodo_fin: date, fecha_calculo: date
+    ) -> dict[str, Any]:
         """Capture complete snapshot of all configuration data.
 
         Args:
             planilla: Planilla being processed
+            periodo_inicio: Payroll period start
+            periodo_fin: Payroll period end
             fecha_calculo: Calculation date
 
         Returns:
             Complete snapshot dictionary
         """
+        catalogos = self.capture_catalogs_snapshot(planilla)
+        vacaciones = self.capture_vacation_snapshot(planilla, periodo_inicio, periodo_fin)
+        catalogos["vacaciones"] = vacaciones
+
         return {
             "configuracion": self.capture_configuration_snapshot(planilla.empresa_id),
             "tipos_cambio": self.capture_exchange_rates_snapshot(planilla, fecha_calculo),
-            "catalogos": self.capture_catalogs_snapshot(planilla),
+            "catalogos": catalogos,
+            "vacaciones": vacaciones,
             "fecha_captura": fecha_calculo.isoformat(),
         }

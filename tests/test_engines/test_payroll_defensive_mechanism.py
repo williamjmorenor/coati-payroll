@@ -420,19 +420,17 @@ class TestProcessLargePayrollRollback:
                 mock_engine_class.return_value = mock_engine
                 mock_engine._procesar_empleado.side_effect = Exception("Critical database error")
 
-                # Execute process_large_payroll - should catch exception and set ERROR state
-                try:
-                    tasks.process_large_payroll(
-                        nomina_id=nomina.id,
-                        planilla_id=planilla.id,
-                        periodo_inicio="2024-01-01",
-                        periodo_fin="2024-01-31",
-                        usuario="test_user",
-                    )
-                except Exception:
-                    pass  # Expected to raise
+                # Execute process_large_payroll - should catch exception and mark as generated with errors
+                tasks.process_large_payroll(
+                    nomina_id=nomina.id,
+                    job_id="job-test-1",
+                    planilla_id=planilla.id,
+                    periodo_inicio="2024-01-01",
+                    periodo_fin="2024-01-31",
+                    usuario="test_user",
+                )
 
-                # Verify nomina is in ERROR state
+                # Verify nomina is in GENERATED_WITH_ERRORS state
                 db_session.refresh(nomina)
-                assert nomina.estado == NominaEstado.ERROR
+                assert nomina.estado == NominaEstado.GENERADO_CON_ERRORES
                 assert len(nomina.errores_calculo) > 0

@@ -25,6 +25,7 @@ class AccumulationProcessor:
         planilla,
         periodo_fin: date,
         fecha_calculo: date,
+        deducciones_snapshot: dict[str, dict] | None = None,
     ) -> None:
         """Update accumulated annual values for the employee."""
         if not planilla.tipo_planilla:
@@ -71,9 +72,19 @@ class AccumulationProcessor:
 
         # Sum up before-tax deductions and taxes
         for deduccion in emp_calculo.deducciones:
-            deduccion_obj = db.session.get(Deduccion, deduccion.deduccion_id) if deduccion.deduccion_id else None
-            if deduccion_obj:
-                if deduccion_obj.es_impuesto:
-                    acumulado.impuesto_retenido_acumulado += deduccion.monto
-                elif deduccion_obj.antes_impuesto:
-                    acumulado.deducciones_antes_impuesto_acumulado += deduccion.monto
+            if not deduccion.deduccion_id:
+                continue
+            deduccion_metadata = deducciones_snapshot.get(deduccion.deduccion_id) if deducciones_snapshot else None
+            if not deduccion_metadata:
+                deduccion_obj = db.session.get(Deduccion, deduccion.deduccion_id)
+                if deduccion_obj:
+                    deduccion_metadata = {
+                        "es_impuesto": deduccion_obj.es_impuesto,
+                        "antes_impuesto": deduccion_obj.antes_impuesto,
+                    }
+            if not deduccion_metadata:
+                continue
+            if deduccion_metadata.get("es_impuesto"):
+                acumulado.impuesto_retenido_acumulado += deduccion.monto
+            elif deduccion_metadata.get("antes_impuesto"):
+                acumulado.deducciones_antes_impuesto_acumulado += deduccion.monto

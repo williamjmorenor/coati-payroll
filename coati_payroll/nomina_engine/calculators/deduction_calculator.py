@@ -10,12 +10,13 @@ from coati_payroll.model import Planilla
 from ..domain.employee_calculation import EmpleadoCalculo
 from ..domain.calculation_items import DeduccionItem
 from .concept_calculator import ConceptCalculator
+from ..results.warning_collector import WarningCollectorProtocol
 
 
 class DeductionCalculator:
     """Calculator for deductions (salary subtractions)."""
 
-    def __init__(self, concept_calculator: ConceptCalculator, warnings: list[str]):
+    def __init__(self, concept_calculator: ConceptCalculator, warnings: WarningCollectorProtocol):
         self.concept_calculator = concept_calculator
         self.warnings = warnings
 

@@ -4,7 +4,7 @@
 
 from io import BytesIO
 
-from coati_payroll.enums import TipoDetalle
+from coati_payroll.enums import NominaEstado, TipoDetalle
 from coati_payroll.model import (
     db,
     Planilla,
@@ -393,6 +393,9 @@ class ExportService:
 
         Workbook, Font, Alignment, PatternFill, Border, Side = openpyxl_classes
 
+        if nomina.estado == NominaEstado.GENERADO_CON_ERRORES:
+            raise ValueError("Nómina calculada con errores: corrija empleados fallidos y recalcule antes de exportar.")
+
         # Get comprobante
         comprobante = db.session.execute(
             db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)
@@ -401,8 +404,21 @@ class ExportService:
         if not comprobante:
             raise ValueError("No existe comprobante contable para esta nómina")
 
+        balance = comprobante.balance
+        if balance is None:
+            total_debitos = comprobante.total_debitos or 0
+            total_creditos = comprobante.total_creditos or 0
+            balance = total_debitos - total_creditos
+
+        if balance != 0:
+            raise ValueError(
+                "El comprobante no esta balanceado. "
+                f"Debitos: {comprobante.total_debitos}, Creditos: {comprobante.total_creditos}."
+            )
+
         # Get summarized entries - will raise ValueError if accounts are NULL
         accounting_service = AccountingVoucherService(db.session)
+        accounting_service.validate_line_integrity(comprobante)
         try:
             summarized_entries = accounting_service.summarize_voucher(comprobante)
         except ValueError as e:

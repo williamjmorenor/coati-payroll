@@ -22,6 +22,11 @@ from typing import Any, Type
 # Local modules
 # <-------------------------------------------------------------------------> #
 from coati_payroll.enums import StepType
+from coati_payroll.formula_engine.ast.safe_operators import (
+    ALLOWED_AST_TYPES,
+    SAFE_FUNCTIONS,
+    validate_expression_complexity,
+)
 
 __all__ = ["ValidationError", "validate_schema", "validate_schema_deep"]
 
@@ -120,37 +125,23 @@ def _validate_formula_safety(formula: str, error_class: Type[Exception] = Valida
         # Parse the formula into an AST
         tree = ast.parse(formula, mode="eval")
 
-        # Check for unsafe operations
-        for node in ast.walk(tree.body):
-            # Block dangerous operations
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                raise error_class("Import statements are not allowed in formulas")
+        try:
+            validate_expression_complexity(tree, formula)
+        except ValueError as e:
+            raise error_class(str(e)) from e
 
-            # Block attribute access (prevents __import__, etc.)
-            if isinstance(node, ast.Attribute):
-                raise error_class("Attribute access is not allowed in formulas")
+        # Check for unsafe operations using whitelist
+        for node in ast.walk(tree):
+            if not isinstance(node, ALLOWED_AST_TYPES):
+                raise error_class(f"Unsafe AST node type '{node.__class__.__name__}' is not allowed in formulas")
 
-            # Block function calls to __import__ and other dangerous builtins
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-                func_name = node.func.id
-                dangerous_functions = {
-                    "__import__",
-                    "eval",
-                    "exec",
-                    "compile",
-                    "open",
-                    "input",
-                    "__builtins__",
-                    "globals",
-                    "locals",
-                    "vars",
-                    "dir",
-                    "getattr",
-                    "setattr",
-                    "delattr",
-                    "hasattr",
-                }
-                if func_name in dangerous_functions:
-                    raise error_class(f"Function '{func_name}' is not allowed in formulas")
+            if isinstance(node, ast.Call):
+                if not isinstance(node.func, ast.Name):
+                    raise error_class("Only named functions are allowed in formulas")
+                if node.func.id not in SAFE_FUNCTIONS:
+                    raise error_class(
+                        f"Function '{node.func.id}' is not allowed in formulas. "
+                        f"Allowed functions: {', '.join(sorted(SAFE_FUNCTIONS.keys()))}"
+                    )
     except SyntaxError as e:
         raise error_class(f"Invalid formula syntax: {e}") from e

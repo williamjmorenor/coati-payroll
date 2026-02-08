@@ -13,6 +13,16 @@ from coati_payroll.queue.drivers import DramatiqDriver, HueyDriver, NoopQueueDri
 _cached_driver: QueueDriver | None = None
 
 
+def _is_production_env() -> bool:
+    env_markers = [
+        os.environ.get("ENV"),
+        os.environ.get("APP_ENV"),
+        os.environ.get("FLASK_ENV"),
+        os.environ.get("NODE_ENV"),
+    ]
+    return any(str(value).strip().lower() == "production" for value in env_markers if value is not None)
+
+
 def _ping_redis(redis_url: str) -> bool:
     """Test if Redis is available.
 
@@ -85,6 +95,8 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
 
     # Fallback to Huey with filesystem (unless forcing Dramatiq)
     if force_backend != "dramatiq":
+        if _is_production_env():
+            raise RuntimeError("Production environment requires Dramatiq+Redis. Huey fallback is disabled.")
         storage_path = os.environ.get("COATI_QUEUE_PATH")
         driver = HueyDriver(storage_path=storage_path)
         if driver.is_available():

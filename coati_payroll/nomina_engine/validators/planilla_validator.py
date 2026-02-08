@@ -52,7 +52,10 @@ class PlanillaValidator(BaseValidator):
         return result
 
     def _validate_periodo_no_duplicado(self, planilla, context: PayrollContext) -> bool:
-        """Validate that period doesn't overlap with existing nominas."""
+        """Validate that period doesn't overlap with existing nominas.
+
+        Excludes ERROR state to allow retries of failed payrolls.
+        """
         from sqlalchemy import select
 
         existing = (
@@ -61,10 +64,12 @@ class PlanillaValidator(BaseValidator):
                     Nomina.planilla_id == planilla.id,
                     Nomina.estado.in_(
                         [
+                            NominaEstado.CALCULANDO,
                             NominaEstado.GENERADO,
                             NominaEstado.APROBADO,
                             NominaEstado.APLICADO,
                             NominaEstado.PAGADO,
+                            # ERROR excluded to allow retries
                         ]
                     ),
                     or_(

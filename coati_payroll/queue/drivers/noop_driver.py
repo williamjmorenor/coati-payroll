@@ -9,8 +9,10 @@ providing a compatible interface.
 
 from __future__ import annotations
 
+import os
 from typing import Any, Callable
 
+from coati_payroll.log import log
 from coati_payroll.queue.driver import QueueDriver
 
 
@@ -18,6 +20,12 @@ class NoopQueueDriver(QueueDriver):
     """Queue driver that does nothing (used for tests)."""
 
     def enqueue(self, task_name: str, *args: Any, delay: int | None = None, **kwargs: Any) -> Any:
+        allow_noop = os.environ.get("COATI_ALLOW_NOOP_QUEUE", "").lower() in {"1", "true", "yes", "on"}
+        strict_noop = os.environ.get("COATI_STRICT_NOOP_QUEUE", "").lower() in {"1", "true", "yes", "on"}
+        if not allow_noop:
+            log.warning("NoopQueueDriver is active. Tasks will not run unless COATI_ALLOW_NOOP_QUEUE=1 is set.")
+            if strict_noop:
+                raise RuntimeError("NoopQueueDriver usage blocked without COATI_ALLOW_NOOP_QUEUE=1.")
         return {"task": task_name, "enqueued": False, "noop": True}
 
     def register_task(

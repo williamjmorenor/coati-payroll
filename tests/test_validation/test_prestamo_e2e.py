@@ -17,6 +17,7 @@ from coati_payroll.enums import AdelantoEstado, AdelantoTipo
 from tests.helpers.auth import login_user
 
 
+@pytest.mark.validation
 def test_prestamo_index_list_all_loans(app, client, admin_user, db_session):
     """
     Test: User views the list of all loans.
@@ -38,6 +39,7 @@ def test_prestamo_index_list_all_loans(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_prestamo_index_with_filters(app, client, admin_user, db_session):
     """
     Test: User filters loans by employee, status, and type.
@@ -99,6 +101,7 @@ def test_prestamo_index_with_filters(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_prestamo_new_get_form(app, client, admin_user, db_session):
     """
     Test: User accesses the form to create a new loan.
@@ -142,6 +145,7 @@ def test_prestamo_new_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_prestamo_new_post_create_loan(app, client, admin_user, db_session):
     """
     Test: User creates a new loan via form submission.
@@ -210,6 +214,7 @@ def test_prestamo_new_post_create_loan(app, client, admin_user, db_session):
         assert prestamo.estado == AdelantoEstado.BORRADOR
 
 
+@pytest.mark.validation
 def test_prestamo_edit_get_form(app, client, admin_user, db_session):
     """
     Test: User accesses the form to edit a loan in draft state.
@@ -265,6 +270,7 @@ def test_prestamo_edit_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_prestamo_edit_post_update_loan(app, client, admin_user, db_session):
     """
     Test: User updates a loan via form submission.
@@ -343,6 +349,7 @@ def test_prestamo_edit_post_update_loan(app, client, admin_user, db_session):
         assert prestamo_updated.cuotas_pactadas == 8
 
 
+@pytest.mark.validation
 def test_prestamo_submit_draft_to_pending(app, client, admin_user, db_session):
     """
     Test: User submits a draft loan for approval.
@@ -408,6 +415,7 @@ def test_prestamo_submit_draft_to_pending(app, client, admin_user, db_session):
         assert prestamo_updated.estado == AdelantoEstado.PENDIENTE
 
 
+@pytest.mark.validation
 def test_prestamo_approve_get_form(app, client, admin_user, db_session):
     """
     Test: User accesses the approval form for a pending loan.
@@ -463,6 +471,7 @@ def test_prestamo_approve_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_prestamo_approve_post_approve_loan(app, client, admin_user, db_session):
     """
     Test: User approves a pending loan.
@@ -539,6 +548,7 @@ def test_prestamo_approve_post_approve_loan(app, client, admin_user, db_session)
         assert prestamo_updated.monto_aprobado == Decimal("5000.00")
 
 
+@pytest.mark.validation
 def test_prestamo_approve_post_reject_loan(app, client, admin_user, db_session):
     """
     Test: User rejects a pending loan.
@@ -610,6 +620,7 @@ def test_prestamo_approve_post_reject_loan(app, client, admin_user, db_session):
         assert prestamo_updated.estado == AdelantoEstado.RECHAZADO
 
 
+@pytest.mark.validation
 def test_prestamo_cancel_post_cancel_loan(app, client, admin_user, db_session):
     """
     Test: User cancels an active loan.
@@ -677,6 +688,7 @@ def test_prestamo_cancel_post_cancel_loan(app, client, admin_user, db_session):
         assert prestamo_updated.estado == AdelantoEstado.CANCELADO
 
 
+@pytest.mark.validation
 def test_prestamo_pago_extraordinario_get_form(app, client, admin_user, db_session):
     """
     Test: User accesses the form to register an extraordinary payment.
@@ -735,6 +747,7 @@ def test_prestamo_pago_extraordinario_get_form(app, client, admin_user, db_sessi
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_prestamo_condonacion_get_form(app, client, admin_user, db_session):
     """
     Test: User accesses the form to record loan forgiveness.
@@ -792,6 +805,7 @@ def test_prestamo_condonacion_get_form(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_prestamo_condonacion_post_record_forgiveness(app, client, admin_user, db_session):
     """
     Test: User records loan forgiveness.
@@ -867,6 +881,7 @@ def test_prestamo_condonacion_post_record_forgiveness(app, client, admin_user, d
         assert prestamo_updated.saldo_pendiente < Decimal("5000.00")
 
 
+@pytest.mark.validation
 def test_prestamo_export_excel(app, client, admin_user, db_session):
     """
     Test: User exports payment schedule to Excel.
@@ -925,6 +940,7 @@ def test_prestamo_export_excel(app, client, admin_user, db_session):
         assert response.status_code in [200, 302]
 
 
+@pytest.mark.validation
 def test_prestamo_detail_view_loan_details(app, client, admin_user, db_session):
     """
     Test: User views detailed information about a loan.
@@ -983,6 +999,7 @@ def test_prestamo_detail_view_loan_details(app, client, admin_user, db_session):
         assert response.status_code == 200
 
 
+@pytest.mark.validation
 def test_prestamo_pago_extraordinario_post_record_payment(app, client, admin_user, db_session):
     """
     Test: User records an extraordinary payment on a loan.
@@ -1059,6 +1076,7 @@ def test_prestamo_pago_extraordinario_post_record_payment(app, client, admin_use
         assert prestamo_updated.saldo_pendiente < Decimal("5000.00")
 
 
+@pytest.mark.validation
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="PDF export flaky on Windows (WeasyPrint dependencies)")
 def test_prestamo_export_pdf(app, client, admin_user, db_session):
     """
@@ -1124,6 +1142,7 @@ def test_prestamo_export_pdf(app, client, admin_user, db_session):
             pass
 
 
+@pytest.mark.validation
 def test_generar_tabla_pago_function(app, db_session):
     """
     Test: The generar_tabla_pago helper function generates correct payment schedule.
@@ -1205,6 +1224,7 @@ def test_generar_tabla_pago_function(app, db_session):
         assert tabla_pago[-1]["saldo"] <= Decimal("0.01")
 
 
+@pytest.mark.validation
 def test_generar_tabla_pago_with_no_installments(app, db_session):
     """
     Test: The generar_tabla_pago helper function handles loans with no installments.

@@ -43,8 +43,21 @@ class TaxLookupStep(Step):
             input_value = context.variables[input_var]
         else:
             if context.strict_mode:
-                raise CalculationError(f"Missing required input variable '{input_var}' for tax lookup")
+                raise CalculationError(
+                    f"Missing required input variable '{input_var}' for tax lookup in table '{table_name}'"
+                )
             input_value = Decimal("0")
 
         table_lookup = TableLookup(context.tax_tables, context.trace_callback, strict_mode=context.strict_mode)
         return table_lookup.lookup(table_name, input_value)
+
+    def get_variable_value(self, result: dict[str, Decimal]) -> Decimal:
+        """Return the Decimal tax value for variable storage."""
+        if not isinstance(result, dict):
+            raise CalculationError(f"Tax lookup step '{self.name}' must return dict, got {type(result).__name__}")
+        tax_value = result.get("tax")
+        if not isinstance(tax_value, Decimal):
+            raise CalculationError(
+                f"Tax lookup step '{self.name}' must include Decimal 'tax', got {type(tax_value).__name__}"
+            )
+        return tax_value

@@ -514,8 +514,20 @@ class TestTaxTableLookup:
         # 60000 + (600000 - 500000) * 0.30 = 60000 + 30000 = 90000
         assert result["output"] == "90000.00"
 
-    def test_tax_lookup_no_matching_bracket(self):
-        """Test tax lookup with no matching bracket raises CalculationError in strict mode."""
+    def test_tax_lookup_no_matching_bracket_strict_default(self):
+        """Test tax lookup with no matching bracket raises CalculationError in strict mode (default)."""
+        schema = {
+            "inputs": [{"name": "income", "default": -100}],
+            "steps": [{"name": "tax", "type": "tax_lookup", "table": "tax_table", "input": "income"}],
+            "tax_tables": {"tax_table": [{"min": 0, "max": 100000, "rate": 0, "fixed": 0, "over": 0}]},
+            "output": "tax",
+        }
+        engine = FormulaEngine(schema)
+        with pytest.raises(CalculationError, match="No tax bracket"):
+            engine.execute({"income": -100})
+
+    def test_tax_lookup_no_matching_bracket_non_strict(self):
+        """Test tax lookup with no matching bracket returns 0 in non-strict mode."""
         schema = {
             "inputs": [{"name": "income", "default": -100}],
             "steps": [{"name": "tax", "type": "tax_lookup", "table": "tax_table", "input": "income"}],

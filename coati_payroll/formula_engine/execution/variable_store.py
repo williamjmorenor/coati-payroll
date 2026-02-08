@@ -17,6 +17,7 @@ from typing import Any
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
+from ..exceptions import CalculationError
 
 
 class VariableStore:
@@ -27,19 +28,18 @@ class VariableStore:
         self.variables: dict[str, Decimal] = {}
         self.results: dict[str, Any] = {}
 
-    def set(self, name: str, value: Decimal | Any) -> None:
+    def set(self, name: str, value: Decimal, result: Any | None = None) -> None:
         """Set a variable value.
 
         Args:
             name: Variable name
             value: Variable value
+            result: Optional raw result for audit purposes
         """
-        if isinstance(value, Decimal):
-            self.variables[name] = value
-        else:
-            # For complex types like tax lookup results
-            self.variables[name] = value.get("tax", Decimal("0")) if isinstance(value, dict) else Decimal("0")
-        self.results[name] = value
+        if not isinstance(value, Decimal):
+            raise CalculationError(f"Variable '{name}' must be Decimal, got {type(value).__name__}")
+        self.variables[name] = value
+        self.results[name] = result if result is not None else value
 
     def get(self, name: str, default: Decimal = Decimal("0")) -> Decimal:
         """Get a variable value.

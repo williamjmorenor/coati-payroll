@@ -98,6 +98,7 @@ def periodic_policy(db_session, planilla):
         min_service_days=0,
         max_balance=Decimal("30.00"),
         allow_negative=False,
+        partial_units_allowed=True,  # Allow fractions for testing
         activo=True,
         creado_por="test_system",
     )
@@ -121,6 +122,7 @@ def proportional_policy(db_session, planilla):
         unit_type=VacationUnitType.DAYS,
         min_service_days=0,
         allow_negative=False,
+        partial_units_allowed=True,  # Allow fractions for testing
         activo=True,
         creado_por="test_system",
     )
@@ -142,6 +144,7 @@ def seniority_policy(db_session, planilla):
         accrual_frequency=AccrualFrequency.ANNUAL,
         unit_type=VacationUnitType.DAYS,
         min_service_days=0,
+        partial_units_allowed=True,  # Allow fractions for testing
         seniority_tiers=[
             {"years": 0, "rate": 15.0},
             {"years": 5, "rate": 20.0},
@@ -193,6 +196,16 @@ def test_acumular_vacaciones_no_account(app, db_session, planilla, empleado, mon
     with app.app_context():
         periodo_inicio = date.today() - timedelta(days=30)
         periodo_fin = date.today()
+
+        # Assign employee to payroll
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+            fecha_inicio=periodo_inicio,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
 
         # Create nomina and nomina_empleado
         nomina = Nomina(
@@ -315,6 +328,16 @@ def test_acumular_vacaciones_min_service_days(app, db_session, planilla, moneda,
         db_session.add(recent_employee)
         db_session.flush()
 
+        # Assign employee to payroll
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=recent_employee.id,
+            fecha_inicio=date.today() - timedelta(days=30),
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
+
         # Create vacation account
         account = VacationAccount(
             empleado_id=recent_employee.id,
@@ -371,6 +394,22 @@ def test_acumular_vacaciones_max_balance_limit(app, db_session, planilla, emplea
             creado_por="test_system",
         )
         db_session.add(account)
+        db_session.flush()
+
+        # Create ledger entry to establish balance
+        from coati_payroll.model import VacationLedger
+        ledger = VacationLedger(
+            account_id=account.id,
+            empleado_id=empleado.id,
+            fecha=date.today() - timedelta(days=60),
+            entry_type=VacationLedgerType.ACCRUAL,
+            quantity=Decimal("29.50"),
+            source="initial",
+            reference_id="initial-balance",
+            reference_type="initial",
+            creado_por="test_system",
+        )
+        db_session.add(ledger)
         db_session.flush()
 
         # Link employee to planilla
@@ -548,6 +587,16 @@ def test_procesar_novedades_vacaciones_no_novelties(app, db_session, planilla, e
     with app.app_context():
         periodo_inicio = date.today() - timedelta(days=30)
         periodo_fin = date.today()
+
+        # Link employee to planilla
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+            fecha_inicio=empleado.fecha_alta,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
 
         service = VacationService(planilla, periodo_inicio, periodo_fin)
 

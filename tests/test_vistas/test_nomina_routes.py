@@ -568,6 +568,24 @@ def test_aprobar_nomina_wrong_state(app, client, admin_user, db_session, planill
         assert response.status_code == 302  # Redirects with error
 
 
+def test_aprobar_nomina_error_state_fails(app, client, admin_user, db_session, planilla, nomina):
+    """Test that aprobar_nomina fails if nomina is in error state."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina = db.session.merge(nomina)
+        nomina.estado = NominaEstado.ERROR
+        db.session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aprobar", follow_redirects=False)
+        assert response.status_code == 302
+
+        updated_nomina = db.session.get(Nomina, nomina.id)
+        assert updated_nomina.estado == NominaEstado.ERROR
+
+
 def test_aprobar_nomina_with_errors_fails(app, client, admin_user, db_session, planilla, nomina):
     """Test that aprobar_nomina fails if nomina has errors."""
     with app.app_context():
@@ -587,6 +605,24 @@ def test_aprobar_nomina_with_errors_fails(app, client, admin_user, db_session, p
         # Verify nomina was NOT approved
         updated_nomina = db.session.get(Nomina, nomina.id)
         assert updated_nomina.estado == "generated"
+
+
+def test_aprobar_nomina_generated_with_errors_fails(app, client, admin_user, db_session, planilla, nomina):
+    """Test that aprobar_nomina fails if nomina is generated with errors."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina = db.session.merge(nomina)
+        nomina.estado = NominaEstado.GENERADO_CON_ERRORES
+        db.session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aprobar", follow_redirects=False)
+        assert response.status_code == 302
+
+        updated_nomina = db.session.get(Nomina, nomina.id)
+        assert updated_nomina.estado == NominaEstado.GENERADO_CON_ERRORES
 
 
 # ============================================================================
@@ -641,6 +677,42 @@ def test_aplicar_nomina_wrong_state(app, client, admin_user, db_session, planill
         # Verify nomina was NOT applied
         updated_nomina = db.session.get(Nomina, nomina.id)
         assert updated_nomina.estado == "generated"
+
+
+def test_aplicar_nomina_error_state_fails(app, client, admin_user, db_session, planilla, nomina):
+    """Test that aplicar_nomina fails if nomina is in error state."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina = db.session.merge(nomina)
+        nomina.estado = NominaEstado.ERROR
+        db.session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aplicar", follow_redirects=False)
+        assert response.status_code == 302
+
+        updated_nomina = db.session.get(Nomina, nomina.id)
+        assert updated_nomina.estado == NominaEstado.ERROR
+
+
+def test_aplicar_nomina_generated_with_errors_fails(app, client, admin_user, db_session, planilla, nomina):
+    """Test that aplicar_nomina fails if nomina is generated with errors."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina = db.session.merge(nomina)
+        nomina.estado = NominaEstado.GENERADO_CON_ERRORES
+        db.session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aplicar", follow_redirects=False)
+        assert response.status_code == 302
+
+        updated_nomina = db.session.get(Nomina, nomina.id)
+        assert updated_nomina.estado == NominaEstado.GENERADO_CON_ERRORES
 
 
 # ============================================================================

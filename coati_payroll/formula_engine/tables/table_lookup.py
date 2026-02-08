@@ -57,15 +57,15 @@ class TableLookup:
             CalculationError: If table not found or lookup fails
         """
         if table_name not in self.tax_tables:
-            raise CalculationError(f"Tax table '{table_name}' not found")
+            raise CalculationError(f"Tax table '{table_name}' not found for input value {input_value}")
 
         table = self.tax_tables[table_name]
         if not isinstance(table, list):
-            raise CalculationError(f"Tax table '{table_name}' must be a list")
+            raise CalculationError(f"Tax table '{table_name}' must be a list for input value {input_value}")
 
         if not table:
             if self.strict_mode:
-                raise CalculationError(f"Tax table '{table_name}' is empty")
+                raise CalculationError(f"Tax table '{table_name}' is empty for input value {input_value}")
             self.trace_callback(
                 _("Advertencia: tabla de impuestos '%(table)s' está vacía, devolviendo ceros") % {"table": table_name}
             )
@@ -86,7 +86,9 @@ class TableLookup:
             sorted_table = sorted(table, key=lambda b: to_decimal(b.get("min", 0)))
             if sorted_table != table:
                 if self.strict_mode:
-                    raise CalculationError(f"Tax table '{table_name}' is not ordered by 'min' values")
+                    raise CalculationError(
+                        f"Tax table '{table_name}' is not ordered by 'min' values for input value {input_value}"
+                    )
                 self.trace_callback(
                     _("Advertencia: tabla '%(table)s' no estaba ordenada, ordenando automáticamente")
                     % {"table": table_name}
@@ -94,7 +96,9 @@ class TableLookup:
                 table = sorted_table
         except Exception as e:
             if self.strict_mode:
-                raise CalculationError(f"Failed to validate ordering for table '{table_name}': {e}") from e
+                raise CalculationError(
+                    f"Failed to validate ordering for table '{table_name}' with input value {input_value}: {e}"
+                ) from e
             self.trace_callback(
                 _("Advertencia: no se pudo ordenar la tabla '%(table)s': %(error)s")
                 % {"table": table_name, "error": str(e)}
@@ -134,9 +138,7 @@ class TableLookup:
             if len(matched_brackets) > 1:
                 # Multiple brackets match - this indicates an overlap
                 if self.strict_mode:
-                    raise CalculationError(
-                        f"Multiple tax brackets match value {input_value} in table '{table_name}'"
-                    )
+                    raise CalculationError(f"Multiple tax brackets match value {input_value} in table '{table_name}'")
                 self.trace_callback(
                     _(
                         "ADVERTENCIA CRÍTICA: múltiples tramos coinciden para valor %(value)s en tabla '%(table)s'. "

@@ -17,7 +17,10 @@ from __future__ import annotations
 import os
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from uuid import uuid4
 
+from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import joinedload
 
 from coati_payroll.log import log
@@ -28,12 +31,16 @@ from coati_payroll.model import (
     Nomina as NominaModel,
     NominaEmpleado as NominaEmpleadoModel,
     NominaDetalle as NominaDetalleModel,
+    NominaProgress as NominaProgressModel,
     PrestacionAcumulada,
     AdelantoAbono,
     InteresAdelanto,
 )
 from coati_payroll.nomina_engine import NominaEngine
+from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
+from coati_payroll.nomina_engine.validators import NominaEngineError, ValidationError as NominaValidationError
 from coati_payroll.queue import get_queue_driver
+from coati_payroll.schema_validator import ValidationError as SchemaValidationError
 
 # Error messages
 ERROR_PLANILLA_NOT_FOUND = "Planilla not found"
@@ -80,43 +87,134 @@ def _is_recoverable_error(error: Exception) -> bool:
     Returns:
         True if error is recoverable, False otherwise
     """
-    error_msg = str(error).lower()
+    if isinstance(error, (IntegrityError, NominaValidationError, SchemaValidationError, NominaEngineError)):
+        return False
 
-    # Recoverable error patterns
-    recoverable_patterns = [
-        "connection",
-        "timeout",
-        "temporary",
-        "unavailable",
-        "deadlock",
-        "lock",
-        "network",
-        "socket",
-        "broken pipe",
-    ]
+    if isinstance(error, (OperationalError, TimeoutError, ConnectionError)):
+        return True
 
-    # Non-recoverable error patterns
-    non_recoverable_patterns = [
+    if isinstance(error, ValueError):
+        return False
+
+    message = str(error).lower()
+    non_recoverable_keywords = (
         "validation",
         "integrity",
-        "not found",
+        "constraint",
+        "missing required",
         "invalid",
-        "missing",
-        "required",
-    ]
+        "schema",
+    )
+    recoverable_keywords = (
+        "connection",
+        "timeout",
+        "network",
+        "broken pipe",
+        "temporar",
+        "deadlock",
+        "lock wait",
+        "unavailable",
+    )
 
-    # Check for non-recoverable patterns first
-    for pattern in non_recoverable_patterns:
-        if pattern in error_msg:
-            return False
+    if any(keyword in message for keyword in non_recoverable_keywords):
+        return False
+    if any(keyword in message for keyword in recoverable_keywords):
+        return True
 
-    # Check for recoverable patterns
-    for pattern in recoverable_patterns:
-        if pattern in error_msg:
-            return True
-
-    # Default: assume recoverable for unknown errors (safer to retry)
     return True
+
+
+def _get_tracking_session():
+    if hasattr(db, "create_scoped_session"):
+        return db.create_scoped_session()
+    return db.session
+
+
+def _release_tracking_session(tracking_session) -> None:
+    if tracking_session is not db.session:
+        if hasattr(tracking_session, "remove"):
+            tracking_session.remove()
+        else:
+            tracking_session.close()
+
+
+def _resolve_job_id(nomina: NominaModel, job_id: str | None) -> str:
+    if job_id:
+        return job_id
+    if nomina.job_id_activo:
+        return nomina.job_id_activo
+    return uuid4().hex
+
+
+def _acquire_nomina_job_lock(nomina_id: str, job_id: str) -> bool:
+    result = db.session.execute(
+        db.update(NominaModel)
+        .where(
+            NominaModel.id == nomina_id,
+            or_(NominaModel.job_id_activo.is_(None), NominaModel.job_id_activo == job_id),
+        )
+        .values(job_id_activo=job_id, job_started_at=datetime.now(timezone.utc))
+    )
+    db.session.flush()
+    return result.rowcount == 1
+
+
+def _clear_nomina_job_lock(nomina_id: str) -> None:
+    db.session.execute(
+        db.update(NominaModel)
+        .where(NominaModel.id == nomina_id)
+        .values(job_id_activo=None, job_completed_at=datetime.now(timezone.utc))
+    )
+
+
+def _upsert_nomina_progress(
+    tracking_session,
+    nomina_id: str,
+    job_id: str,
+    *,
+    total_empleados: int | None = None,
+    empleados_procesados: int | None = None,
+    empleados_con_error: int | None = None,
+    errores_calculo: dict | None = None,
+    log_procesamiento: list | None = None,
+    empleado_actual: str | None = None,
+) -> None:
+    progress = (
+        tracking_session.execute(db.select(NominaProgressModel).filter(NominaProgressModel.nomina_id == nomina_id))
+        .scalars()
+        .first()
+    )
+
+    if not progress:
+        progress = NominaProgressModel(
+            nomina_id=nomina_id,
+            job_id=job_id,
+            total_empleados=total_empleados or 0,
+            empleados_procesados=empleados_procesados or 0,
+            empleados_con_error=empleados_con_error or 0,
+            errores_calculo=errores_calculo or {},
+            log_procesamiento=log_procesamiento or [],
+            empleado_actual=empleado_actual,
+            actualizado_en=datetime.now(timezone.utc),
+        )
+        tracking_session.add(progress)
+    else:
+        progress.job_id = job_id
+        if total_empleados is not None:
+            progress.total_empleados = total_empleados
+        if empleados_procesados is not None:
+            progress.empleados_procesados = empleados_procesados
+        if empleados_con_error is not None:
+            progress.empleados_con_error = empleados_con_error
+        if errores_calculo is not None:
+            progress.errores_calculo = errores_calculo
+        if log_procesamiento is not None:
+            progress.log_procesamiento = log_procesamiento
+        if empleado_actual is not None:
+            progress.empleado_actual = empleado_actual
+        progress.actualizado_en = datetime.now(timezone.utc)
+
+    tracking_session.commit()
 
 
 def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str, bool | str]:
@@ -150,11 +248,23 @@ def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str,
                 "error": "Nomina not found",
             }
 
+        if nomina.estado == NominaEstado.GENERADO_CON_ERRORES:
+            return {
+                "success": False,
+                "error": "Nomina calculated with errors. Please recalculate failed employees before retrying.",
+            }
+
         # Verify nomina is in ERROR state
         if nomina.estado != NominaEstado.ERROR:
             return {
                 "success": False,
                 "error": f"Nomina not in ERROR state (current: {nomina.estado}). Only failed nominas can be retried.",
+            }
+
+        if nomina.job_id_activo:
+            return {
+                "success": False,
+                "error": "Nomina has an active job. Wait for completion before retrying.",
             }
 
         # Get planilla information
@@ -172,13 +282,18 @@ def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str,
         nomina.errores_calculo = {}
         nomina.log_procesamiento = []
         nomina.empleado_actual = None
+        nomina.job_id_activo = None
+        nomina.job_started_at = None
+        nomina.job_completed_at = None
 
         # Clear any partial data from previous attempt
         _rollback_nomina_data(nomina_id)
+        db.session.execute(db.delete(NominaProgressModel).filter(NominaProgressModel.nomina_id == nomina_id))
 
         db.session.commit()
 
         # Enqueue the processing task again
+        job_id = uuid4().hex
         fecha_calculo_str = nomina.fecha_generacion.date().isoformat() if nomina.fecha_generacion else None
         periodo_inicio_str = nomina.periodo_inicio.isoformat()
         periodo_fin_str = nomina.periodo_fin.isoformat()
@@ -186,6 +301,7 @@ def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str,
         task_id = queue.enqueue(
             "process_large_payroll",
             nomina_id=nomina_id,
+            job_id=job_id,
             planilla_id=nomina.planilla_id,
             periodo_inicio=periodo_inicio_str,
             periodo_fin=periodo_fin_str,
@@ -362,6 +478,7 @@ def process_payroll_parallel(
     periodo_fin: str,
     fecha_calculo: str | None = None,
     usuario: str | None = None,
+    job_id: str | None = None,
 ) -> dict[str, bool | int | list[str]]:
     """Process payroll for all employees in parallel (background task).
 
@@ -432,6 +549,7 @@ def process_payroll_parallel(
         # This ensures atomicity: if any employee fails, all changes are rolled back
         result = process_large_payroll(
             nomina_id=nomina.id,
+            job_id=uuid4().hex,
             planilla_id=planilla_id,
             periodo_inicio=periodo_inicio,
             periodo_fin=periodo_fin,
@@ -449,8 +567,45 @@ def process_payroll_parallel(
         }
 
 
+def generate_audit_voucher(
+    nomina_id: str,
+    planilla_id: str,
+    fecha_calculo: str | None = None,
+    usuario: str | None = None,
+) -> dict[str, bool | str]:
+    """Generate audit accounting voucher in background."""
+    try:
+        log.info(f"Generating audit voucher for nomina {nomina_id}")
+
+        nomina = db.session.get(NominaModel, nomina_id)
+        if not nomina:
+            return {"success": False, "error": "Nomina not found"}
+
+        planilla = db.session.get(Planilla, planilla_id)
+        if not planilla:
+            return {"success": False, "error": ERROR_PLANILLA_NOT_FOUND}
+
+        fecha_calculo_date = date.fromisoformat(fecha_calculo) if fecha_calculo else None
+
+        AccountingVoucherService(db.session).generate_audit_voucher(
+            nomina,
+            planilla,
+            fecha_calculo=fecha_calculo_date,
+            usuario=usuario,
+        )
+        db.session.commit()
+
+        log.info(f"Audit voucher generated successfully for nomina {nomina_id}")
+        return {"success": True, "message": "Audit voucher generated"}
+    except Exception as e:
+        log.error(f"Error generating audit voucher for nomina {nomina_id}: {e}")
+        db.session.rollback()
+        return {"success": False, "error": str(e)}
+
+
 def process_large_payroll(
     nomina_id: str,
+    job_id: str | None,
     planilla_id: str,
     periodo_inicio: str,
     periodo_fin: str,
@@ -466,6 +621,7 @@ def process_large_payroll(
 
     Args:
         nomina_id: Nomina ID (ULID string)
+        job_id: Job ID for idempotent retries (optional)
         planilla_id: Planilla ID (ULID string)
         periodo_inicio: Start date (ISO format: YYYY-MM-DD)
         periodo_fin: End date (ISO format: YYYY-MM-DD)
@@ -501,6 +657,21 @@ def process_large_payroll(
                 "error": "Nomina not found",
             }
 
+        if nomina.estado != NominaEstado.CALCULANDO:
+            return {
+                "success": False,
+                "error": f"Nomina is not in CALCULANDO state (current: {nomina.estado})",
+            }
+
+        job_id = _resolve_job_id(nomina, job_id)
+
+        if not _acquire_nomina_job_lock(nomina_id, job_id):
+            db.session.rollback()
+            return {
+                "success": False,
+                "error": "Nomina is already being processed by another job.",
+            }
+
         # Load planilla with eager loading of tipo_planilla and moneda
         planilla = db.session.execute(
             db.select(Planilla)
@@ -512,6 +683,7 @@ def process_large_payroll(
             log.error(f"Planilla {planilla_id} not found")
             nomina.estado = NominaEstado.ERROR
             nomina.errores_calculo = {"error": ERROR_PLANILLA_NOT_FOUND}
+            _clear_nomina_job_lock(nomina_id)
             db.session.commit()
             return {
                 "success": False,
@@ -525,25 +697,44 @@ def process_large_payroll(
             log.warning(f"No active employees found for planilla {planilla_id}")
             nomina.estado = NominaEstado.ERROR
             nomina.errores_calculo = {"error": ERROR_NO_ACTIVE_EMPLOYEES}
+            _clear_nomina_job_lock(nomina_id)
             db.session.commit()
             return {
                 "success": False,
                 "error": ERROR_NO_ACTIVE_EMPLOYEES,
             }
 
-        # Initialize progress tracking
         nomina.total_empleados = len(empleados)
         nomina.empleados_procesados = 0
         nomina.empleados_con_error = 0
         nomina.errores_calculo = {}
         nomina.log_procesamiento = []
-        db.session.commit()
+
+        # Initialize progress tracking in separate session
+        tracking_session = _get_tracking_session()
+        try:
+            _upsert_nomina_progress(
+                tracking_session,
+                nomina_id,
+                job_id,
+                total_empleados=len(empleados),
+                empleados_procesados=0,
+                empleados_con_error=0,
+                errores_calculo={},
+                log_procesamiento=[],
+                empleado_actual=None,
+            )
+        finally:
+            _release_tracking_session(tracking_session)
 
         # CRITICAL: Use savepoints for safer transaction management
         # Process employees with periodic commits to reduce risk of losing all work
         # If ANY employee fails, rollback ALL changes to maintain consistency
         log_entries = []
+        failed_employees: dict[str, dict[str, str]] = {}
         BATCH_SIZE = 10  # Commit progress every N employees to reduce risk
+        processed_count = 0
+        error_count = 0
 
         try:
             # Create initial savepoint for the entire operation
@@ -558,7 +749,6 @@ def process_large_payroll(
                     emp_savepoint = db.session.begin_nested()
 
                     # Update current employee being processed (for progress tracking)
-                    nomina.empleado_actual = empleado_nombre
                     log_entries.append(
                         {
                             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -567,9 +757,19 @@ def process_large_payroll(
                             "message": f"Calculando empleado {idx}/{len(empleados)}: {empleado_nombre}",
                         }
                     )
-                    nomina.log_procesamiento = log_entries
-                    # Commit progress updates separately (outside savepoint) so user can see progress
-                    db.session.commit()
+                    tracking_session = _get_tracking_session()
+                    try:
+                        _upsert_nomina_progress(
+                            tracking_session,
+                            nomina_id,
+                            job_id,
+                            empleados_procesados=idx - 1,
+                            empleados_con_error=error_count,
+                            log_procesamiento=log_entries,
+                            empleado_actual=empleado_nombre,
+                        )
+                    finally:
+                        _release_tracking_session(tracking_session)
 
                     # Initialize engine for single employee
                     engine = NominaEngine(
@@ -589,7 +789,6 @@ def process_large_payroll(
                     emp_savepoint.commit()
 
                     # Update progress with success
-                    nomina.empleados_procesados = idx
                     log_entries.append(
                         {
                             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -598,13 +797,6 @@ def process_large_payroll(
                             "message": f"✓ Completado: {empleado_nombre} - Neto: {emp_calculo.salario_neto}",
                         }
                     )
-                    nomina.log_procesamiento = log_entries
-
-                    # Commit progress updates periodically to reduce risk
-                    # This commits only the progress tracking, not the employee data
-                    if idx % BATCH_SIZE == 0 or idx == len(empleados):
-                        db.session.commit()
-                        log.info(f"Progress committed: {idx}/{len(empleados)} employees processed")
 
                     log.info(f"Employee {empleado.id} processed successfully " f"({idx}/{nomina.total_empleados})")
 
@@ -612,10 +804,53 @@ def process_large_payroll(
                     # Rollback this employee's savepoint (undoes only this employee)
                     emp_savepoint.rollback()
 
-                    # Re-raise to trigger outer rollback of entire operation
                     error_msg = str(e)
+                    error_count += 1
+                    failed_employees[str(empleado.id)] = {
+                        "empleado": empleado_nombre,
+                        "error": error_msg,
+                    }
                     log.error(f"Error processing employee {empleado.id}: {error_msg}")
-                    raise
+                    log_entries.append(
+                        {
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "empleado": empleado_nombre,
+                            "status": "error",
+                            "message": f"✗ Error en empleado {empleado_nombre}: {error_msg}",
+                        }
+                    )
+                    tracking_session = _get_tracking_session()
+                    try:
+                        _upsert_nomina_progress(
+                            tracking_session,
+                            nomina_id,
+                            job_id,
+                            empleados_procesados=idx - 1,
+                            empleados_con_error=error_count,
+                            log_procesamiento=log_entries,
+                            empleado_actual=None,
+                        )
+                    finally:
+                        _release_tracking_session(tracking_session)
+
+                finally:
+                    processed_count = idx
+
+                if idx % BATCH_SIZE == 0 or idx == len(empleados):
+                    tracking_session = _get_tracking_session()
+                    try:
+                        _upsert_nomina_progress(
+                            tracking_session,
+                            nomina_id,
+                            job_id,
+                            empleados_procesados=processed_count,
+                            empleados_con_error=error_count,
+                            log_procesamiento=log_entries,
+                            empleado_actual=None,
+                        )
+                        log.info(f"Progress committed: {idx}/{len(empleados)} employees processed")
+                    finally:
+                        _release_tracking_session(tracking_session)
 
             # All employees processed successfully - commit the main savepoint
             savepoint.commit()
@@ -628,14 +863,39 @@ def process_large_payroll(
             nomina.total_bruto = total_bruto
             nomina.total_deducciones = total_deducciones
             nomina.total_neto = total_neto
-            nomina.estado = NominaEstado.GENERADO
-            nomina.errores_calculo = {}
+            if error_count > 0:
+                nomina.estado = NominaEstado.GENERADO_CON_ERRORES
+                nomina.errores_calculo = {"empleados_fallidos": failed_employees}
+            else:
+                nomina.estado = NominaEstado.GENERADO
+                nomina.errores_calculo = {}
+            nomina.empleados_procesados = processed_count
+            nomina.empleados_con_error = error_count
+            nomina.log_procesamiento = log_entries
             nomina.empleado_actual = None  # Clear current employee
+            _clear_nomina_job_lock(nomina_id)
 
             # Final commit (this is smaller now since we've been committing progress)
             db.session.commit()
+            tracking_session = _get_tracking_session()
+            try:
+                _upsert_nomina_progress(
+                    tracking_session,
+                    nomina_id,
+                    job_id,
+                    empleados_procesados=processed_count,
+                    empleados_con_error=error_count,
+                    errores_calculo=nomina.errores_calculo,
+                    log_procesamiento=log_entries,
+                    empleado_actual=None,
+                )
+            finally:
+                _release_tracking_session(tracking_session)
 
-            log.info(f"All employees processed successfully for nomina {nomina_id}")
+            if error_count > 0:
+                log.warning(f"Payroll completed with {error_count} employee errors for nomina {nomina_id}")
+            else:
+                log.info(f"All employees processed successfully for nomina {nomina_id}")
 
         except Exception as e:
             # CRITICAL: Rollback all changes if any employee fails
@@ -663,15 +923,18 @@ def process_large_payroll(
             _rollback_nomina_data(nomina_id)
 
             # Mark nomina as ERROR with detailed error information
-            nomina.estado = NominaEstado.ERROR
             nomina.errores_calculo = {
                 "critical_error": error_msg,
                 "error_type": error_type,
                 "is_recoverable": is_recoverable,
-                "empleados_procesados_antes_fallo": nomina.empleados_procesados,
+                "empleados_procesados_antes_fallo": processed_count,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
-            nomina.log_procesamiento = log_entries + [
+            nomina.estado = NominaEstado.GENERADO_CON_ERRORES
+            _clear_nomina_job_lock(nomina_id)
+            nomina.empleados_procesados = processed_count
+            nomina.empleados_con_error = error_count
+            log_entries.append(
                 {
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "empleado": "SISTEMA",
@@ -682,9 +945,23 @@ def process_large_payroll(
                         f"(Puede reintentarse: {'Sí' if is_recoverable else 'No'})"
                     ),
                 }
-            ]
+            )
             nomina.empleado_actual = None
             db.session.commit()
+            tracking_session = _get_tracking_session()
+            try:
+                _upsert_nomina_progress(
+                    tracking_session,
+                    nomina_id,
+                    job_id,
+                    empleados_procesados=processed_count,
+                    empleados_con_error=nomina.empleados_con_error,
+                    errores_calculo=nomina.errores_calculo,
+                    log_procesamiento=log_entries,
+                    empleado_actual=None,
+                )
+            finally:
+                _release_tracking_session(tracking_session)
 
             # Re-raise to signal failure (queue system will handle retries if configured)
             raise
@@ -708,8 +985,9 @@ def process_large_payroll(
         try:
             nomina = db.session.get(NominaModel, nomina_id)
             if nomina:
-                nomina.estado = NominaEstado.ERROR
+                nomina.estado = NominaEstado.GENERADO_CON_ERRORES
                 nomina.errores_calculo = {"critical_error": str(e)}
+                _clear_nomina_job_lock(nomina_id)
                 db.session.commit()
         except Exception:
             pass
@@ -753,4 +1031,12 @@ retry_failed_nomina_task = queue.register_task(
     max_retries=1,  # Manual retry, no automatic retries needed
     min_backoff=0,
     max_backoff=0,
+)
+
+generate_audit_voucher_task = queue.register_task(
+    generate_audit_voucher,
+    name="generate_audit_voucher",
+    max_retries=2,
+    min_backoff=60000,  # 1 minute
+    max_backoff=3600000,  # 1 hour
 )

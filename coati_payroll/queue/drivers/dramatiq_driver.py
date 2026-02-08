@@ -36,6 +36,7 @@ class DramatiqDriver(QueueDriver):
         self._redis_url = redis_url or "redis://localhost:6379/0"
         self._broker = None
         self._tasks = {}
+        self._results_backend = None
         self._available = self._initialize_broker()
 
     def _initialize_broker(self) -> bool:
@@ -47,11 +48,9 @@ class DramatiqDriver(QueueDriver):
         try:
             import dramatiq
             from dramatiq.brokers.redis import RedisBroker
-            from dramatiq.middleware import (
-                AgeLimit,
-                Retries,
-                TimeLimit,
-            )
+            from dramatiq.middleware import AgeLimit, Retries, TimeLimit
+            from dramatiq.middleware import Results
+            from dramatiq.results import RedisBackend
 
             # Test Redis connection
             import redis
@@ -66,6 +65,8 @@ class DramatiqDriver(QueueDriver):
             self._broker.add_middleware(Retries(max_retries=3, min_backoff=15000, max_backoff=86400000))
             self._broker.add_middleware(TimeLimit(time_limit=3600000))  # 1 hour max
             self._broker.add_middleware(AgeLimit(max_age=86400000))  # 24 hours max age
+            self._results_backend = RedisBackend(url=self._redis_url)
+            self._broker.add_middleware(Results(backend=self._results_backend))
 
             # Set as default broker
             dramatiq.set_broker(self._broker)
@@ -220,13 +221,29 @@ class DramatiqDriver(QueueDriver):
             return {"status": "error", "error": ERROR_DRAMATIQ_NOT_AVAILABLE}
 
         try:
-            # Dramatiq messages don't have built-in result tracking
-            # unless using Results middleware with a backend
-            return {
-                "status": "pending",
-                "message": "Dramatiq task enqueued. Result tracking requires Results middleware.",
-                "task_id": str(task_id) if task_id else None,
-            }
+            if not self._results_backend:
+                return {
+                    "status": "pending",
+                    "message": "Dramatiq task enqueued. Result tracking requires Results middleware.",
+                    "task_id": str(task_id) if task_id else None,
+                }
+
+            try:
+                result = self._results_backend.get_result(task_id, block=False)
+                return {
+                    "status": "completed",
+                    "result": result,
+                    "task_id": str(task_id) if task_id else None,
+                }
+            except Exception as e:
+                error_name = type(e).__name__
+                if error_name in {"ResultMissing", "ResultTimeout"}:
+                    return {
+                        "status": "pending",
+                        "message": "Task is still processing",
+                        "task_id": str(task_id) if task_id else None,
+                    }
+                raise
         except Exception as e:
             log.error(f"Failed to get task result: {e}")
             return {"status": "error", "error": str(e)}
@@ -248,14 +265,28 @@ class DramatiqDriver(QueueDriver):
 
         total = len(task_ids)
 
-        # Without Results middleware, we can only provide limited feedback
+        completed = 0
+        failed = 0
+        pending = 0
+        tasks = {}
+
+        for index, task_id in enumerate(task_ids):
+            result_info = self.get_task_result(task_id)
+            status = result_info.get("status", "unknown")
+            tasks[f"task_{index}"] = result_info
+            if status == "completed":
+                completed += 1
+            elif status in {"error", "failed"}:
+                failed += 1
+            else:
+                pending += 1
+
         return {
             "total": total,
-            "completed": 0,
-            "failed": 0,
-            "pending": total,  # Assume all pending without result tracking
+            "completed": completed,
+            "failed": failed,
+            "pending": pending,
             "processing": 0,
-            "tasks": {},
-            "message": "Bulk result tracking requires Results middleware with a backend.",
-            "progress_percentage": 0,
+            "tasks": tasks,
+            "progress_percentage": round((completed / total * 100) if total > 0 else 0, 2),
         }

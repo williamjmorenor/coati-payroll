@@ -3,6 +3,7 @@
 """Service for nomina business logic."""
 
 from datetime import date, timedelta
+from uuid import uuid4
 from flask import current_app
 from coati_payroll.model import db, Planilla, Nomina
 from coati_payroll.enums import NominaEstado
@@ -108,6 +109,7 @@ class NominaService:
                 queue.enqueue(
                     "process_large_payroll",
                     nomina_id=nomina.id,
+                    job_id=uuid4().hex,
                     planilla_id=planilla.id,
                     periodo_inicio=periodo_inicio.isoformat(),
                     periodo_fin=periodo_fin.isoformat(),
