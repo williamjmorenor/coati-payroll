@@ -62,14 +62,15 @@ class SalaryCalculator:
                 return salario_mensual
 
         elif periodicidad == "quincenal":
-            config = self._get_config(planilla.empresa_id, configuracion_snapshot)
-            dias_configurados = tipo_planilla.dias or config.dias_quincena
-            if dias_periodo == dias_configurados:
-                divisor = Decimal(str(config.dias_mes_nomina)) / Decimal(str(config.dias_quincena))
-                salario_periodo = salario_mensual / divisor
-                if rounding:
-                    return salario_periodo.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-                return salario_periodo
+            # Para planillas quincenales, siempre se paga la mitad del salario mensual
+            # independientemente del número de días del período (13, 14, 15 o 16 días).
+            # Esto garantiza que el empleado reciba exactamente su salario mensual completo
+            # al sumar ambas quincenas del mes, sin importar si febrero tiene 28 días
+            # o si la segunda quincena de un mes de 31 días tiene 16 días.
+            salario_periodo = salario_mensual / Decimal("2")
+            if rounding:
+                return salario_periodo.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            return salario_periodo
 
         config = self._get_config(planilla.empresa_id, configuracion_snapshot)
         dias_base = Decimal(str(config.dias_mes_nomina))
