@@ -162,28 +162,9 @@ class NominaService:
         periodo_fin = nomina.periodo_fin
         fecha_calculo_original = nomina.fecha_calculo_original or nomina.fecha_generacion.date()
         nomina_original_id = nomina.id
-
-        # Delete related AdelantoAbono records
-        db.session.execute(db.delete(AdelantoAbono).where(AdelantoAbono.nomina_id == nomina.id))
-
-        # Delete NominaNovedad records
-        db.session.execute(db.delete(NominaNovedad).where(NominaNovedad.nomina_id == nomina.id))
-
-        # Delete NominaDetalle records
-        db.session.execute(
-            db.delete(NominaDetalle).where(
-                NominaDetalle.nomina_empleado_id.in_(
-                    db.select(NominaEmpleado.id).where(NominaEmpleado.nomina_id == nomina.id)
-                )
-            )
+        novedad_ids = (
+            db.session.execute(db.select(NominaNovedad.id).where(NominaNovedad.nomina_id == nomina.id)).scalars().all()
         )
-
-        # Delete all NominaEmpleado records
-        db.session.execute(db.delete(NominaEmpleado).where(NominaEmpleado.nomina_id == nomina.id))
-
-        # Delete the nomina record itself
-        db.session.delete(nomina)
-        db.session.commit()
 
         # Re-execute the payroll with the ORIGINAL calculation date for consistency
         engine = NominaEngine(
@@ -200,6 +181,33 @@ class NominaService:
         if new_nomina:
             new_nomina.es_recalculo = True
             new_nomina.nomina_original_id = nomina_original_id
+
+            # Delete related AdelantoAbono records
+            db.session.execute(db.delete(AdelantoAbono).where(AdelantoAbono.nomina_id == nomina.id))
+
+            # Delete NominaDetalle records
+            db.session.execute(
+                db.delete(NominaDetalle).where(
+                    NominaDetalle.nomina_empleado_id.in_(
+                        db.select(NominaEmpleado.id).where(NominaEmpleado.nomina_id == nomina.id)
+                    )
+                )
+            )
+
+            # Delete all NominaEmpleado records
+            db.session.execute(db.delete(NominaEmpleado).where(NominaEmpleado.nomina_id == nomina.id))
+
+            # CRITICAL: NominaNovedad must be preserved during recalculation.
+            # They are master payroll events (overtime, absences, bonuses, etc.)
+            # and deleting them breaks repeatable payroll calculations.
+            # Re-link previous novedades to the new recalculated payroll.
+            if novedad_ids:
+                db.session.execute(
+                    db.update(NominaNovedad).where(NominaNovedad.id.in_(novedad_ids)).values(nomina_id=new_nomina.id)
+                )
+
+            # Delete the old nomina record after moving linked novelties
+            db.session.delete(nomina)
 
             # Create audit log for recalculation
             from coati_payroll.audit_helpers import crear_log_auditoria_nomina

@@ -334,10 +334,10 @@ class TestRecalcularNomina:
 
     @patch("coati_payroll.audit_helpers.crear_log_auditoria_nomina")
     @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
-    def test_recalcular_nomina_deletes_old_data(
+    def test_recalcular_nomina_preserves_novedades_master_data_defensive(
         self, mock_engine_class, mock_audit, app, db_session, planilla, empleado, admin_user
     ):
-        """Test that recalcular_nomina properly deletes old nomina data."""
+        """DEFENSIVE: recalcular_nomina must preserve NominaNovedad master data."""
         with app.app_context():
             # Create original nomina with related records
             original_nomina = Nomina(
@@ -392,6 +392,7 @@ class TestRecalcularNomina:
             )
             db_session.add(nomina_novedad)
             db_session.commit()
+            original_novedad_id = nomina_novedad.id
 
             # Mock the engine for recalculation
             mock_engine = MagicMock()
@@ -417,7 +418,9 @@ class TestRecalcularNomina:
             assert db_session.query(Nomina).filter_by(id=original_nomina_id).first() is None
             assert db_session.query(NominaEmpleado).filter_by(nomina_id=original_nomina_id).first() is None
             assert db_session.query(NominaDetalle).filter_by(nomina_empleado_id=nomina_empleado.id).first() is None
-            assert db_session.query(NominaNovedad).filter_by(nomina_id=original_nomina_id).first() is None
+            preserved_novedad = db_session.get(NominaNovedad, original_novedad_id)
+            assert preserved_novedad is not None
+            assert str(preserved_novedad.nomina_id) == str(new_mock_nomina.id)
 
             # Verify engine was called
             mock_engine_class.assert_called_once()
