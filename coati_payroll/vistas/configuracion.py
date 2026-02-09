@@ -70,8 +70,7 @@ def cambiar_idioma():
         except Exception as e:
             flash(_("Error al actualizar el idioma: %(error)s", error=str(e)), "danger")
         return redirect(url_for("configuracion.index"))
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(error, "danger")
-        return redirect(url_for("configuracion.index"))
+    for _field, errors in form.errors.items():
+        for error in errors:
+            flash(error, "danger")
+    return redirect(url_for("configuracion.index"))

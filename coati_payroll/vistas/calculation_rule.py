@@ -86,7 +86,7 @@ def new():
         db.session.add(rule)
         db.session.commit()
         flash(_("Regla de cálculo creada exitosamente."), "success")
-        return redirect(url_for("calculation_rule.edit_schema", id=rule.id))
+        return redirect(url_for("calculation_rule.edit_schema", id_=rule.id))
 
     return render_template(
         "modules/calculation_rule/form.html",
@@ -95,11 +95,11 @@ def new():
     )
 
 
-@calculation_rule_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@calculation_rule_bp.route("/edit/<string:id_>", methods=["GET", "POST"])
 @require_write_access()
-def edit(id: str):
+def edit(id_: str):
     """Edit an existing calculation rule metadata."""
-    rule = db.session.get(ReglaCalculo, id)
+    rule = db.session.get(ReglaCalculo, id_)
     if not rule:
         flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
@@ -131,12 +131,12 @@ def edit(id: str):
     )
 
 
-@calculation_rule_bp.route("/edit-schema/<string:id>", methods=["GET"])
+@calculation_rule_bp.route("/edit-schema/<string:id_>", methods=["GET"])
 @require_write_access()
-def edit_schema(id: str):
+def edit_schema(id_: str):
     """Edit the JSON schema of a calculation rule."""
 
-    rule = db.session.get(ReglaCalculo, id)
+    rule = db.session.get(ReglaCalculo, id_)
 
     if not rule:
         flash(_(ERROR_RULE_NOT_FOUND), "error")
@@ -160,11 +160,11 @@ def edit_schema(id: str):
     )
 
 
-@calculation_rule_bp.route("/api/save-schema/<string:id>", methods=["POST"])
+@calculation_rule_bp.route("/api/save-schema/<string:id_>", methods=["POST"])
 @require_write_access()
-def save_schema(id: str):
+def save_schema(id_: str):
     """API endpoint to save the JSON schema."""
-    rule = db.session.get(ReglaCalculo, id)
+    rule = db.session.get(ReglaCalculo, id_)
     if not rule:
         return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
 
@@ -189,11 +189,11 @@ def save_schema(id: str):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@calculation_rule_bp.route("/api/validate-schema/<string:id>", methods=["POST"])
+@calculation_rule_bp.route("/api/validate-schema/<string:id_>", methods=["POST"])
 @require_write_access()
-def validate_schema_api(id: str):
+def validate_schema_api(id_: str):
     """API endpoint to validate a JSON schema without saving it."""
-    rule = db.session.get(ReglaCalculo, id)
+    rule = db.session.get(ReglaCalculo, id_)
     if not rule:
         return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
 
@@ -222,11 +222,11 @@ def validate_schema_api(id: str):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@calculation_rule_bp.route("/api/test-schema/<string:id>", methods=["POST"])
+@calculation_rule_bp.route("/api/test-schema/<string:id_>", methods=["POST"])
 @require_write_access()
-def test_schema(id: str):
+def test_schema(id_: str):
     """API endpoint to test the calculation schema with sample data."""
-    rule = db.session.get(ReglaCalculo, id)
+    rule = db.session.get(ReglaCalculo, id_)
     if not rule:
         return jsonify({"success": False, "error": ERROR_RULE_NOT_FOUND}), 404
 
@@ -245,11 +245,11 @@ def test_schema(id: str):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@calculation_rule_bp.route("/delete/<string:id>", methods=["POST"])
+@calculation_rule_bp.route("/delete/<string:id_>", methods=["POST"])
 @require_write_access()
-def delete(id: str):
+def delete(id_: str):
     """Delete a calculation rule."""
-    rule = db.session.get(ReglaCalculo, id)
+    rule = db.session.get(ReglaCalculo, id_)
     if not rule:
         flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
@@ -260,11 +260,11 @@ def delete(id: str):
     return redirect(url_for("calculation_rule.index"))
 
 
-@calculation_rule_bp.route("/duplicate/<string:id>", methods=["POST"])
+@calculation_rule_bp.route("/duplicate/<string:id_>", methods=["POST"])
 @require_write_access()
-def duplicate(id: str):
+def duplicate(id_: str):
     """Duplicate a calculation rule with a new version."""
-    rule = db.session.get(ReglaCalculo, id)
+    rule = db.session.get(ReglaCalculo, id_)
     if not rule:
         flash(_(ERROR_RULE_NOT_FOUND), "error")
         return redirect(url_for("calculation_rule.index"))
@@ -294,4 +294,4 @@ def duplicate(id: str):
     db.session.add(new_rule)
     db.session.commit()
     flash(_("Regla de cálculo duplicada exitosamente."), "success")
-    return redirect(url_for("calculation_rule.edit_schema", id=new_rule.id))
+    return redirect(url_for("calculation_rule.edit_schema", id_=new_rule.id))

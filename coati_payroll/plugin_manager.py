@@ -156,7 +156,7 @@ def register_active_plugins(app: Flask) -> None:
 
             register(app)
         except (ModuleNotFoundError, AttributeError) as exc:
-            log.warning(f"Plugin '{plugin.distribution_name}' could not be registered: {exc}")
+            log.warning("Plugin '%s' could not be registered: %s", plugin.distribution_name, exc)
             plugin.active = False
             plugin.installed = False
             try:
@@ -164,7 +164,7 @@ def register_active_plugins(app: Flask) -> None:
             except Exception:
                 db.session.rollback()
         except Exception as exc:
-            log.warning(f"Plugin '{plugin.distribution_name}' failed during registration: {exc}")
+            log.warning("Plugin '%s' failed during registration: %s", plugin.distribution_name, exc)
             plugin.active = False
             try:
                 db.session.commit()
@@ -207,6 +207,6 @@ def get_active_plugins_menu_entries() -> list[dict]:
                 }
             )
         except Exception as exc:
-            log.warning(f"Plugin '{plugin.distribution_name}' menu entry could not be loaded: {exc}")
+            log.warning("Plugin '%s' menu entry could not be loaded: %s", plugin.distribution_name, exc)
 
     return entries

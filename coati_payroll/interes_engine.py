@@ -17,19 +17,18 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from datetime import date
-from dateutil.relativedelta import relativedelta
 from decimal import Decimal, ROUND_HALF_UP
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 # <-------------------------------------------------------------------------> #
 # Third party libraries
 # <-------------------------------------------------------------------------> #
+from dateutil.relativedelta import relativedelta
 
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
 from coati_payroll.enums import MetodoAmortizacion, TipoInteres
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from coati_payroll.model import ConfiguracionCalculos

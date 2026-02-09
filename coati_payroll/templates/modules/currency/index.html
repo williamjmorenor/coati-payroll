@@ -83,10 +83,10 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ url_for('currency.edit', id=currency.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
+                                <a href="{{ url_for('currency.edit', id_=currency.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form action="{{ url_for('currency.delete', id=currency.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar esta moneda?') }}');">
+                                <form action="{{ url_for('currency.delete', id_=currency.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar esta moneda?') }}');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Eliminar') }}">
                                         <i class="bi bi-trash"></i>
                                     </button>

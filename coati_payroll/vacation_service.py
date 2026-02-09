@@ -83,7 +83,7 @@ class VacationService:
     def _config_from_snapshot(self, snapshot_config: dict) -> ConfiguracionCalculos:
         """Build a ConfiguracionCalculos-like object from snapshot data."""
         return cast(
-            ConfiguracionCalculos,
+            "ConfiguracionCalculos",
             SimpleNamespace(
                 empresa_id=snapshot_config.get("empresa_id"),
                 pais_id=snapshot_config.get("pais_id"),
@@ -172,8 +172,6 @@ class VacationService:
 
         # If no configuration exists, return a default instance (not saved to DB)
         # This ensures backward compatibility with existing tests
-        from decimal import Decimal
-
         return ConfiguracionCalculos(
             empresa_id=None,
             pais_id=None,
@@ -347,8 +345,9 @@ class VacationService:
 
         if not account:
             log.debug(
-                f"No active vacation account found for employee {empleado.codigo_empleado} "
-                f"in payroll {self.planilla.nombre}"
+                "No active vacation account found for employee %s in payroll %s",
+                empleado.codigo_empleado,
+                self.planilla.nombre,
             )
             return Decimal("0.00")
 
@@ -392,8 +391,10 @@ class VacationService:
             dias_servicio = (self.periodo_fin - empleado.fecha_alta).days
             if dias_servicio < policy.min_service_days:
                 log.debug(
-                    f"Employee {empleado.codigo_empleado} has not met minimum service days "
-                    f"({dias_servicio} < {policy.min_service_days})"
+                    "Employee %s has not met minimum service days (%s < %s)",
+                    empleado.codigo_empleado,
+                    dias_servicio,
+                    policy.min_service_days,
                 )
                 return Decimal("0.00")
 
@@ -419,8 +420,10 @@ class VacationService:
                 accrual_amount = max_balance - balance_before
                 if accrual_amount <= 0:
                     log.debug(
-                        f"Employee {empleado.codigo_empleado} has reached max vacation balance "
-                        f"({balance_before} >= {max_balance})"
+                        "Employee %s has reached max vacation balance (%s >= %s)",
+                        empleado.codigo_empleado,
+                        balance_before,
+                        max_balance,
                     )
                     return Decimal("0.00")
 
@@ -495,13 +498,12 @@ class VacationService:
 
         if policy.accrual_method == AccrualMethod.PERIODIC:
             return self._calcular_acumulacion_periodica(policy)
-        elif policy.accrual_method == AccrualMethod.PROPORTIONAL:
+        if policy.accrual_method == AccrualMethod.PROPORTIONAL:
             return self._calcular_acumulacion_proporcional(empleado, policy, nomina_empleado)
-        elif policy.accrual_method == AccrualMethod.SENIORITY:
+        if policy.accrual_method == AccrualMethod.SENIORITY:
             return self._calcular_acumulacion_antiguedad(empleado, policy)
-        else:
-            log.warning(f"Unknown accrual method: {policy.accrual_method}")
-            return Decimal("0.00")
+        log.warning("Unknown accrual method: %s", policy.accrual_method)
+        return Decimal("0.00")
 
     def _calcular_acumulacion_periodica(self, policy: VacationPolicy) -> Decimal:
         """Calculate periodic accrual (fixed amount per period).
@@ -534,9 +536,8 @@ class VacationService:
         # Prorate if period doesn't match frequency
         if dias_periodo == dias_esperados:
             return self._quantize_amount(policy.accrual_rate)
-        else:
-            # Prorate based on days
-            return self._quantize_amount(policy.accrual_rate * Decimal(dias_periodo) / Decimal(dias_esperados))
+        # Prorate based on days
+        return self._quantize_amount(policy.accrual_rate * Decimal(dias_periodo) / Decimal(dias_esperados))
 
     def _calcular_acumulacion_proporcional(
         self, empleado: Empleado, policy: VacationPolicy, nomina_empleado: NominaEmpleado
@@ -560,14 +561,13 @@ class VacationService:
             # Assume full days worked for now (could be enhanced to track absences)
             dias_trabajados = Decimal(dias_periodo)
             return self._quantize_amount(policy.accrual_rate * dias_trabajados)
-        elif policy.accrual_basis == "hours_worked":
+        if policy.accrual_basis == "hours_worked":
             # Calculate based on hours (would need hours tracking in payroll)
             # For now, estimate based on standard hours from configuration
             config = self._obtener_config_calculos()
             horas_estandar = Decimal(str(config.horas_jornada_diaria)) * Decimal(dias_periodo)
             return self._quantize_amount(policy.accrual_rate * horas_estandar)
-        else:
-            raise ValidationError(f"Policy {policy.codigo}: accrual_basis inválido ({policy.accrual_basis}).")
+        raise ValidationError(f"Policy {policy.codigo}: accrual_basis inválido ({policy.accrual_basis}).")
 
     def _calcular_acumulacion_antiguedad(self, empleado: Empleado, policy: VacationPolicy) -> Decimal:
         """Calculate seniority-based accrual (tiered by years of service).
@@ -608,10 +608,9 @@ class VacationService:
             dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
             dias_anio = Decimal(str(config.dias_anio_vacaciones))
             return self._quantize_amount(rate * Decimal(dias_periodo) / dias_anio)
-        else:
-            # If frequency is monthly/biweekly, divide rate accordingly
-            meses_anio = Decimal(str(config.meses_anio_financiero))
-            return self._quantize_amount(rate / meses_anio)
+        # If frequency is monthly/biweekly, divide rate accordingly
+        meses_anio = Decimal(str(config.meses_anio_financiero))
+        return self._quantize_amount(rate / meses_anio)
 
     def procesar_novedades_vacaciones(
         self, empleado: Empleado, novedades: dict | list, usuario: str | None = None

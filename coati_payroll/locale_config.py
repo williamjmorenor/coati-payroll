@@ -62,11 +62,11 @@ def get_language_from_db() -> str:
             with _cache_lock:
                 _language_cache = language
 
-            log.trace(f"Language loaded from database: {language}")
+            log.trace("Language loaded from database: %s", language)
             return language
 
     except Exception as e:
-        log.warning(f"Error reading language from database: {e}")
+        log.warning("Error reading language from database: %s", e)
         return DEFAULT_LANGUAGE
 
 
@@ -103,7 +103,7 @@ def set_language_in_db(language: str) -> None:
         # Invalidate cache to force reload on next access
         invalidate_language_cache()
 
-        log.info(f"Language updated to: {language}")
+        log.info("Language updated to: %s", language)
 
 
 def invalidate_language_cache() -> None:
@@ -133,7 +133,7 @@ def initialize_language_from_env() -> None:
         return
 
     if env_lang not in SUPPORTED_LANGUAGES:
-        log.warning(f"Invalid COATI_LANG value: {env_lang}. " f"Must be one of {SUPPORTED_LANGUAGES}. Using default.")
+        log.warning("Invalid COATI_LANG value: %s. Must be one of %s. Using default.", env_lang, SUPPORTED_LANGUAGES)
         return
 
     try:
@@ -148,7 +148,7 @@ def initialize_language_from_env() -> None:
                 config.idioma = env_lang
                 db.session.add(config)
                 db.session.commit()
-                log.info(f"Language initialized from COATI_LANG: {env_lang}")
+                log.info("Language initialized from COATI_LANG: %s", env_lang)
 
     except Exception as e:
-        log.warning(f"Error initializing language from environment: {e}")
+        log.warning("Error initializing language from environment: %s", e)

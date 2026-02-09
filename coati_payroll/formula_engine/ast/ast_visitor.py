@@ -59,7 +59,6 @@ class ASTVisitor(ABC):
         Raises:
             CalculationError: If the node cannot be safely evaluated
         """
-        pass
 
 
 class SafeASTVisitor(ASTVisitor):
@@ -208,12 +207,11 @@ class SafeASTVisitor(ASTVisitor):
         op_type = type(node.op)
         if op_type == ast.UAdd:
             return to_decimal(+operand)
-        elif op_type == ast.USub:
+        if op_type == ast.USub:
             return to_decimal(-operand)
-        else:
-            raise CalculationError(
-                f"Unary operator '{op_type.__name__}' is not allowed. " "Only unary + and - are permitted."
-            )
+        raise CalculationError(
+            f"Unary operator '{op_type.__name__}' is not allowed. " "Only unary + and - are permitted."
+        )
 
     def visit_call(self, node: ast.Call) -> Decimal:
         """Visit a function call node (e.g., max(a, b), round(x, 2)).

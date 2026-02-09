@@ -282,8 +282,10 @@ class ConceptCalculator:
             return Decimal("0.00")
 
     def _get_deduccion_metadata(self, deduccion_id: str) -> dict[str, Any] | None:
-        if self.deducciones_snapshot and deduccion_id in self.deducciones_snapshot:
-            return self.deducciones_snapshot[deduccion_id]
+        deducciones_snapshot = self.deducciones_snapshot
+        # pylint: disable=unsupported-membership-test,unsubscriptable-object
+        if isinstance(deducciones_snapshot, dict) and deduccion_id in deducciones_snapshot:
+            return deducciones_snapshot[deduccion_id]
 
         deduccion_obj = db.session.get(Deduccion, deduccion_id)
         if not deduccion_obj:

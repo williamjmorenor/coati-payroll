@@ -74,9 +74,8 @@ class FormulaEngine:
                 raise ValidationError(
                     f"Advertencias en tablas de impuestos (modo estricto activado): {', '.join(warnings)}"
                 )
-            else:
-                for warning in warnings:
-                    log.warning(f"Validación de tabla de impuestos: {warning}")
+            for warning in warnings:
+                log.warning("Validación de tabla de impuestos: %s", warning)
 
     def _trace(self, message: str) -> None:
         """Trace helper for logging."""

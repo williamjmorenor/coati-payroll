@@ -35,9 +35,10 @@ class VacationProcessor:
         self, empleado: Empleado, emp_calculo: EmpleadoCalculo, nomina_empleado: NominaEmpleado
     ) -> dict | None:
         """Process vacation accrual and usage for an employee."""
+        from coati_payroll.nomina_engine.validators import ValidationError, NominaEngineError
+
         try:
             from coati_payroll.vacation_service import VacationService
-            from coati_payroll.nomina_engine.validators import ValidationError, NominaEngineError
 
             vacation_service = VacationService(
                 planilla=self.planilla,
@@ -71,10 +72,10 @@ class VacationProcessor:
                 "policy_codigo": resumen_after["policy_codigo"] if resumen_after else None,
             }
 
-        except (ValidationError, NominaEngineError):
-            raise
         except Exception as e:
-            log.error(f"Error procesando vacaciones para empleado {empleado.codigo_empleado}: {str(e)}")
+            if isinstance(e, (ValidationError, NominaEngineError)):
+                raise
+            log.error("Error procesando vacaciones para empleado %s: %s", empleado.codigo_empleado, str(e))
             self.warnings.append(
                 f"No se pudieron procesar vacaciones para {empleado.primer_nombre} "
                 f"{empleado.primer_apellido}: {str(e)}"

@@ -4,6 +4,7 @@
 
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
+from sqlalchemy import false, true
 
 from coati_payroll.model import db, Planilla
 from coati_payroll.forms import PlanillaForm
@@ -44,9 +45,9 @@ def index():
         )
 
     if estado == "activo":
-        query = query.filter(Planilla.activo == True)  # noqa: E712
+        query = query.filter(Planilla.activo.is_(true()))
     elif estado == "inactivo":
-        query = query.filter(Planilla.activo == False)  # noqa: E712
+        query = query.filter(Planilla.activo.is_(false()))
 
     if tipo_planilla_id:
         query = query.filter(Planilla.tipo_planilla_id == tipo_planilla_id)

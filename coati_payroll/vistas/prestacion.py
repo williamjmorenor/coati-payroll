@@ -12,7 +12,8 @@ from decimal import Decimal
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import func
+from sqlalchemy import distinct
+from sqlalchemy.sql.functions import count
 
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
@@ -43,18 +44,16 @@ def dashboard():
     """Prestacion management dashboard."""
     # Statistics
     total_prestaciones = (
-        db.session.execute(db.select(func.count(Prestacion.id)).filter(Prestacion.activo.is_(True))).scalar() or 0
+        db.session.execute(db.select(count(Prestacion.id)).filter(Prestacion.activo.is_(True))).scalar() or 0
     )
 
     # Count employees with benefit balances
-    total_accounts = (
-        db.session.execute(db.select(func.count(func.distinct(PrestacionAcumulada.empleado_id)))).scalar() or 0
-    )
+    total_accounts = db.session.execute(db.select(count(distinct(PrestacionAcumulada.empleado_id)))).scalar() or 0
 
     # Count pending initial loads
     pending_loads = (
         db.session.execute(
-            db.select(func.count(CargaInicialPrestacion.id)).filter(CargaInicialPrestacion.estado == "draft")
+            db.select(count(CargaInicialPrestacion.id)).filter(CargaInicialPrestacion.estado == "draft")
         ).scalar()
         or 0
     )

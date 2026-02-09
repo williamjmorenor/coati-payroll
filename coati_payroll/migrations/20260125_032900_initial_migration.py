@@ -31,7 +31,7 @@ def upgrade():
     This is a no-op migration because we assume the database schema was already
     created by db.create_all(). This migration simply marks the schema version.
     """
-    pass
+    return None
 
 
 def downgrade():
@@ -40,4 +40,4 @@ def downgrade():
     This is a no-op migration. Downgrading from the initial migration would
     require dropping all tables, which should be done with db.drop_all() instead.
     """
-    pass
+    return None

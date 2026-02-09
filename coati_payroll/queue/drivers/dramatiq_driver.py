@@ -69,21 +69,25 @@ class DramatiqDriver(QueueDriver):
 
             results_cls = cast(Any, getattr(dramatiq_middleware, "Results", None))
             redis_backend_cls = cast(Any, getattr(dramatiq_results, "RedisBackend", None))
-            if results_cls is not None and redis_backend_cls is not None:
-                self._results_backend = redis_backend_cls(url=self._redis_url)
-                broker.add_middleware(results_cls(backend=self._results_backend))
+            if callable(results_cls) and callable(redis_backend_cls):
+                backend_cls = cast(Any, redis_backend_cls)
+                middleware_cls = cast(Any, results_cls)
+                # Dynamically loaded classes validated as callable above.
+                # pylint: disable=not-callable
+                self._results_backend = backend_cls(url=self._redis_url)
+                broker.add_middleware(middleware_cls(backend=self._results_backend))
 
             # Set as default broker
             dramatiq.set_broker(cast(Any, broker))
 
-            log.info(f"Dramatiq driver initialized with Redis at {self._redis_url}")
+            log.info("Dramatiq driver initialized with Redis at %s", self._redis_url)
             return True
 
         except ImportError as e:
-            log.warning(f"Dramatiq not available: {e}")
+            log.warning("Dramatiq not available: %s", e)
             return False
         except Exception as e:
-            log.warning(f"Failed to connect to Redis for Dramatiq: {e}")
+            log.warning("Failed to connect to Redis for Dramatiq: %s", e)
             return False
 
     def enqueue(self, task_name: str, *args: Any, delay: int | None = None, **kwargs: Any) -> Any:
@@ -113,8 +117,7 @@ class DramatiqDriver(QueueDriver):
         if delay:
             # Convert seconds to milliseconds for Dramatiq
             return task.send_with_options(args=args, kwargs=kwargs, delay=delay * 1000)
-        else:
-            return task.send(*args, **kwargs)
+        return task.send(*args, **kwargs)
 
     def register_task(
         self,
@@ -137,7 +140,7 @@ class DramatiqDriver(QueueDriver):
             Dramatiq actor that can be called or enqueued
         """
         if not self._available:
-            log.warning(f"Cannot register task '{name or func.__name__}': Dramatiq not available")
+            log.warning("Cannot register task '%s': Dramatiq not available", name or func.__name__)
             return func
 
         try:
@@ -146,21 +149,21 @@ class DramatiqDriver(QueueDriver):
             task_name = name or func.__name__
 
             # Decorate with dramatiq.actor
-            actor = dramatiq.actor(
-                func,
+            actor_decorator = dramatiq.actor(
                 actor_name=task_name,
                 max_retries=max_retries,
                 min_backoff=min_backoff,
                 max_backoff=max_backoff,
             )
+            actor = actor_decorator(func)
 
             self._tasks[task_name] = actor
-            log.debug(f"Registered Dramatiq task: {task_name}")
+            log.debug("Registered Dramatiq task: %s", task_name)
 
             return actor
 
         except Exception as e:
-            log.error(f"Failed to register task '{name or func.__name__}': {e}")
+            log.error("Failed to register task '%s': %s", name or func.__name__, e)
             return func
 
     def is_available(self) -> bool:
@@ -202,12 +205,12 @@ class DramatiqDriver(QueueDriver):
                     length = client.llen(key)
                     stats["queues"][queue_name] = length
             except Exception as e:
-                log.debug(f"Could not fetch queue lengths: {e}")
+                log.debug("Could not fetch queue lengths: %s", e)
 
             return stats
 
         except Exception as e:
-            log.error(f"Failed to get Dramatiq stats: {e}")
+            log.error("Failed to get Dramatiq stats: %s", e)
             return {"error": str(e)}
 
     def get_task_result(self, task_id: Any) -> dict[str, Any]:
@@ -250,7 +253,7 @@ class DramatiqDriver(QueueDriver):
                     }
                 raise
         except Exception as e:
-            log.error(f"Failed to get task result: {e}")
+            log.error("Failed to get task result: %s", e)
             return {"status": "error", "error": str(e)}
 
     def get_bulk_results(self, task_ids: list[Any]) -> dict[str, Any]:

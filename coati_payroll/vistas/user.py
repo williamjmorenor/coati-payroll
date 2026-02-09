@@ -62,11 +62,11 @@ def new():
     return render_template("modules/user/form.html", form=form, title=_("Nuevo Usuario"))
 
 
-@user_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@user_bp.route("/edit/<string:id_>", methods=["GET", "POST"])
 @require_role(TipoUsuario.ADMIN)
-def edit(id: str):
+def edit(id_: str):
     """Edit an existing user. Only administrators can edit users."""
-    user = db.session.get(Usuario, id)
+    user = db.session.get(Usuario, id_)
     if not user:
         flash(_("Usuario no encontrado."), "error")
         return redirect(url_for("user.index"))
@@ -93,11 +93,11 @@ def edit(id: str):
     return render_template("modules/user/form.html", form=form, title=_("Editar Usuario"), user=user)
 
 
-@user_bp.route("/delete/<string:id>", methods=["POST"])
+@user_bp.route("/delete/<string:id_>", methods=["POST"])
 @require_role(TipoUsuario.ADMIN)
-def delete(id: str):
+def delete(id_: str):
     """Delete a user. Only administrators can delete users."""
-    user = db.session.get(Usuario, id)
+    user = db.session.get(Usuario, id_)
     if not user:
         flash(_("Usuario no encontrado."), "error")
         return redirect(url_for("user.index"))

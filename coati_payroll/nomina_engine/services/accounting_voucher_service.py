@@ -144,7 +144,7 @@ class AccountingVoucherService:
         from datetime import datetime, timezone
 
         # Validate configuration
-        is_valid, warnings = self.validate_accounting_configuration(planilla)
+        _, warnings = self.validate_accounting_configuration(planilla)
 
         # Use nomina's calculation date or periodo_fin
         if fecha_calculo is None:

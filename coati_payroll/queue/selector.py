@@ -91,8 +91,7 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
             log.info("Using Dramatiq driver with Redis backend")
             _cached_driver = driver
             return driver
-        else:
-            log.warning("Redis available but Dramatiq failed to initialize")
+        log.warning("Redis available but Dramatiq failed to initialize")
 
     # Fallback to Huey with filesystem (unless forcing Dramatiq)
     if force_backend != "dramatiq":
@@ -104,8 +103,7 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
             log.info("Using Huey driver with filesystem backend")
             _cached_driver = driver
             return driver
-        else:
-            log.error("Huey driver failed to initialize")
+        log.error("Huey driver failed to initialize")
 
     # No driver available
     raise RuntimeError(

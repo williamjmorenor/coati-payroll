@@ -28,5 +28,5 @@ def serve(app: Optional[Flask] = None, host: str = "0.0.0.0", port: int | str = 
     if app is None:
         raise ValueError("wsgi_server.serve requires a Flask app instance.")
 
-    log.trace(f"Starting waitress on {host}:{port}")
+    log.trace("Starting waitress on %s:%s", host, port)
     wsgi_server(app, host=host, port=port)

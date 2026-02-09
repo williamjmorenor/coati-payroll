@@ -167,9 +167,6 @@ def detail(prestamo_id):
         flash("Préstamo no encontrado.", "danger")
         return redirect(url_for("prestamo.index"))
 
-    # Touch relationship to ensure it is loaded before rendering
-    prestamo.empleado
-
     # Generate payment schedule
     tabla_pago = generar_tabla_pago(prestamo)
 
@@ -217,10 +214,7 @@ def edit(prestamo_id):
 
     # Only allow editing in draft or pending state
     if prestamo.estado not in [AdelantoEstado.BORRADOR, AdelantoEstado.PENDIENTE]:
-        flash(
-            _("No se puede editar un préstamo en estado '{estado}'.".format(estado=prestamo.estado)),
-            "warning",
-        )
+        flash(_(f"No se puede editar un préstamo en estado '{prestamo.estado}'."), "warning")
         return redirect(url_for("prestamo.detail", prestamo_id=prestamo_id))
 
     form = PrestamoForm(obj=prestamo)
@@ -395,9 +389,6 @@ def pago_extraordinario(prestamo_id):
     if not prestamo:
         flash("Préstamo no encontrado.", "danger")
         return redirect(url_for("prestamo.index"))
-
-    # Touch relationship to ensure it is loaded before rendering
-    prestamo.empleado
 
     # Only allow payments on approved/active loans
     if prestamo.estado not in [AdelantoEstado.APROBADO, AdelantoEstado.APLICADO]:

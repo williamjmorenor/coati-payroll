@@ -34,8 +34,6 @@ __all__ = ["ValidationError", "validate_schema", "validate_schema_deep"]
 class ValidationError(Exception):
     """Exception for validation errors in schema or data."""
 
-    pass
-
 
 def validate_schema(schema: dict[str, Any], error_class: Type[Exception] = ValidationError) -> None:
     """Validate the calculation schema structure.

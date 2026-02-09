@@ -9,6 +9,7 @@ from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
+from sqlalchemy import false, true
 
 from coati_payroll.forms import EmployeeForm
 from coati_payroll.i18n import _
@@ -147,9 +148,9 @@ def index():
         )
 
     if estado == "activo":
-        query = query.filter(Empleado.activo == True)  # noqa: E712
+        query = query.filter(Empleado.activo.is_(true()))
     elif estado == "inactivo":
-        query = query.filter(Empleado.activo == False)  # noqa: E712
+        query = query.filter(Empleado.activo.is_(false()))
 
     if area:
         query = query.filter(Empleado.area.ilike(f"%{area}%"))
@@ -253,11 +254,11 @@ def new():
     )
 
 
-@employee_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@employee_bp.route("/edit/<string:id_>", methods=["GET", "POST"])
 @require_write_access()
-def edit(id: str):
+def edit(id_: str):
     """Edit an existing employee. Admin and HR can edit employees."""
-    employee = db.session.get(Empleado, id)
+    employee = db.session.get(Empleado, id_)
     if not employee:
         flash(_("Empleado no encontrado."), "error")
         return redirect(url_for("employee.index"))
@@ -340,11 +341,11 @@ def edit(id: str):
     )
 
 
-@employee_bp.route("/delete/<string:id>", methods=["POST"])
+@employee_bp.route("/delete/<string:id_>", methods=["POST"])
 @require_write_access()
-def delete(id: str):
+def delete(id_: str):
     """Delete an employee. Admin and HR can delete employees."""
-    employee = db.session.get(Empleado, id)
+    employee = db.session.get(Empleado, id_)
     if not employee:
         flash(_("Empleado no encontrado."), "error")
         return redirect(url_for("employee.index"))

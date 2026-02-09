@@ -42,10 +42,9 @@ class AcumuladoRepository(BaseRepository[AcumuladoAnual]):
         )
 
         if not acumulado:
-            from datetime import date as date_type
             from decimal import Decimal
 
-            periodo_fiscal_fin = date_type(
+            periodo_fiscal_fin = date(
                 periodo_fiscal_inicio.year + 1, periodo_fiscal_inicio.month, periodo_fiscal_inicio.day
             )
 

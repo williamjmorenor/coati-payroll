@@ -9,6 +9,7 @@ from typing import Any, cast
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for, jsonify, send_file
 from flask_login import current_user
+from sqlalchemy import true
 
 from coati_payroll.enums import ReportType, ReportStatus, TipoUsuario
 from coati_payroll.i18n import _
@@ -63,9 +64,7 @@ def index():
     # Filter by user permissions
     if current_user.tipo != TipoUsuario.ADMIN:
         # Filter reports where user has view permission
-        stmt = stmt.join(ReportRole).filter(
-            ReportRole.role == current_user.tipo, ReportRole.can_view == True  # noqa: E712
-        )
+        stmt = stmt.join(ReportRole).filter(ReportRole.role == current_user.tipo, ReportRole.can_view.is_(true()))
 
     stmt = stmt.order_by(Report.category, Report.name)
 
@@ -222,7 +221,7 @@ def run_report(report_id: str):
         )
 
     except Exception as e:
-        log.error(f"Error executing report: {e}")
+        log.error("Error executing report: %s", e)
         return jsonify({"error": str(e)}), 500
 
 
@@ -231,14 +230,14 @@ def run_report(report_id: str):
 # ============================================================================
 
 
-@report_bp.route("/<report_id>/export/<format>", methods=["POST"])
+@report_bp.route("/<report_id>/export/<export_format>", methods=["POST"])
 @require_read_access()
-def export_report(report_id: str, format: str):
+def export_report(report_id: str, export_format: str):
     """Export report to specified format.
 
     Args:
         report_id: Report ID
-        format: Export format (excel, csv)
+        export_format: Export format (excel, csv)
     """
     report = db.session.get(Report, report_id)
     if not report:
@@ -255,26 +254,26 @@ def export_report(report_id: str, format: str):
     try:
         # Execute report (get all results, no pagination for export)
         manager = ReportExecutionManager(report, current_user.usuario)
-        results, total_count, execution = manager.execute(parameters, page=1, per_page=50000)
+        results, _total_count, execution = manager.execute(parameters, page=1, per_page=50000)
 
         # Export based on format
-        if format == "excel":
+        if export_format == "excel":
             file_path = export_report_to_excel(report.name, results)
-        elif format == "csv":
+        elif export_format == "csv":
             file_path = export_report_to_csv(report.name, results)
         else:
             return jsonify({"error": "Invalid format"}), 400
 
         # Update execution record with export info
         execution.export_file_path = file_path
-        execution.export_format = format
+        execution.export_format = export_format
         db.session.commit()
 
         # Send file
         return send_file(file_path, as_attachment=True)
 
     except Exception as e:
-        log.error(f"Error exporting report: {e}")
+        log.error("Error exporting report: %s", e)
         return jsonify({"error": str(e)}), 500
 
 

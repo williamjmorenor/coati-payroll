@@ -56,8 +56,7 @@ def _calculate_ast_depth(node: ast.AST) -> int:
     stack: list[tuple[ast.AST, int]] = [(node, 0)]
     while stack:
         current, depth = stack.pop()
-        if depth > max_depth:
-            max_depth = depth
+        max_depth = max(max_depth, depth)
         for child in ast.iter_child_nodes(current):
             stack.append((child, depth + 1))
     return max_depth

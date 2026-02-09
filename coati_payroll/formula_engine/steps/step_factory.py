@@ -46,11 +46,10 @@ class StepFactory:
 
         if step_type == StepType.CALCULATION:
             return CalculationStep(step_name, step_config)
-        elif step_type == StepType.CONDITIONAL:
+        if step_type == StepType.CONDITIONAL:
             return ConditionalStep(step_name, step_config)
-        elif step_type == StepType.TAX_LOOKUP:
+        if step_type == StepType.TAX_LOOKUP:
             return TaxLookupStep(step_name, step_config)
-        elif step_type == StepType.ASSIGNMENT:
+        if step_type == StepType.ASSIGNMENT:
             return AssignmentStep(step_name, step_config)
-        else:
-            raise CalculationError(f"Unknown step type: {step_type}")
+        raise CalculationError(f"Unknown step type: {step_type}")

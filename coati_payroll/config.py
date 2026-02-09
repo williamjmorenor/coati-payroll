@@ -54,7 +54,7 @@ def load_config_from_file() -> dict:
     for config_path in search_paths:
         if config_path and path.isfile(config_path):
             try:
-                log.info(f"Loading configuration from file: {config_path}")
+                log.info("Loading configuration from file: %s", config_path)
                 config_obj = ConfigObj(config_path, encoding="utf-8")
 
                 config_dict = dict(config_obj)
@@ -68,7 +68,7 @@ def load_config_from_file() -> dict:
                 return config_dict
 
             except Exception as e:
-                log.warning(f"Error loading configuration from {config_path}: {e}")
+                log.warning("Error loading configuration from %s: %s", config_path, e)
                 continue
 
     log.trace("No configuration file found in search paths.")

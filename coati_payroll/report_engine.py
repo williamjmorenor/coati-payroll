@@ -279,7 +279,7 @@ class CustomReportBuilder:
             Tuple of (results as list of dicts, total count)
         """
         # Build base query without pagination for count
-        from sqlalchemy import func
+        from sqlalchemy.sql.functions import count
 
         # Start with base entity
         count_stmt = db.select(self.base_entity)
@@ -306,7 +306,7 @@ class CustomReportBuilder:
                         count_stmt = count_stmt.filter(field == value)
 
         # Get total count (without pagination or sorting)
-        total_count = db.session.execute(db.select(func.count()).select_from(count_stmt.subquery())).scalar() or 0
+        total_count = db.session.execute(db.select(count()).select_from(count_stmt.subquery())).scalar() or 0
 
         # Build query with pagination for results
         stmt = self.build_query(filters, page, per_page)
@@ -425,7 +425,7 @@ class ReportExecutionManager:
 
             db.session.commit()
 
-            log.error(f"Report execution failed: {e}")
+            log.error("Report execution failed: %s", e)
             raise
 
 

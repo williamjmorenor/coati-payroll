@@ -39,10 +39,9 @@ def get_rate_limiter_storage():
     if redis_url:
         # Use Redis for distributed rate limiting (production)
         return redis_url
-    else:
-        # Use memory storage for development/testing
-        # Note: This won't work across multiple processes
-        return "memory://"
+    # Use memory storage for development/testing
+    # Note: This won't work across multiple processes
+    return "memory://"
 
 
 # Default configuration for rate limiting

@@ -127,7 +127,7 @@ class ReportExporter:
 
         # Save workbook
         wb.save(output_path)
-        log.info(f"Report exported to: {output_path}")
+        log.info("Report exported to: %s", output_path)
 
         return output_path
 
@@ -163,7 +163,7 @@ class ReportExporter:
                 writer.writeheader()
                 writer.writerows(self.results)
 
-        log.info(f"Report exported to: {output_path}")
+        log.info("Report exported to: %s", output_path)
         return output_path
 
 

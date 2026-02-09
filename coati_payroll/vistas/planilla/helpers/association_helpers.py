@@ -2,9 +2,11 @@
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 """Helper functions for managing planilla associations."""
 
-from sqlalchemy import func, select
+from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 from coati_payroll.model import (
     db,
+    Planilla,
     PlanillaEmpleado,
     PlanillaIngreso,
     PlanillaDeduccion,
@@ -21,19 +23,19 @@ def get_planilla_component_counts(planilla_id: str) -> dict:
     """
     return {
         "empleados_count": db.session.execute(
-            select(func.count()).select_from(PlanillaEmpleado).filter_by(planilla_id=planilla_id)
+            select(count()).select_from(PlanillaEmpleado).filter_by(planilla_id=planilla_id)
         ).scalar(),
         "percepciones_count": db.session.execute(
-            select(func.count()).select_from(PlanillaIngreso).filter_by(planilla_id=planilla_id)
+            select(count()).select_from(PlanillaIngreso).filter_by(planilla_id=planilla_id)
         ).scalar(),
         "deducciones_count": db.session.execute(
-            select(func.count()).select_from(PlanillaDeduccion).filter_by(planilla_id=planilla_id)
+            select(count()).select_from(PlanillaDeduccion).filter_by(planilla_id=planilla_id)
         ).scalar(),
         "prestaciones_count": db.session.execute(
-            select(func.count()).select_from(PlanillaPrestacion).filter_by(planilla_id=planilla_id)
+            select(count()).select_from(PlanillaPrestacion).filter_by(planilla_id=planilla_id)
         ).scalar(),
         "reglas_count": db.session.execute(
-            select(func.count()).select_from(PlanillaReglaCalculo).filter_by(planilla_id=planilla_id)
+            select(count()).select_from(PlanillaReglaCalculo).filter_by(planilla_id=planilla_id)
         ).scalar(),
     }
 
@@ -57,14 +59,6 @@ def agregar_asociacion(
     Returns:
         Tuple of (success, error_message, association_id). If success is False, error_message is set.
     """
-    from coati_payroll.model import (
-        Planilla,
-        PlanillaIngreso,
-        PlanillaDeduccion,
-        PlanillaPrestacion,
-        PlanillaReglaCalculo,
-    )
-
     datos_extra = datos_extra or {}
     usuario = usuario or "system"
 
@@ -149,6 +143,8 @@ def agregar_asociacion(
             activo=True,
             creado_por=usuario,
         )
+    else:
+        return False, f"Tipo de componente desconocido: {tipo_componente}", None
 
     db.session.add(association)
     db.session.commit()

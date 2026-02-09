@@ -91,8 +91,7 @@ def ejecutar_nomina(planilla_id: str):
                     nomina_id=nomina.id,
                 )
             )
-        else:
-            return redirect(url_for(ROUTE_EJECUTAR_NOMINA, planilla_id=planilla_id))
+        return redirect(url_for(ROUTE_EJECUTAR_NOMINA, planilla_id=planilla_id))
 
     # GET - show execution form
     periodo_inicio_sugerido, periodo_fin_sugerido = NominaService.calcular_periodo_sugerido(planilla)
@@ -406,9 +405,8 @@ def reintentar_nomina(planilla_id: str, nomina_id: str):
             _("Reintento de nómina iniciado exitosamente. El procesamiento se realizará en segundo plano."), "success"
         )
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
-    else:
-        flash(_("Error al reintentar la nómina: {}").format(result.get("error", "Error desconocido")), "error")
-        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+    flash(_("Error al reintentar la nómina: {}").format(result.get("error", "Error desconocido")), "error")
+    return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/recalcular", methods=["POST"])
@@ -439,9 +437,8 @@ def recalcular_nomina(planilla_id: str, nomina_id: str):
     if new_nomina:
         flash(_("Nómina recalculada exitosamente."), "success")
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=new_nomina.id))
-    else:
-        flash(_("Error al recalcular la nómina."), "error")
-        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
+    flash(_("Error al recalcular la nómina."), "error")
+    return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/log")
@@ -492,8 +489,6 @@ def regenerar_comprobante_contable(planilla_id: str, nomina_id: str):
         return redirect(url_for("planilla.listar_nominas", planilla_id=planilla_id))
 
     # Only allow for applied or paid nominas
-    from coati_payroll.enums import NominaEstado
-
     if nomina.estado not in (NominaEstado.APLICADO, NominaEstado.PAGADO):
         flash(
             _(
@@ -506,7 +501,6 @@ def regenerar_comprobante_contable(planilla_id: str, nomina_id: str):
 
     try:
         from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
-        from flask_login import current_user
 
         accounting_service = AccountingVoucherService(db.session)
 

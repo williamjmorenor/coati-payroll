@@ -82,7 +82,7 @@ class SnapshotService:
         rates = {}
 
         # Get all unique currencies from employees in this planilla
-        from coati_payroll.model import Empleado, PlanillaEmpleado
+        from coati_payroll.model import Empleado
 
         empleados = (
             self.session.execute(

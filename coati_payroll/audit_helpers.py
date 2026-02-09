@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from sqlalchemy import true
 
 from coati_payroll.enums import EstadoAprobacion, TipoUsuario, NominaEstado
 from coati_payroll.model import (
@@ -308,7 +309,7 @@ def obtener_conceptos_en_borrador(planilla_id: str) -> Dict[str, list]:
         .filter(
             PlanillaIngreso.planilla_id == planilla_id,
             Percepcion.estado_aprobacion == EstadoAprobacion.BORRADOR,
-            Percepcion.activo == True,  # noqa: E712
+            Percepcion.activo.is_(true()),
         )
         .all()
     )
@@ -320,7 +321,7 @@ def obtener_conceptos_en_borrador(planilla_id: str) -> Dict[str, list]:
         .filter(
             PlanillaDeduccion.planilla_id == planilla_id,
             Deduccion.estado_aprobacion == EstadoAprobacion.BORRADOR,
-            Deduccion.activo == True,  # noqa: E712
+            Deduccion.activo.is_(true()),
         )
         .all()
     )
@@ -332,7 +333,7 @@ def obtener_conceptos_en_borrador(planilla_id: str) -> Dict[str, list]:
         .filter(
             PlanillaPrestacion.planilla_id == planilla_id,
             Prestacion.estado_aprobacion == EstadoAprobacion.BORRADOR,
-            Prestacion.activo == True,  # noqa: E712
+            Prestacion.activo.is_(true()),
         )
         .all()
     )
@@ -827,7 +828,7 @@ def obtener_reglas_calculo_en_borrador(planilla_id: str) -> list:
         .filter(
             PlanillaReglaCalculo.planilla_id == planilla_id,
             ReglaCalculo.estado_aprobacion == EstadoAprobacion.BORRADOR,
-            ReglaCalculo.activo == True,  # noqa: E712
+            ReglaCalculo.activo.is_(true()),
         )
         .all()
     )

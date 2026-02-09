@@ -18,7 +18,8 @@ from typing import Dict, Any, List, Optional, Callable
 # <-------------------------------------------------------------------------> #
 # Third party libraries
 # <-------------------------------------------------------------------------> #
-from sqlalchemy import func
+from sqlalchemy import func, true
+from sqlalchemy.sql.functions import count
 
 # <-------------------------------------------------------------------------> #
 # Local modules
@@ -144,9 +145,7 @@ def employee_by_department_report(parameters: Dict[str, Any]) -> List[Dict[str, 
     """
     results = (
         db.session.execute(
-            db.select(Empleado)
-            .filter(Empleado.activo == True)  # noqa: E712
-            .order_by(Empleado.area, Empleado.primer_apellido)
+            db.select(Empleado).filter(Empleado.activo.is_(true())).order_by(Empleado.area, Empleado.primer_apellido)
         )
         .scalars()
         .all()
@@ -332,7 +331,7 @@ def payroll_perceptions_summary_report(parameters: Dict[str, Any]) -> List[Dict[
         db.select(
             NominaDetalle.concepto_codigo,
             NominaDetalle.concepto_nombre,
-            func.count(NominaDetalle.id).label("cantidad_empleados"),
+            count(NominaDetalle.id).label("cantidad_empleados"),
             func.sum(NominaDetalle.monto).label("total"),
         )
         .filter(NominaDetalle.nomina_id == nomina_id, NominaDetalle.tipo == TipoDetalle.INGRESO)
@@ -367,7 +366,7 @@ def payroll_deductions_summary_report(parameters: Dict[str, Any]) -> List[Dict[s
         db.select(
             NominaDetalle.concepto_codigo,
             NominaDetalle.concepto_nombre,
-            func.count(NominaDetalle.id).label("cantidad_empleados"),
+            count(NominaDetalle.id).label("cantidad_empleados"),
             func.sum(NominaDetalle.monto).label("total"),
         )
         .filter(NominaDetalle.nomina_id == nomina_id, NominaDetalle.tipo == TipoDetalle.DEDUCCION)
@@ -400,7 +399,7 @@ def vacation_balance_report(parameters: Dict[str, Any]) -> List[Dict[str, Any]]:
     results = db.session.execute(
         db.select(VacationAccount, Empleado)
         .join(Empleado, VacationAccount.empleado_id == Empleado.id)
-        .filter(Empleado.activo == True)  # noqa: E712
+        .filter(Empleado.activo.is_(true()))
         .order_by(Empleado.primer_apellido, Empleado.primer_nombre)
     ).all()
 

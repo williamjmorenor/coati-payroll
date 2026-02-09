@@ -66,10 +66,10 @@ class HueyDriver(QueueDriver):
                 test_file.unlink()
 
                 if content == "test":
-                    log.info(f"Queue storage path verified with read/write access: {path}")
+                    log.info("Queue storage path verified with read/write access: %s", path)
                     return path
             except (OSError, PermissionError) as e:
-                log.debug(f"Cannot use path {path}: {e}")
+                log.debug("Cannot use path %s: %s", path, e)
                 continue
 
         # Try current working directory as last resort (with warning about security)
@@ -81,9 +81,10 @@ class HueyDriver(QueueDriver):
             test_file.read_text()
             test_file.unlink()
             log.warning(
-                f"Using current working directory for queue storage: {cwd_path}. "
-                f"This may be insecure if running in a public directory. "
-                f"Consider setting COATI_QUEUE_PATH to a secure location."
+                "Using current working directory for queue storage: %s. "
+                "This may be insecure if running in a public directory. "
+                "Consider setting COATI_QUEUE_PATH to a secure location.",
+                cwd_path,
             )
             return cwd_path
         except (OSError, PermissionError):
@@ -95,7 +96,8 @@ class HueyDriver(QueueDriver):
         path = os.path.join(tempfile.gettempdir(), "coati_queue")
         Path(path).mkdir(parents=True, exist_ok=True)
         log.warning(
-            f"Using temporary directory for queue storage: {path}. " f"Queue data will be lost on system reboot."
+            "Using temporary directory for queue storage: %s. " "Queue data will be lost on system reboot.",
+            path,
         )
         return path
 
@@ -123,8 +125,10 @@ class HueyDriver(QueueDriver):
                 test_file.unlink()
             except (OSError, PermissionError) as e:
                 log.error(
-                    f"Insufficient permissions for queue storage at {self._storage_path}: {e}. "
-                    f"Please ensure the process has read/write access to this directory."
+                    "Insufficient permissions for queue storage at %s: %s. "
+                    "Please ensure the process has read/write access to this directory.",
+                    self._storage_path,
+                    e,
                 )
                 return False
 
@@ -138,16 +142,16 @@ class HueyDriver(QueueDriver):
             )
 
             log.info(
-                f"Huey driver initialized with filesystem storage at {self._storage_path}. "
-                f"Read/write permissions verified."
+                "Huey driver initialized with filesystem storage at %s. Read/write permissions verified.",
+                self._storage_path,
             )
             return True
 
         except ImportError as e:
-            log.warning(f"Huey not available: {e}")
+            log.warning("Huey not available: %s", e)
             return False
         except Exception as e:
-            log.error(f"Failed to initialize Huey: {e}")
+            log.error("Failed to initialize Huey: %s", e)
             return False
 
     def enqueue(self, task_name: str, *args: Any, delay: int | None = None, **kwargs: Any) -> Any:
@@ -176,8 +180,7 @@ class HueyDriver(QueueDriver):
 
         if delay:
             return task.schedule(args=args, kwargs=kwargs, delay=delay)
-        else:
-            return task(*args, **kwargs)
+        return task(*args, **kwargs)
 
     def register_task(
         self,
@@ -200,7 +203,7 @@ class HueyDriver(QueueDriver):
             Huey task that can be called or enqueued
         """
         if not self._available or not self._huey:
-            log.warning(f"Cannot register task '{name or func.__name__}': Huey not available")
+            log.warning("Cannot register task '%s': Huey not available", name or func.__name__)
             return func
 
         try:
@@ -217,12 +220,12 @@ class HueyDriver(QueueDriver):
             )(func)
 
             self._tasks[task_name] = task
-            log.debug(f"Registered Huey task: {task_name}")
+            log.debug("Registered Huey task: %s", task_name)
 
             return task
 
         except Exception as e:
-            log.error(f"Failed to register task '{name or func.__name__}': {e}")
+            log.error("Failed to register task '%s': %s", name or func.__name__, e)
             return func
 
     def is_available(self) -> bool:
@@ -256,19 +259,19 @@ class HueyDriver(QueueDriver):
                 pending = len(self._huey.pending())
                 stats["pending_tasks"] = pending
             except Exception as e:
-                log.debug(f"Could not fetch pending tasks: {e}")
+                log.debug("Could not fetch pending tasks: %s", e)
 
             # Try to get scheduled task count
             try:
                 scheduled = len(self._huey.scheduled())
                 stats["scheduled_tasks"] = scheduled
             except Exception as e:
-                log.debug(f"Could not fetch scheduled tasks: {e}")
+                log.debug("Could not fetch scheduled tasks: %s", e)
 
             return stats
 
         except Exception as e:
-            log.error(f"Failed to get Huey stats: {e}")
+            log.error("Failed to get Huey stats: %s", e)
             return {"error": str(e)}
 
     def get_task_result(self, task_id: Any) -> dict[str, Any]:
@@ -311,14 +314,14 @@ class HueyDriver(QueueDriver):
                 }
             except Exception as e:
                 # Actual error during result retrieval
-                log.error(f"Error retrieving task result: {e}")
+                log.error("Error retrieving task result: %s", e)
                 return {
                     "status": "failed",
                     "error": str(e),
                 }
 
         except Exception as e:
-            log.error(f"Failed to get task result: {e}")
+            log.error("Failed to get task result: %s", e)
             return {"status": "error", "error": str(e)}
 
     def get_bulk_results(self, task_ids: list[Any]) -> dict[str, Any]:
@@ -350,13 +353,13 @@ class HueyDriver(QueueDriver):
 
                 if status == "completed":
                     completed += 1
-                elif status == "error" or status == "failed":
+                elif status in {"error", "failed"}:
                     failed += 1
                 else:
                     pending += 1
 
             except Exception as e:
-                log.debug(f"Error checking task {i}: {e}")
+                log.debug("Error checking task %s: %s", i, e)
                 failed += 1
                 tasks[f"task_{i}"] = {"status": "error", "error": str(e)}
 

@@ -107,10 +107,10 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ url_for('employee.edit', id=employee.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
+                                <a href="{{ url_for('employee.edit', id_=employee.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form action="{{ url_for('employee.delete', id=employee.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar este empleado?') }}');">
+                                <form action="{{ url_for('employee.delete', id_=employee.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar este empleado?') }}');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Eliminar') }}">
                                         <i class="bi bi-trash"></i>
                                     </button>

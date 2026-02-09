@@ -242,7 +242,7 @@ def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str,
     from coati_payroll.enums import NominaEstado
 
     try:
-        log.info(f"Retrying failed nomina {nomina_id}")
+        log.info("Retrying failed nomina %s", nomina_id)
 
         # Load the nomina
         nomina = db.session.get(NominaModel, nomina_id)
@@ -313,7 +313,7 @@ def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str,
             usuario=usuario or nomina.generado_por,
         )
 
-        log.info(f"Retry task enqueued for nomina {nomina_id}, task_id: {task_id}")
+        log.info("Retry task enqueued for nomina %s, task_id: %s", nomina_id, task_id)
 
         return {
             "success": True,
@@ -321,7 +321,7 @@ def retry_failed_nomina(nomina_id: str, usuario: str | None = None) -> dict[str,
         }
 
     except Exception as e:
-        log.error(f"Error retrying nomina {nomina_id}: {e}")
+        log.error("Error retrying nomina %s: %s", nomina_id, e)
         db.session.rollback()
         return {
             "success": False,
@@ -344,7 +344,7 @@ def _rollback_nomina_data(nomina_id: str) -> None:
         nomina_id: ID of the nomina to rollback
     """
     try:
-        log.info(f"Rolling back all data for nomina {nomina_id}")
+        log.info("Rolling back all data for nomina %s", nomina_id)
 
         # Get all NominaEmpleado records for this nomina
         nomina_empleados = (
@@ -377,10 +377,10 @@ def _rollback_nomina_data(nomina_id: str) -> None:
         # Note: AcumuladoAnual changes are reverted via transaction rollback
         # VacationLedger entries are also reverted via transaction rollback
 
-        log.info(f"Successfully rolled back data for nomina {nomina_id}")
+        log.info("Successfully rolled back data for nomina %s", nomina_id)
 
     except Exception as e:
-        log.error(f"Error during rollback for nomina {nomina_id}: {e}")
+        log.error("Error during rollback for nomina %s: %s", nomina_id, e)
         raise
 
 
@@ -417,7 +417,7 @@ def calculate_employee_payroll(
         }
     """
     try:
-        log.info(f"Processing payroll for employee {empleado_id}")
+        log.info("Processing payroll for employee %s", empleado_id)
 
         # Convert date strings to date objects
         periodo_inicio_date = date.fromisoformat(periodo_inicio)
@@ -451,13 +451,17 @@ def calculate_employee_payroll(
         )
 
         # Process only this employee
-        engine_any = cast(Any, engine)
-        emp_calculo = engine_any._procesar_empleado(empleado)
+        procesar_empleado = getattr(engine, "_procesar_empleado", None)
+        if not callable(procesar_empleado):
+            raise AttributeError("NominaEngine does not expose '_procesar_empleado'")
+        # Dynamic method resolution; validated as callable above.
+        # pylint: disable=not-callable
+        emp_calculo = cast(Any, cast(Any, procesar_empleado)(empleado))
 
         # Commit to database
         db.session.commit()
 
-        log.info(f"Employee {empleado_id} processed successfully. " f"Net: {emp_calculo.salario_neto}")
+        log.info("Employee %s processed successfully. Net: %s", empleado_id, emp_calculo.salario_neto)
 
         return {
             "empleado_id": empleado_id,
@@ -468,7 +472,7 @@ def calculate_employee_payroll(
         }
 
     except Exception as e:
-        log.error(f"Error processing employee {empleado_id}: {e}")
+        log.error("Error processing employee %s: %s", empleado_id, e)
         db.session.rollback()
         return {
             "empleado_id": empleado_id,
@@ -513,7 +517,7 @@ def process_payroll_parallel(
     from coati_payroll.enums import NominaEstado
 
     try:
-        log.info(f"Starting parallel payroll processing for planilla {planilla_id}")
+        log.info("Starting parallel payroll processing for planilla %s", planilla_id)
 
         # Load planilla
         planilla = db.session.get(Planilla, planilla_id)
@@ -555,7 +559,7 @@ def process_payroll_parallel(
         # This ensures atomicity: if any employee fails, all changes are rolled back
         result = process_large_payroll(
             nomina_id=nomina.id,
-            job_id=uuid4().hex,
+            job_id=job_id or uuid4().hex,
             planilla_id=planilla_id,
             periodo_inicio=periodo_inicio,
             periodo_fin=periodo_fin,
@@ -566,7 +570,7 @@ def process_payroll_parallel(
         return result
 
     except Exception as e:
-        log.error(f"Error processing parallel payroll: {e}")
+        log.error("Error processing parallel payroll: %s", e)
         return {
             "success": False,
             "error": str(e),
@@ -581,7 +585,7 @@ def generate_audit_voucher(
 ) -> dict[str, bool | str]:
     """Generate audit accounting voucher in background."""
     try:
-        log.info(f"Generating audit voucher for nomina {nomina_id}")
+        log.info("Generating audit voucher for nomina %s", nomina_id)
 
         nomina = db.session.get(NominaModel, nomina_id)
         if not nomina:
@@ -601,10 +605,10 @@ def generate_audit_voucher(
         )
         db.session.commit()
 
-        log.info(f"Audit voucher generated successfully for nomina {nomina_id}")
+        log.info("Audit voucher generated successfully for nomina %s", nomina_id)
         return {"success": True, "message": "Audit voucher generated"}
     except Exception as e:
-        log.error(f"Error generating audit voucher for nomina {nomina_id}: {e}")
+        log.error("Error generating audit voucher for nomina %s: %s", nomina_id, e)
         db.session.rollback()
         return {"success": False, "error": str(e)}
 
@@ -647,7 +651,7 @@ def process_large_payroll(
     from coati_payroll.enums import NominaEstado
 
     try:
-        log.info(f"Starting background processing for nomina {nomina_id}")
+        log.info("Starting background processing for nomina %s", nomina_id)
 
         # Convert date strings to date objects
         periodo_inicio_date = date.fromisoformat(periodo_inicio)
@@ -657,7 +661,7 @@ def process_large_payroll(
         # Load nomina and planilla
         nomina = db.session.get(NominaModel, nomina_id)
         if not nomina:
-            log.error(f"Nomina {nomina_id} not found")
+            log.error("Nomina %s not found", nomina_id)
             return {
                 "success": False,
                 "error": "Nomina not found",
@@ -686,7 +690,7 @@ def process_large_payroll(
         ).scalar_one_or_none()
 
         if not planilla:
-            log.error(f"Planilla {planilla_id} not found")
+            log.error("Planilla %s not found", planilla_id)
             nomina.estado = NominaEstado.ERROR
             nomina.errores_calculo = {"error": ERROR_PLANILLA_NOT_FOUND}
             _clear_nomina_job_lock(nomina_id)
@@ -701,7 +705,7 @@ def process_large_payroll(
         empleados = [pe.empleado for pe in planilla_empleados if pe.activo and pe.empleado.activo]
 
         if not empleados:
-            log.warning(f"No active employees found for planilla {planilla_id}")
+            log.warning("No active employees found for planilla %s", planilla_id)
             nomina.estado = NominaEstado.ERROR
             nomina.errores_calculo = {"error": ERROR_NO_ACTIVE_EMPLOYEES}
             _clear_nomina_job_lock(nomina_id)
@@ -790,8 +794,12 @@ def process_large_payroll(
                     engine.nomina = nomina
 
                     # Process this employee (creates NominaEmpleado, NominaDetalle, etc.)
-                    engine_any = cast(Any, engine)
-                    emp_calculo = engine_any._procesar_empleado(empleado)
+                    procesar_empleado = getattr(engine, "_procesar_empleado", None)
+                    if not callable(procesar_empleado):
+                        raise AttributeError("NominaEngine does not expose '_procesar_empleado'")
+                    # Dynamic method resolution; validated as callable above.
+                    # pylint: disable=not-callable
+                    emp_calculo = cast(Any, cast(Any, procesar_empleado)(empleado))
 
                     # Commit this employee's savepoint (employee processed successfully)
                     emp_savepoint.commit()
@@ -806,7 +814,7 @@ def process_large_payroll(
                         }
                     )
 
-                    log.info(f"Employee {empleado.id} processed successfully " f"({idx}/{nomina.total_empleados})")
+                    log.info("Employee %s processed successfully (%s/%s)", empleado.id, idx, nomina.total_empleados)
 
                 except Exception as e:
                     # Rollback this employee's savepoint (undoes only this employee)
@@ -818,7 +826,7 @@ def process_large_payroll(
                         "empleado": empleado_nombre,
                         "error": error_msg,
                     }
-                    log.error(f"Error processing employee {empleado.id}: {error_msg}")
+                    log.error("Error processing employee %s: %s", empleado.id, error_msg)
                     log_entries.append(
                         {
                             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -856,7 +864,7 @@ def process_large_payroll(
                             log_procesamiento=log_entries,
                             empleado_actual=None,
                         )
-                        log.info(f"Progress committed: {idx}/{len(empleados)} employees processed")
+                        log.info("Progress committed: %s/%s employees processed", idx, len(empleados))
                     finally:
                         _release_tracking_session(tracking_session)
 
@@ -902,9 +910,9 @@ def process_large_payroll(
                 _release_tracking_session(tracking_session)
 
             if error_count > 0:
-                log.warning(f"Payroll completed with {error_count} employee errors for nomina {nomina_id}")
+                log.warning("Payroll completed with %s employee errors for nomina %s", error_count, nomina_id)
             else:
-                log.info(f"All employees processed successfully for nomina {nomina_id}")
+                log.info("All employees processed successfully for nomina %s", nomina_id)
 
         except Exception as e:
             # CRITICAL: Rollback all changes if any employee fails
@@ -917,8 +925,10 @@ def process_large_payroll(
             is_recoverable = _is_recoverable_error(e)
 
             log.error(
-                f"Critical error during payroll processing: {error_msg} "
-                f"(Type: {error_type}, Recoverable: {is_recoverable})"
+                "Critical error during payroll processing: %s (Type: %s, Recoverable: %s)",
+                error_msg,
+                error_type,
+                is_recoverable,
             )
 
             # Rollback the main savepoint (undoes all employee processing)
@@ -976,9 +986,11 @@ def process_large_payroll(
             raise
 
         log.info(
-            f"Background processing completed for nomina {nomina_id}. "
-            f"Processed: {nomina.empleados_procesados}/{nomina.total_empleados}, "
-            f"Errors: {nomina.empleados_con_error}"
+            "Background processing completed for nomina %s. Processed: %s/%s, Errors: %s",
+            nomina_id,
+            nomina.empleados_procesados,
+            nomina.total_empleados,
+            nomina.empleados_con_error,
         )
 
         return {
@@ -990,7 +1002,7 @@ def process_large_payroll(
         }
 
     except Exception as e:
-        log.error(f"Critical error in background payroll processing: {e}")
+        log.error("Critical error in background payroll processing: %s", e)
         try:
             nomina = db.session.get(NominaModel, nomina_id)
             if nomina:

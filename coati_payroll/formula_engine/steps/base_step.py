@@ -46,7 +46,6 @@ class Step(ABC):
         Returns:
             Step execution result
         """
-        pass
 
     def get_variable_value(self, result: Any) -> Decimal:
         """Return the Decimal value to store for this step."""

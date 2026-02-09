@@ -19,11 +19,9 @@ class BaseRepository(ABC, Generic[T]):
         self.session = session
 
     @abstractmethod
-    def get_by_id(self, id: str) -> Optional[T]:
+    def get_by_id(self, id_: str) -> Optional[T]:
         """Get entity by ID."""
-        pass
 
     @abstractmethod
     def save(self, entity: T) -> T:
         """Save entity."""
-        pass

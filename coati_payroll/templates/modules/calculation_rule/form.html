@@ -71,7 +71,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     {{ form.submit(class="btn btn-primary") }}
                     <a href="{{ url_for('calculation_rule.index') }}" class="btn btn-secondary">{{ _('Cancelar') }}</a>
                     {% if rule %}
-                    <a href="{{ url_for('calculation_rule.edit_schema', id=rule.id) }}" class="btn btn-info">
+                    <a href="{{ url_for('calculation_rule.edit_schema', id_=rule.id) }}" class="btn btn-info">
                         <i class="bi bi-code-square me-1"></i>{{ _('Editar Esquema') }}
                     </a>
                     {% endif %}

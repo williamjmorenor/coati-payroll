@@ -62,11 +62,11 @@ def new():
     )
 
 
-@custom_field_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@custom_field_bp.route("/edit/<string:id_>", methods=["GET", "POST"])
 @require_write_access()
-def edit(id: str):
+def edit(id_: str):
     """Edit an existing custom field."""
-    custom_field = db.session.get(CampoPersonalizado, id)
+    custom_field = db.session.get(CampoPersonalizado, id_)
     if not custom_field:
         flash(_("Campo personalizado no encontrado."), "error")
         return redirect(url_for("custom_field.index"))
@@ -94,11 +94,11 @@ def edit(id: str):
     )
 
 
-@custom_field_bp.route("/delete/<string:id>", methods=["POST"])
+@custom_field_bp.route("/delete/<string:id_>", methods=["POST"])
 @require_write_access()
-def delete(id: str):
+def delete(id_: str):
     """Delete a custom field."""
-    custom_field = db.session.get(CampoPersonalizado, id)
+    custom_field = db.session.get(CampoPersonalizado, id_)
     if not custom_field:
         flash(_("Campo personalizado no encontrado."), "error")
         return redirect(url_for("custom_field.index"))

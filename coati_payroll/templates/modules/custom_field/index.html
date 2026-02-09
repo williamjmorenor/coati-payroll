@@ -58,10 +58,10 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ url_for('custom_field.edit', id=custom_field.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
+                                <a href="{{ url_for('custom_field.edit', id_=custom_field.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form action="{{ url_for('custom_field.delete', id=custom_field.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar este campo personalizado?') }}');">
+                                <form action="{{ url_for('custom_field.delete', id_=custom_field.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar este campo personalizado?') }}');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Eliminar') }}">
                                         <i class="bi bi-trash"></i>
                                     </button>

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
+from sqlalchemy import false, true
 
 from coati_payroll.forms import CurrencyForm
 from coati_payroll.i18n import _
@@ -39,9 +40,9 @@ def index():
         )
 
     if estado == "activo":
-        query = query.filter(Moneda.activo == True)  # noqa: E712
+        query = query.filter(Moneda.activo.is_(true()))
     elif estado == "inactivo":
-        query = query.filter(Moneda.activo == False)  # noqa: E712
+        query = query.filter(Moneda.activo.is_(false()))
 
     query = query.order_by(Moneda.codigo)
 
@@ -83,11 +84,11 @@ def new():
     return render_template("modules/currency/form.html", form=form, title=_("Nueva Moneda"))
 
 
-@currency_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@currency_bp.route("/edit/<string:id_>", methods=["GET", "POST"])
 @require_write_access()
-def edit(id: str):
+def edit(id_: str):
     """Edit an existing currency."""
-    currency = db.session.get(Moneda, id)
+    currency = db.session.get(Moneda, id_)
     if not currency:
         flash(_("Moneda no encontrada."), "error")
         return redirect(url_for("currency.index"))
@@ -113,11 +114,11 @@ def edit(id: str):
     )
 
 
-@currency_bp.route("/delete/<string:id>", methods=["POST"])
+@currency_bp.route("/delete/<string:id_>", methods=["POST"])
 @require_write_access()
-def delete(id: str):
+def delete(id_: str):
     """Delete a currency."""
-    currency = db.session.get(Moneda, id)
+    currency = db.session.get(Moneda, id_)
     if not currency:
         flash(_("Moneda no encontrada."), "error")
         return redirect(url_for("currency.index"))

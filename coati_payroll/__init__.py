@@ -164,7 +164,7 @@ def create_app(config) -> Flask:
         with app.app_context():
             sync_plugin_registry()
     except Exception as exc:
-        log.trace(f"create_app: sync_plugin_registry raised: {exc}")
+        log.trace("create_app: sync_plugin_registry raised: %s", exc)
 
     # Configure session storage
     # In testing mode, respect the SESSION_TYPE from config (e.g., filesystem)
@@ -220,7 +220,7 @@ def create_app(config) -> Flask:
         with app.app_context():
             register_active_plugins(app)
     except Exception as exc:
-        log.trace(f"create_app: register_active_plugins raised: {exc}")
+        log.trace("create_app: register_active_plugins raised: %s", exc)
 
     # Register CRUD blueprints
     from coati_payroll.vistas import (
@@ -307,8 +307,6 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
     Esta función puede llamarse con la `app` o desde un `app.app_context()` ya activo.
     """
 
-    from os import environ as _environ
-    from coati_payroll.model import Usuario, db as _db
     from coati_payroll.auth import proteger_passwd as _proteger_passwd
 
     # Determinar si debemos usar el contexto de la app pasada o el actual.
@@ -324,18 +322,18 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
         try:
             # Logear información útil para diagnóstico
             try:
-                log.trace(f"ensure_database_initialized: engine.url = {_db.engine.url}")
+                log.trace("ensure_database_initialized: engine.url = %s", db.engine.url)
             except Exception:
                 log.trace("ensure_database_initialized: could not read _db.engine.url")
 
             try:
                 db_uri = ctx.config.get("SQLALCHEMY_DATABASE_URI")
-                log.trace(f"ensure_database_initialized: Flask SQLALCHEMY_DATABASE_URI = {db_uri}")
+                log.trace("ensure_database_initialized: Flask SQLALCHEMY_DATABASE_URI = %s", db_uri)
             except Exception:
                 log.trace("ensure_database_initialized: could not read SQLALCHEMY_DATABASE_URI from ctx.config")
 
             log.trace("ensure_database_initialized: calling create_all()")
-            _db.create_all()
+            db.create_all()
             log.trace("ensure_database_initialized: create_all() completed")
         except Exception as exc:
             from sqlalchemy.exc import OperationalError, ProgrammingError
@@ -344,19 +342,19 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
             if isinstance(exc, (OperationalError, ProgrammingError)) and "already exists" in msg:
                 log.trace("ensure_database_initialized: create_all skipped existing objects")
             else:
-                log.trace(f"ensure_database_initialized: create_all() raised: {exc}")
+                log.trace("ensure_database_initialized: create_all() raised: %s", exc)
                 try:
                     log.exception("ensure_database_initialized: create_all() exception")
                 except Exception:
                     pass
 
         # Comprobar existencia de al menos un admin.
-        registro_admin = _db.session.execute(_db.select(Usuario).filter_by(tipo="admin")).scalar_one_or_none()
+        registro_admin = db.session.execute(db.select(Usuario).filter_by(tipo="admin")).scalar_one_or_none()
 
         if registro_admin is None:
             # Leer credenciales de entorno o usar valores por defecto.
-            admin_user = _environ.get("ADMIN_USER", "coati-admin")
-            admin_pass = _environ.get("ADMIN_PASSWORD", "coati-admin")
+            admin_user = environ.get("ADMIN_USER", "coati-admin")
+            admin_pass = environ.get("ADMIN_PASSWORD", "coati-admin")
 
             nuevo = Usuario()
             nuevo.usuario = admin_user
@@ -367,8 +365,8 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
             nuevo.tipo = "admin"
             nuevo.activo = True
 
-            _db.session.add(nuevo)
-            _db.session.commit()
+            db.session.add(nuevo)
+            db.session.commit()
 
         # Handle database migrations with Alembic
         # Check if AUTO_MIGRATE is enabled and run migrations if database is already initialized
@@ -380,9 +378,8 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
                 alembic.upgrade()
                 log.info("Database migrated successfully with alembic.upgrade()")
             except Exception as exc:
-                log.warning(f"Error during automatic database migration: {exc}")
-                # Don't fail initialization if migration fails
-                pass
+                log.warning("Error during automatic database migration: %s", exc)
+                # Don't fail initialization if migration fails.
 
         # Initialize language from environment variable if provided
         try:
@@ -390,4 +387,4 @@ def ensure_database_initialized(app: Flask | None = None) -> None:
 
             initialize_language_from_env()
         except Exception as exc:
-            log.trace(f"Could not initialize language from environment: {exc}")
+            log.trace("Could not initialize language from environment: %s", exc)

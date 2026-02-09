@@ -65,11 +65,11 @@ def new():
     )
 
 
-@tipo_planilla_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@tipo_planilla_bp.route("/edit/<string:id_>", methods=["GET", "POST"])
 @require_write_access()
-def edit(id: str):
+def edit(id_: str):
     """Edit an existing payroll type."""
-    tipo_planilla = db.session.get(TipoPlanilla, id)
+    tipo_planilla = db.session.get(TipoPlanilla, id_)
     if not tipo_planilla:
         flash(_("Tipo de planilla no encontrado."), "error")
         return redirect(url_for("tipo_planilla.index"))
@@ -100,11 +100,11 @@ def edit(id: str):
     )
 
 
-@tipo_planilla_bp.route("/delete/<string:id>", methods=["POST"])
+@tipo_planilla_bp.route("/delete/<string:id_>", methods=["POST"])
 @require_write_access()
-def delete(id: str):
+def delete(id_: str):
     """Delete a payroll type."""
-    tipo_planilla = db.session.get(TipoPlanilla, id)
+    tipo_planilla = db.session.get(TipoPlanilla, id_)
     if not tipo_planilla:
         flash(_("Tipo de planilla no encontrado."), "error")
         return redirect(url_for("tipo_planilla.index"))

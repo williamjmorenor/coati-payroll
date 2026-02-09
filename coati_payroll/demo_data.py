@@ -442,7 +442,7 @@ def load_demo_employees(empresa1: Empresa, empresa2: Empresa) -> list[Empleado]:
 
             db.session.add(empleado)
             empleados.append(empleado)
-            log.trace(f"Created demo employee: {empleado.primer_nombre} {empleado.primer_apellido}")
+            log.trace("Created demo employee: %s %s", empleado.primer_nombre, empleado.primer_apellido)
         else:
             empleados.append(existing)
 
@@ -533,7 +533,7 @@ def load_demo_payrolls(
             asignacion.activo = True
             asignacion.fecha_inicio = empleado.fecha_alta
             db.session.add(asignacion)
-            log.trace(f"Assigned employee {empleado.codigo_empleado} to payroll {planilla.nombre}")
+            log.trace("Assigned employee %s to payroll %s", empleado.codigo_empleado, planilla.nombre)
 
     db.session.commit()
 
@@ -634,7 +634,7 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
     Returns:
         Nomina object or None if creation failed
     """
-    log.trace(f"Creating demo nomina for payroll: {planilla.nombre}")
+    log.trace("Creating demo nomina for payroll: %s", planilla.nombre)
 
     # Calculate dates for next month
     today = date.today()
@@ -649,7 +649,7 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
     ).scalar_one_or_none()
 
     if existing is not None:
-        log.trace(f"Demo nomina already exists for period {next_month_start} to {next_month_end}")
+        log.trace("Demo nomina already exists for period %s to %s", next_month_start, next_month_end)
         return existing
 
     # Create nomina
@@ -664,7 +664,7 @@ def create_demo_nomina(planilla: Planilla) -> Nomina | None:
     db.session.add(nomina)
     db.session.commit()
 
-    log.trace(f"Created demo nomina for period {next_month_start} to {next_month_end}")
+    log.trace("Created demo nomina for period %s to %s", next_month_start, next_month_end)
     return nomina
 
 
@@ -722,7 +722,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                         novedad.percepcion_id = overtime.id
                         novedad.estado = NovedadEstado.PENDIENTE
                         db.session.add(novedad)
-                        log.trace(f"Created overtime novedad for {empleado.codigo_empleado}")
+                        log.trace("Created overtime novedad for %s", empleado.codigo_empleado)
 
     # Create absences for some employees
     if absence:
@@ -749,7 +749,7 @@ def create_demo_novelties(empleados: list[Empleado]) -> None:
                         novedad.deduccion_id = absence.id
                         novedad.estado = NovedadEstado.PENDIENTE
                         db.session.add(novedad)
-                        log.trace(f"Created absence novedad for {empleado.codigo_empleado}")
+                        log.trace("Created absence novedad for %s", empleado.codigo_empleado)
 
     db.session.commit()
 
@@ -783,7 +783,7 @@ def load_demo_data() -> None:
             return
 
         # 3. Create demo payrolls with employees and concepts
-        planilla1, planilla2 = load_demo_payrolls(empresa1, empresa2, empleados)
+        planilla1, _ = load_demo_payrolls(empresa1, empresa2, empleados)
 
         # 4. Create demo nomina for next month (for first payroll)
         if planilla1:
@@ -795,13 +795,13 @@ def load_demo_data() -> None:
         log.trace("=" * 60)
         log.trace("Demo data loading completed successfully!")
         log.trace("=" * 60)
-        log.trace(f"Created {len(empleados)} demo employees")
+        log.trace("Created %s demo employees", len(empleados))
         log.trace("Created 2 demo companies")
         log.trace("Created 2 demo payrolls with assigned concepts")
         log.trace("Created demo novelties (overtime, absences)")
         log.trace("=" * 60)
 
     except Exception as exc:
-        log.error(f"Error loading demo data: {exc}")
+        log.error("Error loading demo data: %s", exc)
         log.exception("Demo data loading exception")
         db.session.rollback()

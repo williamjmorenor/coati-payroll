@@ -13,8 +13,8 @@ from decimal import Decimal
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
-from sqlalchemy import func
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.functions import count
 
 from coati_payroll.enums import TipoUsuario, VacacionEstado, VacationLedgerType
 from coati_payroll.i18n import _
@@ -176,9 +176,7 @@ def policy_detail(policy_id):
 
     # Get statistics
     total_accounts = (
-        db.session.execute(
-            db.select(func.count(VacationAccount.id)).filter(VacationAccount.policy_id == policy_id)
-        ).scalar()
+        db.session.execute(db.select(count(VacationAccount.id)).filter(VacationAccount.policy_id == policy_id)).scalar()
         or 0
     )
 
@@ -706,18 +704,16 @@ def dashboard():
     """Vacation management dashboard."""
     # Statistics
     total_policies = (
-        db.session.execute(db.select(func.count(VacationPolicy.id)).filter(VacationPolicy.activo.is_(True))).scalar()
-        or 0
+        db.session.execute(db.select(count(VacationPolicy.id)).filter(VacationPolicy.activo.is_(True))).scalar() or 0
     )
 
     total_accounts = (
-        db.session.execute(db.select(func.count(VacationAccount.id)).filter(VacationAccount.activo.is_(True))).scalar()
-        or 0
+        db.session.execute(db.select(count(VacationAccount.id)).filter(VacationAccount.activo.is_(True))).scalar() or 0
     )
 
     pending_requests = (
         db.session.execute(
-            db.select(func.count(VacationNovelty.id)).filter(VacationNovelty.estado == VacacionEstado.PENDIENTE)
+            db.select(count(VacationNovelty.id)).filter(VacationNovelty.estado == VacacionEstado.PENDIENTE)
         ).scalar()
         or 0
     )
@@ -834,7 +830,7 @@ def initial_balance_form():
         # Check if there are already ledger entries for this account
         existing_entries = (
             db.session.execute(
-                db.select(func.count(VacationLedger.id)).filter(VacationLedger.account_id == account.id)
+                db.select(count(VacationLedger.id)).filter(VacationLedger.account_id == account.id)
             ).scalar()
             or 0
         )
@@ -979,7 +975,7 @@ def initial_balance_bulk():
                 # Check if account already has ledger entries
                 existing_entries = (
                     db.session.execute(
-                        db.select(func.count(VacationLedger.id)).filter(VacationLedger.account_id == account.id)
+                        db.select(count(VacationLedger.id)).filter(VacationLedger.account_id == account.id)
                     ).scalar()
                     or 0
                 )

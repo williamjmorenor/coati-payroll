@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function exportReport() {
         // Export to Excel
-        fetch('{{ url_for("report.export_report", report_id=report.id, format="excel") }}', {
+        fetch('{{ url_for("report.export_report", report_id=report.id, export_format="excel") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

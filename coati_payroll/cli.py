@@ -9,6 +9,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 import sys
 import os
+import importlib
 import importlib.util
 import json as json_module
 import getpass
@@ -80,7 +81,6 @@ class PluginsCommand(click.Group):
         @click.group(name=name, help=f"Gestión del plugin '{name}'")
         def plugin_group():
             """Grupo de comandos del plugin específico."""
-            pass
 
         @plugin_group.command("init")
         @with_appcontext
@@ -349,7 +349,6 @@ def _system_status():
 @click.group()
 def system():
     """System-level operations."""
-    pass
 
 
 @system.command("status")
@@ -556,7 +555,6 @@ def serve(ctx):
 @click.group()
 def database():
     """Database management commands."""
-    pass
 
 
 @database.command("status")
@@ -592,11 +590,11 @@ def _database_init(app):
     """
     from sqlalchemy import inspect
 
-    from coati_payroll import ensure_database_initialized
-
     inspector = inspect(db.engine)
     if not inspector.get_table_names():
         db.create_all()
+    core_module = importlib.import_module("coati_payroll")
+    ensure_database_initialized = getattr(core_module, "ensure_database_initialized")
     ensure_database_initialized(app)
 
     return os.environ.get("ADMIN_USER", "coati-admin")
@@ -753,8 +751,8 @@ def _backup_postgresql(db_url_str, output=None):
     if parsed.password:
         env["PGPASSWORD"] = parsed.password
 
-    with output_path.open("w") as f:
-        result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, env=env, text=True)
+    with output_path.open("w", encoding="utf-8") as f:
+        result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, env=env, text=True, check=False)
 
     if result.returncode != 0:
         raise RuntimeError(f"pg_dump failed: {result.stderr}")
@@ -796,8 +794,8 @@ def _backup_mysql(db_url_str, output=None):
     if parsed.password:
         env["MYSQL_PWD"] = parsed.password
 
-    with output_path.open("w") as f:
-        result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, env=env, text=True)
+    with output_path.open("w", encoding="utf-8") as f:
+        result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, env=env, text=True, check=False)
 
     if result.returncode != 0:
         raise RuntimeError(f"mysqldump failed: {result.stderr}")
@@ -921,7 +919,8 @@ def _database_migrate_upgrade():
 
     Helper function used by both migrate and upgrade commands.
     """
-    from coati_payroll import alembic
+    core_module = importlib.import_module("coati_payroll")
+    alembic = getattr(core_module, "alembic")
 
     click.echo("Applying database migrations...")
     alembic.upgrade()
@@ -968,7 +967,8 @@ def database_downgrade(ctx, revision):
         revision: Target revision (default: -1 for one step back, or 'base' for all the way back)
     """
     try:
-        from coati_payroll import alembic
+        core_module = importlib.import_module("coati_payroll")
+        alembic = getattr(core_module, "alembic")
 
         click.echo(f"Downgrading database to revision: {revision}...")
         alembic.downgrade(revision)
@@ -986,8 +986,6 @@ def database_downgrade(ctx, revision):
 def database_current(ctx):
     """Show current migration revision."""
     try:
-        from coati_payroll.model import db
-
         # Get current revision
         revision = None
         try:
@@ -1017,7 +1015,8 @@ def database_stamp(ctx, revision):
         revision: Target revision to stamp (default: 'head' for latest)
     """
     try:
-        from coati_payroll import alembic
+        core_module = importlib.import_module("coati_payroll")
+        alembic = getattr(core_module, "alembic")
 
         click.echo(f"Stamping database with revision: {revision}...")
         alembic.stamp(revision)
@@ -1057,7 +1056,6 @@ def _users_list():
 @click.group()
 def users():
     """User management commands."""
-    pass
 
 
 @users.command("list")
@@ -1238,19 +1236,18 @@ def _users_set_admin(username, password):
         existing_user.activo = True
         db.session.commit()
         return False, deactivated_count
-    else:
-        new_user = Usuario()
-        new_user.usuario = username
-        new_user.acceso = proteger_passwd(password)
-        new_user.nombre = "Administrator"
-        new_user.apellido = ""
-        new_user.correo_electronico = None
-        new_user.tipo = "admin"
-        new_user.activo = True
+    new_user = Usuario()
+    new_user.usuario = username
+    new_user.acceso = proteger_passwd(password)
+    new_user.nombre = "Administrator"
+    new_user.apellido = ""
+    new_user.correo_electronico = None
+    new_user.tipo = "admin"
+    new_user.activo = True
 
-        db.session.add(new_user)
-        db.session.commit()
-        return True, deactivated_count
+    db.session.add(new_user)
+    db.session.commit()
+    return True, deactivated_count
 
 
 @users.command("set-admin")
@@ -1338,7 +1335,6 @@ def _cache_status():
 @click.group()
 def cache():
     """Cache and temporary data management."""
-    pass
 
 
 @cache.command("clear")
@@ -1406,7 +1402,6 @@ def cache_status(ctx):
 @click.group()
 def maintenance():
     """Background jobs and cleanup tasks."""
-    pass
 
 
 @maintenance.command("cleanup-sessions")
@@ -1491,7 +1486,6 @@ def _debug_routes(app):
 @click.group()
 def debug():
     """Diagnostics and troubleshooting."""
-    pass
 
 
 @debug.command("config")

@@ -104,11 +104,11 @@ def new():
     return render_template("modules/exchange_rate/form.html", form=form, title=_("Nuevo Tipo de Cambio"))
 
 
-@exchange_rate_bp.route("/edit/<string:id>", methods=["GET", "POST"])
+@exchange_rate_bp.route("/edit/<string:id_>", methods=["GET", "POST"])
 @require_write_access()
-def edit(id: str):
+def edit(id_: str):
     """Edit an existing exchange rate."""
-    exchange_rate = db.session.get(TipoCambio, id)
+    exchange_rate = db.session.get(TipoCambio, id_)
     if not exchange_rate:
         flash(_("Tipo de cambio no encontrado."), "error")
         return redirect(url_for("exchange_rate.index"))
@@ -136,11 +136,11 @@ def edit(id: str):
     )
 
 
-@exchange_rate_bp.route("/delete/<string:id>", methods=["POST"])
+@exchange_rate_bp.route("/delete/<string:id_>", methods=["POST"])
 @require_write_access()
-def delete(id: str):
+def delete(id_: str):
     """Delete an exchange rate."""
-    exchange_rate = db.session.get(TipoCambio, id)
+    exchange_rate = db.session.get(TipoCambio, id_)
     if not exchange_rate:
         flash(_("Tipo de cambio no encontrado."), "error")
         return redirect(url_for("exchange_rate.index"))

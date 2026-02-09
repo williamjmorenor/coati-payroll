@@ -13,8 +13,8 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 from flask import Blueprint, render_template
 from flask_login import login_required
-from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.functions import count
 
 # <-------------------------------------------------------------------------> #
 # Local modules
@@ -28,16 +28,10 @@ app = Blueprint("app", __name__)
 @login_required
 def index():
     # Get statistics for dashboard
-    total_empleados = (
-        db.session.execute(db.select(func.count(Empleado.id)).filter(Empleado.activo.is_(True))).scalar() or 0
-    )
-    total_empresas = (
-        db.session.execute(db.select(func.count(Empresa.id)).filter(Empresa.activo.is_(True))).scalar() or 0
-    )
-    total_planillas = (
-        db.session.execute(db.select(func.count(Planilla.id)).filter(Planilla.activo.is_(True))).scalar() or 0
-    )
-    total_nominas = db.session.execute(db.select(func.count(Nomina.id))).scalar() or 0
+    total_empleados = db.session.execute(db.select(count(Empleado.id)).filter(Empleado.activo.is_(True))).scalar() or 0
+    total_empresas = db.session.execute(db.select(count(Empresa.id)).filter(Empresa.activo.is_(True))).scalar() or 0
+    total_planillas = db.session.execute(db.select(count(Planilla.id)).filter(Planilla.activo.is_(True))).scalar() or 0
+    total_nominas = db.session.execute(db.select(count(Nomina.id))).scalar() or 0
 
     # Get recent payrolls (last 5)
     recent_nominas = (

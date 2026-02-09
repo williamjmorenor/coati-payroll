@@ -2,12 +2,22 @@
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 """Form helper functions for planilla views."""
 
+# <-------------------------------------------------------------------------> #
+# Standard library
+# <-------------------------------------------------------------------------> #
 from typing import Any, cast
 
-from coati_payroll.model import db, TipoPlanilla, Moneda, Empresa, NominaEmpleado, Percepcion, Deduccion
+# <-------------------------------------------------------------------------> #
+# Third party libraries
+# <-------------------------------------------------------------------------> #
+from sqlalchemy.orm import joinedload
+
+# <-------------------------------------------------------------------------> #
+# Local modules
+# <-------------------------------------------------------------------------> #
 from coati_payroll.forms import PlanillaForm
 from coati_payroll.i18n import _
-from sqlalchemy.orm import joinedload
+from coati_payroll.model import db, TipoPlanilla, Moneda, Empresa, NominaEmpleado, Percepcion, Deduccion
 
 # Constants
 SELECT_PLACEHOLDER = "-- Seleccionar --"

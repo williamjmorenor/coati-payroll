@@ -144,7 +144,7 @@ class TaxTableValidator:
                         f"El tramo {i} termina en {current_max_decimal} y el tramo {i + 1} comienza en {next_min}. "
                         "Los tramos no deben solaparse."
                     )
-                elif current_max_decimal < next_min:
+                if current_max_decimal < next_min:
                     # Check for significant gap
                     gap_size = next_min - current_max_decimal
                     tolerance = Decimal("0.01")  # Allow 1 cent gap for rounding
@@ -198,7 +198,7 @@ class TaxTableValidator:
             if not isinstance(table, list):
                 raise ValidationError(f"La tabla de impuestos '{table_name}' debe ser una lista de tramos")
 
-            errors, warnings = self.validate_table(table_name, table)
+            _, warnings = self.validate_table(table_name, table)
             all_warnings.extend(warnings)
 
         return all_warnings

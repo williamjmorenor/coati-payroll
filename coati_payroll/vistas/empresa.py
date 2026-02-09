@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
+from sqlalchemy import false, true
 
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
@@ -41,9 +42,9 @@ def index():
         )
 
     if estado == "activo":
-        query = query.filter(Empresa.activo == True)  # noqa: E712
+        query = query.filter(Empresa.activo.is_(true()))
     elif estado == "inactivo":
-        query = query.filter(Empresa.activo == False)  # noqa: E712
+        query = query.filter(Empresa.activo.is_(false()))
 
     query = query.order_by(Empresa.razon_social)
 

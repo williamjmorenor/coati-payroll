@@ -24,8 +24,6 @@ class FormulaEngineError(Exception):
     Python 3.11+ enhancement: Supports exception notes via add_note() method.
     """
 
-    pass
-
 
 # Alias for backward compatibility
 TaxEngineError = FormulaEngineError
@@ -40,13 +38,9 @@ class ValidationError(_BaseValidationError, FormulaEngineError):
     Python 3.11+ enhancement: Can use add_note() to append contextual information.
     """
 
-    pass
-
 
 class CalculationError(FormulaEngineError):
     """Exception for calculation errors during execution.
 
     Python 3.11+ enhancement: Supports add_note() for additional context.
     """
-
-    pass

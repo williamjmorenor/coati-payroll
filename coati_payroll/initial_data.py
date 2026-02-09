@@ -364,7 +364,7 @@ def load_currencies() -> None:
 
     if currencies_loaded > 0:
         db.session.commit()
-        log.trace(f"Loaded {currencies_loaded} currencies")
+        log.trace("Loaded %s currencies", currencies_loaded)
     else:
         log.trace("No new currencies to load")
 
@@ -410,7 +410,7 @@ def load_income_concepts() -> None:
 
     if concepts_loaded > 0:
         db.session.commit()
-        log.trace(f"Loaded {concepts_loaded} income concepts")
+        log.trace("Loaded %s income concepts", concepts_loaded)
     else:
         log.trace("No new income concepts to load")
 
@@ -458,7 +458,7 @@ def load_deduction_concepts() -> None:
 
     if concepts_loaded > 0:
         db.session.commit()
-        log.trace(f"Loaded {concepts_loaded} deduction concepts")
+        log.trace("Loaded %s deduction concepts", concepts_loaded)
     else:
         log.trace("No new deduction concepts to load")
 
@@ -504,7 +504,7 @@ def load_benefit_concepts() -> None:
 
     if concepts_loaded > 0:
         db.session.commit()
-        log.trace(f"Loaded {concepts_loaded} benefit concepts")
+        log.trace("Loaded %s benefit concepts", concepts_loaded)
     else:
         log.trace("No new benefit concepts to load")
 
@@ -544,7 +544,7 @@ def load_payroll_types() -> None:
 
     if types_loaded > 0:
         db.session.commit()
-        log.trace(f"Loaded {types_loaded} payroll types")
+        log.trace("Loaded %s payroll types", types_loaded)
     else:
         log.trace("No new payroll types to load")
 
@@ -574,7 +574,7 @@ def load_liquidation_concepts() -> None:
 
     if concepts_loaded > 0:
         db.session.commit()
-        log.trace(f"Loaded {concepts_loaded} liquidation concepts")
+        log.trace("Loaded %s liquidation concepts", concepts_loaded)
     else:
         log.trace("No new liquidation concepts to load")
 

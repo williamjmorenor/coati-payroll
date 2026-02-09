@@ -94,10 +94,10 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <td>{{ rate.moneda_destino.codigo if rate.moneda_destino else '-' }}</td>
                             <td>{{ rate.tasa }}</td>
                             <td>
-                                <a href="{{ url_for('exchange_rate.edit', id=rate.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
+                                <a href="{{ url_for('exchange_rate.edit', id_=rate.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Editar') }}">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form action="{{ url_for('exchange_rate.delete', id=rate.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar este tipo de cambio?') }}');">
+                                <form action="{{ url_for('exchange_rate.delete', id_=rate.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('¿Está seguro de eliminar este tipo de cambio?') }}');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Eliminar') }}">
                                         <i class="bi bi-trash"></i>
                                     </button>

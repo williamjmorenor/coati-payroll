@@ -90,7 +90,7 @@ def add_percepcion(planilla_id: str):
     """Add a perception to the planilla."""
     orden = request.form.get("orden", 0, type=int)
     percepcion_id = request.form.get("percepcion_id") or ""
-    success, error_message, association_id = agregar_asociacion(
+    success, error_message, _association_id = agregar_asociacion(
         planilla_id=planilla_id,
         tipo_componente="percepcion",
         componente_id=percepcion_id,
@@ -125,7 +125,7 @@ def add_deduccion(planilla_id: str):
     prioridad = request.form.get("prioridad", 100, type=int)
     es_obligatoria = request.form.get("es_obligatoria") == "on"
     deduccion_id = request.form.get("deduccion_id") or ""
-    success, error_message, association_id = agregar_asociacion(
+    success, error_message, _association_id = agregar_asociacion(
         planilla_id=planilla_id,
         tipo_componente="deduccion",
         componente_id=deduccion_id,
@@ -175,7 +175,7 @@ def add_prestacion(planilla_id: str):
     """Add a benefit (prestacion) to the planilla."""
     orden = request.form.get("orden", 0, type=int)
     prestacion_id = request.form.get("prestacion_id") or ""
-    success, error_message, association_id = agregar_asociacion(
+    success, error_message, _association_id = agregar_asociacion(
         planilla_id=planilla_id,
         tipo_componente="prestacion",
         componente_id=prestacion_id,
@@ -209,7 +209,7 @@ def add_regla(planilla_id: str):
     """Add a calculation rule to the planilla."""
     orden = request.form.get("orden", 0, type=int)
     regla_calculo_id = request.form.get("regla_calculo_id") or ""
-    success, error_message, association_id = agregar_asociacion(
+    success, error_message, _association_id = agregar_asociacion(
         planilla_id=planilla_id,
         tipo_componente="regla",
         componente_id=regla_calculo_id,
