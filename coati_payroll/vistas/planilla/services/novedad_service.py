@@ -87,6 +87,8 @@ class NovedadService:
             fecha_novedad=form.fecha_novedad.data,
             percepcion_id=percepcion_id,
             deduccion_id=deduccion_id,
+            es_inasistencia=bool(form.es_inasistencia.data),
+            descontar_pago_inasistencia=bool(form.descontar_pago_inasistencia.data),
             creado_por=usuario,
         )
         db.session.add(novedad)
@@ -111,5 +113,7 @@ class NovedadService:
         novedad.fecha_novedad = form.fecha_novedad.data
         novedad.percepcion_id = percepcion_id
         novedad.deduccion_id = deduccion_id
+        novedad.es_inasistencia = bool(form.es_inasistencia.data)
+        novedad.descontar_pago_inasistencia = bool(form.descontar_pago_inasistencia.data)
         novedad.modificado_por = usuario
         db.session.commit()

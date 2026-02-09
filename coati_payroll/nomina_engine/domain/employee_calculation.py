@@ -35,6 +35,10 @@ class EmpleadoCalculo:
         self.tipo_cambio = Decimal("1.00")
         self.moneda_origen_id = empleado.moneda_id
         self.novedades: dict[str, Decimal] = {}
+        self.inasistencia_dias = Decimal("0.00")
+        self.inasistencia_horas = Decimal("0.00")
+        self.inasistencia_descuento = Decimal("0.00")
+        self.salario_neto_inasistencia = Decimal("0.00")
         self.variables_calculo: dict[str, Any] = {}
 
 

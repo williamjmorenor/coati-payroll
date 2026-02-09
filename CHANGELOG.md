@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Added absence flags to novelties and applied unpaid-absence salary discounts with a distinct `salario_neto_inasistencia` formula input.
+- Standardized the disability novelty concept code to `DISABILITY` for formula sources.
+
 
 ## [1.0.6] - 2026-02-09
 
@@ -155,4 +162,3 @@ Release 1.0.2 consolidates refactors across payroll processing, accounting vouch
 - Architecture documentation with directory structure
 - API documentation for CLI commands
 - Local implementation guides (docs/local_guides/)
-
