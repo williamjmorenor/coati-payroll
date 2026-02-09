@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.0.6] - 2026-02-09
+
+### Changed
+
+- Refactored modules across CLI, queue drivers, payroll processing, and view layers to align with the active lint/type validation baseline.
+- Standardized control-flow patterns, SQLAlchemy boolean predicates, import organization, and variable naming to reduce static-analysis false positives.
+- Updated `pylint` configuration with explicit non-critical exclusions used by this codebase and its framework integration points.
+
+### CI
+
+- Added `pylint -j 0 coati_payroll` to `.github/workflows/python-package.yml`.
+- Added `dev/lint.sh` to run the full local validation stack (`black`, `ruff`, `flake8`, `pylint`, `mypy`, `pytest`, and `pytest -m validation`).
+
 ## [1.0.5] - 2026-02-08
 
 ### Changed
