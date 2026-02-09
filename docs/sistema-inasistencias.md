@@ -2,7 +2,7 @@
 
 ## Descripción General
 
-El sistema de Coati Payroll incluye un módulo completo para el registro y procesamiento de inasistencias (ausencias) de los empleados. Este módulo permite configurar tres tipos diferentes de inasistencias según su impacto en el pago del trabajador.
+El sistema de Coati Payroll incluye un módulo completo para el registro y procesamiento de inasistencias (ausencias) de los empleados. Este módulo permite configurar **cuatro tipos diferentes** de inasistencias según su impacto en el pago del trabajador.
 
 ## Tipos de Inasistencias
 
@@ -18,6 +18,18 @@ Estas son ausencias justificadas que no afectan el salario del empleado. Por eje
 - `descontar_pago_inasistencia = False`
 
 **Efecto:** El sistema registra la ausencia para fines de auditoría y control, pero NO deduce ningún monto del salario del empleado.
+
+**Ejemplo:**
+```python
+novedad = NominaNovedad(
+    codigo_concepto="PERMISO_JUSTIFICADO",
+    valor_cantidad=Decimal("1.00"),
+    tipo_valor="dias",
+    es_inasistencia=True,
+    descontar_pago_inasistencia=False,  # NO descuenta
+)
+# Resultado: Empleado recibe su salario completo
+```
 
 ### 2. Inasistencias que SÍ se descuentan del pago
 
@@ -38,22 +50,108 @@ Descuento por día = Salario Mensual / Días del Mes
 Descuento por hora = (Salario Mensual / Días del Mes) / Horas por Día
 ```
 
-### 3. Inasistencias pagadas en concepto distinto
+**Ejemplo:**
+```python
+# Salario: $15,000, Días del mes: 30
+# Ausencia: 1 día
+novedad = NominaNovedad(
+    codigo_concepto="AUSENCIA_INJUSTIFICADA",
+    valor_cantidad=Decimal("1.00"),
+    tipo_valor="dias",
+    es_inasistencia=True,
+    descontar_pago_inasistencia=True,  # SÍ descuenta
+)
+# Resultado: Descuenta $500 (15000/30)
+# Salario final: $14,500
+```
 
-Estas son ausencias que se descuentan del salario pero se compensan o pagan a través de otro concepto. Por ejemplo:
+### 3. Inasistencias con compensación en el mismo concepto
+
+Estas son ausencias que se descuentan del salario pero se compensan o pagan a través de una deducción con el mismo código. Por ejemplo:
 - Licencias especiales con compensación diferida
-- Ausencias con pago diferenciado
+- Ausencias con pago diferenciado por categoría
 - Permisos compensados con bonificaciones
 
 **Configuración:**
 - `es_inasistencia = True`
 - `descontar_pago_inasistencia = True`
-- Debe existir una deducción o percepción con el mismo `codigo_concepto`
+- Existe una **deducción** en el catálogo con el mismo `codigo_concepto`
 
 **Efecto:** El sistema:
 1. Deduce el valor de la ausencia del salario base
-2. Previene la aplicación duplicada de la deducción del catálogo
-3. Permite aplicar el concepto compensatorio por separado
+2. Previene la aplicación duplicada de la deducción del catálogo (evita doble descuento)
+3. Permite que la lógica de la deducción catalogada maneje el monto final
+
+**Ejemplo:**
+```python
+# Deducción en catálogo
+deduccion = Deduccion(
+    codigo="LICENCIA_ESPECIAL",
+    formula_tipo=FormulaType.FIJO,
+    monto_default=Decimal("300.00"),  # Descuento fijo diferente
+)
+
+# Novedad de ausencia con mismo código
+novedad = NominaNovedad(
+    codigo_concepto="LICENCIA_ESPECIAL",  # Mismo código
+    valor_cantidad=Decimal("1.00"),
+    tipo_valor="dias",
+    es_inasistencia=True,
+    descontar_pago_inasistencia=True,
+)
+# Resultado: Se descuenta el día pero NO se aplica la deducción
+# del catálogo (evita doble descuento)
+```
+
+### 4. Inasistencias con subsidio parcial (Subsidio Médico)
+
+Este es un caso especial muy común donde un empleado está ausente pero recibe un subsidio parcial que incrementa sus ingresos en un porcentaje. Por ejemplo:
+- Incapacidad médica con subsidio del 60%-80%
+- Licencia por enfermedad con compensación del seguro social
+- Ausencia médica con pago parcial
+
+**Configuración:**
+- **Ausencia**: `es_inasistencia = True`, `descontar_pago_inasistencia = True`
+- **Subsidio**: Una **percepción** independiente que se suma al salario
+
+**Efecto:** El sistema:
+1. Deduce el 100% del día ausente del salario base
+2. Agrega el monto del subsidio como percepción (ej: 60% del salario diario)
+3. Resultado neto: El empleado recibe el porcentaje del subsidio (pierde solo el complemento)
+
+**Ejemplo - Caso Real:**
+```python
+# Salario mensual: $30,000
+# Salario quincenal: $15,000
+# Salario diario: $1,000
+# Primera quincena: 5 días con subsidio médico al 60%
+
+# 1. Crear ausencia médica (descuenta 5 días completos = $5,000)
+novedad_ausencia = NominaNovedad(
+    codigo_concepto="AUSENCIA_MEDICA",
+    valor_cantidad=Decimal("5.00"),
+    tipo_valor="dias",
+    es_inasistencia=True,
+    descontar_pago_inasistencia=True,  # Descuenta los 5 días
+)
+
+# 2. Crear subsidio médico (suma 60% = $3,000)
+novedad_subsidio = NominaNovedad(
+    codigo_concepto="SUBSIDIO_MEDICO",
+    valor_cantidad=Decimal("3000.00"),  # 60% de $5,000
+    tipo_valor="monto",
+    es_inasistencia=False,  # NO es ausencia, es compensación
+    descontar_pago_inasistencia=False,
+)
+
+# Resultado final:
+# Salario base quincenal: $15,000.00
+# Menos ausencia (5 días): -$5,000.00
+# Salario después de ausencia: $10,000.00
+# Más subsidio (60%): +$3,000.00
+# Total ingreso: $13,000.00
+# Pérdida neta: $2,000.00 (40% de los 5 días)
+```
 
 ## Estructura de Datos
 
@@ -181,7 +279,7 @@ novedad = NominaNovedad(
 )
 ```
 
-#### Ejemplo 3: Ausencia con Compensación
+#### Ejemplo 3: Ausencia con Compensación en mismo concepto
 
 ```python
 # 1. Crear la novedad de ausencia
@@ -199,6 +297,41 @@ novedad = NominaNovedad(
 # 2. Asegurar que existe una deducción con el mismo código
 # Esta deducción NO se aplicará automáticamente debido al mecanismo
 # de prevención de doble descuento
+```
+
+#### Ejemplo 4: Subsidio Médico (ausencia con percepción compensatoria)
+
+```python
+# Caso real: Primera quincena, 5 días de subsidio médico al 60%
+# Salario mensual: $30,000, Quincenal: $15,000, Diario: $1,000
+
+# 1. Crear ausencia médica (descuenta 5 días completos)
+novedad_ausencia = NominaNovedad(
+    nomina_id=nomina.id,
+    empleado_id=empleado.id,
+    codigo_concepto="AUSENCIA_MEDICA",
+    valor_cantidad=Decimal("5.00"),
+    tipo_valor="dias",
+    fecha_novedad=date(2025, 1, 15),
+    es_inasistencia=True,
+    descontar_pago_inasistencia=True,  # Descuenta $5,000
+)
+
+# 2. Crear subsidio médico (60% de compensación)
+novedad_subsidio = NominaNovedad(
+    nomina_id=nomina.id,
+    empleado_id=empleado.id,
+    codigo_concepto="SUBSIDIO_MEDICO",
+    valor_cantidad=Decimal("3000.00"),  # 60% de $5,000
+    tipo_valor="monto",
+    fecha_novedad=date(2025, 1, 15),
+    percepcion_id=percepcion_subsidio.id,
+    es_inasistencia=False,  # NO es ausencia, es compensación
+    descontar_pago_inasistencia=False,
+)
+
+# Resultado:
+# Base: $15,000 - Ausencia: $5,000 + Subsidio: $3,000 = $13,000
 ```
 
 ## Consultas y Reportes
