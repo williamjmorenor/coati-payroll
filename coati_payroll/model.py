@@ -1072,6 +1072,12 @@ class NominaNovedad(database.Model, BaseTabla):
     # Flag to mark this novelty as vacation/time-off
     es_descanso_vacaciones = database.Column(database.Boolean(), default=False, nullable=False)
 
+    # ---- Absence (Inasistencia) Tracking ----
+    # Flag to mark this novelty as an absence event
+    es_inasistencia = database.Column(database.Boolean(), default=False, nullable=False)
+    # Flag to indicate the absence should reduce pay for the day/hour
+    descontar_pago_inasistencia = database.Column(database.Boolean(), default=False, nullable=False)
+
     # Reference to VacationNovelty if this is a vacation leave
     vacation_novelty_id = database.Column(
         database.String(26), database.ForeignKey("vacation_novelty.id"), nullable=True, index=True

@@ -78,6 +78,7 @@ class EmployeeProcessingService:
             "salario_base": emp_calculo.salario_base,
             "salario_mensual": emp_calculo.salario_mensual,
             "tipo_cambio": emp_calculo.tipo_cambio,
+            "salario_neto_inasistencia": emp_calculo.salario_neto_inasistencia,
             # Period data
             "fecha_calculo": fecha_calculo,
             "periodo_inicio": periodo_inicio,
@@ -98,6 +99,10 @@ class EmployeeProcessingService:
             "impuesto_acumulado": Decimal("0.00"),
             "ir_retenido_acumulado": Decimal("0.00"),
             "salario_acumulado_mes": Decimal("0.00"),
+            # Absence tracking
+            "inasistencia_dias": emp_calculo.inasistencia_dias,
+            "inasistencia_horas": emp_calculo.inasistencia_horas,
+            "inasistencia_descuento": emp_calculo.inasistencia_descuento,
         }
 
         salario_base_acumulado = Decimal(str(empleado.salario_acumulado or 0))

@@ -7,6 +7,7 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any, cast
+from types import SimpleNamespace
 
 from coati_payroll.model import db, Planilla, Empleado, Nomina, Moneda
 from coati_payroll.enums import NominaEstado
@@ -393,21 +394,47 @@ class PayrollExecutionService:
             configuracion_snapshot=configuracion_snapshot,
             rounding=False,
         )
+
+        # Load employee novelties (including absence summaries)
+        novelties, ausencia_resumen, codigos_descuento = self.novelty_processor.load_novelties_with_absences(
+            empleado, periodo_inicio, periodo_fin
+        )
+
+        descuento_inasistencia = self._calculate_absence_discount(
+            salario_mensual_origen,
+            ausencia_resumen,
+            planilla.empresa_id,
+            configuracion_snapshot,
+        )
+        salario_periodo_origen_neto = max(Decimal("0.00"), salario_periodo_origen - descuento_inasistencia)
         planilla_moneda = cast(Moneda | None, planilla.moneda)
 
         if emp_calculo.tipo_cambio != Decimal("1.00"):
+            descuento_inasistencia_planilla = round_money(
+                descuento_inasistencia * emp_calculo.tipo_cambio, planilla_moneda
+            )
             salario_mensual = round_money(salario_mensual_origen * emp_calculo.tipo_cambio, planilla_moneda)
             salario_periodo = round_money(salario_periodo_origen * emp_calculo.tipo_cambio, planilla_moneda)
+            salario_periodo_neto = round_money(
+                salario_periodo_origen_neto * emp_calculo.tipo_cambio, planilla_moneda
+            )
         else:
             # Always quantize to ensure consistent decimal precision
+            descuento_inasistencia_planilla = round_money(descuento_inasistencia, planilla_moneda)
             salario_mensual = round_money(salario_mensual_origen, planilla_moneda)
             salario_periodo = round_money(salario_periodo_origen, planilla_moneda)
+            salario_periodo_neto = round_money(salario_periodo_origen_neto, planilla_moneda)
 
         emp_calculo.salario_base = salario_periodo
         emp_calculo.salario_mensual = salario_mensual
+        emp_calculo.salario_neto_inasistencia = salario_periodo_neto
 
-        # Load employee novelties
-        emp_calculo.novedades = self.novelty_processor.load_novelties(empleado, periodo_inicio, periodo_fin)
+        # Persist novelties and absence summaries
+        emp_calculo.novedades = novelties
+        emp_calculo.inasistencia_dias = ausencia_resumen["dias"]
+        emp_calculo.inasistencia_horas = ausencia_resumen["horas"]
+        emp_calculo.inasistencia_descuento = descuento_inasistencia_planilla
+        emp_calculo.inasistencia_codigos_descuento = codigos_descuento
 
         # Build calculation variables
         emp_calculo.variables_calculo = self.employee_processing_service.build_calculation_variables(
@@ -420,7 +447,7 @@ class PayrollExecutionService:
         emp_calculo.total_percepciones = sum(p.monto for p in percepciones)
 
         # Calculate gross salary
-        emp_calculo.salario_bruto = emp_calculo.salario_base + emp_calculo.total_percepciones
+        emp_calculo.salario_bruto = emp_calculo.salario_neto_inasistencia + emp_calculo.total_percepciones
 
         # Process deductions
         deducciones = self.deduction_calculator.calculate(emp_calculo, planilla, fecha_calculo)
@@ -459,6 +486,36 @@ class PayrollExecutionService:
         emp_calculo.total_prestaciones = sum(p.monto for p in prestaciones)
 
         return emp_calculo
+
+    def _calculate_absence_discount(
+        self,
+        salario_mensual: Decimal,
+        ausencia_resumen: dict[str, Decimal],
+        empresa_id: str,
+        configuracion_snapshot: dict[str, Any] | None,
+    ) -> Decimal:
+        dias = ausencia_resumen.get("dias", Decimal("0.00"))
+        horas = ausencia_resumen.get("horas", Decimal("0.00"))
+        if dias <= 0 and horas <= 0:
+            return Decimal("0.00")
+
+        config = self._resolve_config(empresa_id, configuracion_snapshot)
+        dias_base = Decimal(str(config.dias_mes_nomina))
+        horas_dia = Decimal(str(config.horas_jornada_diaria))
+        if dias_base <= 0 or horas_dia <= 0:
+            raise ValidationError(
+                "Configuración inválida para cálculo de inasistencias: dias_mes_nomina y horas_jornada_diaria."
+            )
+
+        salario_diario = salario_mensual / dias_base
+        salario_hora = salario_diario / horas_dia
+        return (salario_diario * dias) + (salario_hora * horas)
+
+    def _resolve_config(self, empresa_id: str, configuracion_snapshot: dict[str, Any] | None) -> Any:
+        if configuracion_snapshot:
+            return SimpleNamespace(**configuracion_snapshot)
+
+        return self.config_repo.get_for_empresa(empresa_id)
 
     def _apply_employee_side_effects(
         self,

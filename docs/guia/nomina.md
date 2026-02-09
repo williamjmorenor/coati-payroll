@@ -271,6 +271,8 @@ Al asociar una novedad a un concepto específico, el sistema puede aplicar las r
 | Tipo de Valor | Monto, Horas, Días, etc. | Sí |
 | Valor/Cantidad | Valor numérico | Sí |
 | Fecha de Novedad | Fecha del evento | No |
+| Es Inasistencia | Marca la novedad como inasistencia | No |
+| Descontar Pago por Inasistencia | Indica si la inasistencia descuenta salario | No |
 
 4. Haga clic en **Guardar**
 
@@ -324,7 +326,7 @@ Las novedades se aplican cuando se **recalcula** la nómina. Después de agregar
 ### Salario Bruto
 
 ```
-Salario Bruto = Salario Base + ∑ Percepciones
+Salario Bruto = Salario Neto por Inasistencia + ∑ Percepciones
 ```
 
 ### Salario Neto
@@ -338,6 +340,14 @@ Salario Neto = Salario Bruto - ∑ Deducciones
 ```
 Base Gravable = Salario Bruto - Deducciones Antes de Impuesto
 ```
+
+### Salario Neto por Inasistencia
+
+```
+Salario Neto por Inasistencia = Salario Base del período - Descuento por Inasistencias
+```
+
+El campo `salario_neto_inasistencia` está disponible en el motor de fórmulas para asegurar que los impuestos se calculen sobre el salario efectivamente devengado.
 
 ### Costo Total Empleado
 

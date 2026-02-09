@@ -18,9 +18,11 @@ La plantilla debe contener las siguientes columnas en orden:
 | D | `tipo_valor` | Texto | Sí | Tipo de valor: `monto`, `horas`, `dias`, `cantidad`, `porcentaje` | `dias` |
 | E | `valor_cantidad` | Numérico | Sí | **CRÍTICO**: Días/horas a DESCONTAR del saldo (puede diferir de días calendario) | `2.00` |
 | F | `fecha_novedad` | Fecha | No | Fecha en que ocurrió el evento (formato: DD/MM/YYYY) | `15/01/2025` |
-| G | `es_descanso_vacaciones` | Booleano | No | Si es novedad de vacaciones: `SI`, `NO`, `1`, `0`, `TRUE`, `FALSE` | `SI` |
-| H | `fecha_inicio_descanso` | Fecha | No | Fecha de inicio del período de descanso (calendario) (formato: DD/MM/YYYY) | `20/01/2025` |
-| I | `fecha_fin_descanso` | Fecha | No | Fecha de fin del período de descanso (calendario) (formato: DD/MM/YYYY) | `24/01/2025` |
+| G | `es_inasistencia` | Booleano | No | Marca la novedad como inasistencia: `SI`, `NO`, `1`, `0`, `TRUE`, `FALSE` | `SI` |
+| H | `descontar_pago_inasistencia` | Booleano | No | Indica si la inasistencia descuenta salario: `SI`, `NO`, `1`, `0`, `TRUE`, `FALSE` | `SI` |
+| I | `es_descanso_vacaciones` | Booleano | No | Si es novedad de vacaciones: `SI`, `NO`, `1`, `0`, `TRUE`, `FALSE` | `SI` |
+| J | `fecha_inicio_descanso` | Fecha | No | Fecha de inicio del período de descanso (calendario) (formato: DD/MM/YYYY) | `20/01/2025` |
+| K | `fecha_fin_descanso` | Fecha | No | Fecha de fin del período de descanso (calendario) (formato: DD/MM/YYYY) | `24/01/2025` |
 
 ### Notas Importantes
 
@@ -34,13 +36,15 @@ La plantilla debe contener las siguientes columnas en orden:
 
 4. **Tipo de Valor**: Debe ser uno de los valores especificados. Determina cómo se interpreta el campo `valor_cantidad`.
 
-5. **Vacaciones**: Si `es_descanso_vacaciones` es `SI`/`TRUE`/`1`, entonces:
+5. **Inasistencias**: Si `es_inasistencia` es `SI`/`TRUE`/`1` y `descontar_pago_inasistencia` es `SI`, el descuento se calcula con la configuración de días/horas de la empresa.
+
+6. **Vacaciones**: Si `es_descanso_vacaciones` es `SI`/`TRUE`/`1`, entonces:
    - Las fechas de inicio y fin del descanso son obligatorias
    - El sistema verificará que el empleado tenga saldo suficiente de vacaciones
    - Se creará automáticamente una entrada en el módulo de vacaciones
    - El balance de vacaciones del empleado se reducirá al aprobar y ejecutar la nómina
 
-6. **Validaciones**:
+7. **Validaciones**:
    - El empleado debe existir en el sistema
    - El concepto (percepción o deducción) debe existir y estar activo
    - Si es vacación, el empleado debe tener una cuenta de vacaciones activa
@@ -50,31 +54,31 @@ La plantilla debe contener las siguientes columnas en orden:
 
 ### Ejemplo 1: Bono sin vacaciones
 
-| codigo_empleado | tipo_concepto | codigo_concepto | tipo_valor | valor_cantidad | fecha_novedad | es_descanso_vacaciones | fecha_inicio_descanso | fecha_fin_descanso |
-|-----------------|---------------|-----------------|------------|----------------|---------------|------------------------|----------------------|-------------------|
-| EMP-ABC123 | percepcion | BONO_PROD | monto | 1500.00 | 15/01/2025 | NO | | |
-| EMP-DEF456 | percepcion | COMISION | monto | 2000.00 | 15/01/2025 | NO | | |
+| codigo_empleado | tipo_concepto | codigo_concepto | tipo_valor | valor_cantidad | fecha_novedad | es_inasistencia | descontar_pago_inasistencia | es_descanso_vacaciones | fecha_inicio_descanso | fecha_fin_descanso |
+|-----------------|---------------|-----------------|------------|----------------|---------------|-----------------|----------------------------|------------------------|----------------------|-------------------|
+| EMP-ABC123 | percepcion | BONO_PROD | monto | 1500.00 | 15/01/2025 | NO | NO | NO | | |
+| EMP-DEF456 | percepcion | COMISION | monto | 2000.00 | 15/01/2025 | NO | NO | NO | | |
 
 ### Ejemplo 2: Horas extras sin vacaciones
 
-| codigo_empleado | tipo_concepto | codigo_concepto | tipo_valor | valor_cantidad | fecha_novedad | es_descanso_vacaciones | fecha_inicio_descanso | fecha_fin_descanso |
-|-----------------|---------------|-----------------|------------|----------------|---------------|------------------------|----------------------|-------------------|
-| EMP-ABC123 | percepcion | HORAS_EXTRA | horas | 10.00 | 10/01/2025 | NO | | |
+| codigo_empleado | tipo_concepto | codigo_concepto | tipo_valor | valor_cantidad | fecha_novedad | es_inasistencia | descontar_pago_inasistencia | es_descanso_vacaciones | fecha_inicio_descanso | fecha_fin_descanso |
+|-----------------|---------------|-----------------|------------|----------------|---------------|-----------------|----------------------------|------------------------|----------------------|-------------------|
+| EMP-ABC123 | percepcion | HORAS_EXTRA | horas | 10.00 | 10/01/2025 | NO | NO | NO | | |
 
 ### Ejemplo 3: Vacaciones
 
-| codigo_empleado | tipo_concepto | codigo_concepto | tipo_valor | valor_cantidad | fecha_novedad | es_descanso_vacaciones | fecha_inicio_descanso | fecha_fin_descanso |
-|-----------------|---------------|-----------------|------------|----------------|---------------|------------------------|----------------------|-------------------|
-| EMP-ABC123 | deduccion | AUSENCIA | dias | 5.00 | 20/01/2025 | SI | 20/01/2025 | 24/01/2025 |
-| EMP-DEF456 | deduccion | AUSENCIA | dias | 3.00 | 15/01/2025 | SI | 15/01/2025 | 17/01/2025 |
+| codigo_empleado | tipo_concepto | codigo_concepto | tipo_valor | valor_cantidad | fecha_novedad | es_inasistencia | descontar_pago_inasistencia | es_descanso_vacaciones | fecha_inicio_descanso | fecha_fin_descanso |
+|-----------------|---------------|-----------------|------------|----------------|---------------|-----------------|----------------------------|------------------------|----------------------|-------------------|
+| EMP-ABC123 | deduccion | AUSENCIA | dias | 5.00 | 20/01/2025 | SI | SI | SI | 20/01/2025 | 24/01/2025 |
+| EMP-DEF456 | deduccion | AUSENCIA | dias | 3.00 | 15/01/2025 | SI | SI | SI | 15/01/2025 | 17/01/2025 |
 
 ### Ejemplo 4: Mixto (bonos y vacaciones)
 
-| codigo_empleado | tipo_concepto | codigo_concepto | tipo_valor | valor_cantidad | fecha_novedad | es_descanso_vacaciones | fecha_inicio_descanso | fecha_fin_descanso |
-|-----------------|---------------|-----------------|------------|----------------|---------------|------------------------|----------------------|-------------------|
-| EMP-ABC123 | percepcion | BONO_PROD | monto | 1500.00 | 15/01/2025 | NO | | |
-| EMP-ABC123 | deduccion | AUSENCIA | dias | 5.00 | 20/01/2025 | SI | 20/01/2025 | 24/01/2025 |
-| EMP-DEF456 | percepcion | COMISION | monto | 2000.00 | 15/01/2025 | NO | | |
+| codigo_empleado | tipo_concepto | codigo_concepto | tipo_valor | valor_cantidad | fecha_novedad | es_inasistencia | descontar_pago_inasistencia | es_descanso_vacaciones | fecha_inicio_descanso | fecha_fin_descanso |
+|-----------------|---------------|-----------------|------------|----------------|---------------|-----------------|----------------------------|------------------------|----------------------|-------------------|
+| EMP-ABC123 | percepcion | BONO_PROD | monto | 1500.00 | 15/01/2025 | NO | NO | NO | | |
+| EMP-ABC123 | deduccion | AUSENCIA | dias | 5.00 | 20/01/2025 | SI | SI | SI | 20/01/2025 | 24/01/2025 |
+| EMP-DEF456 | percepcion | COMISION | monto | 2000.00 | 15/01/2025 | NO | NO | NO | | |
 
 ## Flujo de Procesamiento
 

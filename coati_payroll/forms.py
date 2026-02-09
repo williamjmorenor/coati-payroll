@@ -1131,6 +1131,18 @@ class NominaNovedadForm(FlaskForm):
         description=_("Fecha en que ocurrió el evento (opcional, para auditoría)"),
     )
 
+    # ---- Absence (Inasistencia) Tracking ----
+    es_inasistencia = BooleanField(
+        _("Es Inasistencia"),
+        default=False,
+        description=_("Marcar si esta novedad corresponde a una inasistencia del empleado"),
+    )
+    descontar_pago_inasistencia = BooleanField(
+        _("Descontar Pago por Inasistencia"),
+        default=False,
+        description=_("Marcar si la inasistencia debe descontar salario por día u hora"),
+    )
+
     # ---- Vacation Module Integration Fields ----
     es_descanso_vacaciones = BooleanField(
         _("Es Descanso de Vacaciones"),

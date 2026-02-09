@@ -34,6 +34,9 @@ class DeductionCalculator:
             if not deduccion or not deduccion.activo:
                 continue
 
+            if deduccion.codigo in emp_calculo.inasistencia_codigos_descuento:
+                continue
+
             # Check validity dates
             if deduccion.vigente_desde and deduccion.vigente_desde > fecha_calculo:
                 continue

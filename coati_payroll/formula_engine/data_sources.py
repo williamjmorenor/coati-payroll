@@ -644,7 +644,7 @@ AVAILABLE_DATA_SOURCES = {
                 "type": "decimal",
                 "label": "Días de Incapacidad",
                 "description": "Días de incapacidad médica",
-                "codigo_concepto": "INCAPACIDAD",
+                "codigo_concepto": "DISABILITY",
                 "tipo_valor": "dias",
                 "gravable": False,
             },
@@ -677,6 +677,11 @@ AVAILABLE_DATA_SOURCES = {
     "calculado": {
         "label": "Valores Calculados",
         "fields": {
+            "salario_neto_inasistencia": {
+                "type": "decimal",
+                "label": "Salario Neto por Inasistencia",
+                "description": "Salario del período después de descontar inasistencias marcadas",
+            },
             "meses_restantes_fiscal": {
                 "type": "integer",
                 "label": "Meses Restantes en Período Fiscal",
