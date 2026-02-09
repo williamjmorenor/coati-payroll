@@ -396,7 +396,7 @@ class PayrollExecutionService:
         )
 
         # Load employee novelties (including absence summaries)
-        novelties, ausencia_resumen = self.novelty_processor.load_novelties_with_absences(
+        novelties, ausencia_resumen, codigos_descuento = self.novelty_processor.load_novelties_with_absences(
             empleado, periodo_inicio, periodo_fin
         )
 
@@ -434,6 +434,7 @@ class PayrollExecutionService:
         emp_calculo.inasistencia_dias = ausencia_resumen["dias"]
         emp_calculo.inasistencia_horas = ausencia_resumen["horas"]
         emp_calculo.inasistencia_descuento = descuento_inasistencia_planilla
+        emp_calculo.inasistencia_codigos_descuento = codigos_descuento
 
         # Build calculation variables
         emp_calculo.variables_calculo = self.employee_processing_service.build_calculation_variables(

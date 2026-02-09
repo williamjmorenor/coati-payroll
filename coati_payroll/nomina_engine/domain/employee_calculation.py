@@ -39,6 +39,7 @@ class EmpleadoCalculo:
         self.inasistencia_horas = Decimal("0.00")
         self.inasistencia_descuento = Decimal("0.00")
         self.salario_neto_inasistencia = Decimal("0.00")
+        self.inasistencia_codigos_descuento: set[str] = set()
         self.variables_calculo: dict[str, Any] = {}
 
 
