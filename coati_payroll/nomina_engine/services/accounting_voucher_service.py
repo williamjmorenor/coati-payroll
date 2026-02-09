@@ -376,9 +376,22 @@ class AccountingVoucherService:
                     if detalle.tipo == "income" and detalle.percepcion_id:
                         percepcion = self.session.get(Percepcion, detalle.percepcion_id)
                         if percepcion and percepcion.contabilizable:
+                            invertir_asiento = getattr(percepcion, "invertir_asiento_contable", False)
+                            debe_codigo = percepcion.codigo_cuenta_haber if invertir_asiento else percepcion.codigo_cuenta_debe
+                            haber_codigo = percepcion.codigo_cuenta_debe if invertir_asiento else percepcion.codigo_cuenta_haber
+                            debe_descripcion = (
+                                (percepcion.descripcion_cuenta_haber or percepcion.nombre)
+                                if invertir_asiento
+                                else (percepcion.descripcion_cuenta_debe or percepcion.nombre)
+                            )
+                            haber_descripcion = (
+                                (percepcion.descripcion_cuenta_debe or percepcion.nombre)
+                                if invertir_asiento
+                                else (percepcion.descripcion_cuenta_haber or percepcion.nombre)
+                            )
                             # Always create debit line (even if account is NULL)
                             orden += 1
-                            if percepcion.codigo_cuenta_debe is None:
+                            if debe_codigo is None:
                                 null_account_count += 1
                             detalle_monto = round_money(detalle.monto, planilla_moneda)
                             linea_debe = ComprobanteContableLinea(
@@ -387,10 +400,10 @@ class AccountingVoucherService:
                                 empleado_id=empleado.id,
                                 empleado_codigo=empleado.codigo_empleado,
                                 empleado_nombre=empleado_nombre_completo,
-                                codigo_cuenta=percepcion.codigo_cuenta_debe,  # Can be None
+                                codigo_cuenta=debe_codigo,  # Can be None
                                 descripcion_cuenta=(
-                                    (percepcion.descripcion_cuenta_debe or percepcion.nombre)
-                                    if percepcion.codigo_cuenta_debe
+                                    debe_descripcion
+                                    if debe_codigo
                                     else None
                                 ),
                                 centro_costos=centro_costos,
@@ -408,7 +421,7 @@ class AccountingVoucherService:
 
                             # Always create credit line (even if account is NULL)
                             orden += 1
-                            if percepcion.codigo_cuenta_haber is None:
+                            if haber_codigo is None:
                                 null_account_count += 1
                             linea_haber = ComprobanteContableLinea(
                                 comprobante_id=comprobante.id,
@@ -416,10 +429,10 @@ class AccountingVoucherService:
                                 empleado_id=empleado.id,
                                 empleado_codigo=empleado.codigo_empleado,
                                 empleado_nombre=empleado_nombre_completo,
-                                codigo_cuenta=percepcion.codigo_cuenta_haber,  # Can be None
+                                codigo_cuenta=haber_codigo,  # Can be None
                                 descripcion_cuenta=(
-                                    (percepcion.descripcion_cuenta_haber or percepcion.nombre)
-                                    if percepcion.codigo_cuenta_haber
+                                    haber_descripcion
+                                    if haber_codigo
                                     else None
                                 ),
                                 centro_costos=centro_costos,
@@ -438,9 +451,22 @@ class AccountingVoucherService:
                     elif detalle.tipo == "deduction" and detalle.deduccion_id:
                         deduccion = self.session.get(Deduccion, detalle.deduccion_id)
                         if deduccion and deduccion.contabilizable:
+                            invertir_asiento = getattr(deduccion, "invertir_asiento_contable", False)
+                            debe_codigo = deduccion.codigo_cuenta_haber if invertir_asiento else deduccion.codigo_cuenta_debe
+                            haber_codigo = deduccion.codigo_cuenta_debe if invertir_asiento else deduccion.codigo_cuenta_haber
+                            debe_descripcion = (
+                                (deduccion.descripcion_cuenta_haber or deduccion.nombre)
+                                if invertir_asiento
+                                else (deduccion.descripcion_cuenta_debe or deduccion.nombre)
+                            )
+                            haber_descripcion = (
+                                (deduccion.descripcion_cuenta_debe or deduccion.nombre)
+                                if invertir_asiento
+                                else (deduccion.descripcion_cuenta_haber or deduccion.nombre)
+                            )
                             # Always create debit line (even if account is NULL)
                             orden += 1
-                            if deduccion.codigo_cuenta_debe is None:
+                            if debe_codigo is None:
                                 null_account_count += 1
                             detalle_monto = round_money(detalle.monto, planilla_moneda)
                             linea_debe = ComprobanteContableLinea(
@@ -449,10 +475,10 @@ class AccountingVoucherService:
                                 empleado_id=empleado.id,
                                 empleado_codigo=empleado.codigo_empleado,
                                 empleado_nombre=empleado_nombre_completo,
-                                codigo_cuenta=deduccion.codigo_cuenta_debe,  # Can be None
+                                codigo_cuenta=debe_codigo,  # Can be None
                                 descripcion_cuenta=(
-                                    (deduccion.descripcion_cuenta_debe or deduccion.nombre)
-                                    if deduccion.codigo_cuenta_debe
+                                    debe_descripcion
+                                    if debe_codigo
                                     else None
                                 ),
                                 centro_costos=centro_costos,
@@ -470,7 +496,7 @@ class AccountingVoucherService:
 
                             # Always create credit line (even if account is NULL)
                             orden += 1
-                            if deduccion.codigo_cuenta_haber is None:
+                            if haber_codigo is None:
                                 null_account_count += 1
                             linea_haber = ComprobanteContableLinea(
                                 comprobante_id=comprobante.id,
@@ -478,10 +504,10 @@ class AccountingVoucherService:
                                 empleado_id=empleado.id,
                                 empleado_codigo=empleado.codigo_empleado,
                                 empleado_nombre=empleado_nombre_completo,
-                                codigo_cuenta=deduccion.codigo_cuenta_haber,  # Can be None
+                                codigo_cuenta=haber_codigo,  # Can be None
                                 descripcion_cuenta=(
-                                    (deduccion.descripcion_cuenta_haber or deduccion.nombre)
-                                    if deduccion.codigo_cuenta_haber
+                                    haber_descripcion
+                                    if haber_codigo
                                     else None
                                 ),
                                 centro_costos=centro_costos,

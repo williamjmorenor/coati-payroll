@@ -15,8 +15,13 @@ from coati_payroll.model import (
     NominaDetalle,
     NominaNovedad,
     NominaProgress,
+    Percepcion,
+    Deduccion,
+    PlanillaEmpleado,
+    VacationNovelty,
+    VacationNominaNovedad,
 )
-from coati_payroll.enums import NominaEstado, NovedadEstado
+from coati_payroll.enums import NominaEstado, NovedadEstado, VacacionEstado
 from coati_payroll.i18n import _
 from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.vistas.planilla import planilla_bp
@@ -173,6 +178,148 @@ def ver_nomina(planilla_id: str, nomina_id: str):
     )
 
 
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/vacaciones/aplicar", methods=["GET", "POST"])
+@require_write_access()
+def aplicar_vacaciones_nomina(planilla_id: str, nomina_id: str):
+    """Apply approved vacations to a nomina by creating novelties."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+    if nomina.estado in (NominaEstado.APLICADO, NominaEstado.PAGADO):
+        flash(_("No se pueden aplicar vacaciones en una nómina ya aplicada o pagada."), "warning")
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+    percepciones = (
+        db.session.execute(db.select(Percepcion).filter(Percepcion.activo.is_(True)).order_by(Percepcion.codigo))
+        .scalars()
+        .all()
+    )
+    deducciones = (
+        db.session.execute(db.select(Deduccion).filter(Deduccion.activo.is_(True)).order_by(Deduccion.codigo))
+        .scalars()
+        .all()
+    )
+
+    vacaciones_pendientes = _obtener_vacaciones_aprobadas_pendientes(planilla, nomina)
+
+    if request.method == "POST":
+        seleccionadas = request.form.getlist("vacation_ids")
+        tipo_concepto = request.form.get("tipo_concepto")
+        percepcion_id = request.form.get("percepcion_id") if tipo_concepto == "income" else None
+        deduccion_id = request.form.get("deduccion_id") if tipo_concepto == "deduction" else None
+
+        if not seleccionadas:
+            flash(_("Debe seleccionar al menos una solicitud de vacaciones."), "warning")
+            return render_template(
+                "modules/planilla/aplicar_vacaciones.html",
+                planilla=planilla,
+                nomina=nomina,
+                vacaciones=vacaciones_pendientes,
+                percepciones=percepciones,
+                deducciones=deducciones,
+                tipo_concepto=tipo_concepto,
+                percepcion_id=percepcion_id,
+                deduccion_id=deduccion_id,
+            )
+
+        if tipo_concepto == "income":
+            concepto = db.session.get(Percepcion, percepcion_id) if percepcion_id else None
+        elif tipo_concepto == "deduction":
+            concepto = db.session.get(Deduccion, deduccion_id) if deduccion_id else None
+        else:
+            concepto = None
+
+        if not concepto:
+            flash(_("Debe seleccionar un concepto válido para aplicar las vacaciones."), "danger")
+            return render_template(
+                "modules/planilla/aplicar_vacaciones.html",
+                planilla=planilla,
+                nomina=nomina,
+                vacaciones=vacaciones_pendientes,
+                percepciones=percepciones,
+                deducciones=deducciones,
+                tipo_concepto=tipo_concepto,
+                percepcion_id=percepcion_id,
+                deduccion_id=deduccion_id,
+            )
+
+        codigo_concepto = concepto.codigo
+        applied_count = 0
+
+        for vacation_id in seleccionadas:
+            vacation = db.session.get(VacationNovelty, vacation_id)
+            if not vacation or vacation.estado != VacacionEstado.APROBADO:
+                continue
+
+            existing_bridge = db.session.execute(
+                db.select(VacationNominaNovedad).filter(VacationNominaNovedad.vacation_novelty_id == vacation.id)
+            ).scalar_one_or_none()
+            if existing_bridge:
+                continue
+
+            tipo_valor = "dias"
+            if vacation.account and vacation.account.policy and vacation.account.policy.unit_type == "hours":
+                tipo_valor = "horas"
+
+            fecha_novedad = max(vacation.start_date, nomina.periodo_inicio)
+
+            nomina_novedad = NominaNovedad(
+                nomina_id=nomina.id,
+                empleado_id=vacation.empleado_id,
+                tipo_valor=tipo_valor,
+                codigo_concepto=codigo_concepto,
+                valor_cantidad=vacation.units,
+                fecha_novedad=fecha_novedad,
+                percepcion_id=percepcion_id,
+                deduccion_id=deduccion_id,
+                es_descanso_vacaciones=True,
+                vacation_novelty_id=vacation.id,
+                fecha_inicio_descanso=vacation.start_date,
+                fecha_fin_descanso=vacation.end_date,
+                estado=NovedadEstado.PENDIENTE,
+                creado_por=current_user.usuario,
+            )
+            db.session.add(nomina_novedad)
+            db.session.flush()
+
+            bridge = VacationNominaNovedad(
+                vacation_novelty_id=vacation.id,
+                nomina_id=nomina.id,
+                nomina_novedad_id=nomina_novedad.id,
+                aplicado_por=current_user.usuario,
+            )
+            db.session.add(bridge)
+
+            vacation.estado = VacacionEstado.APLICADO
+            vacation.modificado_por = current_user.usuario
+            applied_count += 1
+
+        if applied_count:
+            db.session.commit()
+            flash(_(f"Se aplicaron {applied_count} vacaciones a la nómina."), "success")
+        else:
+            db.session.rollback()
+            flash(_("No se aplicaron vacaciones. Verifique la selección."), "warning")
+
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+    return render_template(
+        "modules/planilla/aplicar_vacaciones.html",
+        planilla=planilla,
+        nomina=nomina,
+        vacaciones=vacaciones_pendientes,
+        percepciones=percepciones,
+        deducciones=deducciones,
+        tipo_concepto="income",
+        percepcion_id=None,
+        deduccion_id=None,
+    )
+
+
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/empleado/<nomina_empleado_id>")
 @require_read_access()
 def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: str):
@@ -285,6 +432,26 @@ def _apply_progress_snapshots(nominas: list[Nomina]) -> None:
         nomina.errores_calculo = progress.errores_calculo
         nomina.log_procesamiento = progress.log_procesamiento
         nomina.empleado_actual = progress.empleado_actual
+
+
+def _obtener_vacaciones_aprobadas_pendientes(planilla: Planilla, nomina: Nomina) -> list[VacationNovelty]:
+    stmt = (
+        db.select(VacationNovelty)
+        .join(PlanillaEmpleado, PlanillaEmpleado.empleado_id == VacationNovelty.empleado_id)
+        .outerjoin(
+            VacationNominaNovedad, VacationNominaNovedad.vacation_novelty_id == VacationNovelty.id
+        )
+        .filter(
+            PlanillaEmpleado.planilla_id == planilla.id,
+            PlanillaEmpleado.activo.is_(True),
+            VacationNovelty.estado == VacacionEstado.APROBADO,
+            VacationNovelty.start_date <= nomina.periodo_fin,
+            VacationNovelty.end_date >= nomina.periodo_inicio,
+            VacationNominaNovedad.id.is_(None),
+        )
+        .order_by(VacationNovelty.start_date, VacationNovelty.end_date)
+    )
+    return db.session.execute(stmt).scalars().all()
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aprobar", methods=["POST"])
