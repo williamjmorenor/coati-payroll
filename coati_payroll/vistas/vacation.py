@@ -434,7 +434,6 @@ def leave_request_approve(request_id):
     leave_request.modificado_por = current_user.usuario
 
     # Deduct from balance
-    old_balance = account.current_balance
     account.current_balance -= leave_request.units
 
     # Create ledger entry
@@ -443,7 +442,7 @@ def leave_request_approve(request_id):
         empleado_id=leave_request.empleado_id,
         entry_type=VacationLedgerType.USAGE,
         reference_id=leave_request.id,
-        reference_type="vacation_novelty",
+        reference_type="leave_request",
         quantity=-leave_request.units,
         balance_after=account.current_balance,
         fecha=date.today(),
