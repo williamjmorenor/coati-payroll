@@ -173,6 +173,8 @@ def edit_concept(concept_type: str, concept_id: str):
         "monto_default": concept.monto_default,
         "porcentaje": concept.porcentaje,
         "base_calculo": concept.base_calculo,
+        "invertir_asiento_contable": getattr(concept, "invertir_asiento_contable", None),
+        "mostrar_como_ingreso_reportes": getattr(concept, "mostrar_como_ingreso_reportes", None),
         "activo": concept.activo,
     }
 
@@ -191,6 +193,8 @@ def edit_concept(concept_type: str, concept_id: str):
             "monto_default": concept.monto_default,
             "porcentaje": concept.porcentaje,
             "base_calculo": concept.base_calculo,
+            "invertir_asiento_contable": getattr(concept, "invertir_asiento_contable", None),
+            "mostrar_como_ingreso_reportes": getattr(concept, "mostrar_como_ingreso_reportes", None),
             "activo": concept.activo,
         }
         cambios = detectar_cambios(original_data, new_data)
@@ -284,6 +288,9 @@ def populate_concept_from_form(concept, form):
     if hasattr(form, "contabilizable"):
         concept.contabilizable = form.contabilizable.data
 
+    if hasattr(form, "invertir_asiento_contable"):
+        concept.invertir_asiento_contable = form.invertir_asiento_contable.data
+
     if hasattr(form, "codigo_cuenta_debe") and form.codigo_cuenta_debe.data:
         concept.codigo_cuenta_debe = form.codigo_cuenta_debe.data
 
@@ -295,6 +302,9 @@ def populate_concept_from_form(concept, form):
 
     if hasattr(form, "descripcion_cuenta_haber") and form.descripcion_cuenta_haber.data:
         concept.descripcion_cuenta_haber = form.descripcion_cuenta_haber.data
+
+    if hasattr(form, "mostrar_como_ingreso_reportes"):
+        concept.mostrar_como_ingreso_reportes = form.mostrar_como_ingreso_reportes.data
 
     if hasattr(form, "editable_en_nomina"):
         concept.editable_en_nomina = form.editable_en_nomina.data

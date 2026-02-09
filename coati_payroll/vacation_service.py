@@ -685,7 +685,7 @@ class VacationService:
             else:
                 vac_novelty = db.session.get(VacationNovelty, nomina_novedad.vacation_novelty_id)
 
-            if not vac_novelty or vac_novelty.estado != VacacionEstado.APROBADO:
+            if not vac_novelty or vac_novelty.estado not in (VacacionEstado.APROBADO, VacacionEstado.APLICADO):
                 continue
 
             account = vac_novelty.account

@@ -139,6 +139,16 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             </div>
                         </div>
 
+                        {% if form.mostrar_como_ingreso_reportes is defined %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ render_field(form.mostrar_como_ingreso_reportes) }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         {% if form.editable_en_nomina is defined %}
                         <div class="row">
                             <div class="col-md-6">
@@ -178,6 +188,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                     {{ render_field(form.contabilizable) }}
                                 </div>
                             </div>
+                            {% if form.invertir_asiento_contable is defined %}
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ render_field(form.invertir_asiento_contable) }}
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="row">

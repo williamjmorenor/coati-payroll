@@ -531,6 +531,11 @@ class PercepcionForm(FlaskForm):
         _("Contabilizable"),
         default=True,
     )
+    invertir_asiento_contable = BooleanField(
+        _("Invertir Asiento Contable"),
+        default=False,
+        description=_("Invierte la naturaleza contable (debe/haber) para este concepto."),
+    )
     codigo_cuenta_debe = StringField(
         _("Cuenta Contable (Debe)"),
         validators=[Optional(), Length(max=64)],
@@ -546,6 +551,11 @@ class PercepcionForm(FlaskForm):
     descripcion_cuenta_haber = StringField(
         _("Descripción Cuenta (Haber)"),
         validators=[Optional(), Length(max=255)],
+    )
+    mostrar_como_ingreso_reportes = BooleanField(
+        _("Mostrar como ingreso en reportes"),
+        default=True,
+        description=_("Controla si este concepto se muestra como ingreso en reportes."),
     )
     editable_en_nomina = BooleanField(
         _("Editable en Nómina"),
@@ -677,6 +687,11 @@ class DeduccionForm(FlaskForm):
         _("Contabilizable"),
         default=True,
     )
+    invertir_asiento_contable = BooleanField(
+        _("Invertir Asiento Contable"),
+        default=False,
+        description=_("Invierte la naturaleza contable (debe/haber) para este concepto."),
+    )
     codigo_cuenta_debe = StringField(
         _("Cuenta Contable (Debe)"),
         validators=[Optional(), Length(max=64)],
@@ -692,6 +707,11 @@ class DeduccionForm(FlaskForm):
     descripcion_cuenta_haber = StringField(
         _("Descripción Cuenta (Haber)"),
         validators=[Optional(), Length(max=255)],
+    )
+    mostrar_como_ingreso_reportes = BooleanField(
+        _("Mostrar como ingreso en reportes"),
+        default=True,
+        description=_("Controla si este concepto se muestra como ingreso en reportes."),
     )
     editable_en_nomina = BooleanField(
         _("Editable en Nómina"),

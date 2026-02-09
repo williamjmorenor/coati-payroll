@@ -222,6 +222,12 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </button>
                 </form>
                 {% endif %}
+                {% if nomina.estado not in ['applied', 'paid'] %}
+                <a href="{{ url_for('planilla.aplicar_vacaciones_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-calendar-check"></i> Aplicar Vacaciones
+                </a>
+                {% endif %}
                 <a href="{{ url_for('planilla.listar_novedades', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-info">
                     <i class="bi bi-list-check"></i> Novedades
                 </a>
