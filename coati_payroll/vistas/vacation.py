@@ -411,11 +411,46 @@ def leave_request_approve(request_id):
         flash(_("Solo se pueden aprobar solicitudes pendientes."), "warning")
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
+    # Get the vacation account
+    account = leave_request.account
+    if not account:
+        flash(_("Cuenta de vacaciones no encontrada."), "danger")
+        return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
+
+    # Check if there's enough balance
+    if account.current_balance < leave_request.units:
+        flash(
+            _("Saldo insuficiente. Disponible: {}, Solicitado: {}").format(
+                account.current_balance, leave_request.units
+            ),
+            "danger",
+        )
+        return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
+
     # Update request status
     leave_request.estado = VacacionEstado.APROBADO
     leave_request.fecha_aprobacion = date.today()
     leave_request.aprobado_por = current_user.usuario
     leave_request.modificado_por = current_user.usuario
+
+    # Deduct from balance
+    old_balance = account.current_balance
+    account.current_balance -= leave_request.units
+
+    # Create ledger entry
+    ledger_entry = VacationLedger(
+        account_id=account.id,
+        empleado_id=leave_request.empleado_id,
+        entry_type=VacationLedgerType.USAGE,
+        reference_id=leave_request.id,
+        reference_type="vacation_novelty",
+        quantity=-leave_request.units,
+        balance_after=account.current_balance,
+        fecha=date.today(),
+        source="leave_request_approval",
+        observaciones=f"Aprobado por {current_user.usuario}",
+    )
+    db.session.add(ledger_entry)
 
     try:
         db.session.commit()

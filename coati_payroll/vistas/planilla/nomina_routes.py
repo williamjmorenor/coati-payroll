@@ -451,7 +451,7 @@ def _obtener_vacaciones_aprobadas_pendientes(planilla: Planilla, nomina: Nomina)
         )
         .order_by(VacationNovelty.start_date, VacationNovelty.end_date)
     )
-    return db.session.execute(stmt).scalars().all()
+    return list(db.session.execute(stmt).scalars().all())
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/aprobar", methods=["POST"])

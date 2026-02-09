@@ -376,9 +376,19 @@ class AccountingVoucherService:
                     if detalle.tipo == "income" and detalle.percepcion_id:
                         percepcion = self.session.get(Percepcion, detalle.percepcion_id)
                         if percepcion and percepcion.contabilizable:
-                            invertir_asiento = getattr(percepcion, "invertir_asiento_contable", False)
-                            debe_codigo = percepcion.codigo_cuenta_haber if invertir_asiento else percepcion.codigo_cuenta_debe
-                            haber_codigo = percepcion.codigo_cuenta_debe if invertir_asiento else percepcion.codigo_cuenta_haber
+                            invertir_asiento = getattr(
+                                percepcion, "invertir_asiento_contable", False
+                            )
+                            debe_codigo = (
+                                percepcion.codigo_cuenta_haber
+                                if invertir_asiento
+                                else percepcion.codigo_cuenta_debe
+                            )
+                            haber_codigo = (
+                                percepcion.codigo_cuenta_debe
+                                if invertir_asiento
+                                else percepcion.codigo_cuenta_haber
+                            )
                             debe_descripcion = (
                                 (percepcion.descripcion_cuenta_haber or percepcion.nombre)
                                 if invertir_asiento
@@ -451,9 +461,19 @@ class AccountingVoucherService:
                     elif detalle.tipo == "deduction" and detalle.deduccion_id:
                         deduccion = self.session.get(Deduccion, detalle.deduccion_id)
                         if deduccion and deduccion.contabilizable:
-                            invertir_asiento = getattr(deduccion, "invertir_asiento_contable", False)
-                            debe_codigo = deduccion.codigo_cuenta_haber if invertir_asiento else deduccion.codigo_cuenta_debe
-                            haber_codigo = deduccion.codigo_cuenta_debe if invertir_asiento else deduccion.codigo_cuenta_haber
+                            invertir_asiento = getattr(
+                                deduccion, "invertir_asiento_contable", False
+                            )
+                            debe_codigo = (
+                                deduccion.codigo_cuenta_haber
+                                if invertir_asiento
+                                else deduccion.codigo_cuenta_debe
+                            )
+                            haber_codigo = (
+                                deduccion.codigo_cuenta_debe
+                                if invertir_asiento
+                                else deduccion.codigo_cuenta_haber
+                            )
                             debe_descripcion = (
                                 (deduccion.descripcion_cuenta_haber or deduccion.nombre)
                                 if invertir_asiento
