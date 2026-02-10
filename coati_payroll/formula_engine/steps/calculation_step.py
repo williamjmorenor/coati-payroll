@@ -7,8 +7,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 # Standard library
 # <-------------------------------------------------------------------------> #
-from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 # <-------------------------------------------------------------------------> #
 # Third party packages
@@ -27,14 +26,14 @@ if TYPE_CHECKING:
 class CalculationStep(Step):
     """Step for executing mathematical calculations."""
 
-    def execute(self, context: "ExecutionContext") -> Decimal:
+    def execute(self, context: "ExecutionContext") -> Any:  # Changed from Decimal to Any
         """Execute calculation step.
 
         Args:
             context: Execution context
 
         Returns:
-            Calculated result as Decimal
+            Calculated result (Decimal for numbers, date for dates, etc.)
         """
         formula = self.config.get("formula", "")
         evaluator = ExpressionEvaluator(

@@ -8,7 +8,6 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Any, Callable, cast
 
 # <-------------------------------------------------------------------------> #
@@ -25,14 +24,14 @@ from ..ast.safe_operators import SAFE_FUNCTIONS, SAFE_OPERATORS
 class ExecutionContext:
     """Context for formula execution."""
 
-    variables: dict[str, Decimal]
+    variables: dict[str, Any]  # Changed from dict[str, Decimal] to support dates and other types
     tax_tables: dict[str, Any]
     strict_mode: bool = False
     trace_callback: Callable[[str], None] | None = None
     safe_operators: dict[type, Any] = field(default_factory=lambda: cast(dict[type, Any], SAFE_OPERATORS))
     safe_functions: dict[str, Any] = field(default_factory=lambda: SAFE_FUNCTIONS)
 
-    def with_variable(self, name: str, value: Decimal) -> "ExecutionContext":
+    def with_variable(self, name: str, value: Any) -> "ExecutionContext":  # Changed from Decimal to Any
         """Create a new context with an additional variable.
 
         Args:

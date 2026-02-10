@@ -8,6 +8,7 @@ from __future__ import annotations
 # Standard library
 # <-------------------------------------------------------------------------> #
 from abc import ABC, abstractmethod
+from datetime import date
 from decimal import Decimal
 from typing import Any, TYPE_CHECKING
 
@@ -47,10 +48,25 @@ class Step(ABC):
             Step execution result
         """
 
-    def get_variable_value(self, result: Any) -> Decimal:
-        """Return the Decimal value to store for this step."""
-        from ..exceptions import CalculationError
+    def get_variable_value(self, result: Any) -> Any:  # Changed from Decimal to Any
+        """Return the value to store for this step.
 
-        if not isinstance(result, Decimal):
-            raise CalculationError(f"Step '{self.name}' must return Decimal, got {type(result).__name__}")
-        return result
+        For numeric results, ensures it's a Decimal.
+        For date/string results, returns as-is.
+        """
+        from ..ast.type_converter import to_decimal
+
+        # If it's already a Decimal, return it
+        if isinstance(result, Decimal):
+            return result
+
+        # If it's a date or string (from date functions), return as-is
+        if isinstance(result, (str, date)):
+            return result
+
+        # For other numeric types, try to convert to Decimal
+        try:
+            return to_decimal(result)
+        except Exception:
+            # If conversion fails, it might be a valid non-numeric type
+            return result

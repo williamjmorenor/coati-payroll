@@ -17,7 +17,6 @@ from typing import Any
 # <-------------------------------------------------------------------------> #
 # Local modules
 # <-------------------------------------------------------------------------> #
-from ..exceptions import CalculationError
 
 
 class VariableStore:
@@ -25,23 +24,22 @@ class VariableStore:
 
     def __init__(self):
         """Initialize variable store."""
-        self.variables: dict[str, Decimal] = {}
+        self.variables: dict[str, Any] = {}  # Changed from Decimal to Any to support dates
         self.results: dict[str, Any] = {}
 
-    def set(self, name: str, value: Decimal, result: Any | None = None) -> None:
+    def set(self, name: str, value: Any, result: Any | None = None) -> None:
         """Set a variable value.
 
         Args:
             name: Variable name
-            value: Variable value
+            value: Variable value (can be Decimal, date, string, etc.)
             result: Optional raw result for audit purposes
         """
-        if not isinstance(value, Decimal):
-            raise CalculationError(f"Variable '{name}' must be Decimal, got {type(value).__name__}")
+        # Removed the Decimal type check to allow dates and other types
         self.variables[name] = value
         self.results[name] = result if result is not None else value
 
-    def get(self, name: str, default: Decimal = Decimal("0")) -> Decimal:
+    def get(self, name: str, default: Any = Decimal("0")) -> Any:
         """Get a variable value.
 
         Args:

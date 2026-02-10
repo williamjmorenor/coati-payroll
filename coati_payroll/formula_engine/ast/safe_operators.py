@@ -15,6 +15,7 @@ Security Guarantees:
 Allowed Operations:
 - Arithmetic: +, -, *, /, //, %, **
 - Functions: min, max, abs, round
+- Date functions: days_between, max_date, min_date
 - Variables: Only pre-defined variables from the execution context
 - Constants: Numeric literals only
 
@@ -34,6 +35,8 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 import ast
 import operator
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any, Callable
 
 # <-------------------------------------------------------------------------> #
@@ -48,6 +51,141 @@ from typing import Any, Callable
 MAX_EXPRESSION_LENGTH = 1000
 MAX_AST_DEPTH = 50
 MAX_FUNCTION_ARGS = 20
+
+
+# <-------------------- Date Helper Functions --------------------> #
+def _safe_days_between(start_date: Any, end_date: Any) -> Decimal:
+    """Calculate days between two dates safely.
+
+    Args:
+        start_date: Start date (date object, datetime object, or ISO string YYYY-MM-DD)
+        end_date: End date (date object, datetime object, or ISO string YYYY-MM-DD)
+
+    Returns:
+        Number of days between dates as Decimal. Returns 0 if inputs are invalid.
+
+    Security:
+        - No file I/O or system calls
+        - No arbitrary code execution
+        - Returns 0 for invalid inputs instead of raising exceptions
+    """
+    try:
+        # Convert to date objects if needed
+        if isinstance(start_date, str):
+            start_date = datetime.fromisoformat(start_date.split("T")[0]).date()
+        elif isinstance(start_date, datetime):
+            start_date = start_date.date()
+        elif isinstance(start_date, (int, float, Decimal)):
+            # If passed as a number, return 0 (invalid input)
+            return Decimal("0")
+
+        if isinstance(end_date, str):
+            end_date = datetime.fromisoformat(end_date.split("T")[0]).date()
+        elif isinstance(end_date, datetime):
+            end_date = end_date.date()
+        elif isinstance(end_date, (int, float, Decimal)):
+            # If passed as a number, return 0 (invalid input)
+            return Decimal("0")
+
+        # Calculate difference
+        if isinstance(start_date, date) and isinstance(end_date, date):
+            days = (end_date - start_date).days
+            return Decimal(str(days))
+        return Decimal("0")
+    except (ValueError, AttributeError, TypeError):
+        return Decimal("0")
+
+
+def _safe_max_date(date1: Any, date2: Any) -> Any:
+    """Return the maximum (latest) of two dates.
+
+    Args:
+        date1: First date (date object, datetime object, or ISO string)
+        date2: Second date (date object, datetime object, or ISO string)
+
+    Returns:
+        The later of the two dates in the same format as inputs.
+        Returns date1 if inputs are invalid.
+
+    Security:
+        - No file I/O or system calls
+        - No arbitrary code execution
+        - Returns first argument for invalid inputs
+    """
+    try:
+        # Store original types for return
+        date1_original = date1
+        date2_original = date2
+
+        # Convert to date objects for comparison
+        if isinstance(date1, str):
+            date1_cmp = datetime.fromisoformat(date1.split("T")[0]).date()
+        elif isinstance(date1, datetime):
+            date1_cmp = date1.date()
+        else:
+            date1_cmp = date1
+
+        if isinstance(date2, str):
+            date2_cmp = datetime.fromisoformat(date2.split("T")[0]).date()
+        elif isinstance(date2, datetime):
+            date2_cmp = date2.date()
+        else:
+            date2_cmp = date2
+
+        # Compare and return original format
+        if isinstance(date1_cmp, date) and isinstance(date2_cmp, date):
+            if date1_cmp >= date2_cmp:
+                return date1_original
+            return date2_original
+        return date1_original
+    except (ValueError, AttributeError, TypeError):
+        return date1
+
+
+def _safe_min_date(date1: Any, date2: Any) -> Any:
+    """Return the minimum (earliest) of two dates.
+
+    Args:
+        date1: First date (date object, datetime object, or ISO string)
+        date2: Second date (date object, datetime object, or ISO string)
+
+    Returns:
+        The earlier of the two dates in the same format as inputs.
+        Returns date1 if inputs are invalid.
+
+    Security:
+        - No file I/O or system calls
+        - No arbitrary code execution
+        - Returns first argument for invalid inputs
+    """
+    try:
+        # Store original types for return
+        date1_original = date1
+        date2_original = date2
+
+        # Convert to date objects for comparison
+        if isinstance(date1, str):
+            date1_cmp = datetime.fromisoformat(date1.split("T")[0]).date()
+        elif isinstance(date1, datetime):
+            date1_cmp = date1.date()
+        else:
+            date1_cmp = date1
+
+        if isinstance(date2, str):
+            date2_cmp = datetime.fromisoformat(date2.split("T")[0]).date()
+        elif isinstance(date2, datetime):
+            date2_cmp = date2.date()
+        else:
+            date2_cmp = date2
+
+        # Compare and return original format
+        if isinstance(date1_cmp, date) and isinstance(date2_cmp, date):
+            if date1_cmp <= date2_cmp:
+                return date1_original
+            return date2_original
+        return date1_original
+    except (ValueError, AttributeError, TypeError):
+        return date1
 
 
 def _calculate_ast_depth(node: ast.AST) -> int:
@@ -109,6 +247,9 @@ def validate_safe_function_call(func_name: str, args: list[Any]) -> None:
     if func_name in ("min", "max") and len(args) < 1:
         raise ValueError(f"{func_name}() requires at least 1 argument")
 
+    if func_name in ("days_between", "max_date", "min_date") and len(args) != 2:
+        raise ValueError(f"{func_name}() requires exactly 2 arguments")
+
 
 # Safe operators for expression evaluation
 SAFE_OPERATORS = {
@@ -139,6 +280,10 @@ SAFE_FUNCTIONS: dict[str, Callable[..., Any]] = {
     "max": max,
     "abs": abs,
     "round": round,
+    # Date calculation functions (security reviewed)
+    "days_between": _safe_days_between,
+    "max_date": _safe_max_date,
+    "min_date": _safe_min_date,
 }
 
 # Allowed AST node types for security validation - WHITELIST ONLY

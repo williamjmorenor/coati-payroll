@@ -34,7 +34,7 @@ from __future__ import annotations
 # <-------------------------------------------------------------------------> #
 import ast
 from decimal import Decimal
-from typing import Callable
+from typing import Any, Callable
 
 # <-------------------------------------------------------------------------> #
 # Third party packages
@@ -45,7 +45,7 @@ from typing import Callable
 # <-------------------------------------------------------------------------> #
 from coati_payroll.i18n import _
 from coati_payroll.log import TRACE_LEVEL_NUM, is_trace_enabled, log
-from ..exceptions import CalculationError
+from ..exceptions import CalculationError, ValidationError
 from .ast_visitor import SafeASTVisitor
 from .safe_operators import ALLOWED_AST_TYPES, validate_expression_complexity
 from .type_converter import to_decimal
@@ -97,7 +97,7 @@ class ExpressionEvaluator:
             except Exception:
                 pass
 
-    def evaluate(self, expression: str) -> Decimal:
+    def evaluate(self, expression: str) -> Any:  # Changed from Decimal to Any
         """Safely evaluate a mathematical expression using AST.
 
         This method implements multiple layers of security validation:
@@ -111,7 +111,7 @@ class ExpressionEvaluator:
             expression: Mathematical expression string (e.g., 'a + b * 2')
 
         Returns:
-            Result of the expression as Decimal
+            Result of the expression (Decimal for numbers, date for dates, etc.)
 
         Raises:
             CalculationError: If expression is invalid, unsafe, or evaluation fails
@@ -143,7 +143,19 @@ class ExpressionEvaluator:
 
             visitor = SafeASTVisitor(self.variables, strict_mode=self.strict_mode)
             result = visitor.visit(tree.body)
-            final_result = to_decimal(result)
+
+            # Try to convert to Decimal only if it's a numeric result
+            # Date functions and other special types return as-is
+            try:
+                if isinstance(result, (int, float, str)):
+                    # If it looks like a number, convert to Decimal
+                    final_result = to_decimal(result)
+                else:
+                    # Otherwise keep the original type (date, etc.)
+                    final_result = result
+            except (ValidationError, ValueError):
+                # If conversion fails, keep original result
+                final_result = result
 
             self.trace_callback(
                 _("Resultado expresión '%(expr)s' => %(res)s") % {"expr": expression, "res": final_result}

@@ -159,25 +159,31 @@ class FormulaEngine:
 
         return execution_result.to_dict()
 
-    def _prepare_initial_variables(self, inputs: dict[str, Any]) -> dict[str, Decimal]:
+    def _prepare_initial_variables(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Prepare initial variables from inputs and defaults.
 
         Args:
             inputs: Input values provided by caller
 
         Returns:
-            Dictionary of variable names to Decimal values
+            Dictionary of variable names to values (Decimal for numbers, original type for dates/strings)
         """
         variables = {}
         for input_def in self.schema.get("inputs", []):
             name = input_def.get("name")
             default = input_def.get("default", 0)
+            input_type = input_def.get("type", "decimal")
 
-            # Use provided input or default
-            if name in inputs:
-                variables[name] = to_decimal(inputs[name])
+            # Get the value (from input or default)
+            value = inputs.get(name, default)
+
+            # Convert based on type
+            if input_type in ("date", "string"):
+                # Keep dates and strings as-is
+                variables[name] = value
             else:
-                variables[name] = to_decimal(default)
+                # Convert numbers to Decimal
+                variables[name] = to_decimal(value)
 
             source = "input" if name in inputs else "default"
             self._trace(

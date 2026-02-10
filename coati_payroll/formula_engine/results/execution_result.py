@@ -24,9 +24,9 @@ class ExecutionResult:
 
     def __init__(
         self,
-        variables: dict[str, Decimal],
+        variables: dict[str, Any],  # Changed from Decimal to Any
         step_results: dict[str, Any],
-        final_output: Decimal,
+        final_output: Any,  # Changed from Decimal to Any
     ):
         self.variables = variables
         self.step_results = step_results
@@ -64,8 +64,14 @@ class ExecutionResult:
             else:
                 processed_results[key] = value
 
+        # Process final output - handle non-Decimal types
+        if isinstance(self.final_output, Decimal):
+            final_output_processed = _round_to_two(self.final_output)
+        else:
+            final_output_processed = self.final_output
+
         return {
             "variables": processed_vars,
             "results": processed_results,
-            "output": _round_to_two(self.final_output),
+            "output": final_output_processed,
         }

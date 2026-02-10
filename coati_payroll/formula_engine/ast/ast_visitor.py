@@ -25,6 +25,7 @@ from __future__ import annotations
 import ast
 from abc import ABC, abstractmethod
 from decimal import Decimal
+from typing import Any
 
 # <-------------------------------------------------------------------------> #
 # Third party packages
@@ -47,14 +48,14 @@ class ASTVisitor(ABC):
     """
 
     @abstractmethod
-    def visit(self, node: ast.AST) -> Decimal:
+    def visit(self, node: ast.AST) -> Any:  # Changed from Decimal to Any
         """Visit and evaluate an AST node.
 
         Args:
             node: The AST node to visit and evaluate
 
         Returns:
-            The evaluated result as a Decimal
+            The evaluated result (Decimal, date, or other supported type)
 
         Raises:
             CalculationError: If the node cannot be safely evaluated
@@ -89,7 +90,7 @@ class SafeASTVisitor(ASTVisitor):
         self.variables = variables
         self.strict_mode = strict_mode
 
-    def visit(self, node: ast.AST) -> Decimal:
+    def visit(self, node: ast.AST) -> Any:  # Changed from Decimal to Any
         """Visit and evaluate an AST node using explicit dispatch.
 
         This method uses explicit type checking with match/case instead of
@@ -101,7 +102,7 @@ class SafeASTVisitor(ASTVisitor):
             node: AST node to evaluate
 
         Returns:
-            Decimal result of evaluation
+            Result of evaluation (Decimal for numbers, date for dates, etc.)
 
         Raises:
             CalculationError: If the node type is not supported or evaluation fails
@@ -137,14 +138,14 @@ class SafeASTVisitor(ASTVisitor):
         """
         return to_decimal(node.value)
 
-    def visit_name(self, node: ast.Name) -> Decimal:
+    def visit_name(self, node: ast.Name) -> Any:  # Changed from Decimal to Any
         """Visit a variable name node.
 
         Args:
             node: AST Name node representing a variable reference
 
         Returns:
-            The value of the variable from the context
+            The value of the variable from the context (can be Decimal, date, string, etc.)
 
         Raises:
             CalculationError: If the variable is not defined in the context
@@ -213,14 +214,14 @@ class SafeASTVisitor(ASTVisitor):
             f"Unary operator '{op_type.__name__}' is not allowed. " "Only unary + and - are permitted."
         )
 
-    def visit_call(self, node: ast.Call) -> Decimal:
+    def visit_call(self, node: ast.Call) -> Any:  # Changed return type from Decimal to Any
         """Visit a function call node (e.g., max(a, b), round(x, 2)).
 
         Args:
             node: AST Call node representing a function call
 
         Returns:
-            The result of the function call as a Decimal
+            The result of the function call (Decimal for math functions, date for date functions)
 
         Raises:
             CalculationError: If the function is not whitelisted or call fails
@@ -255,6 +256,10 @@ class SafeASTVisitor(ASTVisitor):
                 result = SAFE_FUNCTIONS[func_name](args[0], prec)
             else:
                 result = SAFE_FUNCTIONS[func_name](*args)
+
+            # For date functions, return as-is. For numeric functions, convert to Decimal
+            if func_name in ("days_between", "max_date", "min_date"):
+                return result
             return to_decimal(result)
         except TypeError as e:
             raise CalculationError(f"Invalid arguments for function '{func_name}': {e}") from e
