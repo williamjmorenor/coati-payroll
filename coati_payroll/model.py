@@ -561,6 +561,10 @@ class Percepcion(database.Model, BaseTabla):
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
 
+    # Defaults de tratamiento de inasistencias al crear novedades
+    es_inasistencia = database.Column(database.Boolean(), default=False, nullable=False)
+    descontar_pago_inasistencia = database.Column(database.Boolean(), default=False, nullable=False)
+
     # Audit and governance fields
     estado_aprobacion = database.Column(
         database.String(20), nullable=False, default=EstadoAprobacion.BORRADOR, index=True
@@ -621,6 +625,10 @@ class Deduccion(database.Model, BaseTabla):
 
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
+
+    # Defaults de tratamiento de inasistencias al crear novedades
+    es_inasistencia = database.Column(database.Boolean(), default=False, nullable=False)
+    descontar_pago_inasistencia = database.Column(database.Boolean(), default=False, nullable=False)
 
     # Audit and governance fields
     estado_aprobacion = database.Column(
@@ -2248,9 +2256,7 @@ class VacationNominaNovedad(database.Model, BaseTabla):
         database.String(26), database.ForeignKey("vacation_novelty.id"), nullable=False
     )
     nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
-    nomina_novedad_id = database.Column(
-        database.String(26), database.ForeignKey("nomina_novedad.id"), nullable=False
-    )
+    nomina_novedad_id = database.Column(database.String(26), database.ForeignKey("nomina_novedad.id"), nullable=False)
 
     aplicado_por = database.Column(database.String(150), nullable=True)
     aplicado_en = database.Column(database.DateTime, nullable=True, default=utc_now)

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Added concept-level absence defaults to `Percepcion` and `Deduccion` via `es_inasistencia` and `descontar_pago_inasistencia`.
+- Updated payroll concept forms and shared concept UI to configure these absence-default flags.
+- Updated concept persistence/audit change detection to store and track the new absence-default flags.
+- Updated novelty backend creation/update to apply defaults from the selected concept when absence flags are omitted, while preserving explicit payload values.
+- Applied the same absence-default resolution to vacation-generated novelties and demo novelty creation for consistent behavior across entry points.
+- Added route-level tests for novelty creation to validate default propagation and explicit override behavior.
+- Refactored novelty absence-default resolution into a shared utility module to simplify reuse and enable isolated unit testing.
+- Added focused unit tests for absence-default resolution and explicit-form override behavior without requiring full view/bootstrap fixtures.
+
 ## [1.1.1] - 2026-02-09
 
 ### Changed

@@ -562,6 +562,18 @@ class PercepcionForm(FlaskForm):
         default=False,
         description=_("¿Permitir modificar el monto durante la nómina?"),
     )
+    es_inasistencia = BooleanField(
+        _("Es Inasistencia por Defecto"),
+        default=False,
+        description=_("Si está activo, las novedades de esta percepción se marcarán como inasistencia por defecto."),
+    )
+    descontar_pago_inasistencia = BooleanField(
+        _("Descontar Pago por Inasistencia por Defecto"),
+        default=False,
+        description=_(
+            "Si está activo, las novedades de esta percepción descontarán salario por inasistencia por defecto."
+        ),
+    )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
 
@@ -717,6 +729,18 @@ class DeduccionForm(FlaskForm):
         _("Editable en Nómina"),
         default=False,
         description=_("¿Permitir modificar el monto durante la nómina?"),
+    )
+    es_inasistencia = BooleanField(
+        _("Es Inasistencia por Defecto"),
+        default=False,
+        description=_("Si está activo, las novedades de esta deducción se marcarán como inasistencia por defecto."),
+    )
+    descontar_pago_inasistencia = BooleanField(
+        _("Descontar Pago por Inasistencia por Defecto"),
+        default=False,
+        description=_(
+            "Si está activo, las novedades de esta deducción descontarán salario por inasistencia por defecto."
+        ),
     )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))

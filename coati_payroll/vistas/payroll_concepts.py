@@ -175,6 +175,8 @@ def edit_concept(concept_type: str, concept_id: str):
         "base_calculo": concept.base_calculo,
         "invertir_asiento_contable": getattr(concept, "invertir_asiento_contable", None),
         "mostrar_como_ingreso_reportes": getattr(concept, "mostrar_como_ingreso_reportes", None),
+        "es_inasistencia": getattr(concept, "es_inasistencia", None),
+        "descontar_pago_inasistencia": getattr(concept, "descontar_pago_inasistencia", None),
         "activo": concept.activo,
     }
 
@@ -195,6 +197,8 @@ def edit_concept(concept_type: str, concept_id: str):
             "base_calculo": concept.base_calculo,
             "invertir_asiento_contable": getattr(concept, "invertir_asiento_contable", None),
             "mostrar_como_ingreso_reportes": getattr(concept, "mostrar_como_ingreso_reportes", None),
+            "es_inasistencia": getattr(concept, "es_inasistencia", None),
+            "descontar_pago_inasistencia": getattr(concept, "descontar_pago_inasistencia", None),
             "activo": concept.activo,
         }
         cambios = detectar_cambios(original_data, new_data)
@@ -308,6 +312,12 @@ def populate_concept_from_form(concept, form):
 
     if hasattr(form, "editable_en_nomina"):
         concept.editable_en_nomina = form.editable_en_nomina.data
+
+    if hasattr(form, "es_inasistencia"):
+        concept.es_inasistencia = form.es_inasistencia.data
+
+    if hasattr(form, "descontar_pago_inasistencia"):
+        concept.descontar_pago_inasistencia = form.descontar_pago_inasistencia.data
 
     # Vigencia fields
     if hasattr(form, "vigente_desde"):

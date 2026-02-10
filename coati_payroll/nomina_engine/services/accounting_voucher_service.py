@@ -376,18 +376,12 @@ class AccountingVoucherService:
                     if detalle.tipo == "income" and detalle.percepcion_id:
                         percepcion = self.session.get(Percepcion, detalle.percepcion_id)
                         if percepcion and percepcion.contabilizable:
-                            invertir_asiento = getattr(
-                                percepcion, "invertir_asiento_contable", False
-                            )
+                            invertir_asiento = getattr(percepcion, "invertir_asiento_contable", False)
                             debe_codigo = (
-                                percepcion.codigo_cuenta_haber
-                                if invertir_asiento
-                                else percepcion.codigo_cuenta_debe
+                                percepcion.codigo_cuenta_haber if invertir_asiento else percepcion.codigo_cuenta_debe
                             )
                             haber_codigo = (
-                                percepcion.codigo_cuenta_debe
-                                if invertir_asiento
-                                else percepcion.codigo_cuenta_haber
+                                percepcion.codigo_cuenta_debe if invertir_asiento else percepcion.codigo_cuenta_haber
                             )
                             debe_descripcion = (
                                 (percepcion.descripcion_cuenta_haber or percepcion.nombre)
@@ -411,11 +405,7 @@ class AccountingVoucherService:
                                 empleado_codigo=empleado.codigo_empleado,
                                 empleado_nombre=empleado_nombre_completo,
                                 codigo_cuenta=debe_codigo,  # Can be None
-                                descripcion_cuenta=(
-                                    debe_descripcion
-                                    if debe_codigo
-                                    else None
-                                ),
+                                descripcion_cuenta=(debe_descripcion if debe_codigo else None),
                                 centro_costos=centro_costos,
                                 tipo_debito_credito="debito",
                                 debito=detalle_monto,
@@ -440,11 +430,7 @@ class AccountingVoucherService:
                                 empleado_codigo=empleado.codigo_empleado,
                                 empleado_nombre=empleado_nombre_completo,
                                 codigo_cuenta=haber_codigo,  # Can be None
-                                descripcion_cuenta=(
-                                    haber_descripcion
-                                    if haber_codigo
-                                    else None
-                                ),
+                                descripcion_cuenta=(haber_descripcion if haber_codigo else None),
                                 centro_costos=centro_costos,
                                 tipo_debito_credito="credito",
                                 debito=Decimal("0.00"),
@@ -461,18 +447,12 @@ class AccountingVoucherService:
                     elif detalle.tipo == "deduction" and detalle.deduccion_id:
                         deduccion = self.session.get(Deduccion, detalle.deduccion_id)
                         if deduccion and deduccion.contabilizable:
-                            invertir_asiento = getattr(
-                                deduccion, "invertir_asiento_contable", False
-                            )
+                            invertir_asiento = getattr(deduccion, "invertir_asiento_contable", False)
                             debe_codigo = (
-                                deduccion.codigo_cuenta_haber
-                                if invertir_asiento
-                                else deduccion.codigo_cuenta_debe
+                                deduccion.codigo_cuenta_haber if invertir_asiento else deduccion.codigo_cuenta_debe
                             )
                             haber_codigo = (
-                                deduccion.codigo_cuenta_debe
-                                if invertir_asiento
-                                else deduccion.codigo_cuenta_haber
+                                deduccion.codigo_cuenta_debe if invertir_asiento else deduccion.codigo_cuenta_haber
                             )
                             debe_descripcion = (
                                 (deduccion.descripcion_cuenta_haber or deduccion.nombre)
@@ -496,11 +476,7 @@ class AccountingVoucherService:
                                 empleado_codigo=empleado.codigo_empleado,
                                 empleado_nombre=empleado_nombre_completo,
                                 codigo_cuenta=debe_codigo,  # Can be None
-                                descripcion_cuenta=(
-                                    debe_descripcion
-                                    if debe_codigo
-                                    else None
-                                ),
+                                descripcion_cuenta=(debe_descripcion if debe_codigo else None),
                                 centro_costos=centro_costos,
                                 tipo_debito_credito="debito",
                                 debito=detalle_monto,
@@ -525,11 +501,7 @@ class AccountingVoucherService:
                                 empleado_codigo=empleado.codigo_empleado,
                                 empleado_nombre=empleado_nombre_completo,
                                 codigo_cuenta=haber_codigo,  # Can be None
-                                descripcion_cuenta=(
-                                    haber_descripcion
-                                    if haber_codigo
-                                    else None
-                                ),
+                                descripcion_cuenta=(haber_descripcion if haber_codigo else None),
                                 centro_costos=centro_costos,
                                 tipo_debito_credito="credito",
                                 debito=Decimal("0.00"),

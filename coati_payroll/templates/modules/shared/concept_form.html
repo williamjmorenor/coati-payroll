@@ -159,6 +159,25 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         </div>
                         {% endif %}
 
+                        {% if form.es_inasistencia is defined or form.descontar_pago_inasistencia is defined %}
+                        <div class="row">
+                            {% if form.es_inasistencia is defined %}
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ render_field(form.es_inasistencia) }}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if form.descontar_pago_inasistencia is defined %}
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ render_field(form.descontar_pago_inasistencia) }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
                         <!-- Vigencia -->
                         <h5 class="border-bottom pb-2 mb-3 mt-4">
                             <i class="bi bi-calendar-range me-2"></i>{{ _('Vigencia') }}

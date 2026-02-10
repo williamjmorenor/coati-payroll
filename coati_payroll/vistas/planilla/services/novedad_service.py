@@ -4,12 +4,49 @@
 
 from decimal import Decimal
 from typing import Any, cast
-from coati_payroll.model import db, Planilla, Nomina, NominaNovedad
+from flask import has_request_context, request
+
+from coati_payroll.absence_defaults import (
+    resolve_absence_flags,
+    resolve_explicit_flag_from_form,
+)
+from coati_payroll.model import db, Planilla, Nomina, NominaNovedad, Percepcion, Deduccion
 from coati_payroll.vistas.planilla.helpers.form_helpers import get_concepto_ids_from_form
 
 
 class NovedadService:
     """Service for novedad operations."""
+
+    @staticmethod
+    def _resolve_explicit_flag_from_form(form, field_name: str) -> bool | None:
+        """Get explicit boolean value from form if provided in request payload.
+
+        Returns None when the field is not present in the payload, so the caller
+        can apply concept-level defaults.
+        """
+        return resolve_explicit_flag_from_form(
+            form,
+            field_name,
+            has_request_context=has_request_context(),
+            request_form=request.form if has_request_context() else None,
+        )
+
+    @staticmethod
+    def resolve_absence_flags(
+        percepcion_id: str | None,
+        deduccion_id: str | None,
+        explicit_es_inasistencia: bool | None = None,
+        explicit_descontar_pago_inasistencia: bool | None = None,
+    ) -> tuple[bool, bool]:
+        """Resolve absence flags with concept-level defaults when not explicitly provided."""
+        return resolve_absence_flags(
+            percepcion_id=percepcion_id,
+            deduccion_id=deduccion_id,
+            get_percepcion=lambda concept_id: db.session.get(Percepcion, concept_id),
+            get_deduccion=lambda concept_id: db.session.get(Deduccion, concept_id),
+            explicit_es_inasistencia=explicit_es_inasistencia,
+            explicit_descontar_pago_inasistencia=explicit_descontar_pago_inasistencia,
+        )
 
     @staticmethod
     def listar_novedades(planilla: Planilla, nomina: Nomina) -> list:
@@ -77,6 +114,14 @@ class NovedadService:
             The created NominaNovedad
         """
         percepcion_id, deduccion_id = get_concepto_ids_from_form(form)
+        explicit_es_inasistencia = NovedadService._resolve_explicit_flag_from_form(form, "es_inasistencia")
+        explicit_descontar_pago = NovedadService._resolve_explicit_flag_from_form(form, "descontar_pago_inasistencia")
+        es_inasistencia, descontar_pago_inasistencia = NovedadService.resolve_absence_flags(
+            percepcion_id=percepcion_id,
+            deduccion_id=deduccion_id,
+            explicit_es_inasistencia=explicit_es_inasistencia,
+            explicit_descontar_pago_inasistencia=explicit_descontar_pago,
+        )
 
         novedad = NominaNovedad(
             nomina_id=nomina.id,
@@ -87,8 +132,8 @@ class NovedadService:
             fecha_novedad=form.fecha_novedad.data,
             percepcion_id=percepcion_id,
             deduccion_id=deduccion_id,
-            es_inasistencia=bool(form.es_inasistencia.data),
-            descontar_pago_inasistencia=bool(form.descontar_pago_inasistencia.data),
+            es_inasistencia=es_inasistencia,
+            descontar_pago_inasistencia=descontar_pago_inasistencia,
             creado_por=usuario,
         )
         db.session.add(novedad)
@@ -105,6 +150,14 @@ class NovedadService:
             usuario: Username of the user updating
         """
         percepcion_id, deduccion_id = get_concepto_ids_from_form(form)
+        explicit_es_inasistencia = NovedadService._resolve_explicit_flag_from_form(form, "es_inasistencia")
+        explicit_descontar_pago = NovedadService._resolve_explicit_flag_from_form(form, "descontar_pago_inasistencia")
+        es_inasistencia, descontar_pago_inasistencia = NovedadService.resolve_absence_flags(
+            percepcion_id=percepcion_id,
+            deduccion_id=deduccion_id,
+            explicit_es_inasistencia=explicit_es_inasistencia,
+            explicit_descontar_pago_inasistencia=explicit_descontar_pago,
+        )
 
         novedad.empleado_id = form.empleado_id.data
         novedad.codigo_concepto = form.codigo_concepto.data
@@ -113,7 +166,7 @@ class NovedadService:
         novedad.fecha_novedad = form.fecha_novedad.data
         novedad.percepcion_id = percepcion_id
         novedad.deduccion_id = deduccion_id
-        novedad.es_inasistencia = bool(form.es_inasistencia.data)
-        novedad.descontar_pago_inasistencia = bool(form.descontar_pago_inasistencia.data)
+        novedad.es_inasistencia = es_inasistencia
+        novedad.descontar_pago_inasistencia = descontar_pago_inasistencia
         novedad.modificado_por = usuario
         db.session.commit()

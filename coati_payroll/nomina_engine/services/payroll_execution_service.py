@@ -415,9 +415,7 @@ class PayrollExecutionService:
             )
             salario_mensual = round_money(salario_mensual_origen * emp_calculo.tipo_cambio, planilla_moneda)
             salario_periodo = round_money(salario_periodo_origen * emp_calculo.tipo_cambio, planilla_moneda)
-            salario_periodo_neto = round_money(
-                salario_periodo_origen_neto * emp_calculo.tipo_cambio, planilla_moneda
-            )
+            salario_periodo_neto = round_money(salario_periodo_origen_neto * emp_calculo.tipo_cambio, planilla_moneda)
         else:
             # Always quantize to ensure consistent decimal precision
             descuento_inasistencia_planilla = round_money(descuento_inasistencia, planilla_moneda)

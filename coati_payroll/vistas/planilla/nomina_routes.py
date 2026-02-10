@@ -25,7 +25,7 @@ from coati_payroll.enums import NominaEstado, NovedadEstado, VacacionEstado
 from coati_payroll.i18n import _
 from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.vistas.planilla import planilla_bp
-from coati_payroll.vistas.planilla.services import NominaService
+from coati_payroll.vistas.planilla.services import NominaService, NovedadService
 from coati_payroll.queue.tasks import retry_failed_nomina
 
 # Constants
@@ -266,6 +266,10 @@ def aplicar_vacaciones_nomina(planilla_id: str, nomina_id: str):
                 tipo_valor = "horas"
 
             fecha_novedad = max(vacation.start_date, nomina.periodo_inicio)
+            es_inasistencia, descontar_pago_inasistencia = NovedadService.resolve_absence_flags(
+                percepcion_id=percepcion_id,
+                deduccion_id=deduccion_id,
+            )
 
             nomina_novedad = NominaNovedad(
                 nomina_id=nomina.id,
@@ -276,6 +280,8 @@ def aplicar_vacaciones_nomina(planilla_id: str, nomina_id: str):
                 fecha_novedad=fecha_novedad,
                 percepcion_id=percepcion_id,
                 deduccion_id=deduccion_id,
+                es_inasistencia=es_inasistencia,
+                descontar_pago_inasistencia=descontar_pago_inasistencia,
                 es_descanso_vacaciones=True,
                 vacation_novelty_id=vacation.id,
                 fecha_inicio_descanso=vacation.start_date,
@@ -438,9 +444,7 @@ def _obtener_vacaciones_aprobadas_pendientes(planilla: Planilla, nomina: Nomina)
     stmt = (
         db.select(VacationNovelty)
         .join(PlanillaEmpleado, PlanillaEmpleado.empleado_id == VacationNovelty.empleado_id)
-        .outerjoin(
-            VacationNominaNovedad, VacationNominaNovedad.vacation_novelty_id == VacationNovelty.id
-        )
+        .outerjoin(VacationNominaNovedad, VacationNominaNovedad.vacation_novelty_id == VacationNovelty.id)
         .filter(
             PlanillaEmpleado.planilla_id == planilla.id,
             PlanillaEmpleado.activo.is_(True),

@@ -515,6 +515,7 @@ def register_vacation_taken():
     """
     from coati_payroll.forms import VacationTakenForm
     from coati_payroll.model import NominaNovedad, Percepcion, Deduccion
+    from coati_payroll.vistas.planilla.services.novedad_service import NovedadService
 
     form = VacationTakenForm()
 
@@ -668,6 +669,10 @@ def register_vacation_taken():
 
         # Create associated NominaNovedad using existing infrastructure
         # This ensures the novelty is properly processed during payroll calculation
+        es_inasistencia, descontar_pago_inasistencia = NovedadService.resolve_absence_flags(
+            percepcion_id=percepcion_id,
+            deduccion_id=deduccion_id,
+        )
         nomina_novedad = NominaNovedad(
             nomina_id=None,  # Will be linked to the employee's next nomina when calculated
             empleado_id=empleado_id,
@@ -677,6 +682,8 @@ def register_vacation_taken():
             fecha_novedad=form.fecha_inicio.data,
             percepcion_id=percepcion_id,  # Required association
             deduccion_id=deduccion_id,  # Required association
+            es_inasistencia=es_inasistencia,
+            descontar_pago_inasistencia=descontar_pago_inasistencia,
             es_descanso_vacaciones=True,
             vacation_novelty_id=vacation_novelty.id,
             fecha_inicio_descanso=form.fecha_inicio.data,

@@ -843,6 +843,122 @@ def test_nueva_novedad_post_creates_novedad(
         assert novedad.empleado_id == nomina_empleado.empleado_id
 
 
+def test_nueva_novedad_post_uses_concept_absence_defaults_when_flags_omitted(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+):
+    """When absence flags are omitted, use Percepcion defaults."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        percepcion.es_inasistencia = True
+        percepcion.descontar_pago_inasistencia = True
+        db_session.commit()
+
+        data = {
+            "empleado_id": nomina_empleado.empleado_id,
+            "codigo_concepto": "BONO_DEF",
+            "tipo_concepto": "income",
+            "percepcion_id": percepcion.id,
+            "tipo_valor": "monto",
+            "valor_cantidad": 500,
+            "fecha_novedad": date.today().isoformat(),
+        }
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/new",
+            data=data,
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        from coati_payroll.model import NominaNovedad, db
+
+        novedad = db_session.execute(
+            db.select(NominaNovedad).filter_by(nomina_id=nomina.id, codigo_concepto="BONO_DEF")
+        ).scalar_one_or_none()
+        assert novedad is not None
+        assert novedad.es_inasistencia is True
+        assert novedad.descontar_pago_inasistencia is True
+
+
+def test_nueva_novedad_post_respects_explicit_flags_over_concept_defaults(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+):
+    """If flags are explicitly present in payload, they override concept defaults."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        percepcion.es_inasistencia = True
+        percepcion.descontar_pago_inasistencia = True
+        db_session.commit()
+
+        data = {
+            "empleado_id": nomina_empleado.empleado_id,
+            "codigo_concepto": "BONO_EXP",
+            "tipo_concepto": "income",
+            "percepcion_id": percepcion.id,
+            "tipo_valor": "monto",
+            "valor_cantidad": 500,
+            "fecha_novedad": date.today().isoformat(),
+            "es_inasistencia": "",
+            "descontar_pago_inasistencia": "",
+        }
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/new",
+            data=data,
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        from coati_payroll.model import NominaNovedad, db
+
+        novedad = db_session.execute(
+            db.select(NominaNovedad).filter_by(nomina_id=nomina.id, codigo_concepto="BONO_EXP")
+        ).scalar_one_or_none()
+        assert novedad is not None
+        assert novedad.es_inasistencia is False
+        assert novedad.descontar_pago_inasistencia is False
+
+
+def test_nueva_novedad_post_uses_deduccion_absence_defaults_when_flags_omitted(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, deduccion
+):
+    """When absence flags are omitted, use Deduccion defaults."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        deduccion.es_inasistencia = True
+        deduccion.descontar_pago_inasistencia = True
+        db_session.commit()
+
+        data = {
+            "empleado_id": nomina_empleado.empleado_id,
+            "codigo_concepto": "INSS_DEF",
+            "tipo_concepto": "deduction",
+            "deduccion_id": deduccion.id,
+            "tipo_valor": "dias",
+            "valor_cantidad": 1,
+            "fecha_novedad": date.today().isoformat(),
+        }
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/new",
+            data=data,
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        from coati_payroll.model import NominaNovedad, db
+
+        novedad = db_session.execute(
+            db.select(NominaNovedad).filter_by(nomina_id=nomina.id, codigo_concepto="INSS_DEF")
+        ).scalar_one_or_none()
+        assert novedad is not None
+        assert novedad.es_inasistencia is True
+        assert novedad.descontar_pago_inasistencia is True
+
+
 def test_editar_novedad_get_displays_form(
     app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
 ):
