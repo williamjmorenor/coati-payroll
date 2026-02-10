@@ -551,10 +551,12 @@ class Percepcion(database.Model, BaseTabla):
 
     # Control contable
     contabilizable = database.Column(database.Boolean(), default=True, nullable=False)
+    invertir_asiento_contable = database.Column(database.Boolean(), default=False, nullable=False)
     codigo_cuenta_debe = database.Column(database.String(64), nullable=True)
     descripcion_cuenta_debe = database.Column(database.String(255), nullable=True)
     codigo_cuenta_haber = database.Column(database.String(64), nullable=True)
     descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
+    mostrar_como_ingreso_reportes = database.Column(database.Boolean(), default=True, nullable=False)
 
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
@@ -610,10 +612,12 @@ class Deduccion(database.Model, BaseTabla):
 
     # Control contable
     contabilizable = database.Column(database.Boolean(), default=True, nullable=False)
+    invertir_asiento_contable = database.Column(database.Boolean(), default=False, nullable=False)
     codigo_cuenta_debe = database.Column(database.String(64), nullable=True)
     descripcion_cuenta_debe = database.Column(database.String(255), nullable=True)
     codigo_cuenta_haber = database.Column(database.String(64), nullable=True)
     descripcion_cuenta_haber = database.Column(database.String(255), nullable=True)
+    mostrar_como_ingreso_reportes = database.Column(database.Boolean(), default=True, nullable=False)
 
     # Control edición en nómina
     editable_en_nomina = database.Column(database.Boolean(), default=False, nullable=False)
@@ -1072,6 +1076,12 @@ class NominaNovedad(database.Model, BaseTabla):
     # ---- Vacation Module Integration ----
     # Flag to mark this novelty as vacation/time-off
     es_descanso_vacaciones = database.Column(database.Boolean(), default=False, nullable=False)
+
+    # ---- Absence (Inasistencia) Tracking ----
+    # Flag to mark this novelty as an absence event
+    es_inasistencia = database.Column(database.Boolean(), default=False, nullable=False)
+    # Flag to indicate the absence should reduce pay for the day/hour
+    descontar_pago_inasistencia = database.Column(database.Boolean(), default=False, nullable=False)
 
     # Reference to VacationNovelty if this is a vacation leave
     vacation_novelty_id = database.Column(
@@ -2212,6 +2222,42 @@ class VacationNovelty(database.Model, BaseTabla):
     # Notes
     observaciones = database.Column(database.String(500), nullable=True)
     motivo_rechazo = database.Column(database.String(500), nullable=True)
+
+
+# Bridge: Vacation -> Nomina Novedad application
+class VacationNominaNovedad(database.Model, BaseTabla):
+    """Bridge table between vacation requests and payroll novelties.
+
+    This records when an approved vacation is applied to a specific nomina
+    by creating a NominaNovedad entry.
+    """
+
+    __tablename__ = "vacation_nomina_novedad"
+    __table_args__ = (
+        database.UniqueConstraint(
+            "vacation_novelty_id",
+            "nomina_id",
+            name="uq_vacation_nomina_novedad_vacation_nomina",
+        ),
+        database.Index("ix_vacation_nomina_novedad_vacation", "vacation_novelty_id"),
+        database.Index("ix_vacation_nomina_novedad_nomina", "nomina_id"),
+        database.Index("ix_vacation_nomina_novedad_novedad", "nomina_novedad_id"),
+    )
+
+    vacation_novelty_id = database.Column(
+        database.String(26), database.ForeignKey("vacation_novelty.id"), nullable=False
+    )
+    nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
+    nomina_novedad_id = database.Column(
+        database.String(26), database.ForeignKey("nomina_novedad.id"), nullable=False
+    )
+
+    aplicado_por = database.Column(database.String(150), nullable=True)
+    aplicado_en = database.Column(database.DateTime, nullable=True, default=utc_now)
+
+    vacation_novelty = database.relationship("VacationNovelty")
+    nomina = database.relationship("Nomina")
+    nomina_novedad = database.relationship("NominaNovedad")
 
 
 # ============================================================================

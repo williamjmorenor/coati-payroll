@@ -134,6 +134,7 @@ class VacacionEstado(StrEnum):
 
     PENDIENTE = "pending"  # Pending approval
     APROBADO = "approved"  # Approved
+    APLICADO = "applied"  # Applied to payroll novelties
     RECHAZADO = "rejected"  # Rejected
     DISFRUTADO = "taken"  # Taken/enjoyed
 

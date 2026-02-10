@@ -401,46 +401,55 @@ def leave_request_detail(request_id):
 @vacation_bp.route("/leave-requests/<string:request_id>/approve", methods=["POST"])
 @require_role(TipoUsuario.ADMIN)
 def leave_request_approve(request_id):
-    """Approve a vacation leave request and create ledger entry."""
+    """Approve a vacation leave request."""
     leave_request = db.session.get(VacationNovelty, request_id)
     if not leave_request:
         flash(_("Solicitud no encontrada."), "warning")
         return redirect(url_for("vacation.leave_request_index"))
 
-    if leave_request.estado != "pending":
+    if leave_request.estado != VacacionEstado.PENDIENTE:
         flash(_("Solo se pueden aprobar solicitudes pendientes."), "warning")
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
+    # Get the vacation account
+    account = leave_request.account
+    if not account:
+        flash(_("Cuenta de vacaciones no encontrada."), "danger")
+        return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
+
+    # Check if there's enough balance
+    if account.current_balance < leave_request.units:
+        flash(
+            _("Saldo insuficiente. Disponible: {}, Solicitado: {}").format(
+                account.current_balance, leave_request.units
+            ),
+            "danger",
+        )
+        return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
+
     # Update request status
-    leave_request.estado = "approved"
+    leave_request.estado = VacacionEstado.APROBADO
     leave_request.fecha_aprobacion = date.today()
     leave_request.aprobado_por = current_user.usuario
     leave_request.modificado_por = current_user.usuario
 
-    # Create ledger entry for usage
-    ledger_entry = VacationLedger()
-    ledger_entry.account_id = leave_request.account_id
-    ledger_entry.empleado_id = leave_request.empleado_id
-    ledger_entry.fecha = date.today()
-    ledger_entry.entry_type = VacationLedgerType.USAGE
-    ledger_entry.quantity = -abs(leave_request.units)  # Negative for usage
-    ledger_entry.source = "novelty"
-    ledger_entry.reference_id = leave_request.id
-    ledger_entry.reference_type = "vacation_novelty"
-    ledger_entry.observaciones = f"Vacaciones del {leave_request.start_date} al {leave_request.end_date}"
-    ledger_entry.creado_por = current_user.usuario
+    # Deduct from balance
+    account.current_balance -= leave_request.units
 
-    # Update account balance
-    account = leave_request.account
-    account.current_balance = account.current_balance - abs(leave_request.units)
-    ledger_entry.balance_after = account.current_balance
-    account.modificado_por = current_user.usuario
-
+    # Create ledger entry
+    ledger_entry = VacationLedger(
+        account_id=account.id,
+        empleado_id=leave_request.empleado_id,
+        entry_type=VacationLedgerType.USAGE,
+        reference_id=leave_request.id,
+        reference_type="leave_request",
+        quantity=-leave_request.units,
+        balance_after=account.current_balance,
+        fecha=date.today(),
+        source="leave_request_approval",
+        observaciones=f"Aprobado por {current_user.usuario}",
+    )
     db.session.add(ledger_entry)
-    db.session.flush()
-
-    # Link ledger entry to request (after flush so ID is available)
-    leave_request.ledger_entry_id = ledger_entry.id
 
     try:
         db.session.commit()
@@ -461,7 +470,7 @@ def leave_request_reject(request_id):
         flash(_("Solicitud no encontrada."), "warning")
         return redirect(url_for("vacation.leave_request_index"))
 
-    if leave_request.estado != "pending":
+    if leave_request.estado != VacacionEstado.PENDIENTE:
         flash(_("Solo se pueden rechazar solicitudes pendientes."), "warning")
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
@@ -469,7 +478,7 @@ def leave_request_reject(request_id):
     motivo_rechazo = request.form.get("motivo_rechazo", "")
 
     # Update request status
-    leave_request.estado = "rejected"
+    leave_request.estado = VacacionEstado.RECHAZADO
     leave_request.motivo_rechazo = motivo_rechazo
     leave_request.modificado_por = current_user.usuario
 

@@ -26,6 +26,15 @@ The engine does not incorporate hardcoded legal rules. All earnings, deductions,
 
 > **Important**: This project is governed by a [Social Contract](SOCIAL_CONTRACT.md) that clearly defines its scope, purpose, and limitations. Please read it before using the system in production.
 
+## Disclaimer and scope
+
+```
+The calculation engine may not be suitable for all possible use cases. The development team
+is happy to collaborate with interested parties to expand the engine's capabilities so it can
+cover as many use cases as possible. This project is offered under an open-source license,
+as-is, without warranties of fitness for any particular purpose.
+```
+
 ## Key Features
 
 - **Jurisdiction-Agnostic**: No hardcoded legal rules; all payroll logic is defined through configuration
