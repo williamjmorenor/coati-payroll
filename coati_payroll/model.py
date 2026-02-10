@@ -959,6 +959,11 @@ class NominaEmpleado(database.Model, BaseTabla):
     centro_costos_snapshot = database.Column(database.String(150), nullable=True)
     sueldo_base_historico = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
 
+    # Tracking de inasistencias (ausencias)
+    inasistencia_dias = database.Column(database.Numeric(10, 2), nullable=True, default=Decimal("0.00"))
+    inasistencia_horas = database.Column(database.Numeric(10, 2), nullable=True, default=Decimal("0.00"))
+    inasistencia_descuento = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
+
 
 class NominaDetalle(database.Model, BaseTabla):
     __tablename__ = "nomina_detalle"

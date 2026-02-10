@@ -33,6 +33,9 @@ class AccountingProcessor:
             area_snapshot=empleado.area,
             centro_costos_snapshot=empleado.centro_costos,
             sueldo_base_historico=round_money(emp_calculo.salario_base),
+            inasistencia_dias=emp_calculo.inasistencia_dias,
+            inasistencia_horas=emp_calculo.inasistencia_horas,
+            inasistencia_descuento=round_money(emp_calculo.inasistencia_descuento),
         )
         db.session.add(nomina_empleado)
         db.session.flush()
