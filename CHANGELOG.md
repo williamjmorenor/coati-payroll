@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added date calculation functions to the formula engine: `days_between()`, `max_date()`, and `min_date()`.
+- Added support for date and string input types in the formula engine.
+
+### Changed
+
+- Updated formula engine evaluation, execution context, and results handling to support non-Decimal values.
+- Preserved date/string inputs without Decimal conversion in initial variable preparation and step storage.
+
 ## [1.2.0] - 2026-02-09
 
 ### Changed
