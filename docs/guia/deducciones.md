@@ -99,6 +99,73 @@ La base se conserva como referencia para fórmulas. El motor base de deducciones
 | Válido Hasta | Fecha de fin de vigencia |
 | Editable en Nómina | ¿Se puede modificar? |
 
+### Configuración de Ausencias Predeterminadas
+
+Al igual que las percepciones, las deducciones pueden configurar comportamientos predeterminados para el manejo de ausencias:
+
+| Campo | Descripción | Valores |
+|-------|-------------|---------|
+| Es Inasistencia | Marca esta deducción como relacionada con ausencias | Sí/No |
+| Descontar Pago por Inasistencia | Si debe deducirse del salario cuando hay ausencias | Sí/No |
+
+#### ¿Cómo funcionan los valores predeterminados en deducciones?
+
+Cuando crea una **novedad de nómina** (NominaNovedad) basada en esta deducción:
+
+1. **Si la novedad NO especifica** valores explícitos para `es_inasistencia` o `descontar_pago_inasistencia`, el sistema **hereda automáticamente** los valores configurados en el concepto de deducción.
+
+2. **Si la novedad SÍ especifica** valores explícitos, estos **tienen prioridad** sobre los predeterminados del concepto.
+
+#### Casos de Uso Comunes
+
+**Descuento por Ausencia Injustificada:**
+```yaml
+Código: FALTA_INJUSTIFICADA
+Nombre: Ausencia Injustificada
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: Sí  # Descuenta el día completo
+```
+
+**Día de Incapacidad a Descontar:**
+```yaml
+Código: INCAPACIDAD_DESC
+Nombre: Descuento por Incapacidad
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: Sí  # Descuenta el salario del día
+# Este concepto se usa para descontar antes de aplicar el subsidio
+```
+
+**Suspensión Sin Goce:**
+```yaml
+Código: SUSPENSION
+Nombre: Suspensión Sin Goce de Salario
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: Sí  # Descuenta completamente
+```
+
+#### Prevención de Doble Deducción
+
+Un caso especial ocurre cuando una inasistencia ya está descontando el pago base pero **NO** queremos que también se aplique una deducción adicional:
+
+```yaml
+# Incapacidad que descuenta el día pero no debe aplicar deducciones como INSS
+Código: INCAPACIDAD_MEDICA
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: Sí  # Descuenta el día base
+```
+
+En este caso, si el código de esta novedad coincide con el código de una deducción existente (ej: `INCAPACIDAD_MEDICA`), el sistema **NO aplicará esa deducción** para evitar doble descuento. Luego puede aplicarse un concepto de subsidio separado.
+
+#### Ventajas de los Valores Predeterminados
+
+✅ **Consistencia**: Todas las novedades del mismo tipo se comportan igual por defecto  
+✅ **Menos errores**: No es necesario recordar configurar las banderas en cada novedad  
+✅ **Flexibilidad**: Aún puede sobrescribir el comportamiento en casos especiales  
+✅ **Mantenibilidad**: Cambiar el comportamiento de un concepto actualiza todas las novedades futuras
+
+!!! info "Relación con el Sistema de Inasistencias"
+    Para más detalles sobre cómo funcionan las inasistencias, la prevención de doble deducción, y su impacto en el cálculo de nómina, consulte el [Sistema de Inasistencias](../sistema-inasistencias.md).
+
 ## Prioridad de Deducciones
 
 !!! important "Concepto Clave"
@@ -121,6 +188,59 @@ La prioridad se configura al asignar la deducción a la planilla:
 1. Edite la planilla
 2. Al agregar una deducción, configure la prioridad
 3. Menor número = mayor prioridad (se aplica primero)
+
+### Información Contable
+
+Las deducciones pueden configurarse para generar asientos contables automáticos:
+
+| Campo | Descripción |
+|-------|-------------|
+| Contabilizable | ¿Genera asiento contable? |
+| Invertir Asiento Contable | Invierte débito y crédito en el asiento |
+| Mostrar como Ingreso en Reportes | Controla presentación en informes financieros |
+| Cuenta Contable (Debe) | Cuenta para el débito |
+| Cuenta Contable (Haber) | Cuenta para el crédito |
+
+#### Invertir Asiento Contable
+
+**Introducido en v1.1.0**
+
+Este campo permite invertir la dirección de las cuentas débito/crédito en el asiento contable generado. Es útil para situaciones especiales donde la naturaleza contable de la deducción requiere un tratamiento inverso al estándar.
+
+**Configuración Estándar (invertir = False):**
+```
+Débito:  Cuenta configurada en "Cuenta Contable (Debe)"
+Crédito: Cuenta configurada en "Cuenta Contable (Haber)"
+```
+
+**Configuración Invertida (invertir = True):**
+```
+Débito:  Cuenta configurada en "Cuenta Contable (Haber)"  ← Invertido
+Crédito: Cuenta configurada en "Cuenta Contable (Debe)"   ← Invertido
+```
+
+**Casos de Uso:**
+- Deducciones que contablemente funcionan como percepciones
+- Ajustes de nómina con tratamiento contable especial
+- Reversiones o correcciones
+
+#### Mostrar como Ingreso en Reportes
+
+**Introducido en v1.1.0**
+
+Este campo controla cómo se presenta la deducción en los reportes e informes financieros.
+
+**Valores:**
+- `True` (predeterminado): Se muestra en la sección correspondiente del reporte
+- `False`: Se oculta o presenta de forma diferente según el tipo de reporte
+
+**Casos de Uso:**
+- Ajustes técnicos que no deben aparecer en reportes estándar
+- Deducciones que son reversiones o correcciones
+- Conceptos internos de control
+
+!!! info "Impacto en Reportes"
+    Esta configuración solo afecta la **presentación visual** en reportes. El cálculo de nómina y contabilización no se ven afectados.
 
 ## Ejemplos de Deducciones
 

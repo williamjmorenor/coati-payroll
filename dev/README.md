@@ -2,6 +2,35 @@
 
 This directory contains scripts to help with development and testing workflows.
 
+## Linting and Code Quality
+
+### lint.sh - Full Code Quality Validation
+
+**Introduced in v1.0.6**
+
+Runs the complete local validation stack to ensure code quality and correctness before pushing changes.
+
+**Features:**
+- Runs `black` for code formatting
+- Runs `ruff` for fast linting
+- Runs `flake8` for style checking
+- Runs `pylint` for comprehensive static analysis
+- Runs `mypy` for type checking
+- Runs full test suite (regular + validation tests)
+
+**Usage:**
+```bash
+./dev/lint.sh
+```
+
+**Best for:**
+- Pre-push validation
+- Ensuring CI will pass
+- Comprehensive code quality checks
+- Aligning with project standards
+
+**Note:** This script runs all quality tools in sequence. If any step fails, the script continues to show all issues. This matches the CI pipeline configuration.
+
 ## Test Scripts
 
 ### test_fast.sh - Quick Feedback Testing

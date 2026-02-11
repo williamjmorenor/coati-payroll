@@ -309,6 +309,178 @@ La integración con nómina se realiza mediante:
 2. **Pago de Vacaciones al Terminar**: El evento `PAYOUT` genera una novedad que se procesa en la nómina final
 3. **Provisión de Vacaciones**: Se puede configurar como prestación patronal basada en el balance acumulado
 
+### Puente Vacaciones-Nómina (Vacation-to-Payroll Bridge)
+
+**Funcionalidad introducida en v1.1.0**
+
+El sistema incluye un puente automatizado que permite aplicar vacaciones aprobadas directamente a las nóminas en curso. Este mecanismo conecta el módulo de vacaciones con el cálculo de nómina de manera transparente y auditable.
+
+#### ¿Cómo Funciona?
+
+Cuando se aprueba una solicitud de vacaciones (`LeaveRequest`):
+
+1. **Validación de Balance**: El sistema verifica que el empleado tenga balance suficiente en su `VacationAccount`
+
+2. **Deducción Automática**: Se deduce el balance inmediatamente de la cuenta de vacaciones
+
+3. **Registro en Ledger**: Se crea un registro `VacationLedger` con:
+   - `entry_type = "USAGE"`
+   - `quantity = cantidad negativa` (días/horas tomadas)
+   - `reference_type = "LeaveRequest"`
+   - `reference_id = ID de la solicitud`
+   - `source = "leave_request_approval"`
+
+4. **Creación de Novedad para Nómina**: Se genera automáticamente un `VacationNovelty` que:
+   - Vincula la solicitud aprobada con la nómina correspondiente
+   - Contiene información sobre el período de ausencia
+   - Marca la ausencia como pagada (configuración predeterminada)
+
+5. **Aplicación a Nómina**: Cuando se ejecuta la nómina, el sistema:
+   - Detecta las novedades de vacaciones (`VacationNovelty`)
+   - Las convierte en `NominaNovedad` con los flags apropiados
+   - Aplica las reglas configuradas (descuento o no descuento según tipo)
+
+#### Flujo Completo con Ejemplo
+
+```python
+# 1. Empleado solicita vacaciones
+leave_request = LeaveRequest(
+    empleado_id=empleado.id,
+    account_id=vacation_account.id,
+    start_date=date(2025, 2, 10),
+    end_date=date(2025, 2, 14),
+    days_requested=Decimal("5.00"),
+    status="PENDING"
+)
+db.session.add(leave_request)
+
+# 2. Supervisor aprueba la solicitud (vía UI o API)
+# El sistema automáticamente:
+# a) Valida balance suficiente
+if vacation_account.current_balance < leave_request.days_requested:
+    raise ValueError("Balance insuficiente")
+
+# b) Deduce del balance
+ledger_entry = VacationLedger(
+    account_id=vacation_account.id,
+    empleado_id=empleado.id,
+    entry_type="USAGE",
+    reference_type="LeaveRequest",
+    reference_id=leave_request.id,
+    quantity=-leave_request.days_requested,  # Negativo para deducción
+    balance_after=vacation_account.current_balance - leave_request.days_requested,
+    source="leave_request_approval"
+)
+vacation_account.current_balance -= leave_request.days_requested
+leave_request.status = "APPROVED"
+
+# c) Crea VacationNovelty para la nómina
+vacation_novelty = VacationNovelty(
+    leave_request_id=leave_request.id,
+    empleado_id=empleado.id,
+    start_date=leave_request.start_date,
+    end_date=leave_request.end_date,
+    days_count=leave_request.days_requested,
+    applied_to_payroll=False  # Pendiente de aplicar a nómina
+)
+
+# 3. Al ejecutar la nómina, se convierte en NominaNovedad
+nomina_novedad = NominaNovedad(
+    nomina_id=nomina.id,
+    empleado_id=empleado.id,
+    codigo_concepto="VACACIONES",  # Concepto configurado para vacaciones
+    valor_cantidad=vacation_novelty.days_count,
+    tipo_valor="dias",
+    fecha_novedad=vacation_novelty.start_date,
+    es_inasistencia=True,           # Es una ausencia
+    descontar_pago_inasistencia=False,  # NO se descuenta (vacaciones pagadas)
+)
+vacation_novelty.applied_to_payroll = True
+```
+
+#### Configuración del Concepto de Vacaciones
+
+Para que el puente funcione correctamente, debe configurarse un concepto de percepción o deducción con código `VACACIONES` (o el que use su organización):
+
+**Opción 1: Como Percepción (Vacaciones que se pagan adicionalmente)**
+```yaml
+Código: VACACIONES
+Nombre: Vacaciones Pagadas
+Tipo: Percepción
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: No  # Vacaciones son pagadas
+```
+
+**Opción 2: Como Deducción (Vacaciones que no se descuentan)**
+```yaml
+Código: VACACIONES
+Nombre: Ausencia por Vacaciones
+Tipo: Deducción
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: No  # NO se descuenta porque son pagadas
+```
+
+#### Flujo en la Interfaz de Usuario
+
+1. **Empleado/HR crea solicitud de vacaciones** → `LeaveRequest` en estado `PENDING`
+
+2. **Supervisor aprueba en el módulo de vacaciones** → Automáticamente:
+   - Balance se deduce
+   - Ledger se actualiza
+   - VacationNovelty se crea
+
+3. **Al generar nómina para el período** → Sistema:
+   - Detecta VacationNovelty pendientes de aplicar
+   - Convierte a NominaNovedad con concepto `VACACIONES`
+   - Marca `applied_to_payroll = True`
+
+4. **Cálculo de nómina procesa la novedad** → Según configuración:
+   - Si `descontar_pago_inasistencia = False`: Empleado recibe salario completo
+   - Registro queda en la nómina para auditoría
+
+#### Ventajas del Puente Automatizado
+
+✅ **Trazabilidad completa**: Conexión clara entre solicitud → aprobación → deducción de balance → novedad → nómina  
+✅ **Prevención de errores**: No es necesario crear novedades manualmente  
+✅ **Auditoría robusta**: Cada paso queda registrado con timestamp y usuario  
+✅ **Sincronización**: Balance de vacaciones y nómina siempre están alineados  
+✅ **Reversibilidad**: Si se revierte la aprobación, se puede ajustar el balance y eliminar la novedad
+
+#### Consultas Útiles
+
+**Ver vacaciones aplicadas a nómina:**
+```sql
+SELECT 
+    n.numero_nomina,
+    e.codigo_empleado,
+    lr.start_date,
+    lr.end_date,
+    vn.days_count,
+    vn.applied_to_payroll
+FROM vacation_novelty vn
+JOIN leave_request lr ON vn.leave_request_id = lr.id
+JOIN empleado e ON vn.empleado_id = e.id
+JOIN nomina_novedad nn ON nn.empleado_id = e.id AND nn.codigo_concepto = 'VACACIONES'
+JOIN nomina n ON nn.nomina_id = n.id
+WHERE vn.applied_to_payroll = TRUE
+ORDER BY n.numero_nomina, e.codigo_empleado;
+```
+
+**Ver vacaciones aprobadas pendientes de aplicar:**
+```sql
+SELECT 
+    e.codigo_empleado,
+    lr.start_date,
+    lr.end_date,
+    vn.days_count
+FROM vacation_novelty vn
+JOIN leave_request lr ON vn.leave_request_id = lr.id
+JOIN empleado e ON vn.empleado_id = e.id
+WHERE vn.applied_to_payroll = FALSE
+  AND lr.status = 'APPROVED'
+ORDER BY lr.start_date;
+```
+
 ## Reportes y Consultas
 
 ### Balance por Empleado
