@@ -101,6 +101,42 @@ Open your browser at `http://localhost:5000`
 
 > **Important**: Change the default credentials in production environments.
 
+### Docker Installation
+
+You can also run Coati Payroll using Docker:
+
+1. **Build the Docker image**
+
+```bash
+docker build -t coati-payroll:latest .
+```
+
+2. **Run with development settings (SQLite)**
+
+```bash
+docker run -d -p 5000:5000 \
+  -e FLASK_ENV=development \
+  --name coati-payroll \
+  coati-payroll:latest
+```
+
+3. **Run with production settings (requires database)**
+
+```bash
+docker run -d -p 5000:5000 \
+  -e FLASK_ENV=production \
+  -e DATABASE_URL="postgresql://user:password@host:5432/coati_payroll" \
+  -e SECRET_KEY="your-secret-key-here" \
+  -e ADMIN_USER="admin" \
+  -e ADMIN_PASSWORD="secure-password" \
+  --name coati-payroll \
+  coati-payroll:latest
+```
+
+4. **Access the system**
+
+Open your browser at `http://localhost:5000`
+
 ## Documentation
 
 Complete documentation is available in the `docs/` directory and can be generated with MkDocs:
