@@ -582,9 +582,8 @@ def load_liquidation_concepts() -> None:
 def load_plugin_ready_payrolls() -> None:
     """Create two ready-to-use payroll templates for the LCT2019 plugin.
 
-    The associations are explicit and based on the exact concept codes created
-    by the plugin. This function is idempotent and skips changes if required
-    references are missing.
+    This implementation intentionally uses explicit concept names to avoid any
+    fuzzy matching and keep behavior fully deterministic and idempotent.
     """
     from coati_payroll.log import log
     from coati_payroll.model import (
@@ -602,68 +601,53 @@ def load_plugin_ready_payrolls() -> None:
 
     plugin_source = "v_lct2019"
 
-    required_percepciones = {
-        "bmonic_HORAS_EXTRAv_lct2019": "Horas Extras",
-        "bmonic_SUBSIDIO_MEDICO_100v_lct2019": "Subsidio Médico 100%",
-        "bmonic_SUBSIDIO_MEDICO_40v_lct2019": "Subsidio Médico 40%",
-        "bmonic_VACACIONES_DESCANSADASv_lct2019": "Vacaciones Descansadas",
-    }
-    required_deducciones = {
-        "bmonic_INSSv_lct2019": "INSS Laboral",
-        "bmonic_LLEGADAS_TARDEv_lct2019": "Deducción por Llegadas Tarde",
-    }
-    required_prestaciones = {
-        "bmonic_AGUINALDOv_lct2019": "Provisión de Aguinaldo",
-        "bmonic_INATECv_lct2019": "INATEC",
-        "bmonic_INDEMNIZACION_LABORALv_lct2019": "Provisión Indemnización Laboral",
-        "bmonic_INSS_PATRONAL_50PLUSv_lct2019": "INSS Patronal 50+ empleados",
-    }
+    percepcion_horas_extra = db.session.execute(
+        db.select(Percepcion).filter_by(nombre="Horas Extras")
+    ).scalar_one_or_none()
+    percepcion_subsidio_100 = db.session.execute(
+        db.select(Percepcion).filter_by(nombre="Subsidio Médico 100%")
+    ).scalar_one_or_none()
+    percepcion_subsidio_40 = db.session.execute(
+        db.select(Percepcion).filter_by(nombre="Subsidio Médico 40%")
+    ).scalar_one_or_none()
+    percepcion_vacaciones_descansadas = db.session.execute(
+        db.select(Percepcion).filter_by(nombre="Vacaciones Descansadas")
+    ).scalar_one_or_none()
 
-    payroll_blueprints = [
-        {
-            "tipo_codigo": "bmonic_PLANILLA_MENSUALv_lct2019",
-            "nombre": "Planilla Mensual (LCT2019)",
-            "descripcion": "Plantilla lista para usar con conceptos laborales LCT2019.",
-        },
-        {
-            "tipo_codigo": "bmonic_PLANILLA_AGUINALDOv_lct2019",
-            "nombre": "Planilla Aguinaldo (LCT2019)",
-            "descripcion": "Plantilla de aguinaldo lista para usar con conceptos LCT2019.",
-        },
+    deduccion_inss = db.session.execute(
+        db.select(Deduccion).filter_by(nombre="INSS Laboral")
+    ).scalar_one_or_none()
+    deduccion_llegadas_tarde = db.session.execute(
+        db.select(Deduccion).filter_by(nombre="Deducción por Llegadas Tarde")
+    ).scalar_one_or_none()
+
+    prestacion_aguinaldo = db.session.execute(
+        db.select(Prestacion).filter_by(nombre="Provisión de Aguinaldo")
+    ).scalar_one_or_none()
+    prestacion_inatec = db.session.execute(
+        db.select(Prestacion).filter_by(nombre="INATEC")
+    ).scalar_one_or_none()
+    prestacion_indemnizacion = db.session.execute(
+        db.select(Prestacion).filter_by(nombre="Provisión Indemnización Laboral")
+    ).scalar_one_or_none()
+    prestacion_inss_patronal_default = db.session.execute(
+        db.select(Prestacion).filter_by(nombre="INSS Patronal 50+ empleados")
+    ).scalar_one_or_none()
+
+    required = [
+        percepcion_horas_extra,
+        percepcion_subsidio_100,
+        percepcion_subsidio_40,
+        percepcion_vacaciones_descansadas,
+        deduccion_inss,
+        deduccion_llegadas_tarde,
+        prestacion_aguinaldo,
+        prestacion_inatec,
+        prestacion_indemnizacion,
+        prestacion_inss_patronal_default,
     ]
-
-    def _load_concepts(model, required_map: dict[str, str], concept_type: str) -> list:
-        loaded = []
-        missing_codes = []
-
-        for codigo, expected_name in required_map.items():
-            concept = db.session.execute(db.select(model).filter_by(codigo=codigo)).scalar_one_or_none()
-            if concept is None:
-                missing_codes.append(codigo)
-                continue
-
-            if expected_name and concept.nombre != expected_name:
-                log.warning(
-                    "Plugin concept name mismatch for %s '%s': expected '%s', got '%s'",
-                    concept_type,
-                    codigo,
-                    expected_name,
-                    concept.nombre,
-                )
-
-            loaded.append(concept)
-
-        if missing_codes:
-            log.trace("Skipping plugin-ready payroll creation: missing %s codes: %s", concept_type, missing_codes)
-            return []
-
-        return loaded
-
-    percepciones = _load_concepts(Percepcion, required_percepciones, "percepcion")
-    deducciones = _load_concepts(Deduccion, required_deducciones, "deduccion")
-    prestaciones = _load_concepts(Prestacion, required_prestaciones, "prestacion")
-
-    if not percepciones or not deducciones or not prestaciones:
+    if any(concept is None for concept in required):
+        log.trace("Skipping plugin-ready payroll creation: missing explicit plugin concept names")
         return
 
     moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
@@ -671,81 +655,206 @@ def load_plugin_ready_payrolls() -> None:
         log.trace("Skipping plugin-ready payroll creation: currency 'NIO' not found")
         return
 
+    tipo_mensual = db.session.execute(
+        db.select(TipoPlanilla).filter_by(codigo="bmonic_PLANILLA_MENSUALv_lct2019")
+    ).scalar_one_or_none()
+    tipo_aguinaldo = db.session.execute(
+        db.select(TipoPlanilla).filter_by(codigo="bmonic_PLANILLA_AGUINALDOv_lct2019")
+    ).scalar_one_or_none()
+
+    if tipo_mensual is None or tipo_aguinaldo is None:
+        log.trace("Skipping plugin-ready payroll creation: missing explicit payroll types for LCT2019")
+        return
+
     created = 0
     linked = 0
 
-    for blueprint in payroll_blueprints:
-        tipo = db.session.execute(db.select(TipoPlanilla).filter_by(codigo=blueprint["tipo_codigo"])).scalar_one_or_none()
-        if tipo is None:
-            log.trace(
-                "Skipping blueprint '%s': missing payroll type '%s'",
-                blueprint["nombre"],
-                blueprint["tipo_codigo"],
+    mensual = db.session.execute(db.select(Planilla).filter_by(nombre="Planilla Mensual (LCT2019)")).scalar_one_or_none()
+    if mensual is None:
+        mensual = Planilla()
+        mensual.nombre = "Planilla Mensual (LCT2019)"
+        mensual.descripcion = "Plantilla lista para usar con conceptos laborales LCT2019."
+        mensual.tipo_planilla_id = tipo_mensual.id
+        mensual.moneda_id = moneda.id
+        mensual.activo = True
+        mensual.creado_por = "system"
+        mensual.creado_por_plugin = True
+        mensual.plugin_source = plugin_source
+        db.session.add(mensual)
+        db.session.flush()
+        created += 1
+
+    aguinaldo = db.session.execute(db.select(Planilla).filter_by(nombre="Planilla Aguinaldo (LCT2019)")).scalar_one_or_none()
+    if aguinaldo is None:
+        aguinaldo = Planilla()
+        aguinaldo.nombre = "Planilla Aguinaldo (LCT2019)"
+        aguinaldo.descripcion = "Plantilla de aguinaldo lista para usar con conceptos LCT2019."
+        aguinaldo.tipo_planilla_id = tipo_aguinaldo.id
+        aguinaldo.moneda_id = moneda.id
+        aguinaldo.activo = True
+        aguinaldo.creado_por = "system"
+        aguinaldo.creado_por_plugin = True
+        aguinaldo.plugin_source = plugin_source
+        db.session.add(aguinaldo)
+        db.session.flush()
+        created += 1
+
+    def _link_explicit_planilla(planilla: Planilla) -> int:
+        links = 0
+
+        if db.session.execute(
+            db.select(PlanillaIngreso).filter_by(planilla_id=planilla.id, percepcion_id=percepcion_horas_extra.id)
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaIngreso(
+                    planilla_id=planilla.id,
+                    percepcion_id=percepcion_horas_extra.id,
+                    orden=1,
+                    activo=percepcion_horas_extra.activo,
+                    editable=True,
+                )
             )
-            continue
+            links += 1
 
-        planilla = db.session.execute(db.select(Planilla).filter_by(nombre=blueprint["nombre"])).scalar_one_or_none()
-        if planilla is None:
-            planilla = Planilla()
-            planilla.nombre = blueprint["nombre"]
-            planilla.descripcion = blueprint["descripcion"]
-            planilla.tipo_planilla_id = tipo.id
-            planilla.moneda_id = moneda.id
-            planilla.activo = True
-            planilla.creado_por = "system"
-            planilla.creado_por_plugin = True
-            planilla.plugin_source = plugin_source
-            db.session.add(planilla)
-            db.session.flush()
-            created += 1
-
-        for idx, percepcion in enumerate(percepciones, start=1):
-            exists = db.session.execute(
-                db.select(PlanillaIngreso).filter_by(planilla_id=planilla.id, percepcion_id=percepcion.id)
-            ).scalar_one_or_none()
-            if exists is None:
-                db.session.add(
-                    PlanillaIngreso(
-                        planilla_id=planilla.id,
-                        percepcion_id=percepcion.id,
-                        orden=idx,
-                        activo=percepcion.activo,
-                        editable=True,
-                    )
+        if db.session.execute(
+            db.select(PlanillaIngreso).filter_by(planilla_id=planilla.id, percepcion_id=percepcion_subsidio_100.id)
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaIngreso(
+                    planilla_id=planilla.id,
+                    percepcion_id=percepcion_subsidio_100.id,
+                    orden=2,
+                    activo=percepcion_subsidio_100.activo,
+                    editable=True,
                 )
-                linked += 1
+            )
+            links += 1
 
-        for idx, deduccion in enumerate(deducciones, start=1):
-            exists = db.session.execute(
-                db.select(PlanillaDeduccion).filter_by(planilla_id=planilla.id, deduccion_id=deduccion.id)
-            ).scalar_one_or_none()
-            if exists is None:
-                db.session.add(
-                    PlanillaDeduccion(
-                        planilla_id=planilla.id,
-                        deduccion_id=deduccion.id,
-                        orden=idx,
-                        activo=deduccion.activo,
-                        editable=True,
-                    )
+        if db.session.execute(
+            db.select(PlanillaIngreso).filter_by(planilla_id=planilla.id, percepcion_id=percepcion_subsidio_40.id)
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaIngreso(
+                    planilla_id=planilla.id,
+                    percepcion_id=percepcion_subsidio_40.id,
+                    orden=3,
+                    activo=percepcion_subsidio_40.activo,
+                    editable=True,
                 )
-                linked += 1
+            )
+            links += 1
 
-        for idx, prestacion in enumerate(prestaciones, start=1):
-            exists = db.session.execute(
-                db.select(PlanillaPrestacion).filter_by(planilla_id=planilla.id, prestacion_id=prestacion.id)
-            ).scalar_one_or_none()
-            if exists is None:
-                db.session.add(
-                    PlanillaPrestacion(
-                        planilla_id=planilla.id,
-                        prestacion_id=prestacion.id,
-                        orden=idx,
-                        activo=prestacion.activo,
-                        editable=True,
-                    )
+        if db.session.execute(
+            db.select(PlanillaIngreso).filter_by(
+                planilla_id=planilla.id,
+                percepcion_id=percepcion_vacaciones_descansadas.id,
+            )
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaIngreso(
+                    planilla_id=planilla.id,
+                    percepcion_id=percepcion_vacaciones_descansadas.id,
+                    orden=4,
+                    activo=percepcion_vacaciones_descansadas.activo,
+                    editable=True,
                 )
-                linked += 1
+            )
+            links += 1
+
+        if db.session.execute(
+            db.select(PlanillaDeduccion).filter_by(planilla_id=planilla.id, deduccion_id=deduccion_inss.id)
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaDeduccion(
+                    planilla_id=planilla.id,
+                    deduccion_id=deduccion_inss.id,
+                    orden=1,
+                    activo=deduccion_inss.activo,
+                    editable=True,
+                )
+            )
+            links += 1
+
+        if db.session.execute(
+            db.select(PlanillaDeduccion).filter_by(planilla_id=planilla.id, deduccion_id=deduccion_llegadas_tarde.id)
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaDeduccion(
+                    planilla_id=planilla.id,
+                    deduccion_id=deduccion_llegadas_tarde.id,
+                    orden=2,
+                    activo=deduccion_llegadas_tarde.activo,
+                    editable=True,
+                )
+            )
+            links += 1
+
+        if db.session.execute(
+            db.select(PlanillaPrestacion).filter_by(planilla_id=planilla.id, prestacion_id=prestacion_aguinaldo.id)
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaPrestacion(
+                    planilla_id=planilla.id,
+                    prestacion_id=prestacion_aguinaldo.id,
+                    orden=1,
+                    activo=prestacion_aguinaldo.activo,
+                    editable=True,
+                )
+            )
+            links += 1
+
+        if db.session.execute(
+            db.select(PlanillaPrestacion).filter_by(planilla_id=planilla.id, prestacion_id=prestacion_inatec.id)
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaPrestacion(
+                    planilla_id=planilla.id,
+                    prestacion_id=prestacion_inatec.id,
+                    orden=2,
+                    activo=prestacion_inatec.activo,
+                    editable=True,
+                )
+            )
+            links += 1
+
+        if db.session.execute(
+            db.select(PlanillaPrestacion).filter_by(
+                planilla_id=planilla.id,
+                prestacion_id=prestacion_indemnizacion.id,
+            )
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaPrestacion(
+                    planilla_id=planilla.id,
+                    prestacion_id=prestacion_indemnizacion.id,
+                    orden=3,
+                    activo=prestacion_indemnizacion.activo,
+                    editable=True,
+                )
+            )
+            links += 1
+
+        if db.session.execute(
+            db.select(PlanillaPrestacion).filter_by(
+                planilla_id=planilla.id,
+                prestacion_id=prestacion_inss_patronal_default.id,
+            )
+        ).scalar_one_or_none() is None:
+            db.session.add(
+                PlanillaPrestacion(
+                    planilla_id=planilla.id,
+                    prestacion_id=prestacion_inss_patronal_default.id,
+                    orden=4,
+                    activo=prestacion_inss_patronal_default.activo,
+                    editable=True,
+                )
+            )
+            links += 1
+
+        return links
+
+    linked += _link_explicit_planilla(mensual)
+    linked += _link_explicit_planilla(aguinaldo)
 
     if created > 0 or linked > 0:
         db.session.commit()
