@@ -112,6 +112,148 @@ El esquema define la estructura del cálculo. Ejemplo para IR:
 !!! tip "Ventajas del Editor Visual"
     El editor de esquemas valida automáticamente la estructura, previene errores de sintaxis y proporciona una interfaz más intuitiva.
 
+## Funciones de Fecha
+
+El motor de fórmulas soporta funciones para trabajar con fechas, permitiendo cálculos basados en antigüedad, períodos de tiempo y comparaciones de fechas.
+
+### Funciones Disponibles
+
+#### `days_between(fecha_inicio, fecha_fin)`
+
+Calcula el número de días entre dos fechas.
+
+**Sintaxis:**
+```
+days_between(fecha_inicio, fecha_fin)
+```
+
+**Parámetros:**
+- `fecha_inicio`: Fecha inicial (formato ISO: YYYY-MM-DD o campo de fecha)
+- `fecha_fin`: Fecha final (formato ISO: YYYY-MM-DD o campo de fecha)
+
+**Retorna:** Número de días (entero positivo si fecha_fin > fecha_inicio)
+
+**Ejemplo:**
+```json
+{
+  "tipo": "formula",
+  "formula": "days_between(fecha_ingreso, hoy) / 365",
+  "descripcion": "Años de antigüedad del empleado"
+}
+```
+
+#### `max_date(fecha1, fecha2, ...)`
+
+Retorna la fecha más reciente de las fechas proporcionadas.
+
+**Sintaxis:**
+```
+max_date(fecha1, fecha2, fecha3, ...)
+```
+
+**Parámetros:**
+- `fecha1, fecha2, ...`: Dos o más fechas a comparar
+
+**Retorna:** La fecha más reciente
+
+**Ejemplo:**
+```json
+{
+  "tipo": "formula",
+  "formula": "days_between(max_date(ultima_promocion, fecha_ingreso), hoy)",
+  "descripcion": "Días desde último cambio relevante"
+}
+```
+
+#### `min_date(fecha1, fecha2, ...)`
+
+Retorna la fecha más antigua de las fechas proporcionadas.
+
+**Sintaxis:**
+```
+min_date(fecha1, fecha2, fecha3, ...)
+```
+
+**Parámetros:**
+- `fecha1, fecha2, ...`: Dos o más fechas a comparar
+
+**Retorna:** La fecha más antigua
+
+**Ejemplo:**
+```json
+{
+  "tipo": "formula",
+  "formula": "days_between(min_date(fecha_contrato, fecha_ingreso), hoy)",
+  "descripcion": "Antigüedad basada en primera relación laboral"
+}
+```
+
+### Casos de Uso con Fechas
+
+#### Bono por Antigüedad Basado en Años
+
+```json
+{
+  "tipo": "formula",
+  "descripcion": "Bono escalonado según años completos de servicio",
+  "formula": "if(years >= 10, 3000, if(years >= 5, 2000, if(years >= 3, 1000, if(years >= 1, 500, 0))))",
+  "variables": {
+    "years": "days_between(fecha_ingreso, hoy) / 365"
+  }
+}
+```
+
+#### Ajuste Proporcional por Días Trabajados
+
+```json
+{
+  "tipo": "formula",
+  "descripcion": "Salario proporcional según días trabajados en el mes",
+  "formula": "(salario_base / dias_mes) * dias_trabajados",
+  "variables": {
+    "dias_trabajados": "days_between(fecha_ingreso, fin_mes)"
+  }
+}
+```
+
+#### Comparación de Fechas para Elegibilidad
+
+```json
+{
+  "tipo": "formula",
+  "descripcion": "Bono solo para empleados con más de 6 meses",
+  "formula": "if(days_between(fecha_ingreso, hoy) >= 180, monto_bono, 0)"
+}
+```
+
+### Tipos de Entrada en Fórmulas
+
+Además de valores numéricos (Decimal), el motor de fórmulas acepta:
+
+#### Fechas
+- Formato ISO: `"2024-01-15"`
+- Campos de empleado: `fecha_ingreso`, `fecha_nacimiento`
+- Fecha actual del sistema: `hoy` (variable especial)
+
+#### Cadenas de Texto (Strings)
+- Para comparaciones: `"ACTIVO"`, `"INACTIVO"`
+- Para campos de texto: `tipo_contrato`, `departamento`
+
+**Ejemplo con múltiples tipos:**
+```json
+{
+  "tipo": "formula",
+  "descripcion": "Bono especial para gerentes con más de 2 años",
+  "formula": "if(cargo == 'GERENTE' and days_between(fecha_ingreso, hoy) > 730, 5000, 0)"
+}
+```
+
+!!! warning "Formato de Fechas"
+    Las fechas deben estar en formato ISO (YYYY-MM-DD). Otros formatos pueden causar errores de cálculo.
+
+!!! tip "Variables de Fecha del Sistema"
+    El sistema proporciona variables especiales como `hoy` (fecha actual) y `fin_mes` (último día del mes de cálculo) que se actualizan automáticamente.
+
 ## Tipos de Esquemas
 
 ### Esquema de Tramos

@@ -100,6 +100,60 @@ La **Unidad de Cálculo** es informativa para reportes/UI; no cambia el cálculo
 | Cuenta Contable (Debe) | Cuenta para el débito |
 | Cuenta Contable (Haber) | Cuenta para el crédito |
 
+### Configuración de Ausencias Predeterminadas
+
+Las percepciones pueden configurar comportamientos predeterminados para el manejo de ausencias:
+
+| Campo | Descripción | Valores |
+|-------|-------------|---------|
+| Es Inasistencia | Marca esta percepción como relacionada con ausencias | Sí/No |
+| Descontar Pago por Inasistencia | Si debe deducirse del salario cuando hay ausencias | Sí/No |
+
+#### ¿Cómo funcionan los valores predeterminados?
+
+Cuando crea una **novedad de nómina** (NominaNovedad) basada en esta percepción:
+
+1. **Si la novedad NO especifica** valores explícitos para `es_inasistencia` o `descontar_pago_inasistencia`, el sistema **hereda automáticamente** los valores configurados en el concepto de percepción.
+
+2. **Si la novedad SÍ especifica** valores explícitos, estos **tienen prioridad** sobre los predeterminados del concepto.
+
+#### Casos de Uso Comunes
+
+**Vacaciones Pagadas:**
+```yaml
+Código: VACACIONES
+Nombre: Vacaciones Anuales
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: No  # No se descuenta porque son pagadas
+```
+
+**Incapacidad con Subsidio:**
+```yaml
+Código: INCAPACIDAD
+Nombre: Incapacidad Médica
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: Sí  # Se descuenta el día normal
+# Luego se compensa con otro concepto de subsidio
+```
+
+**Permiso Sin Goce de Salario:**
+```yaml
+Código: PERMISO_SIN_GOCE
+Nombre: Permiso Sin Goce de Salario
+Es Inasistencia: Sí
+Descontar Pago por Inasistencia: Sí  # Se descuenta completamente
+```
+
+#### Ventajas de los Valores Predeterminados
+
+✅ **Consistencia**: Todas las novedades del mismo tipo se comportan igual por defecto  
+✅ **Menos errores**: No es necesario recordar configurar las banderas en cada novedad  
+✅ **Flexibilidad**: Aún puede sobrescribir el comportamiento en casos especiales  
+✅ **Mantenibilidad**: Cambiar el comportamiento de un concepto actualiza todas las novedades futuras
+
+!!! info "Relación con el Sistema de Inasistencias"
+    Para más detalles sobre cómo funcionan las inasistencias y su impacto en el cálculo de nómina, consulte el [Sistema de Inasistencias](../sistema-inasistencias.md).
+
 ## Ejemplos de Percepciones
 
 ### Horas Extras

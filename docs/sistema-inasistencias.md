@@ -174,6 +174,75 @@ class NominaNovedad:
     descontar_pago_inasistencia: bool # Si se debe descontar del pago
 ```
 
+### Configuración de Valores Predeterminados en Conceptos
+
+**Nueva funcionalidad desde v1.2.0:** Los conceptos de **Percepción** y **Deducción** pueden tener valores predeterminados para las banderas de ausencia:
+
+```python
+class Percepcion:
+    codigo: str
+    nombre: str
+    # ... otros campos ...
+    es_inasistencia: bool              # Valor predeterminado para novedades
+    descontar_pago_inasistencia: bool  # Valor predeterminado para novedades
+
+class Deduccion:
+    codigo: str
+    nombre: str
+    # ... otros campos ...
+    es_inasistencia: bool              # Valor predeterminado para novedades
+    descontar_pago_inasistencia: bool  # Valor predeterminado para novedades
+```
+
+#### ¿Cómo funcionan los valores predeterminados?
+
+1. **Si la novedad NO especifica** valores para `es_inasistencia` o `descontar_pago_inasistencia`, el sistema **hereda automáticamente** los valores del concepto asociado (Percepción o Deducción).
+
+2. **Si la novedad SÍ especifica** valores explícitos, estos **tienen prioridad** sobre los predeterminados del concepto.
+
+#### Ventajas
+
+✅ **Consistencia:** Todas las novedades de un tipo se comportan igual por defecto  
+✅ **Menos errores:** No es necesario recordar las banderas cada vez  
+✅ **Flexibilidad:** Puede sobrescribir el comportamiento en casos especiales  
+✅ **Mantenibilidad:** Cambiar el concepto actualiza todas las novedades futuras
+
+#### Ejemplo de Configuración
+
+```python
+# 1. Configurar un concepto de percepción con valores predeterminados
+percepcion_vacaciones = Percepcion(
+    codigo="VACACIONES",
+    nombre="Vacaciones Anuales",
+    es_inasistencia=True,              # Predeterminado: Sí es ausencia
+    descontar_pago_inasistencia=False, # Predeterminado: NO descontar
+)
+
+# 2. Crear una novedad sin especificar banderas
+# Hereda automáticamente es_inasistencia=True, descontar_pago=False
+novedad_auto = NominaNovedad(
+    codigo_concepto="VACACIONES",
+    valor_cantidad=Decimal("5.00"),
+    tipo_valor="dias",
+    # NO se especifican es_inasistencia ni descontar_pago_inasistencia
+    # Sistema usa los valores del concepto VACACIONES
+)
+
+# 3. Crear una novedad con valores explícitos (sobrescribir)
+# Ignora los predeterminados del concepto
+novedad_custom = NominaNovedad(
+    codigo_concepto="VACACIONES",
+    valor_cantidad=Decimal("2.00"),
+    tipo_valor="dias",
+    es_inasistencia=True,
+    descontar_pago_inasistencia=True,  # Sobrescribe el predeterminado (False)
+)
+```
+
+Para más información sobre cómo configurar estos valores en las interfaces de usuario, consulte:
+- [Guía de Percepciones](guia/percepciones.md)
+- [Guía de Deducciones](guia/deducciones.md)
+
 ### Modelo `EmpleadoCalculo`
 
 El objeto `EmpleadoCalculo` rastrea información de ausencias durante el cálculo de nómina:
