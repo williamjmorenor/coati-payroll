@@ -579,6 +579,142 @@ def load_liquidation_concepts() -> None:
         log.trace("No new liquidation concepts to load")
 
 
+def load_plugin_ready_payrolls() -> None:
+    """Create default payrolls with configured concepts when plugin concepts exist.
+
+    This helper is intentionally idempotent and conservative: it only creates
+    payrolls if all required references exist (currency, payroll type, and at
+    least one concept in each category).
+    """
+    from coati_payroll.log import log
+    from coati_payroll.model import (
+        Deduccion,
+        Moneda,
+        Percepcion,
+        Planilla,
+        PlanillaDeduccion,
+        PlanillaIngreso,
+        PlanillaPrestacion,
+        Prestacion,
+        TipoPlanilla,
+        db,
+    )
+
+    plugin_marker = "v_lct2019"
+
+    percepciones = db.session.execute(
+        db.select(Percepcion).filter(Percepcion.codigo.ilike(f"%{plugin_marker}%")).order_by(Percepcion.codigo)
+    ).scalars().all()
+    deducciones = db.session.execute(
+        db.select(Deduccion).filter(Deduccion.codigo.ilike(f"%{plugin_marker}%")).order_by(Deduccion.codigo)
+    ).scalars().all()
+    prestaciones = db.session.execute(
+        db.select(Prestacion).filter(Prestacion.codigo.ilike(f"%{plugin_marker}%")).order_by(Prestacion.codigo)
+    ).scalars().all()
+
+    if not percepciones or not deducciones or not prestaciones:
+        log.trace("Skipping plugin-ready payroll creation: missing plugin concepts for marker '%s'", plugin_marker)
+        return
+
+    moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
+    if moneda is None:
+        moneda = db.session.execute(db.select(Moneda).order_by(Moneda.codigo)).scalar_one_or_none()
+
+    if moneda is None:
+        log.trace("Skipping plugin-ready payroll creation: no currency found")
+        return
+
+    payroll_blueprints = [
+        {
+            "tipo_codigo": f"bmonic_PLANILLA_MENSUAL{plugin_marker}",
+            "nombre": "Planilla Mensual (LCT2019)",
+            "descripcion": "Planilla mensual lista para uso con conceptos de percepciones, deducciones y prestaciones.",
+        },
+        {
+            "tipo_codigo": f"bmonic_PLANILLA_AGUINALDO{plugin_marker}",
+            "nombre": "Planilla Aguinaldo (LCT2019)",
+            "descripcion": "Planilla de aguinaldo lista para uso con conceptos de percepciones, deducciones y prestaciones.",
+        },
+    ]
+
+    created = 0
+    linked = 0
+
+    for blueprint in payroll_blueprints:
+        tipo = db.session.execute(db.select(TipoPlanilla).filter_by(codigo=blueprint["tipo_codigo"])).scalar_one_or_none()
+        if tipo is None:
+            continue
+
+        planilla = db.session.execute(db.select(Planilla).filter_by(nombre=blueprint["nombre"])).scalar_one_or_none()
+        if planilla is None:
+            planilla = Planilla()
+            planilla.nombre = blueprint["nombre"]
+            planilla.descripcion = blueprint["descripcion"]
+            planilla.tipo_planilla_id = tipo.id
+            planilla.moneda_id = moneda.id
+            planilla.activo = True
+            planilla.creado_por = "system"
+            planilla.creado_por_plugin = True
+            planilla.plugin_source = plugin_marker
+            db.session.add(planilla)
+            db.session.flush()
+            created += 1
+
+        for idx, percepcion in enumerate(percepciones, start=1):
+            exists = db.session.execute(
+                db.select(PlanillaIngreso).filter_by(planilla_id=planilla.id, percepcion_id=percepcion.id)
+            ).scalar_one_or_none()
+            if exists is None:
+                db.session.add(
+                    PlanillaIngreso(
+                        planilla_id=planilla.id,
+                        percepcion_id=percepcion.id,
+                        orden=idx,
+                        activo=True,
+                        editable=True,
+                    )
+                )
+                linked += 1
+
+        for idx, deduccion in enumerate(deducciones, start=1):
+            exists = db.session.execute(
+                db.select(PlanillaDeduccion).filter_by(planilla_id=planilla.id, deduccion_id=deduccion.id)
+            ).scalar_one_or_none()
+            if exists is None:
+                db.session.add(
+                    PlanillaDeduccion(
+                        planilla_id=planilla.id,
+                        deduccion_id=deduccion.id,
+                        orden=idx,
+                        activo=True,
+                        editable=True,
+                    )
+                )
+                linked += 1
+
+        for idx, prestacion in enumerate(prestaciones, start=1):
+            exists = db.session.execute(
+                db.select(PlanillaPrestacion).filter_by(planilla_id=planilla.id, prestacion_id=prestacion.id)
+            ).scalar_one_or_none()
+            if exists is None:
+                db.session.add(
+                    PlanillaPrestacion(
+                        planilla_id=planilla.id,
+                        prestacion_id=prestacion.id,
+                        orden=idx,
+                        activo=True,
+                        editable=True,
+                    )
+                )
+                linked += 1
+
+    if created > 0 or linked > 0:
+        db.session.commit()
+        log.trace("Created %s ready payrolls and %s concept links for marker '%s'", created, linked, plugin_marker)
+    else:
+        log.trace("No plugin-ready payroll changes were needed for marker '%s'", plugin_marker)
+
+
 def load_initial_data() -> None:
     """Load all initial data into the database.
 
@@ -597,5 +733,6 @@ def load_initial_data() -> None:
     load_benefit_concepts()
     load_payroll_types()
     load_liquidation_concepts()
+    load_plugin_ready_payrolls()
 
     log.trace("Initial data loading completed")
