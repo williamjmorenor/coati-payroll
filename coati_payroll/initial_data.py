@@ -580,11 +580,11 @@ def load_liquidation_concepts() -> None:
 
 
 def load_plugin_ready_payrolls() -> None:
-    """Create default payrolls with configured concepts when plugin concepts exist.
+    """Create two ready-to-use payroll templates for the LCT2019 plugin.
 
-    This helper is intentionally idempotent and conservative: it only creates
-    payrolls if all required references exist (currency, payroll type, and at
-    least one concept in each category).
+    The associations are explicit and based on the exact concept codes created
+    by the plugin. This function is idempotent and skips changes if required
+    references are missing.
     """
     from coati_payroll.log import log
     from coati_payroll.model import (
@@ -600,42 +600,76 @@ def load_plugin_ready_payrolls() -> None:
         db,
     )
 
-    plugin_marker = "v_lct2019"
+    plugin_source = "v_lct2019"
 
-    percepciones = db.session.execute(
-        db.select(Percepcion).filter(Percepcion.codigo.ilike(f"%{plugin_marker}%")).order_by(Percepcion.codigo)
-    ).scalars().all()
-    deducciones = db.session.execute(
-        db.select(Deduccion).filter(Deduccion.codigo.ilike(f"%{plugin_marker}%")).order_by(Deduccion.codigo)
-    ).scalars().all()
-    prestaciones = db.session.execute(
-        db.select(Prestacion).filter(Prestacion.codigo.ilike(f"%{plugin_marker}%")).order_by(Prestacion.codigo)
-    ).scalars().all()
+    required_percepciones = {
+        "bmonic_HORAS_EXTRAv_lct2019": "Horas Extras",
+        "bmonic_SUBSIDIO_MEDICO_100v_lct2019": "Subsidio Médico 100%",
+        "bmonic_SUBSIDIO_MEDICO_40v_lct2019": "Subsidio Médico 40%",
+        "bmonic_VACACIONES_DESCANSADASv_lct2019": "Vacaciones Descansadas",
+    }
+    required_deducciones = {
+        "bmonic_INSSv_lct2019": "INSS Laboral",
+        "bmonic_LLEGADAS_TARDEv_lct2019": "Deducción por Llegadas Tarde",
+    }
+    required_prestaciones = {
+        "bmonic_AGUINALDOv_lct2019": "Provisión de Aguinaldo",
+        "bmonic_INATECv_lct2019": "INATEC",
+        "bmonic_INDEMNIZACION_LABORALv_lct2019": "Provisión Indemnización Laboral",
+        "bmonic_INSS_PATRONAL_50PLUSv_lct2019": "INSS Patronal 50+ empleados",
+    }
+
+    payroll_blueprints = [
+        {
+            "tipo_codigo": "bmonic_PLANILLA_MENSUALv_lct2019",
+            "nombre": "Planilla Mensual (LCT2019)",
+            "descripcion": "Plantilla lista para usar con conceptos laborales LCT2019.",
+        },
+        {
+            "tipo_codigo": "bmonic_PLANILLA_AGUINALDOv_lct2019",
+            "nombre": "Planilla Aguinaldo (LCT2019)",
+            "descripcion": "Plantilla de aguinaldo lista para usar con conceptos LCT2019.",
+        },
+    ]
+
+    def _load_concepts(model, required_map: dict[str, str], concept_type: str) -> list:
+        loaded = []
+        missing_codes = []
+
+        for codigo, expected_name in required_map.items():
+            concept = db.session.execute(db.select(model).filter_by(codigo=codigo)).scalar_one_or_none()
+            if concept is None:
+                missing_codes.append(codigo)
+                continue
+
+            if expected_name and concept.nombre != expected_name:
+                log.warning(
+                    "Plugin concept name mismatch for %s '%s': expected '%s', got '%s'",
+                    concept_type,
+                    codigo,
+                    expected_name,
+                    concept.nombre,
+                )
+
+            loaded.append(concept)
+
+        if missing_codes:
+            log.trace("Skipping plugin-ready payroll creation: missing %s codes: %s", concept_type, missing_codes)
+            return []
+
+        return loaded
+
+    percepciones = _load_concepts(Percepcion, required_percepciones, "percepcion")
+    deducciones = _load_concepts(Deduccion, required_deducciones, "deduccion")
+    prestaciones = _load_concepts(Prestacion, required_prestaciones, "prestacion")
 
     if not percepciones or not deducciones or not prestaciones:
-        log.trace("Skipping plugin-ready payroll creation: missing plugin concepts for marker '%s'", plugin_marker)
         return
 
     moneda = db.session.execute(db.select(Moneda).filter_by(codigo="NIO")).scalar_one_or_none()
     if moneda is None:
-        moneda = db.session.execute(db.select(Moneda).order_by(Moneda.codigo)).scalar_one_or_none()
-
-    if moneda is None:
-        log.trace("Skipping plugin-ready payroll creation: no currency found")
+        log.trace("Skipping plugin-ready payroll creation: currency 'NIO' not found")
         return
-
-    payroll_blueprints = [
-        {
-            "tipo_codigo": f"bmonic_PLANILLA_MENSUAL{plugin_marker}",
-            "nombre": "Planilla Mensual (LCT2019)",
-            "descripcion": "Planilla mensual lista para uso con conceptos de percepciones, deducciones y prestaciones.",
-        },
-        {
-            "tipo_codigo": f"bmonic_PLANILLA_AGUINALDO{plugin_marker}",
-            "nombre": "Planilla Aguinaldo (LCT2019)",
-            "descripcion": "Planilla de aguinaldo lista para uso con conceptos de percepciones, deducciones y prestaciones.",
-        },
-    ]
 
     created = 0
     linked = 0
@@ -643,6 +677,11 @@ def load_plugin_ready_payrolls() -> None:
     for blueprint in payroll_blueprints:
         tipo = db.session.execute(db.select(TipoPlanilla).filter_by(codigo=blueprint["tipo_codigo"])).scalar_one_or_none()
         if tipo is None:
+            log.trace(
+                "Skipping blueprint '%s': missing payroll type '%s'",
+                blueprint["nombre"],
+                blueprint["tipo_codigo"],
+            )
             continue
 
         planilla = db.session.execute(db.select(Planilla).filter_by(nombre=blueprint["nombre"])).scalar_one_or_none()
@@ -655,7 +694,7 @@ def load_plugin_ready_payrolls() -> None:
             planilla.activo = True
             planilla.creado_por = "system"
             planilla.creado_por_plugin = True
-            planilla.plugin_source = plugin_marker
+            planilla.plugin_source = plugin_source
             db.session.add(planilla)
             db.session.flush()
             created += 1
@@ -670,7 +709,7 @@ def load_plugin_ready_payrolls() -> None:
                         planilla_id=planilla.id,
                         percepcion_id=percepcion.id,
                         orden=idx,
-                        activo=True,
+                        activo=percepcion.activo,
                         editable=True,
                     )
                 )
@@ -686,7 +725,7 @@ def load_plugin_ready_payrolls() -> None:
                         planilla_id=planilla.id,
                         deduccion_id=deduccion.id,
                         orden=idx,
-                        activo=True,
+                        activo=deduccion.activo,
                         editable=True,
                     )
                 )
@@ -702,7 +741,7 @@ def load_plugin_ready_payrolls() -> None:
                         planilla_id=planilla.id,
                         prestacion_id=prestacion.id,
                         orden=idx,
-                        activo=True,
+                        activo=prestacion.activo,
                         editable=True,
                     )
                 )
@@ -710,9 +749,14 @@ def load_plugin_ready_payrolls() -> None:
 
     if created > 0 or linked > 0:
         db.session.commit()
-        log.trace("Created %s ready payrolls and %s concept links for marker '%s'", created, linked, plugin_marker)
+        log.trace(
+            "Created %s ready payrolls and %s explicit concept links for plugin '%s'",
+            created,
+            linked,
+            plugin_source,
+        )
     else:
-        log.trace("No plugin-ready payroll changes were needed for marker '%s'", plugin_marker)
+        log.trace("No plugin-ready payroll changes were needed for plugin '%s'", plugin_source)
 
 
 def load_initial_data() -> None:
