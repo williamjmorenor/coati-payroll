@@ -189,6 +189,59 @@ La prioridad se configura al asignar la deducción a la planilla:
 2. Al agregar una deducción, configure la prioridad
 3. Menor número = mayor prioridad (se aplica primero)
 
+### Información Contable
+
+Las deducciones pueden configurarse para generar asientos contables automáticos:
+
+| Campo | Descripción |
+|-------|-------------|
+| Contabilizable | ¿Genera asiento contable? |
+| Invertir Asiento Contable | Invierte débito y crédito en el asiento |
+| Mostrar como Ingreso en Reportes | Controla presentación en informes financieros |
+| Cuenta Contable (Debe) | Cuenta para el débito |
+| Cuenta Contable (Haber) | Cuenta para el crédito |
+
+#### Invertir Asiento Contable
+
+**Introducido en v1.1.0**
+
+Este campo permite invertir la dirección de las cuentas débito/crédito en el asiento contable generado. Es útil para situaciones especiales donde la naturaleza contable de la deducción requiere un tratamiento inverso al estándar.
+
+**Configuración Estándar (invertir = False):**
+```
+Débito:  Cuenta configurada en "Cuenta Contable (Debe)"
+Crédito: Cuenta configurada en "Cuenta Contable (Haber)"
+```
+
+**Configuración Invertida (invertir = True):**
+```
+Débito:  Cuenta configurada en "Cuenta Contable (Haber)"  ← Invertido
+Crédito: Cuenta configurada en "Cuenta Contable (Debe)"   ← Invertido
+```
+
+**Casos de Uso:**
+- Deducciones que contablemente funcionan como percepciones
+- Ajustes de nómina con tratamiento contable especial
+- Reversiones o correcciones
+
+#### Mostrar como Ingreso en Reportes
+
+**Introducido en v1.1.0**
+
+Este campo controla cómo se presenta la deducción en los reportes e informes financieros.
+
+**Valores:**
+- `True` (predeterminado): Se muestra en la sección correspondiente del reporte
+- `False`: Se oculta o presenta de forma diferente según el tipo de reporte
+
+**Casos de Uso:**
+- Ajustes técnicos que no deben aparecer en reportes estándar
+- Deducciones que son reversiones o correcciones
+- Conceptos internos de control
+
+!!! info "Impacto en Reportes"
+    Esta configuración solo afecta la **presentación visual** en reportes. El cálculo de nómina y contabilización no se ven afectados.
+
 ## Ejemplos de Deducciones
 
 ### INSS Laboral (Nicaragua)

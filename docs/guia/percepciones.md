@@ -97,8 +97,51 @@ La **Unidad de Cálculo** es informativa para reportes/UI; no cambia el cálculo
 | Campo | Descripción |
 |-------|-------------|
 | Contabilizable | ¿Genera asiento contable? |
+| Invertir Asiento Contable | Invierte débito y crédito en el asiento |
+| Mostrar como Ingreso en Reportes | Controla presentación en informes financieros |
 | Cuenta Contable (Debe) | Cuenta para el débito |
 | Cuenta Contable (Haber) | Cuenta para el crédito |
+
+#### Invertir Asiento Contable
+
+**Introducido en v1.1.0**
+
+Este campo permite invertir la dirección de las cuentas débito/crédito en el asiento contable generado. Es útil para situaciones especiales donde la naturaleza contable de la percepción requiere un tratamiento inverso al estándar.
+
+**Configuración Estándar (invertir = False):**
+```
+Débito:  Cuenta configurada en "Cuenta Contable (Debe)"
+Crédito: Cuenta configurada en "Cuenta Contable (Haber)"
+```
+
+**Configuración Invertida (invertir = True):**
+```
+Débito:  Cuenta configurada en "Cuenta Contable (Haber)"  ← Invertido
+Crédito: Cuenta configurada en "Cuenta Contable (Debe)"   ← Invertido
+```
+
+**Casos de Uso:**
+- Percepciones que contablemente funcionan como deducciones
+- Ajustes de nómina con tratamiento contable especial
+- Reversiones o correcciones
+
+#### Mostrar como Ingreso en Reportes
+
+**Introducido en v1.1.0**
+
+Este campo controla cómo se presenta la percepción en los reportes e informes financieros.
+
+**Valores:**
+- `True` (predeterminado): Se muestra como ingreso del empleado
+- `False`: Se oculta o presenta de forma diferente según el tipo de reporte
+
+**Casos de Uso:**
+- Ajustes técnicos que no deben aparecer como ingresos en reportes de compensación
+- Percepciones que son reversiones o correcciones
+- Conceptos internos de control que no son parte del salario visible
+
+!!! info "Impacto en Reportes"
+    Esta configuración solo afecta la **presentación visual** en reportes. El cálculo de nómina y contabilización no se ven afectados.
 
 ### Configuración de Ausencias Predeterminadas
 
