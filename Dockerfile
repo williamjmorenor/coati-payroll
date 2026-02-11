@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libpango1.0-dev \
     libcairo2-dev \
-    libgdk-pixbuf2.0-dev \
+    libgdk-pixbuf-2.0-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libcairo2 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-2.0-0 \
     libffi8 \
     fonts-dejavu-core \
     tini \
@@ -59,7 +59,7 @@ COPY . .
 
 # Instalar paquete usando el pip del venv
 RUN /opt/venv/bin/pip install --no-cache-dir -e . \
-    && RUN chmod + xdocker-entrypoint.sh \
+    && chmod +x docker-entrypoint.sh \
     && chown -R coati:coati /app
 
 # Switch to non-root user
@@ -75,7 +75,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_ENV=production
 
 # Use tini as init system for proper signal handling
-ENTRYPOINT ["/usr/bin/tini", "--", "docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/app/docker-entrypoint.sh"]
 
 # Run the application
 CMD ["/opt/venv/bin/python", "app.py"]
