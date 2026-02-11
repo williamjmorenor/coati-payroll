@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+
+
+### Added
+
+- Added planilla cloning from the web UI (list action) to duplicate payroll templates including perceptions, deductions, and benefits.
+
+### Changed
+
+- Added bilingual periodicity support in salary calculation for Spanish/English terms (`mensual`/`monthly`, `quincenal`/`biweekly`).
+- Moved planilla clone business logic to the planilla service layer and exposed it through a dedicated route.
+
+### Tests
+
+- Added route and UI tests for planilla cloning (authentication, visibility, and association-copy behavior).
+- Updated prestaciones accumulation validation expectations for full-calendar-month payroll periods.
+
 ## [1.3.0] - 2026-02-10
 
 ### Added

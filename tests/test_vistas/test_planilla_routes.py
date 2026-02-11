@@ -269,6 +269,14 @@ def test_planilla_ejecutar_requires_authentication(app, client, db_session):
         assert "/auth/login" in response.location
 
 
+def test_planilla_clone_requires_authentication(app, client, db_session, planilla):
+    """Test that cloning a planilla requires authentication."""
+    with app.app_context():
+        response = client.post(f"/planilla/{planilla.id}/clone", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.location
+
+
 # ============================================================================
 # PLANILLA CRUD TESTS
 # ============================================================================
@@ -377,6 +385,104 @@ def test_planilla_delete_removes_planilla(app, client, admin_user, db_session, p
 
         deleted = db_session.get(Planilla, planilla_id)
         assert deleted is None
+
+
+def test_planilla_index_shows_clone_action(app, client, admin_user, db_session, planilla):
+    """Test that planilla index displays clone action for each planilla."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+        response = client.get("/planilla/")
+        assert response.status_code == 200
+        assert f"/planilla/{planilla.id}/clone".encode() in response.data
+
+
+def test_planilla_clone_creates_copy_with_associations(
+    app, client, admin_user, db_session, planilla, percepcion, deduccion, prestacion
+):
+    """Test that POST /planilla/<id>/clone duplicates core planilla associations."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        from coati_payroll.model import PlanillaIngreso, PlanillaDeduccion, PlanillaPrestacion, Planilla, db
+
+        ingreso = PlanillaIngreso(
+            planilla_id=planilla.id,
+            percepcion_id=percepcion.id,
+            orden=3,
+            editable=False,
+            monto_predeterminado=Decimal("150.00"),
+            porcentaje=Decimal("10.00"),
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        ded = PlanillaDeduccion(
+            planilla_id=planilla.id,
+            deduccion_id=deduccion.id,
+            prioridad=50,
+            orden=2,
+            editable=False,
+            monto_predeterminado=Decimal("25.00"),
+            porcentaje=Decimal("2.00"),
+            activo=True,
+            es_obligatoria=True,
+            detener_si_insuficiente=True,
+            creado_por=admin_user.usuario,
+        )
+        pres = PlanillaPrestacion(
+            planilla_id=planilla.id,
+            prestacion_id=prestacion.id,
+            orden=4,
+            editable=False,
+            monto_predeterminado=Decimal("30.00"),
+            porcentaje=Decimal("3.00"),
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add_all([ingreso, ded, pres])
+        db_session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/clone", follow_redirects=False)
+        assert response.status_code == 302
+
+        clon = db_session.execute(
+            db.select(Planilla)
+            .where(
+                Planilla.id != planilla.id,
+                Planilla.nombre.like("Test Planilla (Copia%"),
+            )
+            .order_by(Planilla.timestamp.desc())
+        ).scalar_one_or_none()
+
+        assert clon is not None
+        assert f"/planilla/{clon.id}/edit" in response.location
+        assert clon.creado_por == admin_user.usuario
+        assert clon.tipo_planilla_id == planilla.tipo_planilla_id
+        assert clon.moneda_id == planilla.moneda_id
+        assert clon.empresa_id == planilla.empresa_id
+
+        db_session.refresh(clon)
+        assert len(clon.planilla_percepciones) == 1
+        assert len(clon.planilla_deducciones) == 1
+        assert len(clon.planilla_prestaciones) == 1
+
+        clon_ingreso = clon.planilla_percepciones[0]
+        assert clon_ingreso.percepcion_id == percepcion.id
+        assert clon_ingreso.orden == 3
+        assert clon_ingreso.monto_predeterminado == Decimal("150.00")
+        assert clon_ingreso.porcentaje == Decimal("10.00")
+
+        clon_deduccion = clon.planilla_deducciones[0]
+        assert clon_deduccion.deduccion_id == deduccion.id
+        assert clon_deduccion.prioridad == 50
+        assert clon_deduccion.orden == 2
+        assert clon_deduccion.es_obligatoria is True
+        assert clon_deduccion.detener_si_insuficiente is True
+
+        clon_prestacion = clon.planilla_prestaciones[0]
+        assert clon_prestacion.prestacion_id == prestacion.id
+        assert clon_prestacion.orden == 4
+        assert clon_prestacion.monto_predeterminado == Decimal("30.00")
+        assert clon_prestacion.porcentaje == Decimal("3.00")
 
 
 # ============================================================================

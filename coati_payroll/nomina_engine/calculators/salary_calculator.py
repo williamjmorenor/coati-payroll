@@ -52,7 +52,10 @@ class SalaryCalculator:
         tipo_planilla = planilla.tipo_planilla
         periodicidad = tipo_planilla.periodicidad.lower() if tipo_planilla.periodicidad else ""
 
-        if periodicidad == "mensual":
+        # Support both English and Spanish terms for periodicidad
+        # "mensual" and "monthly" both mean monthly payroll
+        # "quincenal" and "biweekly" both mean biweekly payroll
+        if periodicidad in ("mensual", "monthly"):
             is_first_of_month = periodo_inicio.day == 1
             next_day = periodo_fin + timedelta(days=1)
             is_last_of_month = next_day.day == 1
@@ -61,7 +64,7 @@ class SalaryCalculator:
             if is_first_of_month and is_last_of_month and same_month:
                 return salario_mensual
 
-        elif periodicidad == "quincenal":
+        elif periodicidad in ("quincenal", "biweekly"):
             # Para planillas quincenales, siempre se paga la mitad del salario mensual
             # independientemente del número de días del período (13, 14, 15 o 16 días).
             # Esto garantiza que el empleado reciba exactamente su salario mensual completo

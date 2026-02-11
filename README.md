@@ -46,6 +46,7 @@ as-is, without warranties of fitness for any particular purpose.
 - **Configurable Earnings**: Define any type of additional income (bonuses, commissions, overtime, etc.)
 - **Priority-Based Deductions**: Configure deductions in priority order according to your needs
 - **Employer Benefits**: Configure benefits and employer contributions as required
+- **Planilla Cloning (Web UI)**: Duplicate an existing payroll template from the planilla list, including perceptions, deductions, and benefits
 - **Loans and Advances**: Loan control with automatic installment deduction
 - **Multi-currency**: Support for multiple currencies with exchange rates
 - **Background Processing**: Queue system for large payrolls with Dramatiq/Huey
@@ -53,6 +54,7 @@ as-is, without warranties of fitness for any particular purpose.
 - **Role-Based Access Control (RBAC)**: Permission system with Admin, HR, and Audit roles
 - **Reporting System**: Custom reports with role-based permissions and execution audit
 - **Internationalization**: Multi-language support with interface and content translation
+- **Periodicidad Compatibility**: Salary calculation accepts both Spanish and English periodicity terms (`mensual`/`monthly`, `quincenal`/`biweekly`)
 
 ## Quick Installation
 

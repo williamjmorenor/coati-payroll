@@ -187,10 +187,12 @@ def test_prestaciones_accumulation_workflow(app, db_session):
 
         def calculate_prestacion_amount(base_salary, percentage, inicio, fin, standard_days=30):
             """Calculate prestacion amount considering full month vs partial period logic."""
-            # The system always prorates based on actual days in the period
-            days_in_period = (fin - inicio).days + 1
-            prorated_salary = base_salary / Decimal(str(standard_days)) * Decimal(str(days_in_period))
-            return prorated_salary * (percentage / Decimal("100"))
+            if is_full_calendar_month(inicio, fin):
+                salary_for_period = base_salary
+            else:
+                days_in_period = (fin - inicio).days + 1
+                salary_for_period = base_salary / Decimal(str(standard_days)) * Decimal(str(days_in_period))
+            return salary_for_period * (percentage / Decimal("100"))
 
         # Execute 3 consecutive monthly payrolls (all full calendar months)
         payroll_dates = [
@@ -200,7 +202,7 @@ def test_prestaciones_accumulation_workflow(app, db_session):
         ]
 
         # Pre-calculate expected amounts for each period
-        # System prorates all periods based on actual days
+        # Full months use full salary; partial periods are prorated by configured base days.
         expected_amounts_anual = []
         expected_amounts_vida = []
         for inicio, fin, days in payroll_dates:

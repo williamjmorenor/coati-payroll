@@ -161,6 +161,11 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                        class="btn btn-outline-primary" title="{{ _('Editar') }}">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    <form action="{{ url_for('planilla.clone', planilla_id=planilla.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-secondary" title="{{ _('Clonar') }}">
+                                            <i class="bi bi-copy"></i>
+                                        </button>
+                                    </form>
                                     <button type="button" class="btn btn-outline-danger" 
                                             title="{{ _('Eliminar') }}"
                                             data-bs-toggle="modal" 

@@ -178,6 +178,16 @@ def config(planilla_id: str):
     )
 
 
+@planilla_bp.route("/<planilla_id>/clone", methods=["POST"])
+@require_write_access()
+def clone(planilla_id: str):
+    """Clone a planilla and redirect to edit the new copy."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nueva_planilla = PlanillaService.clone_planilla(planilla, creado_por=current_user.usuario)
+    flash(_("Planilla clonada exitosamente: %(nombre)s", nombre=nueva_planilla.nombre), "success")
+    return redirect(url_for("planilla.edit", planilla_id=nueva_planilla.id))
+
+
 @planilla_bp.route("/<planilla_id>/delete", methods=["POST"])
 @require_write_access()
 def delete(planilla_id: str):
