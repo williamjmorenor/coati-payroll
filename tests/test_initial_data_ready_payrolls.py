@@ -49,8 +49,8 @@ def _seed_plugin_entities():
 
     db.session.add(
         TipoPlanilla(
-            codigo="bmonic_PLANILLA_MENSUALv_lct2019",
-            descripcion="Mensual",
+            codigo="TPL_MENSUAL_LCT",
+            descripcion="Planilla mensual según legislación nicaragüense",
             periodicidad="Monthly",
             dias=30,
             periodos_por_anio=12,
@@ -59,8 +59,8 @@ def _seed_plugin_entities():
     )
     db.session.add(
         TipoPlanilla(
-            codigo="bmonic_PLANILLA_AGUINALDOv_lct2019",
-            descripcion="Aguinaldo",
+            codigo="TPL_AGUINALDO_LCT",
+            descripcion="Planilla para aguinaldo según legislación nicaragüense",
             periodicidad="Monthly",
             dias=30,
             periodos_por_anio=1,

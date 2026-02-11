@@ -656,14 +656,14 @@ def load_plugin_ready_payrolls() -> None:
         return
 
     tipo_mensual = db.session.execute(
-        db.select(TipoPlanilla).filter_by(codigo="bmonic_PLANILLA_MENSUALv_lct2019")
+        db.select(TipoPlanilla).filter_by(descripcion="Planilla mensual según legislación nicaragüense")
     ).scalar_one_or_none()
     tipo_aguinaldo = db.session.execute(
-        db.select(TipoPlanilla).filter_by(codigo="bmonic_PLANILLA_AGUINALDOv_lct2019")
+        db.select(TipoPlanilla).filter_by(descripcion="Planilla para aguinaldo según legislación nicaragüense")
     ).scalar_one_or_none()
 
     if tipo_mensual is None or tipo_aguinaldo is None:
-        log.trace("Skipping plugin-ready payroll creation: missing explicit payroll types for LCT2019")
+        log.trace("Skipping plugin-ready payroll creation: missing explicit payroll type descriptions for LCT2019")
         return
 
     created = 0
