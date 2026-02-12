@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+# pylint: disable=no-member
 """Add planilla.vacation_policy_id foreign key.
 
 Revision ID: 20260212_130000

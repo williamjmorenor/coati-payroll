@@ -6,7 +6,7 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import false, true
 
-from coati_payroll.model import db, Planilla
+from coati_payroll.model import db, Planilla, VacationPolicy
 from coati_payroll.forms import PlanillaForm
 from coati_payroll.i18n import _
 from coati_payroll.rbac import require_read_access, require_write_access
@@ -146,11 +146,15 @@ def edit(planilla_id: str):
             if not policy:
                 flash(_("La regla de vacaciones seleccionada no existe."), "danger")
                 counts = get_planilla_component_counts(planilla_id)
-                return render_template("modules/planilla/form.html", form=form, planilla=planilla, is_edit=True, **counts)
+                return render_template(
+                    "modules/planilla/form.html", form=form, planilla=planilla, is_edit=True, **counts
+                )
             if policy.empresa_id and policy.empresa_id != (form.empresa_id.data or None):
                 flash(_("La regla de vacaciones pertenece a otra empresa."), "danger")
                 counts = get_planilla_component_counts(planilla_id)
-                return render_template("modules/planilla/form.html", form=form, planilla=planilla, is_edit=True, **counts)
+                return render_template(
+                    "modules/planilla/form.html", form=form, planilla=planilla, is_edit=True, **counts
+                )
 
         planilla.nombre = form.nombre.data
         planilla.descripcion = form.descripcion.data

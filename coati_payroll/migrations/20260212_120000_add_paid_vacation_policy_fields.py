@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+# pylint: disable=no-member
 """Add paid vacation policy accounting fields.
 
 Revision ID: 20260212_120000
@@ -24,7 +25,9 @@ def upgrade():
     )
     op.add_column(
         "vacation_policy",
-        sa.Column("porcentaje_pago_vacaciones", sa.Numeric(precision=5, scale=2), nullable=False, server_default="100.00"),
+        sa.Column(
+            "porcentaje_pago_vacaciones", sa.Numeric(precision=5, scale=2), nullable=False, server_default="100.00"
+        ),
     )
     op.add_column("vacation_policy", sa.Column("cuenta_debito_vacaciones_pagadas", sa.String(length=64), nullable=True))
     op.add_column(

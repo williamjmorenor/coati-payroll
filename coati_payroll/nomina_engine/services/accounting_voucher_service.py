@@ -136,25 +136,30 @@ class AccountingVoucherService:
         for policy in paid_policies:
             if not policy.cuenta_debito_vacaciones_pagadas:
                 warnings.append(
-                    f"Política de vacaciones '{policy.nombre}' ({policy.codigo}) no tiene cuenta débito de vacaciones pagadas"
+                    f"Política de vacaciones '{policy.nombre}' ({policy.codigo}) "
+                    f"no tiene cuenta débito de vacaciones pagadas"
                 )
             if not policy.cuenta_credito_vacaciones_pagadas:
                 warnings.append(
-                    f"Política de vacaciones '{policy.nombre}' ({policy.codigo}) no tiene cuenta crédito de vacaciones pagadas"
+                    f"Política de vacaciones '{policy.nombre}' ({policy.codigo}) "
+                    f"no tiene cuenta crédito de vacaciones pagadas"
                 )
 
         is_valid = len(warnings) == 0
         return is_valid, warnings
 
-
     def _get_vacation_days_base(self, empresa_id: str | None) -> Decimal:
         if not empresa_id:
             return Decimal("30")
-        config = self.session.execute(
-            db.select(ConfiguracionCalculos)
-            .filter(ConfiguracionCalculos.empresa_id == empresa_id, ConfiguracionCalculos.activo.is_(True))
-            .order_by(ConfiguracionCalculos.creado.desc())
-        ).scalars().first()
+        config = (
+            self.session.execute(
+                db.select(ConfiguracionCalculos)
+                .filter(ConfiguracionCalculos.empresa_id == empresa_id, ConfiguracionCalculos.activo.is_(True))
+                .order_by(ConfiguracionCalculos.creado.desc())
+            )
+            .scalars()
+            .first()
+        )
         if not config or not config.dias_mes_vacaciones:
             return Decimal("30")
         return Decimal(str(config.dias_mes_vacaciones))
