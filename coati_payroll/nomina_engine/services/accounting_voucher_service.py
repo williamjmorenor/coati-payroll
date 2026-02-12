@@ -238,7 +238,8 @@ class AccountingVoucherService:
             empleado_nombre_completo = f"{empleado.primer_nombre} {empleado.primer_apellido}"
 
             units = Decimal(str(abs(entry.quantity)))
-            salario_base = Decimal(str(ne.sueldo_base_historico or Decimal("0.00")))
+            # Use employee's monthly salary for vacation liability, not period salary
+            salario_base = Decimal(str(empleado.salario_base or Decimal("0.00")))
             porcentaje_pago = Decimal(str(policy.porcentaje_pago_vacaciones or Decimal("100.00"))) / Decimal("100")
             monto = round_money((salario_base / dias_base) * units * porcentaje_pago, planilla_moneda)
             if monto <= 0:
