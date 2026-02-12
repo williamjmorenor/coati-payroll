@@ -198,6 +198,8 @@ class ConceptCalculator:
                 if source in inputs:
                     inputs[name] = inputs[source]
                     continue
+                # Support dotted notation for potential namespaced sources (e.g., "novedad.HORAS_EXTRA")
+                # Extract the last segment after the final dot as a fallback lookup key
                 if "." in source:
                     source_key = source.split(".")[-1]
                     if source_key in inputs:

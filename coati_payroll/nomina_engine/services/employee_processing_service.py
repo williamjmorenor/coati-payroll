@@ -117,6 +117,9 @@ class EmployeeProcessingService:
             variables[f"novedad_{codigo}"] = valor
             normalized = self._normalize_novedad_code(codigo)
             if normalized:
+                # Use setdefault to prefer explicit base codes over plugin-normalized ones.
+                # If a novedad exists as both "HORAS_EXTRA" and "bmonic_HORAS_EXTRAv_lct2019",
+                # the explicit version takes precedence.
                 variables.setdefault(f"novedad_{normalized}", valor)
 
         # Load accumulated annual values
