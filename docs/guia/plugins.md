@@ -4,6 +4,266 @@
 
 Coati Payroll debe permanecer como un motor de nómina agnóstico a cualquier jurisdicción. La adaptación a una jurisdicción específica debe residir **exclusivamente** en plugins instalables, sin modificar el código fuente del motor.
 
+## Interacción con el Motor Genérico
+
+### Principios Fundamentales
+
+Los plugins deben interactuar con el motor usando **únicamente** las capacidades genéricas que este expone. El motor no conoce ni debe conocer conceptos específicos de ninguna jurisdicción.
+
+**✅ Correcto:** Plugin usa características genéricas del motor
+```json
+{
+  "formula": "horas_extra * tarifa_hora * recargo_legal",
+  "inputs": [
+    {"name": "horas_extra", "source": "novedad_HORAS_EXTRA"},
+    {"name": "tarifa_hora", "source": "salario_base_por_hora"},
+    {"name": "recargo_legal", "source": "constante_recargo"}
+  ]
+}
+```
+
+**❌ Incorrecto:** Solicitar que el motor agregue lógica específica
+```python
+# NO HACER: Pedir al motor que agregue código específico de Nicaragua
+def _normalize_nicaragua_codes(codigo):
+    if codigo.startswith("bmonic_"):
+        return codigo[7:]  # Lógica específica de Nicaragua
+```
+
+### Capacidades Genéricas del Motor
+
+El motor expone las siguientes capacidades que los plugins pueden usar:
+
+#### 1. Mapeo de Fuentes de Entrada (Formula Input Source Mapping)
+
+Permite usar nombres descriptivos en fórmulas mientras se mapean a variables técnicas del motor.
+
+**Documentación completa:** Ver [Mapeo de Fuentes de Entrada](reglas-calculo.md#mapeo-de-fuentes-de-entrada-en-formulas)
+
+**Ejemplo:**
+```json
+{
+  "formula": "mi_variable_descriptiva * 2",
+  "inputs": [
+    {
+      "name": "mi_variable_descriptiva",
+      "source": "novedad_CODIGO_GENERICO",
+      "type": "number"
+    }
+  ]
+}
+```
+
+**Uso por plugins:**
+- ✅ Definir nombres descriptivos en su propio idioma/contexto
+- ✅ Mapear a variables genéricas del motor
+- ✅ Mantener fórmulas legibles en su jurisdicción
+
+#### 2. Sistema de Novedades Genérico
+
+El motor expone todas las novedades como variables `novedad_CODIGO` donde CODIGO es el código definido por el implementador.
+
+**Ejemplo de uso en plugin:**
+```json
+{
+  "descripcion": "Bono de productividad según legislación local",
+  "formula": "bono * factor_ajuste",
+  "inputs": [
+    {"name": "bono", "source": "novedad_BONO_PRODUCTIVIDAD"},
+    {"name": "factor_ajuste", "source": "configuracion_factor_local"}
+  ]
+}
+```
+
+#### 3. Campos Personalizados
+
+El motor permite definir campos personalizados en empleados que automáticamente se exponen como variables.
+
+**Ejemplo:**
+```json
+{
+  "campo_personalizado": "nivel_sindical",
+  "tipo": "text",
+  "valores_permitidos": ["basico", "intermedio", "avanzado"]
+}
+```
+
+El plugin puede usar `nivel_sindical` en sus fórmulas sin que el motor conozca el concepto de sindicatos.
+
+#### 4. Reglas de Cálculo Configurables
+
+El motor proporciona:
+- Fórmulas con expresiones matemáticas
+- Tablas de búsqueda
+- Cálculos por tramos (impuestos progresivos)
+- Funciones de fecha y tiempo
+
+Todas estas capacidades son **genéricas** y configurables.
+
+### Antipatrones: ¿Qué NO Debe Hacer un Plugin?
+
+#### ❌ Antipatrón 1: Solicitar Código Específico en el Motor
+
+**Incorrecto:**
+```python
+# NO HACER: Agregar al motor
+if plugin == "nicaragua":
+    codigo_normalizado = _normalize_nicaragua_code(codigo)
+```
+
+**Correcto:**
+```json
+// En la configuración del plugin, usar mapeo
+{
+  "inputs": [
+    {"name": "codigo_limpio", "source": "novedad_CODIGO_CON_PREFIJO"}
+  ]
+}
+```
+
+#### ❌ Antipatrón 2: Asumir Convenciones del Plugin en el Motor
+
+**Incorrecto:**
+```python
+# NO HACER: El motor no debe conocer prefijos de plugins
+if codigo.startswith("bmonic_"):  # Específico de Nicaragua
+    return codigo[7:]
+```
+
+**Correcto:**
+El plugin maneja sus propias convenciones en su espacio de configuración, no en el motor.
+
+#### ❌ Antipatrón 3: Modificar el Comportamiento del Motor
+
+**Incorrecto:**
+Pedir que el motor cambie su comportamiento base para acomodar una jurisdicción.
+
+**Correcto:**
+Usar las capacidades genéricas del motor de manera creativa para lograr el objetivo.
+
+### Guía para Desarrolladores de Plugins
+
+#### Paso 1: Identificar Necesidades
+
+Antes de desarrollar, identifique:
+1. ¿Qué cálculos necesita realizar?
+2. ¿Qué variables del motor necesita?
+3. ¿Qué nombres descriptivos usará en su jurisdicción?
+
+#### Paso 2: Mapear a Capacidades Genéricas
+
+Para cada necesidad, encuentre la capacidad genérica correspondiente:
+
+| Necesidad | Capacidad Genérica del Motor |
+|-----------|------------------------------|
+| Horas extra con nombre local | Mapeo de fuentes: `novedad_HORAS_EXTRA` |
+| Impuesto progresivo | Reglas de cálculo por tramos |
+| Bono por antigüedad | Funciones de fecha + fórmulas |
+| Campo específico de país | Campos personalizados |
+| Descuento específico | Sistema de deducciones genérico |
+
+#### Paso 3: Configurar sin Modificar el Motor
+
+**Ejemplo completo para plugin Nicaragua:**
+
+```json
+{
+  "percepciones": [
+    {
+      "codigo": "HORAS_EXTRA_NIC",
+      "nombre": "Horas Extra - Nicaragua",
+      "descripcion": "Cálculo según Art. 58 Código Laboral Nicaragua",
+      "tipo_formula": "formula",
+      "formula": {
+        "expression": "horas * tarifa * recargo",
+        "inputs": [
+          {
+            "name": "horas",
+            "source": "novedad_HORAS_EXTRA",
+            "type": "number",
+            "descripcion": "Horas extra del período"
+          },
+          {
+            "name": "tarifa",
+            "source": "salario_base_por_hora",
+            "type": "number",
+            "descripcion": "Tarifa base por hora"
+          },
+          {
+            "name": "recargo",
+            "source": "constante_recargo_he",
+            "type": "number",
+            "descripcion": "1.5 para horas extra ordinarias según ley"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Note que:**
+- ✅ El motor no conoce "Nicaragua" ni "Art. 58"
+- ✅ Usa variables genéricas: `novedad_*`, `salario_base_por_hora`
+- ✅ Los nombres descriptivos están en el mapeo del plugin
+- ✅ La lógica específica está en la configuración, no en código
+
+### Solución de Problemas Comunes
+
+#### Problema: "Necesito que el motor reconozca mi formato específico"
+
+**❌ Solución incorrecta:** Pedir que se modifique el motor
+
+**✅ Solución correcta:** Usar mapeo de fuentes
+
+```json
+{
+  "inputs": [
+    {"name": "mi_formato", "source": "variable_generica_del_motor"}
+  ]
+}
+```
+
+#### Problema: "El motor no tiene la función que necesito"
+
+**❌ Solución incorrecta:** Pedir que se agregue función específica
+
+**✅ Solución correcta:** 
+1. Revisar si se puede lograr con combinación de funciones existentes
+2. Si es verdaderamente genérico y útil para múltiples jurisdicciones, proponer como mejora del motor
+3. Si es específico, implementar en el espacio del plugin
+
+#### Problema: "Mis códigos de novedad tienen prefijos que el motor no entiende"
+
+**❌ Solución incorrecta:** Pedir normalización de códigos en el motor
+
+**✅ Solución correcta:** Usar mapeo de fuentes para traducir
+
+```json
+{
+  "inputs": [
+    {"name": "horas_extra", "source": "novedad_MI_PREFIJO_HORAS_EXTRA"}
+  ]
+}
+```
+
+### Verificación de Cumplimiento
+
+Antes de liberar un plugin, verifique:
+
+- [ ] ¿Mi plugin requiere modificaciones al código del motor? → **Debe ser NO**
+- [ ] ¿Mi plugin usa solo capacidades genéricas documentadas? → **Debe ser SÍ**
+- [ ] ¿Otra jurisdicción podría usar el motor sin mi plugin? → **Debe ser SÍ**
+- [ ] ¿El motor puede funcionar sin conocer mi jurisdicción? → **Debe ser SÍ**
+
+### Recursos Adicionales
+
+- [Mapeo de Fuentes de Entrada - Documentación Completa](reglas-calculo.md#mapeo-de-fuentes-de-entrada-en-formulas)
+- [Reglas de Cálculo](reglas-calculo.md)
+- [Sistema de Novedades](nomina.md#novedades)
+- [Campos Personalizados](campos-personalizados.md)
+- [Contrato Social del Proyecto](../../SOCIAL_CONTRACT.md)
+
 ## Descubrimiento (no dinámico)
 
 - Los plugins se detectan al iniciar la aplicación enumerando los paquetes instalados en el entorno de Python.

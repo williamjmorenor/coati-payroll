@@ -310,6 +310,330 @@ Para cálculos con fórmula directa:
 }
 ```
 
+## Mapeo de Fuentes de Entrada en Fórmulas (Formula Input Source Mapping)
+
+### ¿Qué es el Mapeo de Fuentes?
+
+El mapeo de fuentes de entrada (input source mapping) es una característica del motor de fórmulas que permite a las configuraciones y plugins definir **alias claros y descriptivos** para variables del motor, sin necesidad de modificar el código del motor.
+
+Esta característica es **fundamental para mantener el motor agnóstico a la jurisdicción**, ya que permite que plugins de diferentes países usen sus propias convenciones de nombres mientras interactúan con las variables genéricas del motor.
+
+### ¿Por Qué es Importante?
+
+**Problema sin mapeo de fuentes:**
+- El motor expone variables con nombres técnicos como `novedad_HORAS_EXTRA`
+- Las fórmulas deben usar estos nombres exactos, haciendo las configuraciones difíciles de leer
+- Los plugins no pueden usar nombres descriptivos en su propio contexto
+
+**Solución con mapeo de fuentes:**
+- Las fórmulas pueden usar nombres descriptivos y legibles
+- Los plugins pueden definir sus propias convenciones de nombres
+- El motor traduce automáticamente entre nombres descriptivos y nombres técnicos
+- **El motor permanece completamente agnóstico** - no conoce ni entiende los nombres específicos de cada jurisdicción
+
+### Cómo Funciona
+
+El mapeo se define en el campo `inputs` de una fórmula, donde cada entrada especifica:
+
+- `name`: El nombre descriptivo que se usará en la fórmula
+- `source`: La variable técnica del motor que proporciona el valor
+- `type`: El tipo de dato (opcional, para documentación)
+
+**Ejemplo básico:**
+
+```json
+{
+  "tipo": "formula",
+  "formula": "horas_extra * tarifa_hora * 1.5",
+  "inputs": [
+    {
+      "name": "horas_extra",
+      "source": "novedad_HORAS_EXTRA",
+      "type": "number"
+    },
+    {
+      "name": "tarifa_hora",
+      "source": "salario_base_por_hora",
+      "type": "number"
+    }
+  ]
+}
+```
+
+En este ejemplo:
+- La fórmula usa `horas_extra` (nombre descriptivo)
+- El motor busca el valor en `novedad_HORAS_EXTRA` (variable técnica)
+- La fórmula es más legible y mantenible
+
+### Notación con Puntos (Dotted Notation)
+
+El mapeo soporta notación con puntos para mayor flexibilidad:
+
+```json
+{
+  "tipo": "formula",
+  "formula": "horas_extra * 2",
+  "inputs": [
+    {
+      "name": "horas_extra",
+      "source": "novedad.HORAS_EXTRA",
+      "type": "number"
+    }
+  ]
+}
+```
+
+**Comportamiento:**
+1. El motor intenta buscar la variable completa `novedad.HORAS_EXTRA`
+2. Si no existe, extrae la última parte después del punto: `HORAS_EXTRA`
+3. Busca esta variable en el contexto de cálculo
+
+Esto permite:
+- Documentar la procedencia de las variables (namespace conceptual)
+- Mantener compatibilidad con diferentes convenciones de nombres
+- Facilitar la migración entre versiones de configuración
+
+### Variables Disponibles en el Motor
+
+El motor expone las siguientes variables genéricas que pueden ser mapeadas:
+
+#### Variables de Salario
+- `salario_base`: Salario base del empleado
+- `salario_mensual`: Salario mensualizado
+- `salario_bruto`: Salario bruto del período
+- `salario_neto`: Salario neto después de deducciones
+
+#### Variables de Período
+- `dias_trabajados`: Días trabajados en el período
+- `dias_mes`: Días totales del mes
+- `hoy`: Fecha actual del sistema
+
+#### Variables de Empleado
+- `fecha_ingreso`: Fecha de ingreso del empleado
+- `fecha_nacimiento`: Fecha de nacimiento
+- Variables de campos personalizados definidos por el implementador
+
+#### Variables de Novedades
+- `novedad_CODIGO`: Valor de una novedad específica (donde CODIGO es el código de la novedad)
+- Ejemplo: `novedad_BONO_PRODUCTIVIDAD`, `novedad_DESCUENTO_PRESTAMO`
+
+#### Variables Acumuladas
+- `salario_acumulado`: Salario acumulado en el año fiscal
+- `impuesto_acumulado`: Impuesto retenido acumulado
+- `periodos_procesados`: Número de períodos procesados
+
+#### Variables de Cálculo
+- `total_percepciones`: Total de percepciones calculadas
+- `total_deducciones`: Total de deducciones calculadas
+
+### Ejemplo Completo: Plugin Nicaragua
+
+Un plugin de Nicaragua puede usar el mapeo para mantener sus propias convenciones mientras usa las capacidades genéricas del motor:
+
+**Configuración del plugin (JSON):**
+```json
+{
+  "codigo": "CALC_HORAS_EXTRA_NIC",
+  "nombre": "Cálculo de Horas Extra - Nicaragua",
+  "tipo": "formula",
+  "formula": "horas_extra * (salario_hora * recargo_ley)",
+  "inputs": [
+    {
+      "name": "horas_extra",
+      "source": "novedad_HORAS_EXTRA",
+      "type": "number",
+      "descripcion": "Horas extra reportadas por el sistema de asistencia"
+    },
+    {
+      "name": "salario_hora",
+      "source": "salario_base_por_hora",
+      "type": "number",
+      "descripcion": "Salario base dividido por horas mensuales"
+    },
+    {
+      "name": "recargo_ley",
+      "source": "constante_recargo_he",
+      "type": "number",
+      "descripcion": "Recargo del 50% según Código Laboral Nicaragua"
+    }
+  ]
+}
+```
+
+**Lo que hace el motor:**
+1. Lee la fórmula: `horas_extra * (salario_hora * recargo_ley)`
+2. Busca el mapeo de `horas_extra` → encuentra `novedad_HORAS_EXTRA`
+3. Busca el mapeo de `salario_hora` → encuentra `salario_base_por_hora`
+4. Busca el mapeo de `recargo_ley` → encuentra `constante_recargo_he`
+5. Evalúa la fórmula usando estos valores
+
+**Ventajas:**
+- ✅ El motor no conoce conceptos específicos de Nicaragua
+- ✅ La fórmula es legible en español y contexto nicaragüense
+- ✅ El plugin puede cambiar sus convenciones sin modificar el motor
+- ✅ Otros países pueden usar sus propias convenciones
+
+### Ejemplo: Plugin con Múltiples Países
+
+Diferentes plugins pueden usar el mismo motor con sus propias convenciones:
+
+**Plugin Guatemala:**
+```json
+{
+  "formula": "tiempo_extra * pago_hora * factor_legal",
+  "inputs": [
+    {
+      "name": "tiempo_extra",
+      "source": "novedad_HORAS_EXTRA"
+    },
+    {
+      "name": "pago_hora",
+      "source": "salario_base_por_hora"
+    },
+    {
+      "name": "factor_legal",
+      "source": "constante_recargo_he"
+    }
+  ]
+}
+```
+
+**Plugin Panamá:**
+```json
+{
+  "formula": "horas_adicionales * tarifa_ordinaria * multiplicador_ley",
+  "inputs": [
+    {
+      "name": "horas_adicionales",
+      "source": "novedad_HORAS_EXTRA"
+    },
+    {
+      "name": "tarifa_ordinaria",
+      "source": "salario_base_por_hora"
+    },
+    {
+      "name": "multiplicador_ley",
+      "source": "constante_recargo_he"
+    }
+  ]
+}
+```
+
+Ambos plugins usan las **mismas variables del motor** (`novedad_HORAS_EXTRA`, `salario_base_por_hora`), pero cada uno usa su propia terminología en las fórmulas.
+
+### Mejores Prácticas para Plugins
+
+#### 1. Use Nombres Descriptivos en su Contexto
+
+```json
+// ❌ No recomendado: usar nombres técnicos del motor
+{
+  "formula": "novedad_HORAS_EXTRA * salario_base_por_hora"
+}
+
+// ✅ Recomendado: usar nombres descriptivos para su jurisdicción
+{
+  "formula": "horas_extra * tarifa_hora",
+  "inputs": [
+    {"name": "horas_extra", "source": "novedad_HORAS_EXTRA"},
+    {"name": "tarifa_hora", "source": "salario_base_por_hora"}
+  ]
+}
+```
+
+#### 2. Documente sus Mapeos
+
+```json
+{
+  "inputs": [
+    {
+      "name": "horas_extra",
+      "source": "novedad_HORAS_EXTRA",
+      "type": "number",
+      "descripcion": "Horas extra reportadas conforme Art. 123 del Código Laboral",
+      "ejemplo": "10.5"
+    }
+  ]
+}
+```
+
+#### 3. Use Notación con Puntos para Claridad
+
+```json
+{
+  "inputs": [
+    {
+      "name": "bono_productividad",
+      "source": "novedad.BONO_PRODUCTIVIDAD"
+    },
+    {
+      "name": "dias_mes",
+      "source": "periodo.dias_mes"
+    }
+  ]
+}
+```
+
+La notación con puntos ayuda a documentar de dónde viene cada valor, aunque el motor solo usa la parte final.
+
+#### 4. Mantenga Consistencia en su Plugin
+
+Use los mismos nombres de variables a lo largo de todas las fórmulas de su plugin para facilitar el mantenimiento.
+
+### Preguntas Frecuentes
+
+**P: ¿Puedo mapear una misma fuente a múltiples nombres?**  
+R: Sí, puede crear múltiples mapeos para la misma variable:
+
+```json
+{
+  "inputs": [
+    {"name": "salario", "source": "salario_base"},
+    {"name": "sueldo", "source": "salario_base"}
+  ]
+}
+```
+
+**P: ¿Qué pasa si el source no existe?**  
+R: El motor simplemente no crea el mapeo. La variable `name` no estará disponible en la fórmula, lo que podría causar un error de evaluación si se usa.
+
+**P: ¿Puedo usar mapeo con tablas y tramos?**  
+R: Sí, el mapeo funciona con todos los tipos de esquemas (formula, tramos, tabla).
+
+**P: ¿El mapeo afecta el rendimiento?**  
+R: No significativamente. El mapeo se realiza una vez por empleado durante el cálculo de nómina.
+
+### Contratos y Garantías del Motor
+
+**El motor garantiza:**
+- ✅ Las variables genéricas (como `salario_base`, `novedad_*`) siempre estarán disponibles
+- ✅ El mapeo es consistente y predecible
+- ✅ Los nombres de variables del motor no cambiarán sin aviso previo
+- ✅ El motor NO interpretará ni validará los nombres que usted elija para sus mapeos
+
+**El motor NO garantiza:**
+- ❌ Que sus nombres personalizados sean únicos entre diferentes plugins
+- ❌ Que sus convenciones de nombres sean compatibles con otros plugins
+- ❌ Validación semántica de sus nombres (solo sintaxis JSON)
+
+### Integración con Plugins: Responsabilidades
+
+**Responsabilidad del Motor:**
+- Exponer variables genéricas y bien documentadas
+- Procesar el mapeo de fuentes correctamente
+- Mantener el contrato de variables estable
+
+**Responsabilidad del Plugin:**
+- Definir sus propios mapeos de fuentes
+- Documentar sus convenciones de nombres
+- Mantener compatibilidad con las variables del motor
+- No depender de comportamientos no documentados
+
+**Responsabilidad del Implementador:**
+- Entender las variables disponibles en el motor
+- Configurar los mapeos según las necesidades de su jurisdicción
+- Probar las fórmulas con datos reales antes de producción
+
 ## Versionado de Reglas
 
 Las reglas de cálculo soportan versionado para mantener historial:

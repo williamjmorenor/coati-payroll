@@ -17,6 +17,7 @@ from coati_payroll.model import (
     NominaEmpleado,
     NominaNovedad,
     AdelantoAbono,
+    ComprobanteContable,
     Planilla,
     PlanillaEmpleado,
     TipoPlanilla,
@@ -630,3 +631,88 @@ class TestRecalcularNomina:
             assert call_args["cambios"]["nomina_original_id"] == original_nomina_id
             assert call_args["estado_anterior"] == "deleted"
             assert call_args["estado_nuevo"] == NominaEstado.GENERADO
+
+    @patch("coati_payroll.audit_helpers.crear_log_auditoria_nomina")
+    @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
+    def test_recalcular_nomina_deletes_comprobante_contable_before_nomina(
+        self, mock_engine_class, mock_audit, app, db_session, planilla, empleado, admin_user
+    ):
+        """Test that recalcular_nomina deletes ComprobanteContable before deleting Nomina.
+
+        This regression test ensures that the IntegrityError described in the patch
+        does not occur. ComprobanteContable has a non-nullable FK to nomina_id,
+        so it must be deleted before the Nomina record.
+        """
+        with app.app_context():
+            # Create original nomina
+            original_nomina = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2024, 1, 1),
+                periodo_fin=date(2024, 1, 31),
+                generado_por=admin_user.usuario,
+                estado=NominaEstado.GENERADO,
+                total_bruto=Decimal("15000.00"),
+                total_deducciones=Decimal("2000.00"),
+                total_neto=Decimal("13000.00"),
+                total_empleados=1,
+                empleados_procesados=1,
+                empleados_con_error=0,
+            )
+            db_session.add(original_nomina)
+            db_session.commit()
+            db_session.refresh(original_nomina)
+            original_nomina_id = original_nomina.id
+
+            # Create NominaEmpleado
+            nomina_empleado = NominaEmpleado(
+                nomina_id=original_nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("15000.00"),
+                total_ingresos=Decimal("15000.00"),
+                total_deducciones=Decimal("2000.00"),
+                salario_neto=Decimal("13000.00"),
+                sueldo_base_historico=Decimal("15000.00"),
+            )
+            db_session.add(nomina_empleado)
+            db_session.commit()
+            db_session.refresh(nomina_empleado)
+
+            # Create ComprobanteContable linked to the nomina
+            comprobante = ComprobanteContable(
+                nomina_id=original_nomina.id,
+                fecha_calculo=date(2024, 1, 31),
+                concepto="Nómina Mensual Enero 2024",
+                aplicado_por=admin_user.usuario,
+                fecha_aplicacion=date(2024, 1, 31),
+            )
+            db_session.add(comprobante)
+            db_session.commit()
+            db_session.refresh(comprobante)
+            comprobante_id = comprobante.id
+
+            # Mock the engine for recalculation
+            mock_engine = MagicMock()
+            new_mock_nomina = MagicMock(spec=Nomina)
+            new_mock_nomina.id = 999
+            new_mock_nomina.estado = NominaEstado.GENERADO
+            mock_engine.ejecutar.return_value = new_mock_nomina
+            mock_engine.errors = []
+            mock_engine.warnings = []
+            mock_engine_class.return_value = mock_engine
+
+            # Execute recalculation - this should NOT raise IntegrityError
+            new_nomina, errors, warnings = NominaService.recalcular_nomina(
+                nomina=original_nomina, planilla=planilla, usuario=admin_user.usuario
+            )
+
+            # Assert the new nomina is returned
+            assert new_nomina == new_mock_nomina
+            assert errors == []
+            assert warnings == []
+
+            # Verify old records were deleted
+            assert db_session.query(Nomina).filter_by(id=original_nomina_id).first() is None
+            assert db_session.query(ComprobanteContable).filter_by(id=comprobante_id).first() is None
+
+            # Verify the operation completed without IntegrityError
+            assert db_session.query(NominaEmpleado).filter_by(nomina_id=original_nomina_id).first() is None
