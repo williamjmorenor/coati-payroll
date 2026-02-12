@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added configurable payment percentage for paid vacations via `porcentaje_pago_vacaciones` field in `VacationPolicy` (default 100%).
+- Added `son_vacaciones_pagadas` flag to `VacationPolicy` to mark policies that should generate accounting liability entries.
+- Added accounting configuration fields to `VacationPolicy`: `cuenta_debito_vacaciones_pagadas`, `cuenta_credito_vacaciones_pagadas`, and their descriptions.
+- Added `vacation_policy_id` foreign key to `Planilla` model to allow explicit binding of payroll to vacation accrual policy.
+- Extended `VacationService` to prioritize planilla-bound vacation policy when resolving employee vacation accounts.
+- Extended `AccountingVoucherService` to generate vacation liability accounting lines for paid vacation policies during payroll execution.
+
+### Changed
+
+- Vacation payment calculation now applies configurable percentage: `monto = (salario_base / dias_base) * units * (porcentaje / 100)`.
+- Vacation approval workflow now only validates balance; actual balance deduction deferred to payroll execution via `NominaNovedad` for better traceability.
+- Planilla creation/edit forms now include vacation policy selector with scope-aware choices (planilla/empresa/global).
+
+### Fixed
+
+- Fixed SQLAlchemy "multiple foreign key paths" error in bidirectional `Planilla`-`VacationPolicy` relationship by specifying explicit `foreign_keys` parameter.
+- Fixed Alembic migration compatibility with SQLite by using `op.batch_alter_table()` for foreign key operations instead of direct `op.create_foreign_key()` and `op.drop_constraint()`.
+
 ## [1.3.2] - 2026-02-11
 
 ### Fixed
