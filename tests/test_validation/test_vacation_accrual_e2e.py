@@ -32,19 +32,18 @@ from coati_payroll.model import (
     ComprobanteContableLinea,
 )
 from coati_payroll.vistas.planilla.services.nomina_service import NominaService
-from tests.helpers.auth import login_user
 
 
 @pytest.mark.validation
 def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_user, db_session):
     """
     End-to-end test: Employee receives salary and accrues vacation days during payroll.
-    
+
     Setup:
     - Employee salary: 30,000 monthly (1,000 daily)
     - Biweekly payroll (15 days)
     - Vacation rule: 2 days per month worked (periodic accrual)
-    
+
     Expected results after biweekly payroll:
     - Salary payment: 15,000
     - Vacation days accrued: 1 day (2 days/month * 0.5 months)
@@ -166,7 +165,7 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
         periodo_fin = date(2026, 2, 15)
         fecha_calculo = date(2026, 2, 15)
 
-        nomina, errors, warnings = NominaService.ejecutar_nomina(
+        nomina, errors, _warnings = NominaService.ejecutar_nomina(
             planilla=planilla,
             periodo_inicio=periodo_inicio,
             periodo_fin=periodo_fin,
@@ -183,18 +182,14 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
 
         # Validate 8.1: Salary payment of 15,000
         # Biweekly salary = 30,000 / 2 = 15,000
-        assert nomina.total_bruto == Decimal("15000.00"), (
-            f"Expected total_bruto of 15,000.00, got {nomina.total_bruto}"
-        )
-        assert nomina.total_neto == Decimal("15000.00"), (
-            f"Expected total_neto of 15,000.00, got {nomina.total_neto}"
-        )
+        assert nomina.total_bruto == Decimal("15000.00"), f"Expected total_bruto of 15,000.00, got {nomina.total_bruto}"
+        assert nomina.total_neto == Decimal("15000.00"), f"Expected total_neto of 15,000.00, got {nomina.total_neto}"
 
         # Get NominaEmpleado record
         nomina_empleado = nomina.nomina_empleados[0]
-        assert nomina_empleado.salario_bruto == Decimal("15000.00"), (
-            f"Expected employee salario_bruto of 15,000.00, got {nomina_empleado.salario_bruto}"
-        )
+        assert nomina_empleado.salario_bruto == Decimal(
+            "15000.00"
+        ), f"Expected employee salario_bruto of 15,000.00, got {nomina_empleado.salario_bruto}"
 
         # Validate 8.2: 1 vacation day accrued
         # Check VacationLedger for accrual entry
@@ -209,22 +204,20 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
             )
             .all()
         )
-        
-        assert len(accrual_entries) == 1, (
-            f"Expected 1 vacation accrual entry, found {len(accrual_entries)}"
-        )
-        
+
+        assert len(accrual_entries) == 1, f"Expected 1 vacation accrual entry, found {len(accrual_entries)}"
+
         accrual_entry = accrual_entries[0]
         expected_accrual = Decimal("1.0000")  # 2 days/month * 0.5 months
-        assert accrual_entry.quantity == expected_accrual, (
-            f"Expected vacation accrual of {expected_accrual} days, got {accrual_entry.quantity}"
-        )
+        assert (
+            accrual_entry.quantity == expected_accrual
+        ), f"Expected vacation accrual of {expected_accrual} days, got {accrual_entry.quantity}"
 
         # Validate vacation account balance
         db_session.refresh(vacation_account)
-        assert vacation_account.current_balance == expected_accrual, (
-            f"Expected vacation balance of {expected_accrual} days, got {vacation_account.current_balance}"
-        )
+        assert (
+            vacation_account.current_balance == expected_accrual
+        ), f"Expected vacation balance of {expected_accrual} days, got {vacation_account.current_balance}"
 
         # Validate 8.3: Accounting liability created
         # Note: The system calculates vacation liability based on payroll period salary
@@ -238,12 +231,8 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
         expected_liability = expected_accrual * expected_daily_rate
 
         # Check if accounting voucher was created
-        comprobante = (
-            db_session.query(ComprobanteContable)
-            .filter(ComprobanteContable.nomina_id == nomina.id)
-            .first()
-        )
-        
+        comprobante = db_session.query(ComprobanteContable).filter(ComprobanteContable.nomina_id == nomina.id).first()
+
         assert comprobante is not None, "No accounting voucher (ComprobanteContable) was created"
 
         # Check for vacation liability accounting lines
@@ -256,29 +245,31 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
             .all()
         )
 
-        assert len(vacation_lines) == 2, (
-            f"Expected 2 vacation liability accounting lines (debit and credit), found {len(vacation_lines)}"
-        )
+        assert (
+            len(vacation_lines) == 2
+        ), f"Expected 2 vacation liability accounting lines (debit and credit), found {len(vacation_lines)}"
 
         # Find debit (expense) and credit (liability) lines
-        debit_line = next((l for l in vacation_lines if l.debito > 0), None)
-        credit_line = next((l for l in vacation_lines if l.credito > 0), None)
+        debit_line = next((line for line in vacation_lines if line.debito > 0), None)
+        credit_line = next(
+            (line for line in vacation_lines if line.credito > 0), None
+        )
 
         assert debit_line is not None, "No debit line found for vacation expense"
         assert credit_line is not None, "No credit line found for vacation liability"
 
         # Validate amounts
-        assert debit_line.debito == expected_liability, (
-            f"Expected debit (expense) of {expected_liability}, got {debit_line.debito}"
-        )
-        assert credit_line.credito == expected_liability, (
-            f"Expected credit (liability) of {expected_liability}, got {credit_line.credito}"
-        )
+        assert (
+            debit_line.debito == expected_liability
+        ), f"Expected debit (expense) of {expected_liability}, got {debit_line.debito}"
+        assert (
+            credit_line.credito == expected_liability
+        ), f"Expected credit (liability) of {expected_liability}, got {credit_line.credito}"
 
         # Validate accounts used
-        assert debit_line.codigo_cuenta == "5201", (
-            f"Expected debit account 5201 (expense), got {debit_line.codigo_cuenta}"
-        )
-        assert credit_line.codigo_cuenta == "2205", (
-            f"Expected credit account 2205 (liability), got {credit_line.codigo_cuenta}"
-        )
+        assert (
+            debit_line.codigo_cuenta == "5201"
+        ), f"Expected debit account 5201 (expense), got {debit_line.codigo_cuenta}"
+        assert (
+            credit_line.codigo_cuenta == "2205"
+        ), f"Expected credit account 2205 (liability), got {credit_line.codigo_cuenta}"
