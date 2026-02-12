@@ -234,7 +234,8 @@ class AccountingVoucherService:
 
             units = Decimal(str(abs(entry.quantity)))
             salario_base = Decimal(str(ne.sueldo_base_historico or Decimal("0.00")))
-            monto = round_money((salario_base / dias_base) * units, planilla_moneda)
+            porcentaje_pago = Decimal(str(policy.porcentaje_pago_vacaciones or Decimal("100.00"))) / Decimal("100")
+            monto = round_money((salario_base / dias_base) * units * porcentaje_pago, planilla_moneda)
             if monto <= 0:
                 continue
 

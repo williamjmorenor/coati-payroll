@@ -18,18 +18,21 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("planilla", sa.Column("vacation_policy_id", sa.String(length=26), nullable=True))
-    op.create_index("ix_planilla_vacation_policy_id", "planilla", ["vacation_policy_id"], unique=False)
-    op.create_foreign_key(
-        "fk_planilla_vacation_policy_id",
-        "planilla",
-        "vacation_policy",
-        ["vacation_policy_id"],
-        ["id"],
-    )
+    # Use batch mode for SQLite compatibility
+    with op.batch_alter_table("planilla", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("vacation_policy_id", sa.String(length=26), nullable=True))
+        batch_op.create_index("ix_planilla_vacation_policy_id", ["vacation_policy_id"], unique=False)
+        batch_op.create_foreign_key(
+            "fk_planilla_vacation_policy_id",
+            "vacation_policy",
+            ["vacation_policy_id"],
+            ["id"],
+        )
 
 
 def downgrade():
-    op.drop_constraint("fk_planilla_vacation_policy_id", "planilla", type_="foreignkey")
-    op.drop_index("ix_planilla_vacation_policy_id", table_name="planilla")
-    op.drop_column("planilla", "vacation_policy_id")
+    # In SQLite with batch mode, dropping the column automatically removes the FK constraint
+    # because Alembic recreates the table without the column and its constraints
+    with op.batch_alter_table("planilla", schema=None) as batch_op:
+        batch_op.drop_index("ix_planilla_vacation_policy_id")
+        batch_op.drop_column("vacation_policy_id")

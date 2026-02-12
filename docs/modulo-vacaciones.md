@@ -93,6 +93,26 @@ Define cómo se acumulan, usan y vencen las vacaciones. Es completamente configu
 - `accrue_during_leave`: Continuar acumulando durante vacaciones
 - `payout_on_termination`: Pagar vacaciones al terminar relación laboral
 
+#### Configuración Contable (Vacaciones Pagadas)
+- `son_vacaciones_pagadas`: Indica si las vacaciones generan contabilización de pasivo laboral
+  - `True`: Se generan asientos contables por acumulación y consumo de vacaciones
+  - `False` (default): No se genera contabilización automática
+- `porcentaje_pago_vacaciones`: Porcentaje del salario diario a pagar por día de vacaciones (default: 100.00)
+  - `100.00`: 1 día de vacaciones = 100% del salario diario (caso estándar)
+  - `50.00`: 1 día de vacaciones = 50% del salario diario
+  - `120.00`: 1 día de vacaciones = 120% del salario diario (incluye bonificación)
+- `cuenta_debito_vacaciones_pagadas`: Cuenta contable de gasto (débito) para vacaciones pagadas
+- `descripcion_cuenta_debito_vacaciones_pagadas`: Descripción de la cuenta de débito
+- `cuenta_credito_vacaciones_pagadas`: Cuenta contable de pasivo (crédito) para vacaciones pagadas
+- `descripcion_cuenta_credito_vacaciones_pagadas`: Descripción de la cuenta de crédito
+
+**Nota sobre Contabilización:**
+Cuando `son_vacaciones_pagadas=True`, el sistema genera automáticamente asientos contables durante la ejecución de nómina:
+- **Acumulación**: Débito a gasto, Crédito a pasivo laboral (por vacaciones ganadas)
+- **Consumo**: Débito a pasivo laboral, Crédito a gasto (reverso al tomar vacaciones)
+
+El monto se calcula como: `(salario_base / dias_base) * unidades * (porcentaje_pago_vacaciones / 100)`
+
 **Ejemplo de Configuración - Nicaragua:**
 ```python
 policy_nicaragua = VacationPolicy(
@@ -141,6 +161,26 @@ policy_seniority = VacationPolicy(
         {"years": 2, "rate": 15},   # 2-5 años: 15 días
         {"years": 6, "rate": 20}    # 6+ años: 20 días
     ],
+    payout_on_termination=True
+)
+```
+
+**Ejemplo de Configuración - Vacaciones Pagadas con Contabilización:**
+```python
+policy_paid_vacation = VacationPolicy(
+    codigo="NIC-PAID-VAC",
+    nombre="Vacaciones Pagadas Nicaragua",
+    accrual_method="periodic",
+    accrual_rate=1.25,  # 15 días al año / 12 meses
+    accrual_frequency="monthly",
+    unit_type="days",
+    # Configuración contable
+    son_vacaciones_pagadas=True,
+    porcentaje_pago_vacaciones=Decimal("100.00"),  # 100% del salario diario
+    cuenta_debito_vacaciones_pagadas="5201",
+    descripcion_cuenta_debito_vacaciones_pagadas="Gasto por Vacaciones Pagadas",
+    cuenta_credito_vacaciones_pagadas="2205",
+    descripcion_cuenta_credito_vacaciones_pagadas="Pasivo Laboral - Vacaciones",
     payout_on_termination=True
 )
 ```
@@ -228,13 +268,22 @@ Representa una solicitud de vacaciones que afecta el balance cuando es aprobada.
 3. Administrador revisa solicitud
 4. Si aprueba:
    a. Cambia estado a 'aprobado'
-   b. Genera VacationLedger (type=USAGE, quantity=-N)
-   c. Actualiza current_balance
-   d. Vincula ledger_entry_id
+   b. Registra fecha_aprobacion y aprobado_por
+   c. **NOTA**: El descuento del balance se difiere a la ejecución de nómina
+   d. Durante la ejecución de nómina:
+      - Se convierte a NominaNovedad
+      - Se genera VacationLedger (type=USAGE, quantity=-N)
+      - Se actualiza current_balance
+      - Se genera contabilización si son_vacaciones_pagadas=True
 5. Si rechaza:
    a. Cambia estado a 'rechazado'
    b. Registra motivo_rechazo
 ```
+
+**Separación de Concerns:**
+- **Aprobación**: Solo valida y cambia estado (no modifica balance)
+- **Ejecución de Nómina**: Descuenta balance vía VacationLedger y genera contabilidad
+- **Beneficio**: Trazabilidad completa y reproducibilidad en cálculos de nómina
 
 ### Flujo 3: Ajuste Manual
 
