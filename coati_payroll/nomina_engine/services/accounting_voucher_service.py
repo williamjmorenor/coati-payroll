@@ -25,6 +25,7 @@ from coati_payroll.model import (
     VacationLedger,
     VacationPolicy,
     ConfiguracionCalculos,
+    NominaNovedad,
 )
 from ..utils.rounding import round_money
 
@@ -176,7 +177,8 @@ class AccountingVoucherService:
         if not nomina_empleado_ids:
             return total_debitos, total_creditos, orden, null_account_count
 
-        ledger_entries = (
+        # ACCRUAL entries are linked by reference_type=nomina_empleado.
+        accrual_entries = (
             self.session.execute(
                 db.select(VacationLedger).filter(
                     VacationLedger.reference_type == "nomina_empleado",
@@ -187,13 +189,41 @@ class AccountingVoucherService:
             .all()
         )
 
+        # USAGE entries created during payroll use reference_type=vacation_novelty.
+        usage_entries = (
+            self.session.execute(
+                db.select(VacationLedger)
+                .join(
+                    NominaNovedad,
+                    db.and_(
+                        NominaNovedad.vacation_novelty_id == VacationLedger.reference_id,
+                        VacationLedger.reference_type == "vacation_novelty",
+                    ),
+                )
+                .filter(
+                    NominaNovedad.nomina_id == nomina.id,
+                    NominaNovedad.es_descanso_vacaciones.is_(True),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        ledger_entries = [*accrual_entries, *usage_entries]
+
         nomina_empleado_by_id = {ne.id: ne for ne in nomina_empleados}
+        nomina_empleado_by_empleado_id = {ne.empleado_id: ne for ne in nomina_empleados if ne.empleado_id}
         dias_base = self._get_vacation_days_base(planilla.empresa_id)
         if dias_base <= 0:
             dias_base = Decimal("30")
 
         for entry in ledger_entries:
-            ne = nomina_empleado_by_id.get(entry.reference_id)
+            ne = None
+            if entry.reference_type == "nomina_empleado":
+                ne = nomina_empleado_by_id.get(entry.reference_id)
+            elif entry.reference_type == "vacation_novelty":
+                ne = nomina_empleado_by_empleado_id.get(entry.empleado_id)
+
             policy = entry.account.policy if entry.account and entry.account.policy else None
             if not ne or not ne.empleado or not policy or not policy.son_vacaciones_pagadas:
                 continue
