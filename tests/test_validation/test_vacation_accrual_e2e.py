@@ -219,15 +219,14 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
             vacation_account.current_balance == expected_accrual
         ), f"Expected vacation balance of {expected_accrual} days, got {vacation_account.current_balance}"
 
-        # Validate 8.3: Accounting liability created
-        # Note: The system calculates vacation liability based on payroll period salary
-        # Period salary (biweekly): 15,000
+        # Validate 8.3: Accounting liability created based on monthly salary
+        # Monthly salary: 30,000
         # dias_base (default): 30
-        # Daily rate = 15,000 / 30 = 500
-        # Liability = 1 day * 500 = 500
-        expected_period_salary = Decimal("15000.00")
+        # Daily rate = 30,000 / 30 = 1,000
+        # Liability = 1 day * 1,000 = 1,000
+        expected_monthly_salary = Decimal("30000.00")
         expected_dias_base = Decimal("30.00")
-        expected_daily_rate = expected_period_salary / expected_dias_base
+        expected_daily_rate = expected_monthly_salary / expected_dias_base
         expected_liability = expected_accrual * expected_daily_rate
 
         # Check if accounting voucher was created
@@ -251,9 +250,7 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
 
         # Find debit (expense) and credit (liability) lines
         debit_line = next((line for line in vacation_lines if line.debito > 0), None)
-        credit_line = next(
-            (line for line in vacation_lines if line.credito > 0), None
-        )
+        credit_line = next((line for line in vacation_lines if line.credito > 0), None)
 
         assert debit_line is not None, "No debit line found for vacation expense"
         assert credit_line is not None, "No credit line found for vacation liability"
