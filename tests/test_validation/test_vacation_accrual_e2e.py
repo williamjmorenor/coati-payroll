@@ -47,8 +47,7 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
     Expected results after biweekly payroll:
     - Salary payment: 15,000
     - Vacation days accrued: 1 day (2 days/month * 0.5 months)
-    - Accounting liability: 500 (biweekly salary 15,000 / 30 dias_base * 1 day accrued)
-      Note: System calculates vacation liability using period salary, not monthly salary
+    - Accounting liability: 1,000 (monthly salary 30,000 / 30 dias_base * 1 day accrued)
     """
     with app.app_context():
         # Step 1: Create company (empresa)
