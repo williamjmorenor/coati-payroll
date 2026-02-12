@@ -157,6 +157,7 @@ class NominaService:
             NominaDetalle,
             NominaNovedad,
             AdelantoAbono,
+            ComprobanteContable,
         )
 
         # Store the original period and calculation date for consistency
@@ -207,6 +208,10 @@ class NominaService:
                 db.session.execute(
                     db.update(NominaNovedad).where(NominaNovedad.id.in_(novedad_ids)).values(nomina_id=new_nomina.id)
                 )
+
+            # Remove existing accounting voucher tied to the old nomina.
+            # The voucher has a non-nullable FK, so it must be deleted before the nomina.
+            db.session.execute(db.delete(ComprobanteContable).where(ComprobanteContable.nomina_id == nomina.id))
 
             # Delete the old nomina record after moving linked novelties
             db.session.delete(nomina)

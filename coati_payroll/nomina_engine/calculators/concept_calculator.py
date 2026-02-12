@@ -189,6 +189,20 @@ class ConceptCalculator:
             inputs["total_percepciones"] = emp_calculo.total_percepciones
             inputs["total_deducciones"] = emp_calculo.total_deducciones
 
+            # Map formula input sources to input names when present
+            for input_def in formula.get("inputs", []) if isinstance(formula.get("inputs"), list) else []:
+                name = input_def.get("name")
+                source = input_def.get("source")
+                if not name or not source:
+                    continue
+                if source in inputs:
+                    inputs[name] = inputs[source]
+                    continue
+                if "." in source:
+                    source_key = source.split(".")[-1]
+                    if source_key in inputs:
+                        inputs[name] = inputs[source_key]
+
             # Calculate before-tax deductions already processed in this period
             deducciones_antes_impuesto_periodo = Decimal("0.00")
             for ded in emp_calculo.deducciones:
