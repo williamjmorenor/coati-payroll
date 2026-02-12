@@ -22,6 +22,9 @@ from coati_payroll.model import (
     ComprobanteContable,
     ComprobanteContableLinea,
     Moneda,
+    VacationLedger,
+    VacationPolicy,
+    ConfiguracionCalculos,
 )
 from ..utils.rounding import round_money
 
@@ -118,8 +121,151 @@ class AccountingVoucherService:
                         f"Prestación '{prestacion.nombre}' ({prestacion.codigo}) no tiene cuenta de crédito configurada"
                     )
 
+        paid_policies = (
+            self.session.execute(
+                db.select(VacationPolicy).filter(
+                    VacationPolicy.activo.is_(True),
+                    VacationPolicy.son_vacaciones_pagadas.is_(True),
+                    db.or_(VacationPolicy.planilla_id == planilla.id, VacationPolicy.planilla_id.is_(None)),
+                )
+            )
+            .scalars()
+            .all()
+        )
+        for policy in paid_policies:
+            if not policy.cuenta_debito_vacaciones_pagadas:
+                warnings.append(
+                    f"Política de vacaciones '{policy.nombre}' ({policy.codigo}) no tiene cuenta débito de vacaciones pagadas"
+                )
+            if not policy.cuenta_credito_vacaciones_pagadas:
+                warnings.append(
+                    f"Política de vacaciones '{policy.nombre}' ({policy.codigo}) no tiene cuenta crédito de vacaciones pagadas"
+                )
+
         is_valid = len(warnings) == 0
         return is_valid, warnings
+
+
+    def _get_vacation_days_base(self, empresa_id: str | None) -> Decimal:
+        if not empresa_id:
+            return Decimal("30")
+        config = self.session.execute(
+            db.select(ConfiguracionCalculos)
+            .filter(ConfiguracionCalculos.empresa_id == empresa_id, ConfiguracionCalculos.activo.is_(True))
+            .order_by(ConfiguracionCalculos.creado.desc())
+        ).scalars().first()
+        if not config or not config.dias_mes_vacaciones:
+            return Decimal("30")
+        return Decimal(str(config.dias_mes_vacaciones))
+
+    def _build_paid_vacation_liability_lines(
+        self,
+        comprobante: ComprobanteContable,
+        nomina: Nomina,
+        planilla: Planilla,
+        nomina_empleados: list[NominaEmpleado],
+        orden: int,
+        null_account_count: int,
+    ) -> tuple[Decimal, Decimal, int, int]:
+        """Build accounting lines for paid vacation liability movements tied to this payroll."""
+        planilla_moneda = cast(Moneda | None, planilla.moneda)
+        total_debitos = Decimal("0.00")
+        total_creditos = Decimal("0.00")
+
+        nomina_empleado_ids = [ne.id for ne in nomina_empleados if ne.id]
+        if not nomina_empleado_ids:
+            return total_debitos, total_creditos, orden, null_account_count
+
+        ledger_entries = (
+            self.session.execute(
+                db.select(VacationLedger).filter(
+                    VacationLedger.reference_type == "nomina_empleado",
+                    VacationLedger.reference_id.in_(nomina_empleado_ids),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        nomina_empleado_by_id = {ne.id: ne for ne in nomina_empleados}
+        dias_base = self._get_vacation_days_base(planilla.empresa_id)
+        if dias_base <= 0:
+            dias_base = Decimal("30")
+
+        for entry in ledger_entries:
+            ne = nomina_empleado_by_id.get(entry.reference_id)
+            policy = entry.account.policy if entry.account and entry.account.policy else None
+            if not ne or not ne.empleado or not policy or not policy.son_vacaciones_pagadas:
+                continue
+
+            empleado = ne.empleado
+            centro_costos = ne.centro_costos_snapshot or empleado.centro_costos
+            empleado_nombre_completo = f"{empleado.primer_nombre} {empleado.primer_apellido}"
+
+            units = Decimal(str(abs(entry.quantity)))
+            salario_base = Decimal(str(ne.sueldo_base_historico or Decimal("0.00")))
+            monto = round_money((salario_base / dias_base) * units, planilla_moneda)
+            if monto <= 0:
+                continue
+
+            cuenta_debito = policy.cuenta_debito_vacaciones_pagadas
+            cuenta_credito = policy.cuenta_credito_vacaciones_pagadas
+            desc_debito = policy.descripcion_cuenta_debito_vacaciones_pagadas or "Gasto por vacaciones pagadas"
+            desc_credito = policy.descripcion_cuenta_credito_vacaciones_pagadas or "Pasivo laboral vacaciones"
+
+            if entry.entry_type == "usage":
+                cuenta_debito, cuenta_credito = cuenta_credito, cuenta_debito
+                desc_debito, desc_credito = desc_credito, desc_debito
+
+            orden += 1
+            if cuenta_debito is None:
+                null_account_count += 1
+            linea_debe = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=empleado_nombre_completo,
+                codigo_cuenta=cuenta_debito,
+                descripcion_cuenta=(desc_debito if cuenta_debito else None),
+                centro_costos=centro_costos,
+                tipo_debito_credito="debito",
+                debito=monto,
+                credito=Decimal("0.00"),
+                monto_calculado=monto,
+                concepto="Vacaciones pagadas",
+                tipo_concepto="vacation_liability",
+                concepto_codigo="VAC_PAID_LIAB",
+                orden=orden,
+            )
+            self.session.add(linea_debe)
+            total_debitos += monto
+
+            orden += 1
+            if cuenta_credito is None:
+                null_account_count += 1
+            linea_haber = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=ne.id,
+                empleado_id=empleado.id,
+                empleado_codigo=empleado.codigo_empleado,
+                empleado_nombre=empleado_nombre_completo,
+                codigo_cuenta=cuenta_credito,
+                descripcion_cuenta=(desc_credito if cuenta_credito else None),
+                centro_costos=centro_costos,
+                tipo_debito_credito="credito",
+                debito=Decimal("0.00"),
+                credito=monto,
+                monto_calculado=monto,
+                concepto="Vacaciones pagadas",
+                tipo_concepto="vacation_liability",
+                concepto_codigo="VAC_PAID_LIAB",
+                orden=orden,
+            )
+            self.session.add(linea_haber)
+            total_creditos += monto
+
+        return total_debitos, total_creditos, orden, null_account_count
 
     def generate_accounting_voucher(
         self, nomina: Nomina, planilla: Planilla, fecha_calculo: date | None = None, usuario: str | None = None
@@ -576,6 +722,17 @@ class AccountingVoucherService:
                             )
                             self.session.add(linea_haber)
                             total_creditos += detalle_monto
+
+        vac_debitos, vac_creditos, orden, null_account_count = self._build_paid_vacation_liability_lines(
+            comprobante,
+            nomina,
+            planilla,
+            nomina_empleados,
+            orden,
+            null_account_count,
+        )
+        total_debitos += vac_debitos
+        total_creditos += vac_creditos
 
         # Calculate balance (should be 0 for balanced voucher)
         total_debitos = round_money(total_debitos, planilla_moneda)

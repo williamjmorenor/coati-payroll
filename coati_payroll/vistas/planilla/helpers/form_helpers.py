@@ -17,7 +17,7 @@ from sqlalchemy.orm import joinedload
 # <-------------------------------------------------------------------------> #
 from coati_payroll.forms import PlanillaForm
 from coati_payroll.i18n import _
-from coati_payroll.model import db, TipoPlanilla, Moneda, Empresa, NominaEmpleado, Percepcion, Deduccion
+from coati_payroll.model import db, TipoPlanilla, Moneda, Empresa, VacationPolicy, NominaEmpleado, Percepcion, Deduccion
 
 # Constants
 SELECT_PLACEHOLDER = "-- Seleccionar --"
@@ -40,6 +40,22 @@ def populate_form_choices(form: PlanillaForm):
     )
     form.empresa_id.choices = [("", _(SELECT_PLACEHOLDER))] + [
         (e.id, f"{e.codigo} - {e.razon_social}") for e in empresas
+    ]
+
+    vacation_policies = (
+        db.session.execute(db.select(VacationPolicy).filter_by(activo=True).order_by(VacationPolicy.codigo)).scalars().all()
+    )
+    form.vacation_policy_id.choices = [("", _("-- Sin regla vinculada --"))] + [
+        (
+            p.id,
+            f"{p.codigo} - {p.nombre}"
+            + (
+                f" [Planilla: {p.planilla.nombre}]" if p.planilla else (
+                    f" [Empresa: {p.empresa.razon_social}]" if p.empresa else " [Global]"
+                )
+            ),
+        )
+        for p in vacation_policies
     ]
 
 

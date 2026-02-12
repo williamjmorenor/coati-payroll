@@ -219,6 +219,28 @@ class VacationService:
             VacationPolicy.activo.is_(True),
         ]
 
+        # Strong relation: if payroll has an explicit vacation policy binding, use only that rule.
+        if self.planilla.vacation_policy_id:
+            bound_accounts = (
+                db.session.execute(
+                    db.select(VacationAccount)
+                    .join(VacationAccount.policy)
+                    .filter(*filtros_base)
+                    .filter(VacationPolicy.id == self.planilla.vacation_policy_id)
+                )
+                .scalars()
+                .all()
+            )
+            if len(bound_accounts) > 1:
+                raise ValidationError(
+                    f"Más de una cuenta de vacaciones encontrada para empleado {empleado.codigo_empleado} "
+                    f"y política vinculada de planilla."
+                )
+            if len(bound_accounts) == 1:
+                account = bound_accounts[0]
+                return account, "planilla_bound"
+            return None, None
+
         scopes = [
             (
                 "planilla",

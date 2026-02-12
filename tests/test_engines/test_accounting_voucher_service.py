@@ -35,6 +35,9 @@ from coati_payroll.model import (
     PlanillaDeduccion,
     ComprobanteContable,
     ComprobanteContableLinea,
+    VacationPolicy,
+    VacationAccount,
+    VacationLedger,
 )
 from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
 from coati_payroll.enums import NominaEstado, AdelantoEstado
@@ -220,8 +223,187 @@ class TestAccountingConfigurationValidation:
             assert any("INSS Laboral" in w and "crédito" in w for w in warnings)
 
 
+
+    def test_validate_paid_vacation_policy_requires_accounts(self, app, db_session):
+        """Paid vacation policy should warn when liability accounts are missing."""
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Company SA", ruc="J-12345678")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL",
+                descripcion="Mensual",
+                periodicidad="monthly",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Planilla Test",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+                codigo_cuenta_debe_salario="5101",
+                codigo_cuenta_haber_salario="2101",
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            policy = VacationPolicy(
+                codigo="POL-PAID",
+                nombre="Vacaciones Pagadas",
+                planilla_id=planilla.id,
+                empresa_id=empresa.id,
+                son_vacaciones_pagadas=True,
+                accrual_rate=Decimal("1.25"),
+            )
+            db_session.add(policy)
+            db_session.commit()
+
+            service = AccountingVoucherService(db_session)
+            is_valid, warnings = service.validate_accounting_configuration(planilla)
+
+            assert is_valid is False
+            assert any("cuenta débito de vacaciones pagadas" in w for w in warnings)
+            assert any("cuenta crédito de vacaciones pagadas" in w for w in warnings)
+
+
 class TestAccountingVoucherGeneration:
     """Tests for accounting voucher generation."""
+
+    def test_generate_voucher_includes_paid_vacation_liability_lines(self, app, db_session):
+        """Voucher must include paid vacation liability lines when policy flag is enabled."""
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Company SA", ruc="J-12345678")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL",
+                descripcion="Mensual",
+                periodicidad="monthly",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Planilla Test",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+                codigo_cuenta_debe_salario="5101",
+                codigo_cuenta_haber_salario="2101",
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            empleado = Empleado(
+                empresa_id=empresa.id,
+                codigo_empleado="EMP001",
+                primer_nombre="Juan",
+                primer_apellido="Pérez",
+                identificacion_personal="001-010101-0001A",
+                salario_base=Decimal("9000.00"),
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+
+            nomina = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2026, 1, 1),
+                periodo_fin=date(2026, 1, 31),
+                estado=NominaEstado.GENERADO,
+                total_bruto=Decimal("9000.00"),
+                total_deducciones=Decimal("0.00"),
+                total_neto=Decimal("9000.00"),
+            )
+            db_session.add(nomina)
+            db_session.flush()
+
+            ne = NominaEmpleado(
+                nomina_id=nomina.id,
+                empleado_id=empleado.id,
+                salario_bruto=Decimal("9000.00"),
+                total_ingresos=Decimal("9000.00"),
+                total_deducciones=Decimal("0.00"),
+                salario_neto=Decimal("9000.00"),
+                sueldo_base_historico=Decimal("9000.00"),
+            )
+            db_session.add(ne)
+            db_session.flush()
+
+            policy = VacationPolicy(
+                codigo="POL-PAID",
+                nombre="Vacaciones Pagadas",
+                planilla_id=planilla.id,
+                empresa_id=empresa.id,
+                son_vacaciones_pagadas=True,
+                cuenta_debito_vacaciones_pagadas="5201",
+                descripcion_cuenta_debito_vacaciones_pagadas="Gasto Vacaciones Pagadas",
+                cuenta_credito_vacaciones_pagadas="2205",
+                descripcion_cuenta_credito_vacaciones_pagadas="Pasivo Vacaciones",
+                accrual_rate=Decimal("1.25"),
+            )
+            db_session.add(policy)
+            db_session.flush()
+
+            account = VacationAccount(
+                empleado_id=empleado.id,
+                policy_id=policy.id,
+                current_balance=Decimal("0.00"),
+                activo=True,
+            )
+            db_session.add(account)
+            db_session.flush()
+
+            db_session.add(
+                VacationLedger(
+                    account_id=account.id,
+                    empleado_id=empleado.id,
+                    fecha=nomina.periodo_fin,
+                    entry_type="accrual",
+                    quantity=Decimal("1.2500"),
+                    source="payroll",
+                    reference_type="nomina_empleado",
+                    reference_id=ne.id,
+                )
+            )
+            db_session.commit()
+
+            service = AccountingVoucherService(db_session)
+            comprobante = service.generate_audit_voucher(nomina, planilla)
+            db_session.flush()
+
+            lineas = (
+                db_session.query(ComprobanteContableLinea)
+                .filter(ComprobanteContableLinea.comprobante_id == comprobante.id)
+                .all()
+            )
+            vac_lines = [l for l in lineas if l.tipo_concepto == "vacation_liability"]
+
+            assert len(vac_lines) == 2
+            assert any(l.codigo_cuenta == "5201" and l.debito > 0 for l in vac_lines)
+            assert any(l.codigo_cuenta == "2205" and l.credito > 0 for l in vac_lines)
+
 
     def test_generate_voucher_base_salary(self, app, db_session):
         """Test voucher generation for base salary."""

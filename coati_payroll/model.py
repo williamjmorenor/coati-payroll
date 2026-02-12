@@ -436,6 +436,12 @@ class Planilla(database.Model, BaseTabla):
     empresa_id = database.Column(database.String(26), database.ForeignKey(FK_EMPRESA_ID), nullable=True)
     empresa = database.relationship("Empresa", back_populates="planillas")
 
+    # Strong relationship: each payroll can bind to one specific vacation accrual policy
+    vacation_policy_id = database.Column(
+        database.String(26), database.ForeignKey("vacation_policy.id"), nullable=True, index=True
+    )
+    vacation_policy = database.relationship("VacationPolicy", foreign_keys=[vacation_policy_id])
+
     # Período Fiscal
     periodo_fiscal_inicio = database.Column(database.Date, nullable=True)
     periodo_fiscal_fin = database.Column(database.Date, nullable=True)
@@ -2067,6 +2073,15 @@ class VacationPolicy(database.Model, BaseTabla):
 
     # Continue accruing during vacation leave
     accrue_during_leave = database.Column(database.Boolean(), default=True, nullable=False)
+
+    # Whether vacations are paid and should generate a labor liability accounting flow
+    son_vacaciones_pagadas = database.Column(database.Boolean(), default=False, nullable=False)
+
+    # Accounting configuration for paid vacation liability entries
+    cuenta_debito_vacaciones_pagadas = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_debito_vacaciones_pagadas = database.Column(database.String(255), nullable=True)
+    cuenta_credito_vacaciones_pagadas = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_credito_vacaciones_pagadas = database.Column(database.String(255), nullable=True)
 
     # Additional configuration (JSON for future extensibility)
     configuracion_adicional = database.Column(JSON, nullable=True)

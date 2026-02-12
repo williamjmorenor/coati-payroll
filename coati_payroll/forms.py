@@ -780,6 +780,12 @@ class PlanillaForm(FlaskForm):
         coerce=str,
         description=_("Empresa a la que pertenece esta planilla. Solo empleados de esta empresa podrán ser asignados."),
     )
+    vacation_policy_id = SelectField(
+        _("Regla de Vacaciones"),
+        validators=[Optional()],
+        coerce=str,
+        description=_("Política de vacaciones que esta planilla utilizará para acumulación y descuento."),
+    )
     periodo_fiscal_inicio = DateField(
         _("Inicio Período Fiscal"),
         validators=[Optional()],
@@ -1759,6 +1765,34 @@ class VacationPolicyForm(FlaskForm):
         _("Acumular Durante Vacaciones"),
         default=True,
         description=_("Continuar acumulando durante período de vacaciones"),
+    )
+
+    son_vacaciones_pagadas = BooleanField(
+        _("Son vacaciones pagadas"),
+        default=False,
+        description=_(
+            "Si está activo, la acumulación/consumo de vacaciones genera contabilización de pasivo laboral en la nómina"
+        ),
+    )
+    cuenta_debito_vacaciones_pagadas = StringField(
+        _("Cuenta débito vacaciones pagadas"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta de gasto (débito) para registrar el devengo de vacaciones pagadas"),
+    )
+    descripcion_cuenta_debito_vacaciones_pagadas = StringField(
+        _("Descripción cuenta débito vacaciones pagadas"),
+        validators=[Optional(), Length(max=255)],
+        description=_("Descripción de la cuenta débito para vacaciones pagadas"),
+    )
+    cuenta_credito_vacaciones_pagadas = StringField(
+        _("Cuenta crédito vacaciones pagadas"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta de pasivo (crédito) para registrar el devengo de vacaciones pagadas"),
+    )
+    descripcion_cuenta_credito_vacaciones_pagadas = StringField(
+        _("Descripción cuenta crédito vacaciones pagadas"),
+        validators=[Optional(), Length(max=255)],
+        description=_("Descripción de la cuenta crédito para vacaciones pagadas"),
     )
 
     submit = SubmitField(_("Guardar"))

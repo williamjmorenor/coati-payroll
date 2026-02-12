@@ -169,7 +169,7 @@ def test_vacation_policy_new_post_creates_policy(app, client, admin_user, db_ses
 
 
 @pytest.mark.validation
-def test_vacation_leave_request_approve_creates_ledger_and_deducts_balance(app, client, admin_user, db_session):
+def test_vacation_leave_request_approve_only_marks_approved_until_payroll_execution(app, client, admin_user, db_session):
     with app.app_context():
         empresa, moneda, _, planilla = _create_base_company_struct(db_session)
         empleado = _create_employee(db_session, empresa.id, moneda.id)
@@ -221,7 +221,7 @@ def test_vacation_leave_request_approve_creates_ledger_and_deducts_balance(app, 
         assert updated_request.estado == "approved"
 
         updated_account = db_session.get(VacationAccount, account.id)
-        assert updated_account.current_balance == Decimal("5.0000")
+        assert updated_account.current_balance == Decimal("10.0000")
 
         ledger_entry = (
             db_session.query(VacationLedger)
@@ -231,10 +231,7 @@ def test_vacation_leave_request_approve_creates_ledger_and_deducts_balance(app, 
             )
             .one_or_none()
         )
-        assert ledger_entry is not None
-        assert ledger_entry.entry_type == VacationLedgerType.USAGE
-        assert ledger_entry.quantity == Decimal("-5")
-        assert ledger_entry.balance_after == Decimal("5.0000")
+        assert ledger_entry is None
 
 
 @pytest.mark.validation

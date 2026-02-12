@@ -93,12 +93,23 @@ def new():
     populate_form_choices(form)
 
     if form.validate_on_submit():
+        vacation_policy_id = form.vacation_policy_id.data or None
+        if vacation_policy_id:
+            policy = db.session.get(VacationPolicy, vacation_policy_id)
+            if not policy:
+                flash(_("La regla de vacaciones seleccionada no existe."), "danger")
+                return render_template("modules/planilla/form.html", form=form, is_edit=False)
+            if policy.empresa_id and policy.empresa_id != (form.empresa_id.data or None):
+                flash(_("La regla de vacaciones pertenece a otra empresa."), "danger")
+                return render_template("modules/planilla/form.html", form=form, is_edit=False)
+
         planilla = Planilla(
             nombre=form.nombre.data,
             descripcion=form.descripcion.data,
             tipo_planilla_id=form.tipo_planilla_id.data,
             moneda_id=form.moneda_id.data,
             empresa_id=form.empresa_id.data or None,
+            vacation_policy_id=vacation_policy_id,
             periodo_fiscal_inicio=form.periodo_fiscal_inicio.data,
             periodo_fiscal_fin=form.periodo_fiscal_fin.data,
             prioridad_prestamos=form.prioridad_prestamos.data or 250,
@@ -129,11 +140,24 @@ def edit(planilla_id: str):
     populate_form_choices(form)
 
     if form.validate_on_submit():
+        vacation_policy_id = form.vacation_policy_id.data or None
+        if vacation_policy_id:
+            policy = db.session.get(VacationPolicy, vacation_policy_id)
+            if not policy:
+                flash(_("La regla de vacaciones seleccionada no existe."), "danger")
+                counts = get_planilla_component_counts(planilla_id)
+                return render_template("modules/planilla/form.html", form=form, planilla=planilla, is_edit=True, **counts)
+            if policy.empresa_id and policy.empresa_id != (form.empresa_id.data or None):
+                flash(_("La regla de vacaciones pertenece a otra empresa."), "danger")
+                counts = get_planilla_component_counts(planilla_id)
+                return render_template("modules/planilla/form.html", form=form, planilla=planilla, is_edit=True, **counts)
+
         planilla.nombre = form.nombre.data
         planilla.descripcion = form.descripcion.data
         planilla.tipo_planilla_id = form.tipo_planilla_id.data
         planilla.moneda_id = form.moneda_id.data
         planilla.empresa_id = form.empresa_id.data or None
+        planilla.vacation_policy_id = vacation_policy_id
         planilla.periodo_fiscal_inicio = form.periodo_fiscal_inicio.data
         planilla.periodo_fiscal_fin = form.periodo_fiscal_fin.data
         planilla.prioridad_prestamos = form.prioridad_prestamos.data or 250
