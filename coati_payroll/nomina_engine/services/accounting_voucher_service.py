@@ -238,8 +238,11 @@ class AccountingVoucherService:
             empleado_nombre_completo = f"{empleado.primer_nombre} {empleado.primer_apellido}"
 
             units = Decimal(str(abs(entry.quantity)))
-            # Use converted monthly salary from payroll snapshot to respect currency conversion
-            salario_base = Decimal(str(ne.sueldo_base_historico or Decimal("0.00")))
+            # Use employee's monthly salary and apply currency conversion from payroll
+            # ne.sueldo_base_historico stores period salary, but vacation liability must use monthly salary
+            salario_mensual = Decimal(str(empleado.salario_base or Decimal("0.00")))
+            tipo_cambio = Decimal(str(ne.tipo_cambio_aplicado or Decimal("1.00")))
+            salario_base = salario_mensual * tipo_cambio
             porcentaje_pago = Decimal(str(policy.porcentaje_pago_vacaciones or Decimal("100.00"))) / Decimal("100")
             monto = round_money((salario_base / dias_base) * units * porcentaje_pago, planilla_moneda)
             if monto <= 0:

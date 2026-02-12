@@ -48,8 +48,8 @@ def test_vacation_liability_respects_exchange_rate(app, client, admin_user, db_s
     - Accounting liability: 1,250 NIO (37,500 NIO monthly / 30 dias_base * 1 day accrued)
       NOT 33.33 NIO (1,000 USD / 30 * 1 day without conversion)
 
-    This test validates the fix for: vacation liability must use ne.sueldo_base_historico
-    (converted monthly salary) instead of empleado.salario_base (raw source currency).
+    This test validates the fix for: vacation liability must use empleado.salario_base
+    with tipo_cambio_aplicado (converted monthly salary) instead of raw source currency.
     """
     with app.app_context():
         # Create currencies
@@ -76,7 +76,7 @@ def test_vacation_liability_respects_exchange_rate(app, client, admin_user, db_s
             codigo="TEST-MC",
             razon_social="Test MultiCurrency Company",
             ruc="J-0000000001-2026",
-            moneda_id=nio.id,
+            activo=True,
         )
         db_session.add(empresa)
         db_session.commit()
@@ -84,14 +84,15 @@ def test_vacation_liability_respects_exchange_rate(app, client, admin_user, db_s
 
         # 2. Create employee with USD salary
         empleado = Empleado(
-            codigo="EMP-USD-001",
+            codigo_empleado="EMP-USD-001",
             primer_nombre="John",
             primer_apellido="Dollar",
+            identificacion_personal="001-010190-0001B",
             empresa_id=empresa.id,
             salario_base=Decimal("1000.00"),  # 1,000 USD
             moneda_id=usd.id,  # Paid in USD
             activo=True,
-            fecha_ingreso=date(2026, 1, 1),
+            fecha_alta=date(2026, 1, 1),
         )
         db_session.add(empleado)
         db_session.commit()
@@ -101,31 +102,37 @@ def test_vacation_liability_respects_exchange_rate(app, client, admin_user, db_s
         tipo_planilla = TipoPlanilla(
             codigo="QUINCENAL-MC",
             descripcion="Quincenal MultiCurrency Test",
-            periodicidad_anio=24,
-            periodicidad_dias=15,
+            periodicidad="biweekly",
+            dias=15,
+            periodos_por_anio=24,
+            mes_inicio_fiscal=1,
+            dia_inicio_fiscal=1,
             activo=True,
         )
         db_session.add(tipo_planilla)
-        db_session.commit()
-        db_session.refresh(tipo_planilla)
+        db_session.flush()
 
         # 4. Create vacation policy (2 days per month, paid 100%)
         vacation_policy = VacationPolicy(
-            nombre="Vacation MC Test",
             codigo="VAC-MC-2026",
+            nombre="Vacation MC Test",
             empresa_id=empresa.id,
-            accrual_type="PERIODIC",
-            accrual_days_per_period=Decimal("2.00"),
-            accrual_period_months=1,
-            active=True,
+            accrual_method="periodic",
+            accrual_rate=Decimal("2.0000"),
+            accrual_frequency="monthly",
+            unit_type="days",
+            min_service_days=0,
+            allow_negative=False,
+            activo=True,
             son_vacaciones_pagadas=True,
             porcentaje_pago_vacaciones=Decimal("100.00"),
             cuenta_debito_vacaciones_pagadas="5101",
+            descripcion_cuenta_debito_vacaciones_pagadas="Gasto Vacaciones",
             cuenta_credito_vacaciones_pagadas="2103",
+            descripcion_cuenta_credito_vacaciones_pagadas="Pasivo Vacaciones",
         )
         db_session.add(vacation_policy)
-        db_session.commit()
-        db_session.refresh(vacation_policy)
+        db_session.flush()
 
         # 5. Create biweekly planilla linked to vacation policy
         planilla = Planilla(
@@ -135,43 +142,57 @@ def test_vacation_liability_respects_exchange_rate(app, client, admin_user, db_s
             moneda_id=nio.id,  # Payroll in NIO
             activo=True,
             vacation_policy_id=vacation_policy.id,  # Link to vacation policy
+            # Accounting configuration for base salary
+            codigo_cuenta_debe_salario="5101",
+            descripcion_cuenta_debe_salario="Gasto por Salario",
+            codigo_cuenta_haber_salario="2101",
+            descripcion_cuenta_haber_salario="Salario por Pagar",
         )
         db_session.add(planilla)
-        db_session.commit()
-        db_session.refresh(planilla)
+        db_session.flush()
 
         # 6. Associate employee to payroll
         planilla_empleado = PlanillaEmpleado(
             planilla_id=planilla.id,
             empleado_id=empleado.id,
+            activo=True,
         )
         db_session.add(planilla_empleado)
+        db_session.flush()
+
+        # Create vacation account for employee
+        vacation_account = VacationAccount(
+            empleado_id=empleado.id,
+            policy_id=vacation_policy.id,
+            current_balance=Decimal("0.00"),
+            activo=True,
+        )
+        db_session.add(vacation_account)
         db_session.commit()
 
         # 7. Execute payroll for Feb 1-15, 2026
-        nomina_service = NominaService(db_session)
-        resultado = nomina_service.ejecutar_nomina(
-            planilla_id=planilla.id,
-            fecha_inicio=date(2026, 2, 1),
-            fecha_fin=date(2026, 2, 15),
-            fecha_pago=date(2026, 2, 20),
-            periodo="Febrero 2026 - Primera Quincena MultiCurrency",
+        periodo_inicio = date(2026, 2, 1)
+        periodo_fin = date(2026, 2, 15)
+        fecha_calculo = date(2026, 2, 15)
+
+        nomina, errors, _warnings = NominaService.ejecutar_nomina(
+            planilla=planilla,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            fecha_calculo=fecha_calculo,
             usuario=admin_user.usuario,
         )
 
-        assert resultado["success"] is True, f"Payroll execution failed: {resultado.get('error')}"
-        nomina_id = resultado["nomina_id"]
+        # Ensure nomina was created successfully
+        assert nomina is not None, f"Nomina creation failed with errors: {errors}"
+        assert len(errors) == 0, f"Unexpected errors: {errors}"
 
         # Refresh session to get updated data
-        db_session.expire_all()
+        db_session.refresh(nomina)
 
         # 8. Validate salary payment (converted to NIO)
         # Expected: 1,000 USD * 37.50 exchange rate = 37,500 NIO monthly
         # Biweekly (15 days out of 30): 37,500 / 2 = 18,750 NIO
-        from coati_payroll.model import Nomina, NominaEmpleado
-
-        nomina = db_session.get(Nomina, nomina_id)
-        assert nomina is not None
 
         nomina_empleados = nomina.nomina_empleados
         assert len(nomina_empleados) == 1
