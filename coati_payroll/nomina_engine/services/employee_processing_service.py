@@ -115,12 +115,6 @@ class EmployeeProcessingService:
         # Add novelties
         for codigo, valor in emp_calculo.novedades.items():
             variables[f"novedad_{codigo}"] = valor
-            normalized = self._normalize_novedad_code(codigo)
-            if normalized:
-                # Use setdefault to prefer explicit base codes over plugin-normalized ones.
-                # If a novedad exists as both "HORAS_EXTRA" and "bmonic_HORAS_EXTRAv_lct2019",
-                # the explicit version takes precedence.
-                variables.setdefault(f"novedad_{normalized}", valor)
 
         # Load accumulated annual values
         acumulado = self._get_acumulado_anual(empleado, planilla, fecha_calculo)
@@ -149,20 +143,6 @@ class EmployeeProcessingService:
         variables["impuesto_inicial_acumulado"] = impuesto_base_acumulado
 
         return variables
-
-    @staticmethod
-    def _normalize_novedad_code(codigo: str) -> str | None:
-        """Normalize novelty codes for formula compatibility.
-
-        Some plugins store prefixed codes (e.g., bmonic_HORAS_EXTRAv_lct2019)
-        while formulas reference the base code (e.g., HORAS_EXTRA).
-        """
-        prefix = "bmonic_"
-        suffix = "v_lct2019"
-        if codigo.startswith(prefix) and codigo.endswith(suffix):
-            base = codigo[len(prefix) : -len(suffix)]
-            return base or None
-        return None
 
     def _resolve_config(self, empresa_id: str, configuracion_snapshot: dict[str, Any] | None) -> Any:
         if configuracion_snapshot:
