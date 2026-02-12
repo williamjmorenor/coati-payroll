@@ -43,16 +43,18 @@ def populate_form_choices(form: PlanillaForm):
     ]
 
     vacation_policies = (
-        db.session.execute(db.select(VacationPolicy).filter_by(activo=True).order_by(VacationPolicy.codigo)).scalars().all()
+        db.session.execute(db.select(VacationPolicy).filter_by(activo=True).order_by(VacationPolicy.codigo))
+        .scalars()
+        .all()
     )
     form.vacation_policy_id.choices = [("", _("-- Sin regla vinculada --"))] + [
         (
             p.id,
             f"{p.codigo} - {p.nombre}"
             + (
-                f" [Planilla: {p.planilla.nombre}]" if p.planilla else (
-                    f" [Empresa: {p.empresa.razon_social}]" if p.empresa else " [Global]"
-                )
+                f" [Planilla: {p.planilla.nombre}]"
+                if p.planilla
+                else (f" [Empresa: {p.empresa.razon_social}]" if p.empresa else " [Global]")
             ),
         )
         for p in vacation_policies
