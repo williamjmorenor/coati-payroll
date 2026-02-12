@@ -1,0 +1,254 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+"""End-to-end test for vacation liability with multi-currency payroll.
+
+This test validates that vacation liability accounting entries correctly apply
+exchange rates when employees are paid in a different source currency than the
+payroll currency.
+"""
+
+from datetime import date
+from decimal import Decimal
+
+import pytest
+
+from coati_payroll.model import (
+    Empleado,
+    Empresa,
+    Moneda,
+    Planilla,
+    PlanillaEmpleado,
+    TipoCambio,
+    TipoPlanilla,
+    VacationAccount,
+    VacationLedger,
+    VacationPolicy,
+    ComprobanteContable,
+    ComprobanteContableLinea,
+)
+from coati_payroll.vistas.planilla.services.nomina_service import NominaService
+
+
+@pytest.mark.validation
+def test_vacation_liability_respects_exchange_rate(app, client, admin_user, db_session):
+    """
+    End-to-end test: Vacation liability uses converted salary for multi-currency employees.
+
+    Setup:
+    - Payroll currency: NIO (Córdoba)
+    - Employee currency: USD
+    - Exchange rate: 1 USD = 37.50 NIO
+    - Employee salary: 1,000 USD monthly (37,500 NIO converted)
+    - Biweekly payroll (15 days)
+    - Vacation rule: 2 days per month worked (periodic accrual)
+
+    Expected results after biweekly payroll:
+    - Salary payment: 18,750 NIO (1,000 USD * 37.50 / 2)
+    - Vacation days accrued: 1 day (2 days/month * 0.5 months)
+    - Accounting liability: 1,250 NIO (37,500 NIO monthly / 30 dias_base * 1 day accrued)
+      NOT 33.33 NIO (1,000 USD / 30 * 1 day without conversion)
+
+    This test validates the fix for: vacation liability must use ne.sueldo_base_historico
+    (converted monthly salary) instead of empleado.salario_base (raw source currency).
+    """
+    with app.app_context():
+        # Create currencies
+        nio = Moneda(codigo="NIO", nombre="Córdoba Nicaragüense", simbolo="C$", activo=True)
+        usd = Moneda(codigo="USD", nombre="US Dollar", simbolo="$", activo=True)
+        db_session.add_all([nio, usd])
+        db_session.commit()
+        db_session.refresh(nio)
+        db_session.refresh(usd)
+
+        # Create exchange rate: 1 USD = 37.50 NIO
+        exchange_rate = TipoCambio(
+            fecha=date(2026, 2, 1),
+            moneda_origen_id=usd.id,
+            moneda_destino_id=nio.id,
+            tasa=Decimal("37.50"),
+            creado_por="admin-test",
+        )
+        db_session.add(exchange_rate)
+        db_session.commit()
+
+        # 1. Create company
+        empresa = Empresa(
+            codigo="TEST-MC",
+            razon_social="Test MultiCurrency Company",
+            ruc="J-0000000001-2026",
+            moneda_id=nio.id,
+        )
+        db_session.add(empresa)
+        db_session.commit()
+        db_session.refresh(empresa)
+
+        # 2. Create employee with USD salary
+        empleado = Empleado(
+            codigo="EMP-USD-001",
+            primer_nombre="John",
+            primer_apellido="Dollar",
+            empresa_id=empresa.id,
+            salario_base=Decimal("1000.00"),  # 1,000 USD
+            moneda_id=usd.id,  # Paid in USD
+            activo=True,
+            fecha_ingreso=date(2026, 1, 1),
+        )
+        db_session.add(empleado)
+        db_session.commit()
+        db_session.refresh(empleado)
+
+        # 3. Create biweekly payroll type
+        tipo_planilla = TipoPlanilla(
+            codigo="QUINCENAL-MC",
+            descripcion="Quincenal MultiCurrency Test",
+            periodicidad_anio=24,
+            periodicidad_dias=15,
+            activo=True,
+        )
+        db_session.add(tipo_planilla)
+        db_session.commit()
+        db_session.refresh(tipo_planilla)
+
+        # 4. Create vacation policy (2 days per month, paid 100%)
+        vacation_policy = VacationPolicy(
+            nombre="Vacation MC Test",
+            codigo="VAC-MC-2026",
+            empresa_id=empresa.id,
+            accrual_type="PERIODIC",
+            accrual_days_per_period=Decimal("2.00"),
+            accrual_period_months=1,
+            active=True,
+            son_vacaciones_pagadas=True,
+            porcentaje_pago_vacaciones=Decimal("100.00"),
+            cuenta_debito_vacaciones_pagadas="5101",
+            cuenta_credito_vacaciones_pagadas="2103",
+        )
+        db_session.add(vacation_policy)
+        db_session.commit()
+        db_session.refresh(vacation_policy)
+
+        # 5. Create biweekly planilla linked to vacation policy
+        planilla = Planilla(
+            nombre="Planilla MultiCurrency Feb 2026",
+            tipo_planilla_id=tipo_planilla.id,
+            empresa_id=empresa.id,
+            moneda_id=nio.id,  # Payroll in NIO
+            activo=True,
+            vacation_policy_id=vacation_policy.id,  # Link to vacation policy
+        )
+        db_session.add(planilla)
+        db_session.commit()
+        db_session.refresh(planilla)
+
+        # 6. Associate employee to payroll
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+        )
+        db_session.add(planilla_empleado)
+        db_session.commit()
+
+        # 7. Execute payroll for Feb 1-15, 2026
+        nomina_service = NominaService(db_session)
+        resultado = nomina_service.ejecutar_nomina(
+            planilla_id=planilla.id,
+            fecha_inicio=date(2026, 2, 1),
+            fecha_fin=date(2026, 2, 15),
+            fecha_pago=date(2026, 2, 20),
+            periodo="Febrero 2026 - Primera Quincena MultiCurrency",
+            usuario=admin_user.usuario,
+        )
+
+        assert resultado["success"] is True, f"Payroll execution failed: {resultado.get('error')}"
+        nomina_id = resultado["nomina_id"]
+
+        # Refresh session to get updated data
+        db_session.expire_all()
+
+        # 8. Validate salary payment (converted to NIO)
+        # Expected: 1,000 USD * 37.50 exchange rate = 37,500 NIO monthly
+        # Biweekly (15 days out of 30): 37,500 / 2 = 18,750 NIO
+        from coati_payroll.model import Nomina, NominaEmpleado
+
+        nomina = db_session.get(Nomina, nomina_id)
+        assert nomina is not None
+
+        nomina_empleados = nomina.nomina_empleados
+        assert len(nomina_empleados) == 1
+
+        ne = nomina_empleados[0]
+        assert ne.empleado_id == empleado.id
+
+        # Validate currency conversion was applied
+        assert ne.moneda_origen_id == usd.id
+        assert ne.tipo_cambio_aplicado == Decimal("37.50")
+
+        # Validate converted monthly salary snapshot
+        assert ne.sueldo_base_historico == Decimal("37500.00")  # 1,000 USD * 37.50
+
+        # Validate period salary (18,750 NIO for 15 days)
+        assert ne.salario_bruto == Decimal("18750.00")
+
+        # 9. Validate vacation accrual
+        vacation_account = (
+            db_session.query(VacationAccount)
+            .filter(VacationAccount.empleado_id == empleado.id)
+            .first()
+        )
+        assert vacation_account is not None
+
+        # 1 day accrued: 2 days per month * (15 days / 30 days per month) = 1 day
+        assert vacation_account.balance == Decimal("1.00")
+
+        vacation_ledger = (
+            db_session.query(VacationLedger)
+            .filter(VacationLedger.account_id == vacation_account.id)
+            .first()
+        )
+        assert vacation_ledger is not None
+        assert vacation_ledger.quantity == Decimal("1.00")
+        assert vacation_ledger.nomina_empleado_id == ne.id
+
+        # 10. Validate accounting liability uses converted salary
+        comprobante = (
+            db_session.query(ComprobanteContable)
+            .filter(ComprobanteContable.nomina_id == nomina_id)
+            .first()
+        )
+        assert comprobante is not None
+
+        vacation_lines = [
+            linea
+            for linea in comprobante.lineas
+            if linea.tipo_linea == "vacation_liability"
+        ]
+        assert len(vacation_lines) == 2  # Debit and credit
+
+        # Expected liability: 37,500 NIO monthly / 30 dias_base * 1 day = 1,250 NIO
+        expected_liability = Decimal("1250.00")
+
+        debit_line = next(
+            (l for l in vacation_lines if l.cuenta_contable == "5101"), None
+        )
+        credit_line = next(
+            (l for l in vacation_lines if l.cuenta_contable == "2103"), None
+        )
+
+        assert debit_line is not None, "Debit vacation liability line not found"
+        assert credit_line is not None, "Credit vacation liability line not found"
+
+        assert (
+            debit_line.debito == expected_liability
+        ), f"Expected {expected_liability} NIO liability, got {debit_line.debito}"
+        assert debit_line.credito == Decimal("0.00")
+
+        assert credit_line.credito == expected_liability
+        assert credit_line.debito == Decimal("0.00")
+
+        # Validate the liability is NOT based on unconverted salary
+        # If using empleado.salario_base without conversion:
+        # Wrong calculation: 1,000 USD / 30 * 1 day = 33.33 (wrong!)
+        wrong_liability = Decimal("33.33")
+        assert (
+            debit_line.debito != wrong_liability
+        ), "Vacation liability incorrectly using unconverted USD salary!"
