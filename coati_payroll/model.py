@@ -1994,7 +1994,7 @@ class VacationPolicy(database.Model, BaseTabla):
     # Payroll association (primary) - policies are tied to specific payrolls
     # This allows different vacation rules for different payrolls in consolidated companies
     planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=True, index=True)
-    planilla = database.relationship("Planilla", backref="vacation_policies")
+    planilla = database.relationship("Planilla", foreign_keys=[planilla_id], backref="vacation_policies")
 
     # Company association (secondary, optional) - for policies that apply to entire company
     empresa_id = database.Column(database.String(26), database.ForeignKey(FK_EMPRESA_ID), nullable=True, index=True)
