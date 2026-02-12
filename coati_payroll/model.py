@@ -2077,6 +2077,10 @@ class VacationPolicy(database.Model, BaseTabla):
     # Whether vacations are paid and should generate a labor liability accounting flow
     son_vacaciones_pagadas = database.Column(database.Boolean(), default=False, nullable=False)
 
+    # Payment rate percentage when vacation is consumed (e.g., 100 means 1 vacation day = 100% of daily salary)
+    # Defaults to 100% if not specified. Allows for jurisdictions with different payment rates.
+    porcentaje_pago_vacaciones = database.Column(database.Numeric(5, 2), nullable=False, default=Decimal("100.00"))
+
     # Accounting configuration for paid vacation liability entries
     cuenta_debito_vacaciones_pagadas = database.Column(database.String(64), nullable=True)
     descripcion_cuenta_debito_vacaciones_pagadas = database.Column(database.String(255), nullable=True)

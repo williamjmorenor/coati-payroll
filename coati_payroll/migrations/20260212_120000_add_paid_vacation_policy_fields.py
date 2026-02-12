@@ -22,6 +22,10 @@ def upgrade():
         "vacation_policy",
         sa.Column("son_vacaciones_pagadas", sa.Boolean(), nullable=False, server_default=sa.false()),
     )
+    op.add_column(
+        "vacation_policy",
+        sa.Column("porcentaje_pago_vacaciones", sa.Numeric(precision=5, scale=2), nullable=False, server_default="100.00"),
+    )
     op.add_column("vacation_policy", sa.Column("cuenta_debito_vacaciones_pagadas", sa.String(length=64), nullable=True))
     op.add_column(
         "vacation_policy",
@@ -41,4 +45,5 @@ def downgrade():
     op.drop_column("vacation_policy", "cuenta_credito_vacaciones_pagadas")
     op.drop_column("vacation_policy", "descripcion_cuenta_debito_vacaciones_pagadas")
     op.drop_column("vacation_policy", "cuenta_debito_vacaciones_pagadas")
+    op.drop_column("vacation_policy", "porcentaje_pago_vacaciones")
     op.drop_column("vacation_policy", "son_vacaciones_pagadas")

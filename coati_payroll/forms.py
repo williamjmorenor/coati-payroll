@@ -1774,6 +1774,14 @@ class VacationPolicyForm(FlaskForm):
             "Si está activo, la acumulación/consumo de vacaciones genera contabilización de pasivo laboral en la nómina"
         ),
     )
+    porcentaje_pago_vacaciones = DecimalField(
+        _("Porcentaje de pago de vacaciones"),
+        validators=[Optional(), NumberRange(min=0, max=999.99)],
+        default=Decimal("100.00"),
+        description=_(
+            "Porcentaje del salario diario a pagar por día de vacaciones (ej: 100 = pago completo, 50 = medio día)"
+        ),
+    )
     cuenta_debito_vacaciones_pagadas = StringField(
         _("Cuenta débito vacaciones pagadas"),
         validators=[Optional(), Length(max=64)],
