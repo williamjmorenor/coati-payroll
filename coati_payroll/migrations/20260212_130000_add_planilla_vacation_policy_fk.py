@@ -31,8 +31,8 @@ def upgrade():
 
 
 def downgrade():
-    # In SQLite, when dropping FK with batch mode, we just drop the column
-    # The FK constraint is implicit and will be dropped with the column
+    # In SQLite with batch mode, dropping the column automatically removes the FK constraint
+    # because Alembic recreates the table without the column and its constraints
     with op.batch_alter_table("planilla", schema=None) as batch_op:
         batch_op.drop_index("ix_planilla_vacation_policy_id")
         batch_op.drop_column("vacation_policy_id")
