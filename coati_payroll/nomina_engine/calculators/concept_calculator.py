@@ -189,7 +189,7 @@ class ConceptCalculator:
             inputs["total_percepciones"] = emp_calculo.total_percepciones
             inputs["total_deducciones"] = emp_calculo.total_deducciones
 
-            # Map formula input sources to input names when present
+            # Map generic formula input sources to input names when present
             for input_def in formula.get("inputs", []) if isinstance(formula.get("inputs"), list) else []:
                 name = input_def.get("name")
                 source = input_def.get("source")
