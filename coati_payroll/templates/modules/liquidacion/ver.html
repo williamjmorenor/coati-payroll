@@ -18,13 +18,16 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             </a>
             {% if liquidacion.estado in ['draft', 'calculated'] %}
                 <form method="POST" action="{{ url_for('liquidacion.recalcular', liquidacion_id=liquidacion.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-outline-primary">{{ _('Recalcular') }}</button>
                 </form>
                 <form method="POST" action="{{ url_for('liquidacion.aplicar', liquidacion_id=liquidacion.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-success">{{ _('Aplicar') }}</button>
                 </form>
             {% elif liquidacion.estado == 'applied' %}
                 <form method="POST" action="{{ url_for('liquidacion.pagar', liquidacion_id=liquidacion.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-success">{{ _('Marcar Pagada') }}</button>
                 </form>
             {% endif %}

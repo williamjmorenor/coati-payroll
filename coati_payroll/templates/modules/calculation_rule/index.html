@@ -76,6 +76,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                     </a>
                                     <form action="{{ url_for('calculation_rule.duplicate', id_=rule.id) }}" 
                                           method="POST" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-outline-info" title="{{ _('Duplicar') }}">
                                             <i class="bi bi-copy"></i>
                                         </button>
@@ -83,6 +84,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                     <form action="{{ url_for('calculation_rule.delete', id_=rule.id) }}" 
                                           method="POST" class="d-inline" 
                                           onsubmit="return confirm('{{ _('¿Está seguro de eliminar esta regla?') }}');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-outline-danger" title="{{ _('Eliminar') }}">
                                             <i class="bi bi-trash"></i>
                                         </button>

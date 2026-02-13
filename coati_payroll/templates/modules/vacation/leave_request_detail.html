@@ -91,6 +91,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('vacation.leave_request_approve', request_id=leave_request.id) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-success" 
                                 onclick="return confirm('{{ _('¿Está seguro de aprobar esta solicitud?') }}');">
                             <i class="bi bi-check-circle me-1"></i>{{ _('Aprobar') }}
@@ -142,6 +143,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="{{ url_for('vacation.leave_request_reject', request_id=leave_request.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
                     <h5 class="modal-title" id="rejectModalLabel">{{ _('Rechazar Solicitud') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

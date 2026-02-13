@@ -160,6 +160,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         </div>
                         <div class="card-body">
                             <form method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div class="form-group mb-3">
                                     <label for="file" class="form-label required">{{ _('Archivo Excel') }}</label>
                                     <input type="file" 

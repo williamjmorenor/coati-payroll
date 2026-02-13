@@ -101,12 +101,14 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                             </a>
                                             <form method="POST" action="{{ url_for('carga_inicial_prestacion.aplicar', carga_id=carga.id) }}" 
                                                   style="display: inline;" onsubmit="return confirm('{{ _('¿Está seguro de aplicar esta carga inicial?') }}');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-success" title="{{ _('Aplicar') }}">
                                                     <i class="bi bi-check-circle"></i>
                                                 </button>
                                             </form>
                                             <form method="POST" action="{{ url_for('carga_inicial_prestacion.eliminar', carga_id=carga.id) }}" 
                                                   style="display: inline;" onsubmit="return confirm('{{ _('¿Está seguro de eliminar esta carga inicial?') }}');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Eliminar') }}">
                                                     <i class="bi bi-trash"></i>
                                                 </button>

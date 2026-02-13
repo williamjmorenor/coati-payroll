@@ -37,6 +37,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 </div>
                 <div class="card-body">
                     <form action="{{ url_for('planilla.add_deduccion', planilla_id=planilla.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <label class="form-label">{{ _('Deducción') }}</label>
                             <select name="deduccion_id" class="form-select" required>
@@ -94,6 +95,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 <tr>
                                     <td>
                                         <form action="{{ url_for('planilla.update_deduccion_priority', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="number" name="prioridad" value="{{ assoc.prioridad }}" class="form-control form-control-sm" style="width: 70px;" min="1" max="999" onchange="this.form.submit()">
                                         </form>
                                     </td>
@@ -109,6 +111,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                     </td>
                                     <td class="text-end">
                                         <form action="{{ url_for('planilla.remove_deduccion', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Remover') }}" onclick="return confirm('{{ _('¿Remover esta deducción de la planilla?') }}')">
                                                 <i class="bi bi-x-lg"></i>
                                             </button>
