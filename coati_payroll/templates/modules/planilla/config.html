@@ -66,6 +66,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <span class="badge bg-secondary">{{ _('Inactivo') }}</span>
                         {% endif %}
                     </p>
+                    <p><strong>{{ _('Regla de Vacaciones') }}:</strong>
+                        {% if planilla.vacation_policy %}
+                            {{ planilla.vacation_policy.codigo }} - {{ planilla.vacation_policy.nombre }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
                 </div>
             </div>
             <div class="text-end mt-3">

@@ -112,9 +112,9 @@ class SnapshotService:
                         .filter(
                             TipoCambio.moneda_origen_id == moneda_id,
                             TipoCambio.moneda_destino_id == planilla.moneda_id,
-                            TipoCambio.fecha_vigencia <= fecha_calculo,
+                            TipoCambio.fecha <= fecha_calculo,
                         )
-                        .order_by(TipoCambio.fecha_vigencia.desc())
+                        .order_by(TipoCambio.fecha.desc())
                     )
                     .scalars()
                     .first()
@@ -123,7 +123,7 @@ class SnapshotService:
                 if tipo_cambio:
                     rates[moneda_id] = {
                         "tasa": str(tipo_cambio.tasa),
-                        "fecha": tipo_cambio.fecha_vigencia.isoformat(),
+                        "fecha": tipo_cambio.fecha.isoformat(),
                         "moneda_destino_id": tipo_cambio.moneda_destino_id,
                     }
 

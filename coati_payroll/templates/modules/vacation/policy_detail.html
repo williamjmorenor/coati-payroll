@@ -118,6 +118,36 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 
             <div class="card mb-4">
                 <div class="card-header">
+                    <h5 class="mb-0">{{ _('Contabilidad de Vacaciones Pagadas') }}</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">{{ _('Son vacaciones pagadas') }}</dt>
+                        <dd class="col-sm-8">
+                            {% if policy.son_vacaciones_pagadas %}
+                                <i class="bi bi-check-circle text-success"></i> {{ _('Sí') }}
+                            {% else %}
+                                <i class="bi bi-x-circle text-danger"></i> {{ _('No') }}
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">{{ _('Cuenta débito') }}</dt>
+                        <dd class="col-sm-8">{{ policy.cuenta_debito_vacaciones_pagadas or '-' }}</dd>
+
+                        <dt class="col-sm-4">{{ _('Descripción débito') }}</dt>
+                        <dd class="col-sm-8">{{ policy.descripcion_cuenta_debito_vacaciones_pagadas or '-' }}</dd>
+
+                        <dt class="col-sm-4">{{ _('Cuenta crédito') }}</dt>
+                        <dd class="col-sm-8">{{ policy.cuenta_credito_vacaciones_pagadas or '-' }}</dd>
+
+                        <dt class="col-sm-4">{{ _('Descripción crédito') }}</dt>
+                        <dd class="col-sm-8">{{ policy.descripcion_cuenta_credito_vacaciones_pagadas or '-' }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
                     <h5 class="mb-0">{{ _('Configuración de Uso') }}</h5>
                 </div>
                 <div class="card-body">

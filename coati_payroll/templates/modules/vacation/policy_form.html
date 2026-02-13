@@ -146,6 +146,34 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </div>
                 </div>
                 
+
+                <hr class="my-4">
+
+                <h5 class="mb-3">{{ _('Contabilidad de Vacaciones Pagadas') }}</h5>
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ render_field(form.son_vacaciones_pagadas) }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ render_field(form.cuenta_debito_vacaciones_pagadas) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ render_field(form.descripcion_cuenta_debito_vacaciones_pagadas) }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ render_field(form.cuenta_credito_vacaciones_pagadas) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ render_field(form.descripcion_cuenta_credito_vacaciones_pagadas) }}
+                    </div>
+                </div>
+
                 <div class="mt-4">
                     {{ form.submit(class="btn btn-primary") }}
                     <a href="{{ url_for('vacation.policy_index') }}" class="btn btn-secondary">{{ _('Cancelar') }}</a>

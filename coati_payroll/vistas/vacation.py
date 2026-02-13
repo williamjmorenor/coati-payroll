@@ -417,8 +417,8 @@ def leave_request_approve(request_id):
         flash(_("Cuenta de vacaciones no encontrada."), "danger")
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
-    # Check if there's enough balance
-    if account.current_balance < leave_request.units:
+    # Check if there's enough balance (validation only; discount happens via payroll execution)
+    if account.current_balance < leave_request.units and not account.policy.allow_negative:
         flash(
             _("Saldo insuficiente. Disponible: {}, Solicitado: {}").format(
                 account.current_balance, leave_request.units
@@ -427,29 +427,11 @@ def leave_request_approve(request_id):
         )
         return redirect(url_for("vacation.leave_request_detail", request_id=request_id))
 
-    # Update request status
+    # Update request status; accounting/balance impact is deferred to payroll novelties execution
     leave_request.estado = VacacionEstado.APROBADO
     leave_request.fecha_aprobacion = date.today()
     leave_request.aprobado_por = current_user.usuario
     leave_request.modificado_por = current_user.usuario
-
-    # Deduct from balance
-    account.current_balance -= leave_request.units
-
-    # Create ledger entry
-    ledger_entry = VacationLedger(
-        account_id=account.id,
-        empleado_id=leave_request.empleado_id,
-        entry_type=VacationLedgerType.USAGE,
-        reference_id=leave_request.id,
-        reference_type="leave_request",
-        quantity=-leave_request.units,
-        balance_after=account.current_balance,
-        fecha=date.today(),
-        source="leave_request_approval",
-        observaciones=f"Aprobado por {current_user.usuario}",
-    )
-    db.session.add(ledger_entry)
 
     try:
         db.session.commit()
@@ -640,32 +622,8 @@ def register_vacation_taken():
         db.session.add(vacation_novelty)
         db.session.flush()  # Get ID
 
-        # Create VacationLedger entry
-        ledger_entry = VacationLedger(
-            account_id=account.id,
-            empleado_id=empleado_id,
-            fecha=form.fecha_fin.data,
-            entry_type=VacationLedgerType.USAGE,
-            quantity=-abs(dias_descontados),  # Negative for usage
-            source="direct_registration",
-            reference_id=vacation_novelty.id,
-            reference_type="vacation_novelty",
-            observaciones=f"{form.fecha_inicio.data} - {form.fecha_fin.data} - {dias_descontados} descontados",
-            creado_por=current_user.usuario,
-        )
-
-        # Update account balance
-        account.current_balance = account.current_balance - abs(dias_descontados)
-        account.modificado_por = current_user.usuario
-
-        db.session.add(ledger_entry)
-        db.session.flush()
-
-        ledger_entry.balance_after = account.current_balance
-
-        # Link ledger entry to vacation novelty
-        vacation_novelty.ledger_entry_id = ledger_entry.id
-        vacation_novelty.estado = VacacionEstado.DISFRUTADO
+        # IMPORTANT: do NOT write VacationLedger here.
+        # Vacation discounts must be executed via payroll (Nomina) processing only.
 
         # Create associated NominaNovedad using existing infrastructure
         # This ensures the novelty is properly processed during payroll calculation
@@ -691,6 +649,8 @@ def register_vacation_taken():
             estado=VacacionEstado.PENDIENTE,  # Will be processed when nomina is calculated
             creado_por=current_user.usuario,
         )
+
+        vacation_novelty.estado = VacacionEstado.APLICADO
 
         db.session.add(nomina_novedad)
 
