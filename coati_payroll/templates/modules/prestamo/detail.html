@@ -187,6 +187,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 <i class="bi bi-pencil me-1"></i>{{ _('Editar') }}
                             </a>
                             <form method="POST" action="{{ url_for('prestamo.submit', prestamo_id=prestamo.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-send me-1"></i>{{ _('Enviar para Aprobación') }}
                                 </button>
@@ -211,6 +212,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {% if prestamo.estado not in ['paid', 'cancelled'] %}
                             <form method="POST" action="{{ url_for('prestamo.cancel', prestamo_id=prestamo.id) }}" class="d-inline"
                                   onsubmit="return confirm('{{ _('¿Está seguro de cancelar este préstamo?') }}');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-danger">
                                     <i class="bi bi-x-circle me-1"></i>{{ _('Cancelar Préstamo') }}
                                 </button>

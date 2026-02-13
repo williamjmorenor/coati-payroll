@@ -42,6 +42,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 </div>
                 <div class="card-body">
                     <form action="{{ url_for('planilla.add_regla', planilla_id=planilla.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <label class="form-label">{{ _('Regla de Cálculo') }}</label>
                             <select name="regla_calculo_id" class="form-select" required>
@@ -100,6 +101,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                     <td><span class="badge bg-secondary">v{{ assoc.regla_calculo.version }}</span></td>
                                     <td class="text-end">
                                         <form action="{{ url_for('planilla.remove_regla', planilla_id=planilla.id, association_id=assoc.id) }}" method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Remover') }}" onclick="return confirm('{{ _('¿Remover esta regla de la planilla?') }}')">
                                                 <i class="bi bi-x-lg"></i>
                                             </button>

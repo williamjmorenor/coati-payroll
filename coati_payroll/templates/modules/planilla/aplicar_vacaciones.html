@@ -29,6 +29,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </div>
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="card mb-4">
         <div class="card-header">
             <h6 class="mb-0">{{ _('Configuración del Concepto') }}</h6>

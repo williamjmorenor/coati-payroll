@@ -27,6 +27,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         {% endif %}
 
         <form method="post" action="{{ url_for('planilla.ejecutar_nomina', planilla_id=planilla.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-group">
