@@ -240,12 +240,12 @@ class ConceptCalculator:
         # Fallback to live DB if not in snapshot (backward compatibility)
         if not regla_schema:
             from sqlalchemy import select, or_
+
             regla = None
             # If caller passed a concept ID, try direct FK matches first.
             if codigo_concepto:
                 regla = db.session.execute(
-                    select(ReglaCalculo)
-                    .filter(
+                    select(ReglaCalculo).filter(
                         ReglaCalculo.activo.is_(True),
                         or_(
                             ReglaCalculo.deduccion_id == codigo_concepto,
@@ -256,7 +256,9 @@ class ConceptCalculator:
                 ).scalar_one_or_none()
             if not regla and codigo_concepto:
                 # Fallback by concept code -> concept ID -> linked ReglaCalculo.
-                deduccion_obj = db.session.execute(select(Deduccion).filter_by(codigo=codigo_concepto)).scalar_one_or_none()
+                deduccion_obj = db.session.execute(
+                    select(Deduccion).filter_by(codigo=codigo_concepto)
+                ).scalar_one_or_none()
                 if deduccion_obj:
                     regla = db.session.execute(
                         select(ReglaCalculo)
@@ -315,6 +317,7 @@ class ConceptCalculator:
         except FormulaEngineError as e:
             self.warnings.append(f"Error en ReglaCalculo {regla_codigo}: {str(e)}")
             return Decimal("0.00")
+
     def _get_deduccion_metadata(self, deduccion_id: str) -> dict[str, Any] | None:
         deducciones_snapshot = self.deducciones_snapshot
         # pylint: disable=unsupported-membership-test,unsubscriptable-object
@@ -337,4 +340,3 @@ class ConceptCalculator:
             return SimpleNamespace(**self.configuracion_snapshot)
 
         return self.config_repo.get_for_empresa(empresa_id)
-
