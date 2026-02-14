@@ -21,7 +21,7 @@ from typing import Any
 
 from coati_payroll.enums import FormulaType
 from coati_payroll.formula_engine import FormulaEngine, FormulaEngineError
-from coati_payroll.model import db, Deduccion, ReglaCalculo
+from coati_payroll.model import db, Deduccion, Prestacion, Percepcion, ReglaCalculo
 from ..domain.employee_calculation import EmpleadoCalculo
 from ..results.warning_collector import WarningCollectorProtocol
 
@@ -96,9 +96,9 @@ class ConceptCalculator:
         # Ensure calculated amounts are never negative
         if monto_calculado < 0:
             self.warnings.append(
-                f"Concepto '{codigo_concepto or 'desconocido'}': Configuración incorrecta resultó en "
+                f"Concepto '{codigo_concepto or 'desconocido'}': ConfiguraciÃ³n incorrecta resultÃ³ en "
                 f"monto negativo ({monto_calculado}). Ajustando a 0.00. "
-                f"Verifique la configuración del concepto (porcentaje o monto)."
+                f"Verifique la configuraciÃ³n del concepto (porcentaje o monto)."
             )
             return Decimal("0.00")
 
@@ -224,7 +224,7 @@ class ConceptCalculator:
             result = engine.execute(inputs)
             return Decimal(str(result.get("output", 0))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         except FormulaEngineError as e:
-            self.warnings.append(f"Error en fórmula: {str(e)}")
+            self.warnings.append(f"Error en f\u00f3rmula: {str(e)}")
             return Decimal("0.00")
 
     def _calculate_regla_calculo(self, emp_calculo: EmpleadoCalculo, codigo_concepto: str | None) -> Decimal:
@@ -232,49 +232,84 @@ class ConceptCalculator:
         # First try to get ReglaCalculo from snapshot (for reproducibility)
         regla_schema = None
         regla_codigo = None
-
         if self.deducciones_snapshot and codigo_concepto:
             deduccion_data = self.deducciones_snapshot.get(codigo_concepto)
             if deduccion_data and "regla_calculo" in deduccion_data:
                 regla_schema = deduccion_data["regla_calculo"]["esquema_json"]
                 regla_codigo = deduccion_data["regla_calculo"]["codigo"]
-
         # Fallback to live DB if not in snapshot (backward compatibility)
         if not regla_schema:
-            from sqlalchemy import select
-
-            # Find the ReglaCalculo linked to this deduction
-            regla = db.session.execute(
-                select(ReglaCalculo).filter_by(deduccion_id=codigo_concepto).filter(ReglaCalculo.activo.is_(True))
-            ).scalar_one_or_none()
-
-            if not regla:
-                # Try finding by deduccion_id matching deduccion's id
-                deduccion_obj = db.session.execute(
-                    select(Deduccion).filter_by(codigo=codigo_concepto)
+            from sqlalchemy import select, or_
+            regla = None
+            # If caller passed a concept ID, try direct FK matches first.
+            if codigo_concepto:
+                regla = db.session.execute(
+                    select(ReglaCalculo)
+                    .filter(
+                        ReglaCalculo.activo.is_(True),
+                        or_(
+                            ReglaCalculo.deduccion_id == codigo_concepto,
+                            ReglaCalculo.prestacion_id == codigo_concepto,
+                            ReglaCalculo.percepcion_id == codigo_concepto,
+                        ),
+                    )
                 ).scalar_one_or_none()
+            if not regla and codigo_concepto:
+                # Fallback by concept code -> concept ID -> linked ReglaCalculo.
+                deduccion_obj = db.session.execute(select(Deduccion).filter_by(codigo=codigo_concepto)).scalar_one_or_none()
                 if deduccion_obj:
                     regla = db.session.execute(
                         select(ReglaCalculo)
                         .filter_by(deduccion_id=deduccion_obj.id)
                         .filter(ReglaCalculo.activo.is_(True))
                     ).scalar_one_or_none()
-
+            if not regla and codigo_concepto:
+                prestacion_obj = db.session.execute(
+                    select(Prestacion).filter_by(codigo=codigo_concepto)
+                ).scalar_one_or_none()
+                if prestacion_obj:
+                    regla = db.session.execute(
+                        select(ReglaCalculo)
+                        .filter_by(prestacion_id=prestacion_obj.id)
+                        .filter(ReglaCalculo.activo.is_(True))
+                    ).scalar_one_or_none()
+            if not regla and codigo_concepto:
+                percepcion_obj = db.session.execute(
+                    select(Percepcion).filter_by(codigo=codigo_concepto)
+                ).scalar_one_or_none()
+                if percepcion_obj:
+                    regla = db.session.execute(
+                        select(ReglaCalculo)
+                        .filter_by(percepcion_id=percepcion_obj.id)
+                        .filter(ReglaCalculo.activo.is_(True))
+                    ).scalar_one_or_none()
+            if not regla and codigo_concepto:
+                # Last fallback for legacy datasets: resolve by rule code convention.
+                candidate_codes = [codigo_concepto]
+                if not codigo_concepto.startswith("REGLA_"):
+                    candidate_codes.append(f"REGLA_{codigo_concepto}")
+                if codigo_concepto.startswith("bmonic_") and "REGLA_" not in codigo_concepto:
+                    candidate_codes.append(codigo_concepto.replace("bmonic_", "bmonic_REGLA_", 1))
+                for candidate_code in candidate_codes:
+                    regla = db.session.execute(
+                        select(ReglaCalculo)
+                        .filter_by(codigo=candidate_code)
+                        .filter(ReglaCalculo.activo.is_(True))
+                    ).scalar_one_or_none()
+                    if regla:
+                        break
             if regla and regla.esquema_json:
                 regla_schema = regla.esquema_json
                 regla_codigo = regla.codigo
-
         if not regla_schema:
-            self.warnings.append(f"ReglaCalculo no encontrada para deducción {codigo_concepto}")
+            self.warnings.append(f"ReglaCalculo no encontrada para concepto {codigo_concepto}")
             return Decimal("0.00")
-
         try:
             # Prepare inputs for formula engine
             inputs = {**emp_calculo.variables_calculo}
             inputs["salario_bruto"] = emp_calculo.salario_bruto
             inputs["total_percepciones"] = emp_calculo.total_percepciones
             inputs["total_deducciones"] = emp_calculo.total_deducciones
-
             # Calculate before-tax deductions already processed
             deducciones_antes_impuesto_periodo = Decimal("0.00")
             for ded in emp_calculo.deducciones:
@@ -289,14 +324,12 @@ class ConceptCalculator:
             # New generic aliases (preferred for new schemas)
             inputs["pre_tax_deductions"] = deducciones_antes_impuesto_periodo
             inputs["social_security_deduction"] = deducciones_antes_impuesto_periodo
-
             engine = FormulaEngine(regla_schema)
             result = engine.execute(inputs)
             return Decimal(str(result.get("output", 0))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         except FormulaEngineError as e:
             self.warnings.append(f"Error en ReglaCalculo {regla_codigo}: {str(e)}")
             return Decimal("0.00")
-
     def _get_deduccion_metadata(self, deduccion_id: str) -> dict[str, Any] | None:
         deducciones_snapshot = self.deducciones_snapshot
         # pylint: disable=unsupported-membership-test,unsubscriptable-object
@@ -319,3 +352,4 @@ class ConceptCalculator:
             return SimpleNamespace(**self.configuracion_snapshot)
 
         return self.config_repo.get_for_empresa(empresa_id)
+

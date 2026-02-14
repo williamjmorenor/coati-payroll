@@ -51,6 +51,8 @@ class FormulaType(StrEnum):
             "porcentaje_salario": cls.PORCENTAJE_SALARIO,
             "porcentaje_bruto": cls.PORCENTAJE_BRUTO,
             "formula": cls.FORMULA,
+            "formula_personalizada": cls.REGLA_CALCULO,
+            "custom_formula": cls.REGLA_CALCULO,
             "regla_calculo": cls.REGLA_CALCULO,
             "horas": cls.HORAS,
             "dias": cls.DIAS,
