@@ -283,21 +283,6 @@ class ConceptCalculator:
                         .filter_by(percepcion_id=percepcion_obj.id)
                         .filter(ReglaCalculo.activo.is_(True))
                     ).scalar_one_or_none()
-            if not regla and codigo_concepto:
-                # Last fallback for legacy datasets: resolve by rule code convention.
-                candidate_codes = [codigo_concepto]
-                if not codigo_concepto.startswith("REGLA_"):
-                    candidate_codes.append(f"REGLA_{codigo_concepto}")
-                if codigo_concepto.startswith("bmonic_") and "REGLA_" not in codigo_concepto:
-                    candidate_codes.append(codigo_concepto.replace("bmonic_", "bmonic_REGLA_", 1))
-                for candidate_code in candidate_codes:
-                    regla = db.session.execute(
-                        select(ReglaCalculo)
-                        .filter_by(codigo=candidate_code)
-                        .filter(ReglaCalculo.activo.is_(True))
-                    ).scalar_one_or_none()
-                    if regla:
-                        break
             if regla and regla.esquema_json:
                 regla_schema = regla.esquema_json
                 regla_codigo = regla.codigo
