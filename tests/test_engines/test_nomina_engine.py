@@ -446,6 +446,104 @@ class TestSalarioPeriodoCalculation:
             # 11 days: 30000 / 30 * 11 = 11000
             assert salario_periodo == Decimal("11000.00")
 
+    def test_calcular_salario_periodo_prorrateado_por_fecha_alta(self, app, db_session):
+        """Test monthly salary is prorated when employee starts mid-period."""
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda, Empresa
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="CÃ³rdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL",
+                descripcion="Mensual",
+                periodicidad="monthly",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Planilla Mensual Prorrateo Alta",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.commit()
+
+            config_repo = ConfigRepository(db.session)
+            calculator = SalaryCalculator(config_repo)
+
+            salario_periodo = calculator.calculate_period_salary(
+                Decimal("10000.00"),
+                planilla,
+                date(2025, 1, 1),
+                date(2025, 1, 31),
+                date(2025, 1, 31),
+                fecha_alta=date(2025, 1, 15),
+            )
+
+            # 17 dÃ­as laborados (15-31) de 31 dÃ­as del perÃ­odo.
+            assert salario_periodo == Decimal("5483.87")
+
+    def test_calcular_salario_periodo_prorrateado_por_fecha_baja(self, app, db_session):
+        """Test monthly salary is prorated when employee leaves mid-period."""
+        from coati_payroll.model import Planilla, TipoPlanilla, Moneda, Empresa
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="CÃ³rdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Corp Inc", ruc="1234567")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="MENSUAL",
+                descripcion="Mensual",
+                periodicidad="monthly",
+                dias=30,
+                periodos_por_anio=12,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Planilla Mensual Prorrateo Baja",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.commit()
+
+            config_repo = ConfigRepository(db.session)
+            calculator = SalaryCalculator(config_repo)
+
+            salario_periodo = calculator.calculate_period_salary(
+                Decimal("10000.00"),
+                planilla,
+                date(2025, 1, 1),
+                date(2025, 1, 31),
+                date(2025, 1, 31),
+                fecha_baja=date(2025, 1, 10),
+            )
+
+            # 10 dÃ­as laborados (1-10) de 31 dÃ­as del perÃ­odo.
+            assert salario_periodo == Decimal("3225.81")
+
 
 class TestCalculoConcepto:
     """Tests for _calcular_concepto method - calculates perception/deduction amounts."""

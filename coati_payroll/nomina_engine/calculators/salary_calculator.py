@@ -26,6 +26,8 @@ class SalaryCalculator:
         periodo_inicio: date,
         periodo_fin: date,
         fecha_calculo: date,
+        fecha_alta: date | None = None,
+        fecha_baja: date | None = None,
         configuracion_snapshot: dict[str, Any] | None = None,
         rounding: bool = True,
     ) -> Decimal:
@@ -55,6 +57,8 @@ class SalaryCalculator:
         # Support both English and Spanish terms for periodicidad
         # "mensual" and "monthly" both mean monthly payroll
         # "quincenal" and "biweekly" both mean biweekly payroll
+        salario_periodo = salario_mensual
+
         if periodicidad in ("mensual", "monthly"):
             is_first_of_month = periodo_inicio.day == 1
             next_day = periodo_fin + timedelta(days=1)
@@ -62,25 +66,37 @@ class SalaryCalculator:
             same_month = periodo_inicio.year == periodo_fin.year and periodo_inicio.month == periodo_fin.month
 
             if is_first_of_month and is_last_of_month and same_month:
-                return salario_mensual
+                salario_periodo = salario_mensual
+            else:
+                config = self._get_config(planilla.empresa_id, configuracion_snapshot)
+                dias_base = Decimal(str(config.dias_mes_nomina))
+                salario_diario = salario_mensual / dias_base
+                salario_periodo = salario_diario * Decimal(str(dias_periodo))
 
         elif periodicidad in ("quincenal", "biweekly"):
-            # Para planillas quincenales, siempre se paga la mitad del salario mensual
-            # independientemente del número de días del período (13, 14, 15 o 16 días).
-            # Esto garantiza que el empleado reciba exactamente su salario mensual completo
-            # al sumar ambas quincenas del mes, sin importar si febrero tiene 28 días
-            # o si la segunda quincena de un mes de 31 días tiene 16 días.
+            # For biweekly payrolls, a full period pays half monthly salary.
+            # If the employee worked only part of the period, we prorate below.
             salario_periodo = salario_mensual / Decimal("2")
-            if rounding:
-                return salario_periodo.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            return salario_periodo
 
-        config = self._get_config(planilla.empresa_id, configuracion_snapshot)
-        dias_base = Decimal(str(config.dias_mes_nomina))
-        salario_diario = salario_mensual / dias_base
-        salario_periodo = salario_diario * Decimal(str(dias_periodo))
+        else:
+            config = self._get_config(planilla.empresa_id, configuracion_snapshot)
+            dias_base = Decimal(str(config.dias_mes_nomina))
+            salario_diario = salario_mensual / dias_base
+            salario_periodo = salario_diario * Decimal(str(dias_periodo))
+
+        # Prorate by effective worked days in the payroll period.
+        inicio_laborado = max(periodo_inicio, fecha_alta) if fecha_alta else periodo_inicio
+        fin_laborado = min(periodo_fin, fecha_baja) if fecha_baja else periodo_fin
+        dias_laborados = (fin_laborado - inicio_laborado).days + 1
+
+        if dias_laborados <= 0:
+            return Decimal("0.00")
+
+        if dias_laborados < dias_periodo:
+            factor_prorrateo = Decimal(str(dias_laborados)) / Decimal(str(dias_periodo))
+            salario_periodo = salario_periodo * factor_prorrateo
+
         if rounding:
-            salario_diario = salario_diario.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             salario_periodo = salario_periodo.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         return salario_periodo

@@ -391,6 +391,8 @@ class PayrollExecutionService:
             periodo_inicio,
             periodo_fin,
             fecha_calculo,
+            fecha_alta=empleado.fecha_alta,
+            fecha_baja=empleado.fecha_baja,
             configuracion_snapshot=configuracion_snapshot,
             rounding=False,
         )
