@@ -125,6 +125,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         </a>
                         <form action="{{ url_for('planilla.eliminar_novedad', planilla_id=planilla.id, nomina_id=nomina.id, novedad_id=novedad.id) }}"
                               method="post" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-outline-danger"
                                     title="{{ _('Eliminar') }}"
                                     onclick="return confirm('{{ _('¿Está seguro de eliminar esta novedad?') }}')">
