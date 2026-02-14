@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
- -
+- Allowed recalculating non-approved payrolls for the same period by excluding the source payroll from overlap and duplicate-period validation checks.
 
 ## [1.4.1] - 2026-02-13
 
