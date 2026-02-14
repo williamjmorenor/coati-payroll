@@ -55,14 +55,13 @@ def policy_index():
     )
 
 
-
-
 def _normalize_policy_optional_defaults(form):
     """Normalize optional policy fields with DB-required defaults."""
     if form.accrual_rate.data is None:
         form.accrual_rate.data = Decimal("0.0")
     if form.min_service_days.data is None:
         form.min_service_days.data = 0
+
 
 @vacation_bp.route("/policies/new", methods=["GET", "POST"])
 @require_role(TipoUsuario.ADMIN)

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import sys
 
 from coati_payroll.log import log
 from coati_payroll.queue.driver import QueueDriver
@@ -21,6 +22,20 @@ def _is_production_env() -> bool:
         os.environ.get("NODE_ENV"),
     ]
     return any(str(value).strip().lower() == "production" for value in env_markers if value is not None)
+
+
+def _is_test_env() -> bool:
+    """Detect if code is running under automated tests."""
+    testing_flag = os.environ.get("TESTING", "").strip().lower()
+    if testing_flag in {"1", "true", "yes", "on"}:
+        return True
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return True
+    if os.environ.get("PYTEST_VERSION"):
+        return True
+    if os.environ.get("PYTEST_XDIST_WORKER"):
+        return True
+    return "pytest" in sys.modules
 
 
 def _ping_redis(redis_url: str) -> bool:
@@ -72,7 +87,7 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
     driver: QueueDriver
 
     # In test environments, always use Noop driver to avoid optional dependencies
-    if force_backend is None and (os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("TESTING") == "True"):
+    if force_backend is None and _is_test_env():
         driver = NoopQueueDriver()
         _cached_driver = driver
         return driver
