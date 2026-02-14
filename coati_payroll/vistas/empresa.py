@@ -10,7 +10,7 @@ from sqlalchemy import false, true
 
 from coati_payroll.enums import TipoUsuario
 from coati_payroll.i18n import _
-from coati_payroll.model import Empresa, db
+from coati_payroll.model import Empleado, Empresa, Nomina, Planilla, db
 from coati_payroll.rbac import require_role, require_read_access
 
 empresa_bp = Blueprint("empresa", __name__, url_prefix="/empresa")
@@ -127,10 +127,21 @@ def delete(empresa_id):
         flash(_("Empresa no encontrada."), "warning")
         return redirect(url_for("empresa.index"))
 
-    # Check if company has employees or payrolls
-    if empresa.empleados or empresa.planillas:
+    # Prevent deletion when the company still has active links.
+    has_active_employees = db.session.execute(
+        db.select(Empleado.id).filter(Empleado.empresa_id == empresa.id, Empleado.activo.is_(true())).limit(1)
+    ).scalar_one_or_none()
+
+    has_nominas = db.session.execute(
+        db.select(Nomina.id)
+        .join(Planilla, Nomina.planilla_id == Planilla.id)
+        .filter(Planilla.empresa_id == empresa.id)
+        .limit(1)
+    ).scalar_one_or_none()
+
+    if has_active_employees or has_nominas:
         flash(
-            _("No se puede eliminar la empresa porque tiene empleados o planillas asociadas."),
+            _("No se puede eliminar la empresa porque tiene empleados activos o nóminas asociadas."),
             "danger",
         )
         return redirect(url_for("empresa.index"))

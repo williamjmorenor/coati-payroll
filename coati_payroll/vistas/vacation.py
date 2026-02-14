@@ -55,6 +55,14 @@ def policy_index():
     )
 
 
+def _normalize_policy_optional_defaults(form):
+    """Normalize optional policy fields with DB-required defaults."""
+    if form.accrual_rate.data is None:
+        form.accrual_rate.data = Decimal("0.0")
+    if form.min_service_days.data is None:
+        form.min_service_days.data = 0
+
+
 @vacation_bp.route("/policies/new", methods=["GET", "POST"])
 @require_role(TipoUsuario.ADMIN)
 def policy_new():
@@ -88,6 +96,7 @@ def policy_new():
     form.empresa_id.choices = [("", _("-- Seleccionar Empresa --"))] + [(e.id, e.razon_social) for e in empresas]
 
     if form.validate_on_submit():
+        _normalize_policy_optional_defaults(form)
         policy = VacationPolicy()
         form.populate_obj(policy)
         policy.creado_por = current_user.usuario
@@ -146,6 +155,7 @@ def policy_edit(policy_id):
     form.empresa_id.choices = [("", _("-- Seleccionar Empresa --"))] + [(e.id, e.razon_social) for e in empresas]
 
     if form.validate_on_submit():
+        _normalize_policy_optional_defaults(form)
         form.populate_obj(policy)
         policy.modificado_por = current_user.usuario
 

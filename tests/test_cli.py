@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import types
 import tempfile
 from pathlib import Path
 
@@ -121,6 +122,48 @@ def test_database_init(app, db_session):
 
         assert admin_user is not None
         assert isinstance(admin_user, str)
+
+
+def test_database_init_creates_all_metadata_tables(tmp_path):
+    """Test _database_init creates every table declared in SQLAlchemy metadata."""
+    from sqlalchemy import inspect
+    from sqlalchemy.orm import scoped_session, sessionmaker
+
+    from coati_payroll import create_app
+    from coati_payroll.cli import _database_init
+    from coati_payroll.model import db as local_db
+
+    db_file = tmp_path / "database_init_schema_check.db"
+    config = {
+        "TESTING": True,
+        "WTF_CSRF_ENABLED": False,
+        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_file.as_posix()}",
+        "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+        "SECRET_KEY": "test-secret-key",
+    }
+    app = create_app(config)
+
+    with app.app_context():
+        # Isolate session state to avoid bleed-over from other tests that
+        # monkeypatch the global Flask-SQLAlchemy scoped session.
+        original_session = local_db.session
+        connection = local_db.engine.connect()
+        local_session = scoped_session(sessionmaker(bind=connection, expire_on_commit=False))
+        local_db.session = local_session
+
+        try:
+            _database_init(app)
+
+            inspector = inspect(local_db.engine)
+            created_tables = set(inspector.get_table_names())
+            expected_tables = set(local_db.metadata.tables.keys())
+            missing_tables = expected_tables - created_tables
+
+            assert not missing_tables, f"Missing tables after database init: {sorted(missing_tables)}"
+        finally:
+            local_session.close()
+            connection.close()
+            local_db.session = original_session
 
 
 def test_database_seed(app, db_session):
@@ -730,3 +773,147 @@ def test_register_cli_commands(app):
     assert "maintenance" in app.cli.commands
     assert "debug" in app.cli.commands
     assert "plugins" in app.cli.commands
+
+
+def test_database_group_commands_success(app, monkeypatch):
+    """Cover database command wrappers through Flask CLI runner."""
+    import coati_payroll.cli as cli
+
+    runner = app.test_cli_runner()
+
+    monkeypatch.setattr(cli, "_database_status", lambda: {"tables": 1, "record_counts": {"usuario": 1}})
+    monkeypatch.setattr(cli, "_database_init", lambda _app: "admin")
+    monkeypatch.setattr(cli, "_database_seed", lambda: None)
+    monkeypatch.setattr(cli, "_database_drop", lambda: None)
+    monkeypatch.setattr(cli, "_database_restore_sqlite", lambda *_: None)
+    monkeypatch.setattr(cli, "_database_migrate_upgrade", lambda: None)
+    monkeypatch.setattr(cli.db.session, "execute", lambda *_: types.SimpleNamespace(scalar=lambda: "rev"))
+    monkeypatch.setattr(
+        cli,
+        "importlib",
+        types.SimpleNamespace(
+            import_module=lambda *_: types.SimpleNamespace(
+                alembic=types.SimpleNamespace(downgrade=lambda *_: None, stamp=lambda *_: None)
+            )
+        ),
+    )
+
+    for cmd in [
+        ["database", "status"],
+        ["database", "init"],
+        ["database", "seed"],
+        ["database", "drop", "--yes"],
+        ["database", "restore", "tests/test_cli.py", "--yes"],
+        ["database", "migrate"],
+        ["database", "upgrade"],
+        ["database", "downgrade", "base"],
+        ["database", "current"],
+        ["database", "stamp", "head"],
+    ]:
+        result = runner.invoke(args=cmd)
+        assert result.exit_code == 0
+
+
+def test_users_cache_maintenance_debug_and_serve_commands(app, monkeypatch):
+    """Cover command wrappers for remaining groups with Flask CLI runner."""
+    import coati_payroll.cli as cli
+
+    runner = app.test_cli_runner()
+
+    monkeypatch.setattr(
+        cli, "_users_list", lambda: [{"username": "u", "type": "hr", "active": True, "name": "", "email": None}]
+    )
+    monkeypatch.setattr(cli, "_users_create", lambda *_: None)
+    monkeypatch.setattr(cli, "_users_disable", lambda *_: None)
+    monkeypatch.setattr(cli, "_users_reset_password", lambda *_: None)
+    monkeypatch.setattr(cli, "_cache_clear", lambda: None)
+    monkeypatch.setattr(cli, "_cache_warm", lambda: "es")
+    monkeypatch.setattr(cli, "_cache_status", lambda: {"language_cache": "populated"})
+    monkeypatch.setattr(cli, "_debug_config", lambda _app: {"DEBUG": False})
+    monkeypatch.setattr(cli, "_debug_routes", lambda _app: [{"path": "/", "methods": ["GET"]}])
+
+    command_inputs = {
+        tuple(["users", "create", "--username", "u1", "--name", "User One", "--type", "hr"]): "abc123\nabc123\n",
+        tuple(["users", "reset-password", "u1"]): "abc123\nabc123\n",
+    }
+
+    for cmd in [
+        ["users", "list"],
+        ["users", "create", "--username", "u1", "--name", "User One", "--type", "hr"],
+        ["users", "disable", "u1"],
+        ["users", "reset-password", "u1"],
+        ["cache", "clear"],
+        ["cache", "warm"],
+        ["cache", "status"],
+        ["maintenance", "cleanup-sessions"],
+        ["maintenance", "cleanup-temp"],
+        ["maintenance", "run-jobs"],
+        ["debug", "config"],
+        ["debug", "routes"],
+    ]:
+        result = runner.invoke(args=cmd, input=command_inputs.get(tuple(cmd), None))
+        assert result.exit_code == 0
+
+
+def test_plugins_group_and_main_paths(app, monkeypatch):
+    """Cover dynamic plugins command and main() import paths."""
+    import coati_payroll.cli as cli
+
+    runner = app.test_cli_runner()
+
+    class DummyPlugin:
+        plugin_id = "demo"
+        version = "1.0.0"
+
+    record = types.SimpleNamespace(installed=True, active=False, distribution_name="dist-demo")
+
+    class ScalarResult:
+        def first(self):
+            return record
+
+    class ExecResult:
+        def scalars(self):
+            return ScalarResult()
+
+    dummy_module = types.SimpleNamespace(
+        __version__="1.2.3",
+        __doc__="demo plugin",
+        init=lambda: None,
+        update=lambda: None,
+        demo_data=lambda: None,
+    )
+
+    monkeypatch.setattr(cli, "discover_installed_plugins", lambda: [DummyPlugin()])
+    monkeypatch.setattr(cli, "load_plugin_module", lambda *_: dummy_module)
+    monkeypatch.setattr(cli, "sync_plugin_registry", lambda: None)
+    monkeypatch.setattr(cli.db, "create_all", lambda: None)
+    monkeypatch.setattr(cli.db.session, "execute", lambda *_: ExecResult())
+    monkeypatch.setattr(cli.db.session, "commit", lambda: None)
+
+    for cmd in [
+        ["plugins", "demo", "init"],
+        ["plugins", "demo", "update"],
+        ["plugins", "demo", "demo_data"],
+        ["plugins", "demo", "status"],
+        ["plugins", "demo", "version"],
+        ["plugins", "demo", "info"],
+        ["plugins", "demo", "maintainer"],
+        ["plugins", "demo", "mantainer"],
+        ["plugins", "demo", "contact"],
+        ["plugins", "demo", "enable"],
+        ["plugins", "demo", "disable"],
+    ]:
+        result = runner.invoke(args=cmd)
+        assert result.exit_code == 0
+
+    monkeypatch.delenv("FLASK_APP", raising=False)
+    with pytest.raises(SystemExit):
+        cli.main()
+
+    mini_app = Path("miniapp_for_test.py")
+    mini_app.write_text("from flask import Flask\napp = Flask(__name__)\napp.cli = lambda: None\n", encoding="utf-8")
+    try:
+        monkeypatch.setenv("FLASK_APP", "miniapp_for_test")
+        cli.main()
+    finally:
+        mini_app.unlink(missing_ok=True)

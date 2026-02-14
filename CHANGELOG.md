@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+## [1.4.1] - 2026-02-13
+
+### Changed
+
+- Hardened deletion safeguards: companies cannot be deleted when they have active employee links or associated payroll runs, and payroll templates (`Planilla`) cannot be deleted when they have associated payruns (`Nomina`).
 
 ### Fixed
 
 - Fixed missing CSRF tokens in 49+ POST forms across 23 templates to prevent cross-site request forgery attacks.
+- Fixed schema initialization in `flask database init` by resolving a duplicate index name collision on `liquidacion.concepto_id` that could leave tables like `vacation_account` uncreated.
+- Fixed vacation policy form validation so `Tasa de Acumulación` and `Días Mínimos de Servicio` are now optional and default to `0` when omitted.
 
 ## [1.4.0] - 2026-02-12
 
