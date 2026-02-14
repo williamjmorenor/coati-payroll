@@ -123,6 +123,48 @@ def test_database_init(app, db_session):
         assert isinstance(admin_user, str)
 
 
+def test_database_init_creates_all_metadata_tables(tmp_path):
+    """Test _database_init creates every table declared in SQLAlchemy metadata."""
+    from sqlalchemy import inspect
+    from sqlalchemy.orm import scoped_session, sessionmaker
+
+    from coati_payroll import create_app
+    from coati_payroll.cli import _database_init
+    from coati_payroll.model import db as local_db
+
+    db_file = tmp_path / "database_init_schema_check.db"
+    config = {
+        "TESTING": True,
+        "WTF_CSRF_ENABLED": False,
+        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_file.as_posix()}",
+        "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+        "SECRET_KEY": "test-secret-key",
+    }
+    app = create_app(config)
+
+    with app.app_context():
+        # Isolate session state to avoid bleed-over from other tests that
+        # monkeypatch the global Flask-SQLAlchemy scoped session.
+        original_session = local_db.session
+        connection = local_db.engine.connect()
+        local_session = scoped_session(sessionmaker(bind=connection, expire_on_commit=False))
+        local_db.session = local_session
+
+        try:
+            _database_init(app)
+
+            inspector = inspect(local_db.engine)
+            created_tables = set(inspector.get_table_names())
+            expected_tables = set(local_db.metadata.tables.keys())
+            missing_tables = expected_tables - created_tables
+
+            assert not missing_tables, f"Missing tables after database init: {sorted(missing_tables)}"
+        finally:
+            local_session.close()
+            connection.close()
+            local_db.session = original_session
+
+
 def test_database_seed(app, db_session):
     """Test _database_seed loads initial data."""
     from coati_payroll.cli import _database_seed
