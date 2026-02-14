@@ -156,6 +156,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     <div>
         <form action="{{ url_for('planilla.reintentar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
               method="post" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-warning" 
                     onclick="return confirm('¿Reintentar el procesamiento de esta nómina? Se limpiarán los datos parciales y se intentará procesar nuevamente.')">
                 <i class="fas fa-redo"></i> Reintentar Procesamiento
@@ -196,6 +197,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 {% if nomina.estado == 'generated' %}
                 <form action="{{ url_for('planilla.aprobar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                       method="post" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     {% if has_errors %}
                     <button type="button" class="btn btn-success" disabled title="No se puede aprobar una nómina con errores de procesamiento">
                         <i class="fas fa-check"></i> Aprobar
@@ -209,6 +211,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 {% elif nomina.estado == 'approved' %}
                 <form action="{{ url_for('planilla.aplicar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                       method="post" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-primary" onclick="return confirm('¿Marcar como aplicada/pagada?')">
                         <i class="fas fa-money-bill"></i> Aplicar/Pagar
                     </button>
@@ -217,6 +220,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 {% if nomina.estado != 'applied' %}
                 <form action="{{ url_for('planilla.recalcular_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                       method="post" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-warning" onclick="return confirm('¿Recalcular esta nómina? Se eliminarán los datos actuales y se generarán nuevamente.')">
                         <i class="fas fa-sync-alt"></i> Recalcular
                     </button>

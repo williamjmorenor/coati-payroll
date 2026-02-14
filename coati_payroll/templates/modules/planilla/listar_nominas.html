@@ -73,6 +73,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {% if nomina.estado == 'error' %}
                         <form action="{{ url_for('planilla.reintentar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                               method="post" style="display: inline;" class="ms-1">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-warning" 
                                     onclick="return confirm('¿Reintentar esta nómina?')"
                                     title="Reintentar Procesamiento">
