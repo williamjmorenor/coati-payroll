@@ -234,6 +234,73 @@ def test_acumular_vacaciones_no_account(app, db_session, planilla, empleado, mon
         assert accrued == Decimal("0.00")
 
 
+def test_acumular_vacaciones_autocreate_account_for_bound_policy(
+    app, db_session, planilla, empleado, moneda, periodic_policy
+):
+    """Auto-create vacation account when payroll has an explicit bound vacation policy."""
+    with app.app_context():
+        from sqlalchemy import select
+
+        periodo_inicio = date.today() - timedelta(days=30)
+        periodo_fin = date.today()
+
+        planilla.vacation_policy_id = periodic_policy.id
+        db_session.flush()
+
+        # Assign employee to payroll
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado.id,
+            fecha_inicio=periodo_inicio,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
+
+        # Create nomina and nomina_empleado
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado.id,
+            sueldo_base_historico=Decimal("1000.00"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+        accrued = service.acumular_vacaciones_empleado(empleado, nomina_empleado, "test_user")
+
+        assert accrued > Decimal("0.00")
+
+        account = db_session.execute(
+            select(VacationAccount).filter(
+                VacationAccount.empleado_id == empleado.id,
+                VacationAccount.policy_id == periodic_policy.id,
+            )
+        ).scalar_one_or_none()
+        assert account is not None
+        assert account.activo is True
+
+        ledger_entry = db_session.execute(
+            select(VacationLedger).filter(
+                VacationLedger.account_id == account.id,
+                VacationLedger.entry_type == VacationLedgerType.ACCRUAL,
+                VacationLedger.reference_type == "nomina_empleado",
+                VacationLedger.reference_id == nomina_empleado.id,
+            )
+        ).scalar_one_or_none()
+        assert ledger_entry is not None
+
+
 def test_acumular_vacaciones_periodic_method(app, db_session, planilla, empleado, periodic_policy, moneda):
     """Test periodic vacation accrual calculation."""
     with app.app_context():

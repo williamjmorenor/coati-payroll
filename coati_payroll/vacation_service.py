@@ -239,6 +239,61 @@ class VacationService:
             if len(bound_accounts) == 1:
                 account = bound_accounts[0]
                 return account, "planilla_bound"
+
+            # Bootstrap account automatically for bound policy during payroll processing.
+            if self.apply_side_effects:
+                bound_policy = (
+                    db.session.execute(
+                        db.select(VacationPolicy).filter(
+                            VacationPolicy.id == self.planilla.vacation_policy_id,
+                            VacationPolicy.activo.is_(True),
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+                if bound_policy:
+                    if bound_policy.planilla_id and bound_policy.planilla_id != self.planilla.id:
+                        raise ValidationError(
+                            f"Policy {bound_policy.codigo} does not belong to planilla {self.planilla.id}."
+                        )
+                    if (
+                        bound_policy.empresa_id
+                        and self.planilla.empresa_id
+                        and bound_policy.empresa_id != self.planilla.empresa_id
+                    ):
+                        raise ValidationError(f"Policy {bound_policy.codigo} belongs to another empresa.")
+
+                    existing_account = (
+                        db.session.execute(
+                            db.select(VacationAccount).filter(
+                                VacationAccount.empleado_id == empleado.id,
+                                VacationAccount.policy_id == bound_policy.id,
+                            )
+                        )
+                        .scalars()
+                        .first()
+                    )
+                    if existing_account:
+                        if not existing_account.activo:
+                            existing_account.activo = True
+                        return existing_account, "planilla_bound_reactivated"
+
+                    account = VacationAccount(
+                        empleado_id=empleado.id,
+                        policy_id=bound_policy.id,
+                        current_balance=Decimal("0.0000"),
+                        activo=True,
+                    )
+                    db.session.add(account)
+                    db.session.flush()
+                    log.info(
+                        "Vacation account auto-created for employee %s with policy %s (planilla=%s).",
+                        empleado.codigo_empleado,
+                        bound_policy.codigo,
+                        self.planilla.id,
+                    )
+                    return account, "planilla_bound_auto_created"
             return None, None
 
         scopes = [
