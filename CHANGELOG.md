@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed missing CSRF tokens in 49+ POST forms across 23 templates to prevent cross-site request forgery attacks.
 - Fixed schema initialization in `flask database init` by resolving a duplicate index name collision on `liquidacion.concepto_id` that could leave tables like `vacation_account` uncreated.
+- Fixed vacation policy form validation so `Tasa de Acumulación` and `Días Mínimos de Servicio` are now optional and default to `0` when omitted.
 
 ## [1.4.0] - 2026-02-12
 

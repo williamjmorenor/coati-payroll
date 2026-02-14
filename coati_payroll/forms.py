@@ -1634,7 +1634,7 @@ class VacationPolicyForm(FlaskForm):
     )
     accrual_rate = DecimalField(
         _("Tasa de Acumulación"),
-        validators=[DataRequired(), NumberRange(min=0)],
+        validators=[Optional(), NumberRange(min=0)],
         default=Decimal("0.0"),
         description=_("Cantidad acumulada por período"),
     )
@@ -1668,7 +1668,7 @@ class VacationPolicyForm(FlaskForm):
     )
     min_service_days = IntegerField(
         _("Días Mínimos de Servicio"),
-        validators=[DataRequired(), NumberRange(min=0)],
+        validators=[Optional(), NumberRange(min=0)],
         default=0,
         description=_("Días de servicio antes de comenzar a acumular"),
     )

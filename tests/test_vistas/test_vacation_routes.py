@@ -101,6 +101,16 @@ def test_vacation_policy_detail_not_found(app, client, admin_user, db_session):
         # Should redirect to policy index after not finding the policy
 
 
+
+
+def test_vacation_policy_new_shows_paid_vacation_percentage_field(app, client, admin_user, db_session):
+    """Test new vacation policy form includes liability accrual percentage field."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+        response = client.get("/vacation/policies/new")
+        assert response.status_code == 200
+        assert b"Porcentaje de pago de vacaciones" in response.data
+
 def test_vacation_policy_detail_success(app, client, admin_user, db_session):
     """Test that viewing an existing vacation policy shows details."""
     from decimal import Decimal
@@ -132,3 +142,4 @@ def test_vacation_policy_detail_success(app, client, admin_user, db_session):
         login_user(client, admin_user.usuario, "admin-password")
         response = client.get(f"/vacation/policies/{policy_id}")
         assert response.status_code == 200
+        assert b"Porcentaje de pago de vacaciones" in response.data

@@ -168,6 +168,43 @@ def test_vacation_policy_new_post_creates_policy(app, client, admin_user, db_ses
         assert created is not None
 
 
+
+
+@pytest.mark.validation
+def test_vacation_policy_new_post_allows_empty_accrual_rate_and_min_service_days(app, client, admin_user, db_session):
+    with app.app_context():
+        _create_base_company_struct(db_session)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.post(
+            "/vacation/policies/new",
+            data={
+                "codigo": "POL-OPTIONAL",
+                "nombre": "Política Opcional",
+                "planilla_id": "",
+                "empresa_id": "",
+                "accrual_method": "periodic",
+                "accrual_rate": "",
+                "accrual_frequency": "monthly",
+                "accrual_basis": "",
+                "min_service_days": "",
+                "expiration_rule": "never",
+                "unit_type": "days",
+                "rounding_rule": "nearest",
+                "submit": "Guardar",
+            },
+            follow_redirects=False,
+        )
+
+        assert response.status_code == 302
+
+        created = db_session.query(VacationPolicy).filter(VacationPolicy.codigo == "POL-OPTIONAL").one_or_none()
+        assert created is not None
+        assert created.accrual_rate == Decimal("0.0000")
+        assert created.min_service_days == 0
+
 @pytest.mark.validation
 def test_vacation_leave_request_approve_only_marks_approved_until_payroll_execution(app, client, admin_user, db_session):
     with app.app_context():
