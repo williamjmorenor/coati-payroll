@@ -574,7 +574,7 @@ class VacationService:
         policy = cast("VacationPolicy", account.policy)
 
         if policy.accrual_method == AccrualMethod.PERIODIC:
-            return self._calcular_acumulacion_periodica(policy)
+            return self._calcular_acumulacion_periodica(policy, empleado)
         if policy.accrual_method == AccrualMethod.PROPORTIONAL:
             return self._calcular_acumulacion_proporcional(empleado, policy, nomina_empleado)
         if policy.accrual_method == AccrualMethod.SENIORITY:
@@ -582,7 +582,7 @@ class VacationService:
         log.warning("Unknown accrual method: %s", policy.accrual_method)
         return Decimal("0.00")
 
-    def _calcular_acumulacion_periodica(self, policy: VacationPolicy) -> Decimal:
+    def _calcular_acumulacion_periodica(self, policy: VacationPolicy, empleado: Empleado | None = None) -> Decimal:
         """Calculate periodic accrual (fixed amount per period).
 
         Args:
@@ -591,10 +591,8 @@ class VacationService:
         Returns:
             Accrual amount
         """
-        # For periodic accrual, the rate is the amount per configured frequency
-        # If frequency matches payroll period, use the rate directly
-        # Otherwise, prorate based on actual days in period
-
+        # For periodic accrual, treat accrual_rate as the amount for a full frequency cycle
+        # and prorate by worked days only when employee did not cover the full payroll period.
         dias_periodo = (self.periodo_fin - self.periodo_inicio).days + 1
 
         # Get configuration for vacation calculations
@@ -610,11 +608,34 @@ class VacationService:
         else:
             dias_esperados = config.dias_mes_vacaciones
 
-        # Prorate if period doesn't match frequency
-        if dias_periodo == dias_esperados:
+        if dias_esperados <= 0:
+            raise ValidationError("ConfiguraciÃ³n invÃ¡lida: dias esperados de acumulaciÃ³n debe ser mayor que cero.")
+
+        # Backward-compatible path for direct method calls without employee context.
+        if empleado is None:
+            if dias_periodo == dias_esperados:
+                return self._quantize_amount(policy.accrual_rate)
+            return self._quantize_amount(policy.accrual_rate * Decimal(dias_periodo) / Decimal(dias_esperados))
+
+        # Employee active for the full payroll period receives full accrual.
+        alta = empleado.fecha_alta
+        baja = empleado.fecha_baja
+        cubre_periodo_completo = (not alta or alta <= self.periodo_inicio) and (not baja or baja >= self.periodo_fin)
+        if cubre_periodo_completo:
             return self._quantize_amount(policy.accrual_rate)
-        # Prorate based on days
-        return self._quantize_amount(policy.accrual_rate * Decimal(dias_periodo) / Decimal(dias_esperados))
+
+        inicio_efectivo = self.periodo_inicio if not alta or alta <= self.periodo_inicio else alta
+        fin_efectivo = self.periodo_fin if not baja or baja >= self.periodo_fin else baja
+        if inicio_efectivo > fin_efectivo:
+            return Decimal("0.00")
+
+        dias_trabajados = (fin_efectivo - inicio_efectivo).days + 1
+        if dias_trabajados <= 0:
+            return Decimal("0.00")
+
+        # Prorate with configured expected days (e.g., 30 for monthly accrual).
+        dias_prorrata = min(dias_trabajados, dias_esperados)
+        return self._quantize_amount(policy.accrual_rate * Decimal(dias_prorrata) / Decimal(dias_esperados))
 
     def _calcular_acumulacion_proporcional(
         self, empleado: Empleado, policy: VacationPolicy, nomina_empleado: NominaEmpleado

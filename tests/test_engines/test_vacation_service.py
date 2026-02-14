@@ -301,6 +301,72 @@ def test_acumular_vacaciones_autocreate_account_for_bound_policy(
         assert ledger_entry is not None
 
 
+def test_acumular_vacaciones_periodic_prorated_for_partial_period(
+    app, db_session, planilla, moneda, periodic_policy, empresa
+):
+    """Periodic accrual must prorate when employee joins mid-period."""
+    with app.app_context():
+        periodo_inicio = date(2026, 1, 1)
+        periodo_fin = date(2026, 1, 30)  # 30-day commercial month reference
+
+        empleado_parcial = Empleado(
+            empresa_id=empresa.id,
+            codigo_empleado="VAC-PARTIAL-001",
+            primer_nombre="Partial",
+            primer_apellido="Worker",
+            identificacion_personal="VAC-333333-3333C",
+            fecha_alta=date(2026, 1, 15),  # 16 worked days in period
+            salario_base=Decimal("1000.00"),
+            moneda_id=moneda.id,
+            activo=True,
+        )
+        db_session.add(empleado_parcial)
+        db_session.flush()
+
+        account = VacationAccount(
+            empleado_id=empleado_parcial.id,
+            policy_id=periodic_policy.id,
+            current_balance=Decimal("0.00"),
+            activo=True,
+            creado_por="test_system",
+        )
+        db_session.add(account)
+        db_session.flush()
+
+        planilla_empleado = PlanillaEmpleado(
+            planilla_id=planilla.id,
+            empleado_id=empleado_parcial.id,
+            fecha_inicio=periodo_inicio,
+            activo=True,
+        )
+        db_session.add(planilla_empleado)
+        db_session.flush()
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            generado_por="test_user",
+        )
+        db_session.add(nomina)
+        db_session.flush()
+
+        nomina_empleado = NominaEmpleado(
+            nomina_id=nomina.id,
+            empleado_id=empleado_parcial.id,
+            sueldo_base_historico=Decimal("533.33"),
+            moneda_origen_id=moneda.id,
+        )
+        db_session.add(nomina_empleado)
+        db_session.flush()
+
+        service = VacationService(planilla, periodo_inicio, periodo_fin)
+        accrued = service.acumular_vacaciones_empleado(empleado_parcial, nomina_empleado, "test_user")
+
+        # 1.25 * (16/30) = 0.6667
+        assert accrued == Decimal("0.6667")
+
+
 def test_acumular_vacaciones_periodic_method(app, db_session, planilla, empleado, periodic_policy, moneda):
     """Test periodic vacation accrual calculation."""
     with app.app_context():
