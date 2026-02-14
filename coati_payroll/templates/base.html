@@ -2,7 +2,7 @@
 SPDX-License-Identifier: Apache-2.0
 SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 -#}
-
+{% from 'macros.html' import render_messages %}
 <!doctype html>
 <html lang="es">
     <head>
@@ -293,6 +293,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 
             <!-- ======================= CONTENIDO DINÁMICO ======================= -->
             <main class="flex-grow-1 p-4">
+                {{ render_messages() }}
                 {% block content %}
                 <h2>{{ _('Bienvenido a Coaty') }}</h2>
                 <p>{{ _('Sistema de Planillas (Payroll)') }}</p>
@@ -330,3 +331,4 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         </script>
     </body>
 </html>
+

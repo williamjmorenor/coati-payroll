@@ -4,11 +4,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 -#}
 
 {% extends 'base.html' %}
-{% from 'macros.html' import render_messages %}
 
 {% block content %}
 <div class="container">
-    {{ render_messages() }}
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>{{ _('Cuenta de Vacaciones') }} - {{ account.empleado.primer_nombre }} {{ account.empleado.primer_apellido }}</h2>

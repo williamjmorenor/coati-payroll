@@ -22,17 +22,6 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         </div>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
     <!-- Planilla summary card -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-coaty-light">
