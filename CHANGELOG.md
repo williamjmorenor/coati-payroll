@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Hardened deletion safeguards: companies cannot be deleted when they have active employee links or associated payroll runs, and payroll templates (`Planilla`) cannot be deleted when they have associated payruns (`Nomina`).
+
 ### Fixed
 
 - Fixed missing CSRF tokens in 49+ POST forms across 23 templates to prevent cross-site request forgery attacks.

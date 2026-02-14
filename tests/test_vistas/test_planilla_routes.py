@@ -387,6 +387,29 @@ def test_planilla_delete_removes_planilla(app, client, admin_user, db_session, p
         assert deleted is None
 
 
+def test_planilla_delete_is_blocked_if_has_nominas(app, client, admin_user, db_session, planilla):
+    """Test that POST /planilla/<id>/delete is blocked when nominas exist."""
+    with app.app_context():
+        from coati_payroll.model import Nomina, Planilla
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date.today(),
+            periodo_fin=date.today() + timedelta(days=14),
+            generado_por=admin_user.usuario,
+            estado="generated",
+        )
+        db_session.add(nomina)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.post(f"/planilla/{planilla.id}/delete", follow_redirects=False)
+        assert response.status_code == 302
+
+        existing = db_session.get(Planilla, planilla.id)
+        assert existing is not None
+
 def test_planilla_index_shows_clone_action(app, client, admin_user, db_session, planilla):
     """Test that planilla index displays clone action for each planilla."""
     with app.app_context():

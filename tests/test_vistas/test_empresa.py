@@ -235,6 +235,50 @@ def test_empresa_delete_prevents_deletion_if_has_employees(app, client, admin_us
         assert empresa is not None
 
 
+def test_empresa_delete_prevents_deletion_if_has_nominas(app, client, admin_user, db_session):
+    """Test that company cannot be deleted if it has associated nominas."""
+    with app.app_context():
+        from datetime import date, timedelta
+
+        from coati_payroll.model import Moneda, Nomina, Planilla, TipoPlanilla
+        from tests.factories.company_factory import create_company
+
+        empresa = create_company(db_session, "EMPNOM", "Nomina Company", "J-66666666-7")
+
+        tipo_planilla = TipoPlanilla(codigo="QN", descripcion="Quincenal", periodicidad="biweekly", activo=True)
+        moneda = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+        db_session.add_all([tipo_planilla, moneda])
+        db_session.flush()
+
+        planilla = Planilla(
+            nombre="Planilla empresa con nómina",
+            tipo_planilla_id=tipo_planilla.id,
+            moneda_id=moneda.id,
+            empresa_id=empresa.id,
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(planilla)
+        db_session.flush()
+
+        nomina = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date.today(),
+            periodo_fin=date.today() + timedelta(days=14),
+            generado_por=admin_user.usuario,
+            estado="generated",
+        )
+        db_session.add(nomina)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.post(f"/empresa/{empresa.id}/delete", follow_redirects=True)
+
+        assert response.status_code == 200
+        db_session.refresh(empresa)
+        assert empresa is not None
+
 def test_empresa_toggle_active_changes_status(app, client, admin_user, db_session):
     """Test toggling company active status."""
     with app.app_context():
