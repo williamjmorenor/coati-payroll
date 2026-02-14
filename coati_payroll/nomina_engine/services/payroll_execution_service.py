@@ -82,6 +82,7 @@ class PayrollExecutionService:
         periodo_fin: date,
         fecha_calculo: date,
         usuario: str | None,
+        excluded_nomina_id: str | None = None,
     ) -> tuple[Nomina | None, list[EmpleadoCalculo], list[str], list[str]]:
         """Execute a complete payroll run."""
         errors: list[str] = []
@@ -100,6 +101,7 @@ class PayrollExecutionService:
             periodo_fin=periodo_fin,
             fecha_calculo=fecha_calculo,
             usuario=usuario,
+            excluded_nomina_id=excluded_nomina_id,
         )
 
         validation_result = self.planilla_validator.validate(context)
@@ -117,26 +119,24 @@ class PayrollExecutionService:
 
         # Prevent duplicate execution for the same period
         # Exclude ERROR state to allow retries
-        existing = (
-            self.planilla_repo.session.execute(
-                db.select(Nomina).filter(
-                    Nomina.planilla_id == planilla.id,
-                    Nomina.periodo_inicio == periodo_inicio,
-                    Nomina.periodo_fin == periodo_fin,
-                    Nomina.estado.in_(
-                        [
-                            NominaEstado.CALCULANDO,
-                            NominaEstado.GENERADO,
-                            NominaEstado.APROBADO,
-                            NominaEstado.APLICADO,
-                            NominaEstado.PAGADO,
-                        ]
-                    ),
-                )
-            )
-            .scalars()
-            .first()
+        duplicate_query = db.select(Nomina).filter(
+            Nomina.planilla_id == planilla.id,
+            Nomina.periodo_inicio == periodo_inicio,
+            Nomina.periodo_fin == periodo_fin,
+            Nomina.estado.in_(
+                [
+                    NominaEstado.CALCULANDO,
+                    NominaEstado.GENERADO,
+                    NominaEstado.APROBADO,
+                    NominaEstado.APLICADO,
+                    NominaEstado.PAGADO,
+                ]
+            ),
         )
+        if excluded_nomina_id:
+            duplicate_query = duplicate_query.filter(Nomina.id != excluded_nomina_id)
+
+        existing = self.planilla_repo.session.execute(duplicate_query).scalars().first()
         if existing:
             errors.append("Ya existe una nómina para este período.")
             return None, [], errors, warnings.to_list()

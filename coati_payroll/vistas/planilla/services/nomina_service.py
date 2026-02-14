@@ -176,6 +176,7 @@ class NominaService:
             periodo_fin=periodo_fin,
             fecha_calculo=fecha_calculo_original,
             usuario=usuario,
+            excluded_nomina_id=nomina_original_id,
         )
 
         new_nomina = engine.ejecutar()

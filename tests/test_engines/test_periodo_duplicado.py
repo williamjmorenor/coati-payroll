@@ -679,3 +679,84 @@ class TestPeriodoDuplicadoValidation:
             # Should be ALLOWED because it's a different planilla
             assert is_valid is True
             assert len(engine.errors) == 0
+
+    def test_validar_recalculo_ignora_nomina_original(self, app, db_session):
+        """Test that recalculation can ignore the original non-approved nomina."""
+        from coati_payroll.model import Empresa, Moneda, TipoPlanilla, Planilla, Empleado, PlanillaEmpleado, Nomina
+
+        with app.app_context():
+            moneda = Moneda(codigo="NIO", nombre="CÃ³rdoba", simbolo="C$", activo=True)
+            db_session.add(moneda)
+
+            empresa = Empresa(codigo="TEST001", razon_social="Test Company SA", ruc="J-12345678")
+            db_session.add(empresa)
+            db_session.flush()
+
+            tipo_planilla = TipoPlanilla(
+                codigo="QUINCENAL",
+                descripcion="Quincenal",
+                periodicidad="biweekly",
+                dias=15,
+                periodos_por_anio=24,
+                mes_inicio_fiscal=1,
+                dia_inicio_fiscal=1,
+            )
+            db_session.add(tipo_planilla)
+            db_session.flush()
+
+            planilla = Planilla(
+                nombre="Planilla Quincenal",
+                tipo_planilla_id=tipo_planilla.id,
+                empresa_id=empresa.id,
+                moneda_id=moneda.id,
+                activo=True,
+            )
+            db_session.add(planilla)
+            db_session.flush()
+
+            empleado = Empleado(
+                codigo_empleado="EMP001",
+                primer_nombre="Juan",
+                primer_apellido="PÃ©rez",
+                identificacion_personal="001-010180-0001A",
+                fecha_alta=date(2024, 1, 1),
+                salario_base=Decimal("15000.00"),
+                moneda_id=moneda.id,
+                empresa_id=empresa.id,
+                activo=True,
+            )
+            db_session.add(empleado)
+            db_session.flush()
+
+            planilla_emp = PlanillaEmpleado(planilla_id=planilla.id, empleado_id=empleado.id, activo=True)
+            db_session.add(planilla_emp)
+
+            # Existing non-approved nomina for Jan 1-15.
+            nomina_existente = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2025, 1, 1),
+                periodo_fin=date(2025, 1, 15),
+                generado_por="admin",
+                estado=NominaEstado.GENERADO,
+                total_bruto=Decimal("15000.00"),
+                total_deducciones=Decimal("2250.00"),
+                total_neto=Decimal("12750.00"),
+            )
+            db_session.add(nomina_existente)
+            db_session.commit()
+            db_session.refresh(nomina_existente)
+
+            # Recalculation should ignore the source nomina and allow the same period.
+            engine = NominaEngine(
+                planilla=planilla,
+                periodo_inicio=date(2025, 1, 1),
+                periodo_fin=date(2025, 1, 15),
+                fecha_calculo=date(2025, 1, 15),
+                usuario="admin",
+                excluded_nomina_id=nomina_existente.id,
+            )
+
+            is_valid = engine.validar_planilla()
+
+            assert is_valid is True
+            assert len(engine.errors) == 0

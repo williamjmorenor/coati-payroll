@@ -58,42 +58,40 @@ class PlanillaValidator(BaseValidator):
         """
         from sqlalchemy import select
 
-        existing = (
-            self.planilla_repo.session.execute(
-                select(Nomina).filter(
-                    Nomina.planilla_id == planilla.id,
-                    Nomina.estado.in_(
-                        [
-                            NominaEstado.CALCULANDO,
-                            NominaEstado.GENERADO,
-                            NominaEstado.APROBADO,
-                            NominaEstado.APLICADO,
-                            NominaEstado.PAGADO,
-                            # ERROR excluded to allow retries
-                        ]
-                    ),
-                    or_(
-                        # Existing start falls within our period
-                        and_(
-                            Nomina.periodo_inicio >= context.periodo_inicio,
-                            Nomina.periodo_inicio <= context.periodo_fin,
-                        ),
-                        # Existing end falls within our period
-                        and_(
-                            Nomina.periodo_fin >= context.periodo_inicio,
-                            Nomina.periodo_fin <= context.periodo_fin,
-                        ),
-                        # Our period is completely within existing period
-                        and_(
-                            Nomina.periodo_inicio <= context.periodo_inicio,
-                            Nomina.periodo_fin >= context.periodo_fin,
-                        ),
-                    ),
-                )
-            )
-            .scalars()
-            .first()
+        overlap_query = select(Nomina).filter(
+            Nomina.planilla_id == planilla.id,
+            Nomina.estado.in_(
+                [
+                    NominaEstado.CALCULANDO,
+                    NominaEstado.GENERADO,
+                    NominaEstado.APROBADO,
+                    NominaEstado.APLICADO,
+                    NominaEstado.PAGADO,
+                    # ERROR excluded to allow retries
+                ]
+            ),
+            or_(
+                # Existing start falls within our period
+                and_(
+                    Nomina.periodo_inicio >= context.periodo_inicio,
+                    Nomina.periodo_inicio <= context.periodo_fin,
+                ),
+                # Existing end falls within our period
+                and_(
+                    Nomina.periodo_fin >= context.periodo_inicio,
+                    Nomina.periodo_fin <= context.periodo_fin,
+                ),
+                # Our period is completely within existing period
+                and_(
+                    Nomina.periodo_inicio <= context.periodo_inicio,
+                    Nomina.periodo_fin >= context.periodo_fin,
+                ),
+            ),
         )
+        if context.excluded_nomina_id:
+            overlap_query = overlap_query.filter(Nomina.id != context.excluded_nomina_id)
+
+        existing = self.planilla_repo.session.execute(overlap_query).scalars().first()
 
         return existing is None
 

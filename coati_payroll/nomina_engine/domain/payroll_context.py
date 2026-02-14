@@ -21,6 +21,7 @@ class PayrollContext:
     periodo_fin: date
     fecha_calculo: date
     usuario: Optional[str] = None
+    excluded_nomina_id: Optional[str] = None
     validation_result: "ValidationResult | None" = None
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)

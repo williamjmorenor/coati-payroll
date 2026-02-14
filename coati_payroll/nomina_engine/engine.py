@@ -33,6 +33,7 @@ class NominaEngine:
         periodo_fin: date,
         fecha_calculo: date | None = None,
         usuario: str | None = None,
+        excluded_nomina_id: str | None = None,
     ):
         """Initialize the payroll engine.
 
@@ -42,12 +43,15 @@ class NominaEngine:
             periodo_fin: End date of the payroll period
             fecha_calculo: Date of calculation (defaults to today)
             usuario: Username executing the payroll
+            excluded_nomina_id: Nomina ID to ignore in overlap/duplicate validation.
+                Used by recalculation flow to ignore the source nomina.
         """
         self.planilla = planilla
         self.periodo_inicio = periodo_inicio
         self.periodo_fin = periodo_fin
         self.fecha_calculo = fecha_calculo or date.today()
         self.usuario = usuario
+        self.excluded_nomina_id = excluded_nomina_id
         self.nomina: Nomina | None = None
         self.empleados_calculo: list[EmpleadoCalculo] = []
         self.errors: list[str] = []
@@ -75,6 +79,7 @@ class NominaEngine:
             periodo_fin=self.periodo_fin,
             fecha_calculo=self.fecha_calculo,
             usuario=self.usuario,
+            excluded_nomina_id=self.excluded_nomina_id,
         )
 
         validation_result = self.execution_service.planilla_validator.validate(context)
@@ -101,6 +106,7 @@ class NominaEngine:
             self.periodo_fin,
             self.fecha_calculo,
             self.usuario,
+            excluded_nomina_id=self.excluded_nomina_id,
         )
 
         self.nomina = nomina

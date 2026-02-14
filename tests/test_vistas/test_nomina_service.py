@@ -567,6 +567,7 @@ class TestRecalcularNomina:
             db_session.add(original_nomina)
             db_session.commit()
             db_session.refresh(original_nomina)
+            original_nomina_id = original_nomina.id
 
             # Mock the engine
             mock_engine = MagicMock()
@@ -582,6 +583,7 @@ class TestRecalcularNomina:
             # Verify engine was called with original fecha_calculo
             call_args = mock_engine_class.call_args
             assert call_args[1]["fecha_calculo"] == fecha_calculo_original
+            assert call_args[1]["excluded_nomina_id"] == original_nomina_id
 
     @patch("coati_payroll.audit_helpers.crear_log_auditoria_nomina")
     @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
