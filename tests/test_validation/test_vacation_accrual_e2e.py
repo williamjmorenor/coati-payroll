@@ -218,6 +218,21 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
         nomina.estado = "applied"
         db_session.flush()
 
+        # Regenerate accounting voucher to include vacation liability lines
+        # (now that vacation ledger entries exist after apply)
+        from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
+        
+        # Delete old comprobante
+        old_comprobante = db_session.query(ComprobanteContable).filter(ComprobanteContable.nomina_id == nomina.id).first()
+        if old_comprobante:
+            db_session.delete(old_comprobante)
+            db_session.flush()
+        
+        # Regenerate with vacation entries included
+        voucher_service = AccountingVoucherService(db_session)
+        voucher_service.generate_audit_voucher(nomina, planilla, fecha_calculo, admin_user.usuario)
+        db_session.flush()
+
         # Validate 8.2: 1 vacation day accrued
         # Check VacationLedger for accrual entry
         accrual_entries = (

@@ -7,6 +7,7 @@ from typing import Any, cast
 from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from coati_payroll.log import log
 from coati_payroll.model import (
     db,
     Planilla,
@@ -561,7 +562,7 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
 def _aplicar_vacaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str | None) -> None:
     """Apply vacation ledger side effects for an applied nomina.
-    
+
     This function is idempotent - it only creates ledger entries if they don't already exist.
     If vacation accruals were already persisted during payroll generation (normal case),
     this function will skip creating duplicate entries.
@@ -569,20 +570,24 @@ def _aplicar_vacaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str 
     # Check if vacation ledger entries already exist for this nomina
     nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina.id)).scalars().all()
     nomina_empleado_ids = [ne.id for ne in nomina_empleados if ne.id]
-    
+
     if nomina_empleado_ids:
-        existing_entries = db.session.execute(
-            db.select(VacationLedger).filter(
-                VacationLedger.reference_type == "nomina_empleado",
-                VacationLedger.reference_id.in_(nomina_empleado_ids)
+        existing_entries = (
+            db.session.execute(
+                db.select(VacationLedger).filter(
+                    VacationLedger.reference_type == "nomina_empleado",
+                    VacationLedger.reference_id.in_(nomina_empleado_ids),
+                )
             )
-        ).scalars().first()
-        
+            .scalars()
+            .first()
+        )
+
         if existing_entries:
             # Vacation accruals already exist, skip to avoid duplicates
             log.debug(f"Vacation accruals already exist for nomina {nomina.id}, skipping re-application")
             return
-    
+
     # Accruals don't exist (e.g., old nomina from before refactor), create them now
     vacation_snapshot: dict = {}
     if nomina.catalogos_snapshot:
