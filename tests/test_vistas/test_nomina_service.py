@@ -18,6 +18,8 @@ from coati_payroll.model import (
     NominaNovedad,
     AdelantoAbono,
     ComprobanteContable,
+    Prestacion,
+    PrestacionAcumulada,
     Planilla,
     PlanillaEmpleado,
     TipoPlanilla,
@@ -540,6 +542,80 @@ class TestRecalcularNomina:
 
             # Verify AdelantoAbono was deleted
             assert db_session.query(AdelantoAbono).filter_by(nomina_id=original_nomina_id).first() is None
+
+    @patch("coati_payroll.audit_helpers.crear_log_auditoria_nomina")
+    @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
+    def test_recalcular_nomina_deletes_legacy_prestacion_transactions(
+        self, mock_engine_class, _mock_audit, app, db_session, planilla, empleado, admin_user
+    ):
+        """Recalculation removes legacy PrestacionAcumulada rows tied to the source nomina."""
+        with app.app_context():
+            original_nomina = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2024, 1, 1),
+                periodo_fin=date(2024, 1, 31),
+                generado_por=admin_user.usuario,
+                estado=NominaEstado.GENERADO,
+                total_bruto=Decimal("15000.00"),
+                total_deducciones=Decimal("2000.00"),
+                total_neto=Decimal("13000.00"),
+                total_empleados=1,
+                empleados_procesados=1,
+                empleados_con_error=0,
+            )
+            db_session.add(original_nomina)
+            db_session.commit()
+            db_session.refresh(original_nomina)
+
+            prestacion = Prestacion(
+                codigo="PREST_RECALC_TEST",
+                nombre="Prestacion Recalc Test",
+                tipo="employer",
+                formula_tipo="fixed",
+                monto_default=Decimal("0.00"),
+                tipo_acumulacion="annual",
+                activo=True,
+            )
+            db_session.add(prestacion)
+            db_session.commit()
+            db_session.refresh(prestacion)
+
+            legacy_transaccion = PrestacionAcumulada(
+                empleado_id=empleado.id,
+                prestacion_id=prestacion.id,
+                fecha_transaccion=date(2024, 1, 31),
+                tipo_transaccion="adicion",
+                anio=2024,
+                mes=1,
+                moneda_id=planilla.moneda_id,
+                monto_transaccion=Decimal("100.00"),
+                saldo_anterior=Decimal("0.00"),
+                saldo_nuevo=Decimal("100.00"),
+                nomina_id=original_nomina.id,
+                creado_por=admin_user.usuario,
+                procesado_por=admin_user.usuario,
+            )
+            db_session.add(legacy_transaccion)
+            db_session.commit()
+            assert db_session.query(PrestacionAcumulada).filter_by(nomina_id=original_nomina.id).count() == 1
+
+            mock_engine = MagicMock()
+            new_mock_nomina = MagicMock(spec=Nomina)
+            new_mock_nomina.id = 999
+            new_mock_nomina.estado = NominaEstado.GENERADO
+            mock_engine.ejecutar.return_value = new_mock_nomina
+            mock_engine.errors = []
+            mock_engine.warnings = []
+            mock_engine_class.return_value = mock_engine
+
+            new_nomina, errors, warnings = NominaService.recalcular_nomina(
+                nomina=original_nomina, planilla=planilla, usuario=admin_user.usuario
+            )
+
+            assert new_nomina == new_mock_nomina
+            assert errors == []
+            assert warnings == []
+            assert db_session.query(PrestacionAcumulada).filter_by(nomina_id=original_nomina.id).count() == 0
 
     @patch("coati_payroll.audit_helpers.crear_log_auditoria_nomina")
     @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")

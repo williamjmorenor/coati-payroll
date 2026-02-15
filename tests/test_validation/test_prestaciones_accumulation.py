@@ -19,6 +19,7 @@ from coati_payroll.model import (
     TipoPlanilla,
 )
 from coati_payroll.nomina_engine import ejecutar_nomina
+from coati_payroll.vistas.planilla.nomina_routes import _aplicar_prestaciones_nomina
 
 
 @pytest.mark.validation
@@ -233,8 +234,13 @@ def test_prestaciones_accumulation_workflow(app, db_session):
             assert len(errors) == 0, f"Errors during payroll execution: {errors}"
             assert nomina is not None, "Nomina should be created"
 
-            # Refresh the session to ensure we have the latest data
-            db_session.expire_all()
+            # Side effects for prestaciones are deferred until payroll apply.
+            nomina.estado = "approved"
+            db_session.flush()
+            _aplicar_prestaciones_nomina(nomina, planilla, "test_user")
+            nomina.estado = "applied"
+            db_session.commit()
+
             nominas_executed.append(nomina)
 
         # ===== VERIFICATION PHASE =====
@@ -504,6 +510,11 @@ def test_prestaciones_monthly_settlement(app, db_session):
 
             assert len(errors) == 0, f"Errors during payroll execution: {errors}"
             assert nomina is not None, "Nomina should be created"
+            nomina.estado = "approved"
+            db_session.flush()
+            _aplicar_prestaciones_nomina(nomina, planilla, "test_user")
+            nomina.estado = "applied"
+            db_session.commit()
 
         # ===== VERIFICATION PHASE =====
 

@@ -538,9 +538,6 @@ class PayrollExecutionService:
         self.accumulation_processor.update_accumulations(
             emp_calculo, planilla, periodo_fin, fecha_calculo, deducciones_snapshot
         )
-        self.accounting_processor.create_prestacion_transactions(
-            emp_calculo, nomina, planilla, periodo_fin, fecha_calculo
-        )
         setattr(
             emp_calculo,
             "vacaciones_resumen",

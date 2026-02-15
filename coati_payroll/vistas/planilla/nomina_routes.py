@@ -26,6 +26,7 @@ from coati_payroll.model import (
 )
 from coati_payroll.enums import NominaEstado, NovedadEstado, VacacionEstado
 from coati_payroll.i18n import _
+from coati_payroll.nomina_engine.processors.accounting_processor import AccountingProcessor
 from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.vistas.planilla import planilla_bp
 from coati_payroll.vistas.planilla.services import NominaService, NovedadService
@@ -549,6 +550,7 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         novedad.estado = NovedadEstado.EJECUTADA
         novedad.modificado_por = current_user.usuario
 
+    _aplicar_prestaciones_nomina(nomina, planilla, current_user.usuario)
     _aplicar_vacaciones_nomina(nomina, planilla, current_user.usuario)
 
     db.session.commit()
@@ -558,6 +560,24 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         "success",
     )
     return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+
+def _aplicar_prestaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str | None) -> None:
+    """Apply prestaciones ledger side effects for an applied/paid nomina.
+
+    This function is idempotent: if transactions already exist for the same
+    (nomina, empleado, prestacion), they are skipped.
+    """
+    created_count = AccountingProcessor().create_prestacion_transactions_for_nomina(
+        nomina=nomina,
+        planilla=planilla,
+        usuario=usuario,
+    )
+
+    if created_count:
+        log.debug("Created %s prestaciones transactions for nomina %s", created_count, nomina.id)
+    else:
+        log.debug("No new prestaciones transactions created for nomina %s", nomina.id)
 
 
 def _aplicar_vacaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str | None) -> None:
@@ -585,7 +605,10 @@ def _aplicar_vacaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str 
 
         if existing_entries:
             # Vacation accruals already exist, skip to avoid duplicates
-            log.debug(f"Vacation accruals already exist for nomina {nomina.id}, skipping re-application")
+            log.debug(
+                "Vacation accruals already exist for nomina %s, skipping re-application",
+                nomina.id,
+            )
             return
 
     # Accruals don't exist (e.g., old nomina from before refactor), create them now

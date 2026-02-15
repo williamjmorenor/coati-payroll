@@ -163,3 +163,110 @@ class AccountingProcessor:
             )
 
             db.session.add(transaccion)
+
+    def create_prestacion_transactions_for_nomina(self, nomina: Nomina, planilla, usuario: str | None = None) -> int:
+        """Create benefit accumulation transactions for an applied/paid payroll.
+
+        This method is idempotent: for each (nomina, empleado, prestacion) tuple it
+        creates at most one transaction of type ``adicion``.
+        """
+        from sqlalchemy import func, select
+
+        periodo_anio = nomina.periodo_fin.year
+        periodo_mes = nomina.periodo_fin.month
+        fecha_transaccion = nomina.fecha_calculo_original or nomina.periodo_fin
+        moneda_id = planilla.moneda_id
+        procesado_por = usuario or nomina.aplicado_por or nomina.generado_por
+        creado_por = procesado_por or nomina.generado_por
+
+        rows = db.session.execute(
+            select(
+                NominaEmpleado.empleado_id,
+                NominaDetalle.prestacion_id,
+                func.coalesce(func.sum(NominaDetalle.monto), 0),
+            )
+            .join(NominaDetalle, NominaDetalle.nomina_empleado_id == NominaEmpleado.id)
+            .where(
+                NominaEmpleado.nomina_id == nomina.id,
+                NominaDetalle.tipo == TipoDetalle.PRESTACION,
+                NominaDetalle.prestacion_id.is_not(None),
+            )
+            .group_by(NominaEmpleado.empleado_id, NominaDetalle.prestacion_id)
+            .order_by(NominaEmpleado.empleado_id, NominaDetalle.prestacion_id)
+        ).all()
+
+        created_count = 0
+        for empleado_id, prestacion_id, monto_total in rows:
+            if not prestacion_id:
+                continue
+
+            existing = db.session.execute(
+                select(PrestacionAcumulada.id)
+                .where(
+                    PrestacionAcumulada.nomina_id == nomina.id,
+                    PrestacionAcumulada.empleado_id == empleado_id,
+                    PrestacionAcumulada.prestacion_id == prestacion_id,
+                    PrestacionAcumulada.tipo_transaccion == "adicion",
+                )
+                .limit(1)
+            ).scalar_one_or_none()
+            if existing:
+                continue
+
+            prestacion = db.session.get(Prestacion, prestacion_id)
+            if not prestacion:
+                continue
+
+            ultima_transaccion = (
+                db.session.execute(
+                    select(PrestacionAcumulada)
+                    .where(
+                        PrestacionAcumulada.empleado_id == empleado_id,
+                        PrestacionAcumulada.prestacion_id == prestacion_id,
+                    )
+                    .order_by(
+                        PrestacionAcumulada.fecha_transaccion.desc(),
+                        PrestacionAcumulada.creado.desc(),
+                    )
+                    .limit(1)
+                )
+                .unique()
+                .scalars()
+                .first()
+            )
+
+            saldo_anterior = ultima_transaccion.saldo_nuevo if ultima_transaccion else Decimal("0.00")
+
+            if prestacion.tipo_acumulacion == TipoAcumulacionPrestacion.MENSUAL:
+                if ultima_transaccion and (
+                    ultima_transaccion.anio != periodo_anio or ultima_transaccion.mes != periodo_mes
+                ):
+                    saldo_anterior = Decimal("0.00")
+
+            monto_transaccion = round_money(Decimal(str(monto_total or 0)))
+            saldo_nuevo = round_money(saldo_anterior + monto_transaccion)
+
+            transaccion = PrestacionAcumulada(
+                empleado_id=empleado_id,
+                prestacion_id=prestacion_id,
+                fecha_transaccion=fecha_transaccion,
+                tipo_transaccion="adicion",
+                anio=periodo_anio,
+                mes=periodo_mes,
+                moneda_id=moneda_id,
+                monto_transaccion=monto_transaccion,
+                saldo_anterior=saldo_anterior,
+                saldo_nuevo=saldo_nuevo,
+                nomina_id=nomina.id,
+                empresa_id=planilla.empresa_id,
+                observaciones=(
+                    f"ProvisiÃ³n nÃ³mina {nomina.periodo_inicio.strftime('%Y-%m-%d')} - "
+                    f"{nomina.periodo_fin.strftime('%Y-%m-%d')}"
+                ),
+                procesado_por=procesado_por,
+                creado_por=creado_por,
+            )
+            db.session.add(transaccion)
+            created_count += 1
+
+        return created_count

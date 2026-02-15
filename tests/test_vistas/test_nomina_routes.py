@@ -8,7 +8,7 @@ from decimal import Decimal
 from unittest.mock import patch, MagicMock
 
 from coati_payroll.enums import NominaEstado
-from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle
+from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle, Prestacion, PrestacionAcumulada
 from tests.helpers.auth import login_user
 
 
@@ -713,6 +713,121 @@ def test_aplicar_nomina_generated_with_errors_fails(app, client, admin_user, db_
 
         updated_nomina = db.session.get(Nomina, nomina.id)
         assert updated_nomina.estado == NominaEstado.GENERADO_CON_ERRORES
+
+
+def test_aplicar_nomina_creates_prestacion_ledger_transactions(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """Applying a payroll must persist prestaciones accumulation transactions."""
+    with app.app_context():
+        from coati_payroll.model import db, PlanillaEmpleado
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina = db.session.merge(nomina)
+        nomina_empleado = db.session.merge(nomina_empleado)
+        nomina.estado = NominaEstado.APROBADO
+        db.session.flush()
+
+        prestacion = Prestacion(
+            codigo="PREST_TEST_APPLY",
+            nombre="Prestacion Test Apply",
+            tipo="employer",
+            formula_tipo="fixed",
+            monto_default=Decimal("0.00"),
+            tipo_acumulacion="annual",
+            activo=True,
+        )
+        db.session.add(prestacion)
+        db.session.flush()
+
+        detalle_prestacion = NominaDetalle(
+            nomina_empleado_id=nomina_empleado.id,
+            tipo="benefit",
+            codigo=prestacion.codigo,
+            descripcion=prestacion.nombre,
+            monto=Decimal("125.50"),
+            orden=99,
+            prestacion_id=prestacion.id,
+        )
+        db.session.add(detalle_prestacion)
+        db.session.add(
+            PlanillaEmpleado(
+                planilla_id=planilla.id,
+                empleado_id=nomina_empleado.empleado_id,
+                activo=True,
+            )
+        )
+        db.session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/aplicar", follow_redirects=False)
+        assert response.status_code == 302
+
+        transacciones = (
+            db.session.query(PrestacionAcumulada)
+            .filter(
+                PrestacionAcumulada.nomina_id == nomina.id,
+                PrestacionAcumulada.empleado_id == nomina_empleado.empleado_id,
+                PrestacionAcumulada.prestacion_id == prestacion.id,
+            )
+            .all()
+        )
+        assert len(transacciones) == 1
+        assert transacciones[0].tipo_transaccion == "adicion"
+        assert transacciones[0].monto_transaccion == Decimal("125.50")
+
+
+def test_aplicar_prestaciones_nomina_is_idempotent(app, db_session, planilla, nomina, nomina_empleado, admin_user):
+    """Prestaciones ledger generation must be idempotent for the same payroll."""
+    with app.app_context():
+        from coati_payroll.model import db
+        from coati_payroll.vistas.planilla.nomina_routes import _aplicar_prestaciones_nomina
+
+        nomina = db.session.merge(nomina)
+        planilla = db.session.merge(planilla)
+        nomina_empleado = db.session.merge(nomina_empleado)
+        nomina.estado = NominaEstado.APROBADO
+        db.session.flush()
+
+        prestacion = Prestacion(
+            codigo="PREST_TEST_IDEMP",
+            nombre="Prestacion Test Idempotent",
+            tipo="employer",
+            formula_tipo="fixed",
+            monto_default=Decimal("0.00"),
+            tipo_acumulacion="annual",
+            activo=True,
+        )
+        db.session.add(prestacion)
+        db.session.flush()
+
+        detalle_prestacion = NominaDetalle(
+            nomina_empleado_id=nomina_empleado.id,
+            tipo="benefit",
+            codigo=prestacion.codigo,
+            descripcion=prestacion.nombre,
+            monto=Decimal("200.00"),
+            orden=100,
+            prestacion_id=prestacion.id,
+        )
+        db.session.add(detalle_prestacion)
+        db.session.commit()
+
+        _aplicar_prestaciones_nomina(nomina, planilla, admin_user.usuario)
+        db.session.flush()
+        _aplicar_prestaciones_nomina(nomina, planilla, admin_user.usuario)
+        db.session.commit()
+
+        transacciones = (
+            db.session.query(PrestacionAcumulada)
+            .filter(
+                PrestacionAcumulada.nomina_id == nomina.id,
+                PrestacionAcumulada.empleado_id == nomina_empleado.empleado_id,
+                PrestacionAcumulada.prestacion_id == prestacion.id,
+            )
+            .all()
+        )
+        assert len(transacciones) == 1
 
 
 # ============================================================================

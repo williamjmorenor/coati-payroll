@@ -285,6 +285,7 @@ class NominaService:
             NominaNovedad,
             AdelantoAbono,
             ComprobanteContable,
+            PrestacionAcumulada,
             VacationLedger,
             VacationAccount,
         )
@@ -376,6 +377,11 @@ class NominaService:
 
             # Delete all NominaEmpleado records
             db.session.execute(db.delete(NominaEmpleado).where(NominaEmpleado.nomina_id == nomina.id))
+
+            # Defensive cleanup for legacy behavior where prestaciones were
+            # written during payroll generation. With deferred side effects,
+            # these rows should not exist for draft/generated payrolls.
+            db.session.execute(db.delete(PrestacionAcumulada).where(PrestacionAcumulada.nomina_id == nomina.id))
 
             # CRITICAL: NominaNovedad must be preserved during recalculation.
             # They are master payroll events (overtime, absences, bonuses, etc.)

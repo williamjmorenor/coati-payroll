@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Changed
+
+- Deferred prestaciones (`PrestacionAcumulada`) ledger side effects to the payroll apply step (`applied`/`paid`) so draft/generated recalculations do not mutate balances.
+
+### Fixed
+
+- Added defensive cleanup for legacy `PrestacionAcumulada` rows tied to recalculated source payrolls to avoid duplicate benefit balances.
+
+### Tests
+
+- Updated unit and validation tests to assert prestaciones ledger updates only happen on payroll apply/paid transitions and remain idempotent across draft recalculations.
+
+
 ## [1.5.0] - 2026-02-15
 
 ### Added
