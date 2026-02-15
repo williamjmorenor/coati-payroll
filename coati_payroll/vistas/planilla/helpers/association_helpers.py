@@ -53,7 +53,7 @@ def get_nomina_counts_by_planilla(planilla_ids: list[str]) -> dict[str, int]:
     ).all()
 
     counts = {planilla_id: 0 for planilla_id in planilla_ids}
-    counts.update({planilla_id: total for planilla_id, total in rows})
+    counts.update(dict(rows))
     return counts
 
 
