@@ -36,7 +36,7 @@ class AccumulationProcessor:
 
         # Calculate fiscal period
         anio = fecha_calculo.year
-        mes_inicio = tipo_planilla.mes_inicio_fiscal
+        mes_inicio = int(planilla.mes_inicio_fiscal or tipo_planilla.mes_inicio_fiscal)
         dia_inicio = tipo_planilla.dia_inicio_fiscal
 
         if fecha_calculo.month < mes_inicio:

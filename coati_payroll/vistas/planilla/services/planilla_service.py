@@ -52,6 +52,7 @@ class PlanillaService:
             tipo_planilla_id=planilla.tipo_planilla_id,
             moneda_id=planilla.moneda_id,
             empresa_id=planilla.empresa_id,
+            mes_inicio_fiscal=planilla.mes_inicio_fiscal,
             vacation_policy_id=planilla.vacation_policy_id,
             periodo_fiscal_inicio=planilla.periodo_fiscal_inicio,
             periodo_fiscal_fin=planilla.periodo_fiscal_fin,

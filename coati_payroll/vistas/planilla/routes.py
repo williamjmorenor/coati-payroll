@@ -109,6 +109,7 @@ def new():
             tipo_planilla_id=form.tipo_planilla_id.data,
             moneda_id=form.moneda_id.data,
             empresa_id=form.empresa_id.data or None,
+            mes_inicio_fiscal=form.mes_inicio_fiscal.data or 1,
             vacation_policy_id=vacation_policy_id,
             periodo_fiscal_inicio=form.periodo_fiscal_inicio.data,
             periodo_fiscal_fin=form.periodo_fiscal_fin.data,
@@ -161,6 +162,7 @@ def edit(planilla_id: str):
         planilla.tipo_planilla_id = form.tipo_planilla_id.data
         planilla.moneda_id = form.moneda_id.data
         planilla.empresa_id = form.empresa_id.data or None
+        planilla.mes_inicio_fiscal = form.mes_inicio_fiscal.data or 1
         planilla.vacation_policy_id = vacation_policy_id
         planilla.periodo_fiscal_inicio = form.periodo_fiscal_inicio.data
         planilla.periodo_fiscal_fin = form.periodo_fiscal_fin.data

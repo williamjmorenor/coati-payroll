@@ -50,8 +50,8 @@ class EmployeeProcessingService:
         antiguedad_meses = antiguedad_dias // config.dias_mes_antiguedad
         antiguedad_anios = antiguedad_dias // config.dias_anio_antiguedad
 
-        # Calculate remaining months in fiscal year
-        mes_inicio_fiscal = tipo_planilla.mes_inicio_fiscal if tipo_planilla else 1
+        # Calculate remaining months in fiscal year (source of truth: planilla.mes_inicio_fiscal)
+        mes_inicio_fiscal = int(planilla.mes_inicio_fiscal or (tipo_planilla.mes_inicio_fiscal if tipo_planilla else 1))
         meses_anio_financiero = int(config.meses_anio_financiero)
         if meses_anio_financiero <= 0:
             from ..validators import ValidationError
@@ -131,7 +131,18 @@ class EmployeeProcessingService:
                 str(acumulado.deducciones_antes_impuesto_acumulado or 0)
             )
             variables["periodos_procesados"] = Decimal(str(acumulado.periodos_procesados or 0))
-            variables["meses_trabajados"] = Decimal(str(acumulado.periodos_procesados or 0))
+            # For monthly payroll, months worked should follow the fiscal calendar
+            # (e.g. Feb payroll corresponds to period 2), not only processed runs.
+            if tipo_planilla and (tipo_planilla.periodicidad or "").lower() in ("mensual", "monthly"):
+                meses_previos = self._calculate_elapsed_fiscal_months_before_period(
+                    fecha_referencia=periodo_fin,
+                    fecha_alta=fecha_alta,
+                    mes_inicio_fiscal=mes_inicio_fiscal,
+                    dia_inicio_fiscal=tipo_planilla.dia_inicio_fiscal,
+                )
+                variables["meses_trabajados"] = Decimal(str(meses_previos))
+            else:
+                variables["meses_trabajados"] = Decimal(str(acumulado.periodos_procesados or 0))
 
             # Calculate net accumulated salary
             variables["salario_neto_acumulado"] = Decimal(str(acumulado.salario_bruto_acumulado or 0)) - Decimal(
@@ -143,6 +154,35 @@ class EmployeeProcessingService:
         variables["impuesto_inicial_acumulado"] = impuesto_base_acumulado
 
         return variables
+
+    def _calculate_elapsed_fiscal_months_before_period(
+        self,
+        fecha_referencia: date,
+        fecha_alta: date,
+        mes_inicio_fiscal: int,
+        dia_inicio_fiscal: int,
+    ) -> int:
+        """Return elapsed fiscal months before the current payroll period.
+
+        Example:
+        - Fiscal start Jan 1
+        - Payroll period in Feb
+        -> returns 1, so formulas can compute period 2 with +1.
+        """
+        fiscal_year = fecha_referencia.year
+        if fecha_referencia.month < mes_inicio_fiscal:
+            fiscal_year -= 1
+
+        fiscal_start = date(fiscal_year, mes_inicio_fiscal, dia_inicio_fiscal)
+        employee_start_month = date(fecha_alta.year, fecha_alta.month, 1)
+        effective_start = max(fiscal_start, employee_start_month)
+        reference_month = date(fecha_referencia.year, fecha_referencia.month, 1)
+
+        if reference_month < effective_start:
+            return 0
+
+        months = (reference_month.year - effective_start.year) * 12 + (reference_month.month - effective_start.month)
+        return max(months, 0)
 
     def _resolve_config(self, empresa_id: str, configuracion_snapshot: dict[str, Any] | None) -> Any:
         if configuracion_snapshot:
@@ -161,7 +201,7 @@ class EmployeeProcessingService:
 
         # Calculate fiscal period
         anio = fecha_calculo.year
-        mes_inicio = tipo_planilla.mes_inicio_fiscal
+        mes_inicio = int(planilla.mes_inicio_fiscal or tipo_planilla.mes_inicio_fiscal)
         dia_inicio = tipo_planilla.dia_inicio_fiscal
 
         if fecha_calculo.month < mes_inicio:

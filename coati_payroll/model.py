@@ -443,6 +443,8 @@ class Planilla(database.Model, BaseTabla):
     vacation_policy = database.relationship("VacationPolicy", foreign_keys=[vacation_policy_id])
 
     # Período Fiscal
+    # Fuente de verdad por planilla para el mes de inicio fiscal (1=enero ... 12=diciembre)
+    mes_inicio_fiscal = database.Column(database.Integer, nullable=False, default=1)
     periodo_fiscal_inicio = database.Column(database.Date, nullable=True)
     periodo_fiscal_fin = database.Column(database.Date, nullable=True)
 

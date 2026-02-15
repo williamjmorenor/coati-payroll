@@ -67,7 +67,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         </div>
 
                         <div class="row">
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3">
                                 {{ form.tipo_planilla_id.label(class="form-label") }}
                                 {{ form.tipo_planilla_id(class="form-select" + (" is-invalid" if form.tipo_planilla_id.errors else "")) }}
                                 {% if form.tipo_planilla_id.description %}
@@ -77,7 +77,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 <div class="invalid-feedback">{{ error }}</div>
                                 {% endfor %}
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3">
                                 {{ form.moneda_id.label(class="form-label") }}
                                 {{ form.moneda_id(class="form-select" + (" is-invalid" if form.moneda_id.errors else "")) }}
                                 {% if form.moneda_id.description %}
@@ -87,13 +87,23 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 <div class="invalid-feedback">{{ error }}</div>
                                 {% endfor %}
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3">
                                 {{ form.empresa_id.label(class="form-label") }}
                                 {{ form.empresa_id(class="form-select" + (" is-invalid" if form.empresa_id.errors else "")) }}
                                 {% if form.empresa_id.description %}
                                 <div class="form-text">{{ form.empresa_id.description }}</div>
                                 {% endif %}
                                 {% for error in form.empresa_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                {{ form.mes_inicio_fiscal.label(class="form-label") }}
+                                {{ form.mes_inicio_fiscal(class="form-select" + (" is-invalid" if form.mes_inicio_fiscal.errors else "")) }}
+                                {% if form.mes_inicio_fiscal.description %}
+                                <div class="form-text">{{ form.mes_inicio_fiscal.description }}</div>
+                                {% endif %}
+                                {% for error in form.mes_inicio_fiscal.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                                 {% endfor %}
                             </div>

@@ -617,13 +617,9 @@ class VacationService:
                 return self._quantize_amount(policy.accrual_rate)
             return self._quantize_amount(policy.accrual_rate * Decimal(dias_periodo) / Decimal(dias_esperados))
 
-        # Employee active for the full payroll period receives full accrual.
+        # Determine worked days inside payroll period (respecting hire/termination dates).
         alta = empleado.fecha_alta
         baja = empleado.fecha_baja
-        cubre_periodo_completo = (not alta or alta <= self.periodo_inicio) and (not baja or baja >= self.periodo_fin)
-        if cubre_periodo_completo:
-            return self._quantize_amount(policy.accrual_rate)
-
         inicio_efectivo = self.periodo_inicio if not alta or alta <= self.periodo_inicio else alta
         fin_efectivo = self.periodo_fin if not baja or baja >= self.periodo_fin else baja
         if inicio_efectivo > fin_efectivo:
@@ -633,7 +629,7 @@ class VacationService:
         if dias_trabajados <= 0:
             return Decimal("0.00")
 
-        # Prorate with configured expected days (e.g., 30 for monthly accrual).
+        # Prorate using policy frequency cycle (e.g., monthly policy on biweekly payroll => 15/30).
         dias_prorrata = min(dias_trabajados, dias_esperados)
         return self._quantize_amount(policy.accrual_rate * Decimal(dias_prorrata) / Decimal(dias_esperados))
 

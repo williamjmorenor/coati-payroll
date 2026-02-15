@@ -3,10 +3,12 @@
 """Service for nomina business logic."""
 
 from datetime import date, timedelta
+from decimal import Decimal
 from typing import Any, cast
 from uuid import uuid4
 from flask import current_app
-from coati_payroll.model import db, Planilla, Nomina
+from sqlalchemy import func
+from coati_payroll.model import db, Planilla, Nomina, AcumuladoAnual, Deduccion, Percepcion
 from coati_payroll.enums import NominaEstado
 from coati_payroll.nomina_engine import NominaEngine
 from coati_payroll.queue import get_queue_driver
@@ -14,6 +16,131 @@ from coati_payroll.queue import get_queue_driver
 
 class NominaService:
     """Service for nomina operations."""
+
+    @staticmethod
+    def _rollback_accumulations_for_nomina(nomina: Nomina, planilla: Planilla) -> None:
+        """Rollback accumulated annual values produced by one payroll.
+
+        This is required before recalculation to avoid double-counting
+        (e.g., periodos_procesados jumping from 2 -> 3 for the same month).
+        """
+        from coati_payroll.model import NominaEmpleado, NominaDetalle
+
+        if not planilla.tipo_planilla:
+            return
+
+        tipo_planilla = planilla.tipo_planilla
+        empresa_id = planilla.empresa_id
+        if not empresa_id:
+            return
+
+        fecha_base = nomina.fecha_calculo_original or nomina.fecha_generacion.date()
+        anio = fecha_base.year
+        mes_inicio = int(planilla.mes_inicio_fiscal or tipo_planilla.mes_inicio_fiscal)
+        dia_inicio = tipo_planilla.dia_inicio_fiscal
+        if fecha_base.month < mes_inicio:
+            anio -= 1
+        periodo_fiscal_inicio = date(anio, mes_inicio, dia_inicio)
+
+        nomina_empleados = (
+            db.session.execute(db.select(NominaEmpleado).where(NominaEmpleado.nomina_id == nomina.id)).scalars().all()
+        )
+        if not nomina_empleados:
+            return
+
+        empleado_ids = [ne.empleado_id for ne in nomina_empleados]
+        nomina_empleado_ids = [ne.id for ne in nomina_empleados]
+
+        acumulados = (
+            db.session.execute(
+                db.select(AcumuladoAnual).where(
+                    AcumuladoAnual.empleado_id.in_(empleado_ids),
+                    AcumuladoAnual.tipo_planilla_id == tipo_planilla.id,
+                    AcumuladoAnual.empresa_id == empresa_id,
+                    AcumuladoAnual.periodo_fiscal_inicio == periodo_fiscal_inicio,
+                )
+            )
+            .scalars()
+            .all()
+        )
+        acumulado_by_empleado = {a.empleado_id: a for a in acumulados}
+
+        # Aggregate deduction amounts by payroll employee and deduction type.
+        deduction_rows = db.session.execute(
+            db.select(
+                NominaDetalle.nomina_empleado_id,
+                Deduccion.es_impuesto,
+                Deduccion.antes_impuesto,
+                func.sum(NominaDetalle.monto),
+            )
+            .join(Deduccion, Deduccion.id == NominaDetalle.deduccion_id)
+            .where(
+                NominaDetalle.nomina_empleado_id.in_(nomina_empleado_ids),
+                NominaDetalle.tipo == "deduction",
+                NominaDetalle.deduccion_id.is_not(None),
+            )
+            .group_by(NominaDetalle.nomina_empleado_id, Deduccion.es_impuesto, Deduccion.antes_impuesto)
+        ).all()
+
+        deducciones_by_ne: dict[str, dict[str, Decimal]] = {}
+        for ne_id, es_impuesto, antes_impuesto, total in deduction_rows:
+            bucket = deducciones_by_ne.setdefault(ne_id, {"impuesto": Decimal("0.00"), "antes": Decimal("0.00")})
+            amount = Decimal(str(total or 0))
+            if es_impuesto:
+                bucket["impuesto"] += amount
+            elif antes_impuesto:
+                bucket["antes"] += amount
+
+        # Aggregate only gravable perceptions for salario_gravable rollback.
+        gravable_rows = db.session.execute(
+            db.select(NominaDetalle.nomina_empleado_id, func.sum(NominaDetalle.monto))
+            .join(Percepcion, Percepcion.id == NominaDetalle.percepcion_id)
+            .where(
+                NominaDetalle.nomina_empleado_id.in_(nomina_empleado_ids),
+                NominaDetalle.tipo == "income",
+                NominaDetalle.percepcion_id.is_not(None),
+                Percepcion.gravable.is_(True),
+            )
+            .group_by(NominaDetalle.nomina_empleado_id)
+        ).all()
+        gravable_by_ne = {ne_id: Decimal(str(total or 0)) for ne_id, total in gravable_rows}
+
+        for ne in nomina_empleados:
+            acumulado = acumulado_by_empleado.get(ne.empleado_id)
+            if not acumulado:
+                continue
+
+            salario_bruto = Decimal(str(ne.salario_bruto or 0))
+            salario_base = Decimal(str(ne.sueldo_base_historico or 0))
+            salario_gravable = salario_base + gravable_by_ne.get(ne.id, Decimal("0.00"))
+            deducciones = deducciones_by_ne.get(ne.id, {"impuesto": Decimal("0.00"), "antes": Decimal("0.00")})
+
+            acumulado.salario_bruto_acumulado = max(
+                Decimal(str(acumulado.salario_bruto_acumulado or 0)) - salario_bruto,
+                Decimal("0.00"),
+            )
+            acumulado.salario_acumulado_mes = max(
+                Decimal(str(acumulado.salario_acumulado_mes or 0)) - salario_bruto,
+                Decimal("0.00"),
+            )
+            acumulado.salario_gravable_acumulado = max(
+                Decimal(str(acumulado.salario_gravable_acumulado or 0)) - salario_gravable,
+                Decimal("0.00"),
+            )
+            acumulado.deducciones_antes_impuesto_acumulado = max(
+                Decimal(str(acumulado.deducciones_antes_impuesto_acumulado or 0)) - deducciones["antes"],
+                Decimal("0.00"),
+            )
+            acumulado.impuesto_retenido_acumulado = max(
+                Decimal(str(acumulado.impuesto_retenido_acumulado or 0)) - deducciones["impuesto"],
+                Decimal("0.00"),
+            )
+
+            acumulado.periodos_procesados = max(int(acumulado.periodos_procesados or 0) - 1, 0)
+            if acumulado.periodos_procesados == 0:
+                acumulado.ultimo_periodo_procesado = None
+                if Decimal(str(acumulado.salario_acumulado_mes or 0)) == Decimal("0.00"):
+                    acumulado.mes_actual = None
 
     @staticmethod
     def calcular_periodo_sugerido(planilla: Planilla) -> tuple[date, date]:
@@ -168,6 +295,9 @@ class NominaService:
         novedad_ids = (
             db.session.execute(db.select(NominaNovedad.id).where(NominaNovedad.nomina_id == nomina.id)).scalars().all()
         )
+
+        # Revert original accumulated values first to keep period counts correct on recalculation.
+        NominaService._rollback_accumulations_for_nomina(nomina, planilla)
 
         # Re-execute the payroll with the ORIGINAL calculation date for consistency
         engine = NominaEngine(

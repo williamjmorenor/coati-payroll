@@ -780,6 +780,27 @@ class PlanillaForm(FlaskForm):
         coerce=str,
         description=_("Empresa a la que pertenece esta planilla. Solo empleados de esta empresa podrán ser asignados."),
     )
+    mes_inicio_fiscal = SelectField(
+        _("Mes Inicio Fiscal"),
+        choices=[
+            (1, _("Enero")),
+            (2, _("Febrero")),
+            (3, _("Marzo")),
+            (4, _("Abril")),
+            (5, _("Mayo")),
+            (6, _("Junio")),
+            (7, _("Julio")),
+            (8, _("Agosto")),
+            (9, _("Septiembre")),
+            (10, _("Octubre")),
+            (11, _("Noviembre")),
+            (12, _("Diciembre")),
+        ],
+        validators=[Optional()],
+        coerce=int,
+        default=1,
+        description=_("Mes en que inicia el a?o fiscal para esta planilla."),
+    )
     vacation_policy_id = SelectField(
         _("Regla de Vacaciones"),
         validators=[Optional()],
