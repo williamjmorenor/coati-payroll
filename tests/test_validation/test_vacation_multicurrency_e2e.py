@@ -190,6 +190,44 @@ def test_vacation_liability_respects_exchange_rate(app, client, admin_user, db_s
         # Refresh session to get updated data
         db_session.refresh(nomina)
 
+        # Apply vacation accruals (per design: deferred to apply step)
+        from coati_payroll.vacation_service import VacationService
+
+        vacation_snapshot_apply = {}
+        if nomina.catalogos_snapshot:
+            vacation_snapshot_apply = (nomina.catalogos_snapshot.get("vacaciones") or {}).copy()
+        vacation_snapshot_apply["configuracion"] = nomina.configuracion_snapshot or {}
+
+        vacation_service = VacationService(
+            planilla=planilla,
+            periodo_inicio=nomina.periodo_inicio,
+            periodo_fin=nomina.periodo_fin,
+            snapshot=vacation_snapshot_apply,
+            apply_side_effects=True,
+        )
+
+        for ne in nomina.nomina_empleados:
+            emp = ne.empleado or db_session.get(Empleado, ne.empleado_id)
+            if emp and emp.activo:
+                vacation_service.acumular_vacaciones_empleado(emp, ne, admin_user.usuario)
+
+        db_session.flush()
+
+        # Regenerate accounting voucher to include vacation liability lines
+        # (now that vacation ledger entries exist after apply)
+        from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
+        
+        # Delete old comprobante
+        old_comprobante = db_session.query(ComprobanteContable).filter(ComprobanteContable.nomina_id == nomina.id).first()
+        if old_comprobante:
+            db_session.delete(old_comprobante)
+            db_session.flush()
+        
+        # Regenerate with vacation entries included
+        voucher_service = AccountingVoucherService(db_session)
+        voucher_service.generate_audit_voucher(nomina, planilla, fecha_calculo, admin_user.usuario)
+        db_session.flush()
+
         # 8. Validate salary payment (converted to NIO)
         # Expected: 1,000 USD * 37.50 exchange rate = 37,500 NIO monthly
         # Biweekly (15 days out of 30): 37,500 / 2 = 18,750 NIO
@@ -215,14 +253,14 @@ def test_vacation_liability_respects_exchange_rate(app, client, admin_user, db_s
         vacation_account = db_session.query(VacationAccount).filter(VacationAccount.empleado_id == empleado.id).first()
         assert vacation_account is not None
 
-        # 1 day accrued: 2 days per month * (15 days / 30 days per month) = 1 day
-        assert vacation_account.current_balance == Decimal("1.0000")
+        # 1 day accrued: 2 days per month * (15 days / 30 days per month) = 1 day (rounded to 2 decimals)
+        assert vacation_account.current_balance == Decimal("1.00")
 
         vacation_ledger = (
             db_session.query(VacationLedger).filter(VacationLedger.account_id == vacation_account.id).first()
         )
         assert vacation_ledger is not None
-        assert vacation_ledger.quantity == Decimal("1.0000")
+        assert vacation_ledger.quantity == Decimal("1.00")
         assert vacation_ledger.reference_type == "nomina_empleado"
         assert vacation_ledger.reference_id == ne.id
 

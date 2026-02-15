@@ -47,7 +47,9 @@ def get_nomina_counts_by_planilla(planilla_ids: list[str]) -> dict[str, int]:
         return {}
 
     rows = db.session.execute(
-        select(Nomina.planilla_id, count(Nomina.id)).where(Nomina.planilla_id.in_(planilla_ids)).group_by(Nomina.planilla_id)
+        select(Nomina.planilla_id, count(Nomina.id))
+        .where(Nomina.planilla_id.in_(planilla_ids))
+        .group_by(Nomina.planilla_id)
     ).all()
 
     counts = {planilla_id: 0 for planilla_id in planilla_ids}

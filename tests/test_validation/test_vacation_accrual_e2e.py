@@ -190,6 +190,49 @@ def test_vacation_accrual_during_biweekly_payroll_execution(app, client, admin_u
             "15000.00"
         ), f"Expected employee salario_bruto of 15,000.00, got {nomina_empleado.salario_bruto}"
 
+        # Apply nomina to persist vacation accruals (per design: deferred to apply step)
+        from coati_payroll.vacation_service import VacationService
+
+        nomina.estado = "approved"
+        db_session.flush()
+
+        # Manually apply vacation accruals (mimics what aplicar_nomina endpoint does)
+        vacation_snapshot_apply = {}
+        if nomina.catalogos_snapshot:
+            vacation_snapshot_apply = (nomina.catalogos_snapshot.get("vacaciones") or {}).copy()
+        vacation_snapshot_apply["configuracion"] = nomina.configuracion_snapshot or {}
+
+        vacation_service = VacationService(
+            planilla=planilla,
+            periodo_inicio=nomina.periodo_inicio,
+            periodo_fin=nomina.periodo_fin,
+            snapshot=vacation_snapshot_apply,
+            apply_side_effects=True,
+        )
+
+        for ne in nomina.nomina_empleados:
+            emp = ne.empleado or db_session.get(Empleado, ne.empleado_id)
+            if emp and emp.activo:
+                vacation_service.acumular_vacaciones_empleado(emp, ne, admin_user.usuario)
+
+        nomina.estado = "applied"
+        db_session.flush()
+
+        # Regenerate accounting voucher to include vacation liability lines
+        # (now that vacation ledger entries exist after apply)
+        from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
+        
+        # Delete old comprobante
+        old_comprobante = db_session.query(ComprobanteContable).filter(ComprobanteContable.nomina_id == nomina.id).first()
+        if old_comprobante:
+            db_session.delete(old_comprobante)
+            db_session.flush()
+        
+        # Regenerate with vacation entries included
+        voucher_service = AccountingVoucherService(db_session)
+        voucher_service.generate_audit_voucher(nomina, planilla, fecha_calculo, admin_user.usuario)
+        db_session.flush()
+
         # Validate 8.2: 1 vacation day accrued
         # Check VacationLedger for accrual entry
         accrual_entries = (

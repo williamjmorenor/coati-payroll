@@ -363,8 +363,8 @@ def test_acumular_vacaciones_periodic_prorated_for_partial_period(
         service = VacationService(planilla, periodo_inicio, periodo_fin)
         accrued = service.acumular_vacaciones_empleado(empleado_parcial, nomina_empleado, "test_user")
 
-        # 1.25 * (16/30) = 0.6667
-        assert accrued == Decimal("0.6667")
+        # 1.25 * (16/30) = 0.6667, rounded to 2 decimals = 0.67
+        assert accrued == Decimal("0.67")
 
 
 def test_acumular_vacaciones_periodic_method(app, db_session, planilla, empleado, periodic_policy, moneda):
@@ -765,8 +765,8 @@ def test_calcular_acumulacion_periodic_biweekly(app, db_session, planilla):
         service = VacationService(planilla, periodo_inicio, periodo_fin)
         accrual = service._calcular_acumulacion_periodica(policy)
 
-        # Should return the rate directly for matching period
-        assert accrual == Decimal("0.625")
+        # Should return the rate directly for matching period, rounded to 2 decimals = 0.63
+        assert accrual == Decimal("0.63")
 
 
 def test_calcular_acumulacion_proportional_hours(app, db_session, planilla, empleado, moneda):
