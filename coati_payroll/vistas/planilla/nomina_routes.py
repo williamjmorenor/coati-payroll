@@ -15,6 +15,7 @@ from coati_payroll.model import (
     NominaDetalle,
     NominaNovedad,
     NominaProgress,
+    Empleado,
     Percepcion,
     Deduccion,
     PlanillaEmpleado,
@@ -27,6 +28,7 @@ from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.vistas.planilla import planilla_bp
 from coati_payroll.vistas.planilla.services import NominaService, NovedadService
 from coati_payroll.queue.tasks import retry_failed_nomina
+from coati_payroll.vacation_service import VacationService
 
 # Constants
 ROUTE_EJECUTAR_NOMINA = "planilla.ejecutar_nomina"
@@ -545,6 +547,8 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         novedad.estado = NovedadEstado.EJECUTADA
         novedad.modificado_por = current_user.usuario
 
+    _aplicar_vacaciones_nomina(nomina, planilla, current_user.usuario)
+
     db.session.commit()
 
     flash(
@@ -552,6 +556,31 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         "success",
     )
     return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+
+def _aplicar_vacaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str | None) -> None:
+    """Apply vacation ledger side effects for an applied nomina."""
+    vacation_snapshot = {}
+    if nomina.catalogos_snapshot:
+        vacation_snapshot = (nomina.catalogos_snapshot.get("vacaciones") or {}).copy()
+    vacation_snapshot["configuracion"] = nomina.configuracion_snapshot or {}
+
+    vacation_service = VacationService(
+        planilla=planilla,
+        periodo_inicio=nomina.periodo_inicio,
+        periodo_fin=nomina.periodo_fin,
+        snapshot=vacation_snapshot,
+        apply_side_effects=True,
+    )
+
+    nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina.id)).scalars().all()
+    for nomina_empleado in nomina_empleados:
+        empleado = nomina_empleado.empleado or db.session.get(Empleado, nomina_empleado.empleado_id)
+        if not empleado or not empleado.activo:
+            continue
+        # Persist accruals and vacation usage only when the payroll is applied.
+        vacation_service.acumular_vacaciones_empleado(empleado, nomina_empleado, usuario)
+        vacation_service.procesar_novedades_vacaciones(empleado, {}, usuario)
 
 
 @planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/reintentar", methods=["POST"])

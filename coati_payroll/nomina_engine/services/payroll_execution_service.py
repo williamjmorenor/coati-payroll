@@ -214,7 +214,13 @@ class PayrollExecutionService:
             vacation_snapshot = snapshot.get("vacaciones", {}).copy()
             vacation_snapshot["configuracion"] = snapshot.get("configuracion")
             vacation_processor = VacationProcessor(
-                planilla, periodo_inicio, periodo_fin, usuario, warnings, snapshot=vacation_snapshot
+                planilla,
+                periodo_inicio,
+                periodo_fin,
+                usuario,
+                warnings,
+                apply_side_effects=False,
+                snapshot=vacation_snapshot,
             )
 
             for emp_calculo in empleados_calculo:

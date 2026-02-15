@@ -297,6 +297,22 @@ class ConceptCalculator:
             inputs["salario_bruto"] = emp_calculo.salario_bruto
             inputs["total_percepciones"] = emp_calculo.total_percepciones
             inputs["total_deducciones"] = emp_calculo.total_deducciones
+            # Map generic schema input sources to input names when present.
+            # This keeps parity with FormulaType.FORMULA behavior and allows
+            # rules that declare sources such as "nomina.salario_bruto".
+            if isinstance(regla_schema, dict):
+                for input_def in regla_schema.get("inputs", []):
+                    name = input_def.get("name")
+                    source = input_def.get("source")
+                    if not name or not source:
+                        continue
+                    if source in inputs:
+                        inputs[name] = inputs[source]
+                        continue
+                    if "." in source:
+                        source_key = source.split(".")[-1]
+                        if source_key in inputs:
+                            inputs[name] = inputs[source_key]
             # Calculate before-tax deductions already processed
             deducciones_antes_impuesto_periodo = Decimal("0.00")
             for ded in emp_calculo.deducciones:

@@ -285,6 +285,8 @@ class NominaService:
             NominaNovedad,
             AdelantoAbono,
             ComprobanteContable,
+            VacationLedger,
+            VacationAccount,
         )
 
         # Store the original period and calculation date for consistency
@@ -298,6 +300,50 @@ class NominaService:
 
         # Revert original accumulated values first to keep period counts correct on recalculation.
         NominaService._rollback_accumulations_for_nomina(nomina, planilla)
+
+        # Remove vacation ledger entries tied to the old payroll employees to avoid double accruals.
+        nomina_empleado_ids = (
+            db.session.execute(db.select(NominaEmpleado.id).where(NominaEmpleado.nomina_id == nomina.id))
+            .scalars()
+            .all()
+        )
+        if nomina_empleado_ids:
+            account_ids = {
+                row[0]
+                for row in db.session.execute(
+                    db.select(VacationLedger.account_id).where(
+                        VacationLedger.reference_type == "nomina_empleado",
+                        VacationLedger.reference_id.in_(nomina_empleado_ids),
+                    )
+                ).all()
+                if row[0]
+            }
+            db.session.execute(
+                db.delete(VacationLedger).where(
+                    VacationLedger.reference_type == "nomina_empleado",
+                    VacationLedger.reference_id.in_(nomina_empleado_ids),
+                )
+            )
+            if account_ids:
+                accounts = (
+                    db.session.execute(db.select(VacationAccount).where(VacationAccount.id.in_(account_ids)))
+                    .scalars()
+                    .all()
+                )
+                for account in accounts:
+                    balance = db.session.execute(
+                        db.select(func.coalesce(func.sum(VacationLedger.quantity), 0)).where(
+                            VacationLedger.account_id == account.id
+                        )
+                    ).scalar_one()
+                    account.current_balance = Decimal(str(balance))
+                    last_accrual = db.session.execute(
+                        db.select(func.max(VacationLedger.fecha)).where(
+                            VacationLedger.account_id == account.id,
+                            VacationLedger.entry_type == "accrual",
+                        )
+                    ).scalar_one()
+                    account.last_accrual_date = last_accrual
 
         # Re-execute the payroll with the ORIGINAL calculation date for consistency
         engine = NominaEngine(

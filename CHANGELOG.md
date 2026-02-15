@@ -17,16 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated payroll template create/edit/clone flows to persist and propagate `mes_inicio_fiscal`.
 - Updated fiscal-period resolution in payroll accumulation and annual lookup logic to use `Planilla.mes_inicio_fiscal` as the source of truth.
 - Updated monthly fiscal progression inputs used by calculation rules to align with the planilla fiscal-start month.
+- Deferred vacation ledger side effects to the payroll apply step to avoid mutating balances during generation.
 
 ### Fixed
 
 - Allowed recalculating non-approved payrolls for the same period by excluding the source payroll from overlap and duplicate-period validation checks.
 - Fixed periodic vacation accrual proration so monthly policies on biweekly payrolls accrue proportionally by worked days in the period.
 - Fixed calculation rules issues.
+- Cleaned vacation ledger entries tied to recalculated payrolls to prevent duplicate accruals and recomputed balances.
 
-### Tests
-
-- Re-ran full quality and test suite (`black`, `ruff`, `flake8`, `pylint`, `mypy`, `pytest`, and `pytest -m validation`) after fiscal-start and vacation accrual changes.
 
 ## [1.4.1] - 2026-02-13
 
