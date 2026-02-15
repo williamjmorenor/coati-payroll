@@ -26,6 +26,24 @@ class ExportService:
     """Service for Excel export operations."""
 
     @staticmethod
+    def _add_traceability_section(ws, row: int, nomina: Nomina) -> int:
+        """Add user traceability section and return next available row."""
+        ws[f"A{row}"] = "TRAZABILIDAD DE USUARIO:"
+        row += 1
+
+        ws[f"A{row}"] = "Creado por:"
+        ws[f"B{row}"] = nomina.generado_por or "N/A"
+        row += 1
+
+        ws[f"A{row}"] = "Aprobado por:"
+        ws[f"B{row}"] = nomina.aprobado_por or "N/A"
+        row += 1
+
+        ws[f"A{row}"] = "Aplicado por:"
+        ws[f"B{row}"] = nomina.aplicado_por or "N/A"
+        return row + 1
+
+    @staticmethod
     def exportar_nomina_excel(planilla: Planilla, nomina: Nomina) -> tuple[BytesIO, str]:
         """Export nomina to Excel with employee details and calculations.
 
@@ -474,6 +492,14 @@ class ExportService:
         ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
         row += 1
 
+        ws[f"A{row}"] = "ID Planilla:"
+        ws[f"B{row}"] = planilla.id
+        row += 1
+
+        ws[f"A{row}"] = "Estatus Planilla:"
+        ws[f"B{row}"] = nomina.estado
+        row += 1
+
         if comprobante.moneda:
             ws[f"A{row}"] = "Moneda:"
             ws[f"B{row}"] = f"{comprobante.moneda.codigo} - {comprobante.moneda.nombre}"
@@ -561,6 +587,9 @@ class ExportService:
         ws[f"B{row}"] = float(comprobante.balance)
         if comprobante.balance != 0:
             ws[f"B{row}"].font = Font(bold=True, color="FF0000")
+
+        row += 2
+        row = ExportService._add_traceability_section(ws, row, nomina)
 
         # Auto-adjust column widths
         ws.column_dimensions["A"].width = 18
@@ -652,6 +681,14 @@ class ExportService:
 
         ws[f"A{row}"] = "Período:"
         ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+        row += 1
+
+        ws[f"A{row}"] = "ID Planilla:"
+        ws[f"B{row}"] = planilla.id
+        row += 1
+
+        ws[f"A{row}"] = "Estatus Planilla:"
+        ws[f"B{row}"] = nomina.estado
         row += 2
 
         # Table headers
@@ -675,6 +712,9 @@ class ExportService:
                 ws.cell(row=row, column=5, value=linea["descripcion_cuenta"]).border = border
                 ws.cell(row=row, column=6, value=float(linea["debito"])).border = border
                 ws.cell(row=row, column=7, value=float(linea["credito"])).border = border
+
+        row += 2
+        row = ExportService._add_traceability_section(ws, row, nomina)
 
         # Auto-adjust column widths
         ws.column_dimensions["A"].width = 18
