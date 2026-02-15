@@ -340,6 +340,7 @@ class SnapshotService:
                 "unit_type": policy.unit_type,
                 "accrual_method": policy.accrual_method,
                 "accrual_rate": str(policy.accrual_rate),
+                "prorate_by_period_days": policy.prorate_by_period_days,
                 "accrual_frequency": policy.accrual_frequency,
                 "min_service_days": policy.min_service_days,
                 "max_balance": str(policy.max_balance) if policy.max_balance is not None else None,

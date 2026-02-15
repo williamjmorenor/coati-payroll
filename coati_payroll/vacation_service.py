@@ -613,6 +613,8 @@ class VacationService:
 
         # Backward-compatible path for direct method calls without employee context.
         if empleado is None:
+            if not policy.prorate_by_period_days:
+                return self._quantize_amount(policy.accrual_rate)
             if dias_periodo == dias_esperados:
                 return self._quantize_amount(policy.accrual_rate)
             return self._quantize_amount(policy.accrual_rate * Decimal(dias_periodo) / Decimal(dias_esperados))
@@ -628,6 +630,15 @@ class VacationService:
         dias_trabajados = (fin_efectivo - inicio_efectivo).days + 1
         if dias_trabajados <= 0:
             return Decimal("0.00")
+
+        # If proration by period days is disabled and the employee covered the full period,
+        # apply the full accrual rate for the cycle (e.g., monthly accrual in February).
+        if (
+            not policy.prorate_by_period_days
+            and inicio_efectivo == self.periodo_inicio
+            and fin_efectivo == self.periodo_fin
+        ):
+            return self._quantize_amount(policy.accrual_rate)
 
         # Prorate using policy frequency cycle (e.g., monthly policy on biweekly payroll => 15/30).
         dias_prorrata = min(dias_trabajados, dias_esperados)

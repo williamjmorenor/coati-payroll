@@ -2013,6 +2013,10 @@ class VacationPolicy(database.Model, BaseTabla):
     # Amount earned per period (for periodic method)
     accrual_rate = database.Column(database.Numeric(10, 4), nullable=False, default=Decimal("0.0000"))
 
+    # Whether to prorate periodic accruals by actual days in the payroll period
+    # (False means a full monthly accrual even in shorter months like February).
+    prorate_by_period_days = database.Column(database.Boolean(), default=True, nullable=False)
+
     # How often accrual happens
     accrual_frequency = database.Column(
         database.String(20), nullable=False, default=AccrualFrequency.MONTHLY

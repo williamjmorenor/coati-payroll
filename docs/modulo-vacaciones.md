@@ -62,6 +62,9 @@ Define cómo se acumulan, usan y vencen las vacaciones. Es completamente configu
   - `monthly`: Mensual
   - `biweekly`: Quincenal
   - `annual`: Anual
+- `prorate_by_period_days`: Prorratear por días reales del período
+  - `true`: prorratea la tasa cuando el período tiene menos días (ej: febrero)
+  - `false`: aplica la tasa completa del ciclo aunque el período tenga menos días
 - `accrual_basis`: Base para cálculo proporcional
   - `days_worked`: Días trabajados
   - `hours_worked`: Horas trabajadas
@@ -489,17 +492,17 @@ Descontar Pago por Inasistencia: No  # NO se descuenta porque son pagadas
 
 #### Ventajas del Puente Automatizado
 
-✅ **Trazabilidad completa**: Conexión clara entre solicitud → aprobación → deducción de balance → novedad → nómina  
-✅ **Prevención de errores**: No es necesario crear novedades manualmente  
-✅ **Auditoría robusta**: Cada paso queda registrado con timestamp y usuario  
-✅ **Sincronización**: Balance de vacaciones y nómina siempre están alineados  
+✅ **Trazabilidad completa**: Conexión clara entre solicitud → aprobación → deducción de balance → novedad → nómina
+✅ **Prevención de errores**: No es necesario crear novedades manualmente
+✅ **Auditoría robusta**: Cada paso queda registrado con timestamp y usuario
+✅ **Sincronización**: Balance de vacaciones y nómina siempre están alineados
 ✅ **Reversibilidad**: Si se revierte la aprobación, se puede ajustar el balance y eliminar la novedad
 
 #### Consultas Útiles
 
 **Ver vacaciones aplicadas a nómina:**
 ```sql
-SELECT 
+SELECT
     n.numero_nomina,
     e.codigo_empleado,
     lr.start_date,
@@ -517,7 +520,7 @@ ORDER BY n.numero_nomina, e.codigo_empleado;
 
 **Ver vacaciones aprobadas pendientes de aplicar:**
 ```sql
-SELECT 
+SELECT
     e.codigo_empleado,
     lr.start_date,
     lr.end_date,
@@ -539,8 +542,8 @@ SELECT current_balance FROM vacation_account WHERE empleado_id = ?
 
 ### Historial Completo
 ```sql
-SELECT * FROM vacation_ledger 
-WHERE empleado_id = ? 
+SELECT * FROM vacation_ledger
+WHERE empleado_id = ?
 ORDER BY fecha DESC
 ```
 
@@ -552,7 +555,7 @@ SELECT SUM(quantity) FROM vacation_ledger WHERE account_id = ?
 
 ### Vacaciones por Vencer
 ```sql
-SELECT va.*, vp.expiration_months 
+SELECT va.*, vp.expiration_months
 FROM vacation_account va
 JOIN vacation_policy vp ON va.policy_id = vp.id
 WHERE vp.expiration_rule != 'never'
@@ -569,20 +572,20 @@ WHERE vp.expiration_rule != 'never'
 
 ## Ventajas del Diseño
 
-✅ **100% agnóstico al país**: Se adapta a cualquier legislación mediante configuración  
-✅ **Auditable**: Cada cambio queda registrado  
-✅ **Reversible**: Ajustes se registran, no se borran  
-✅ **Extensible**: Nuevas reglas se agregan sin cambiar código  
-✅ **Compatible con plugins**: Sistema de eventos permite extensiones  
-✅ **No rompe nómina**: Integración limpia con el módulo de nómina  
+✅ **100% agnóstico al país**: Se adapta a cualquier legislación mediante configuración
+✅ **Auditable**: Cada cambio queda registrado
+✅ **Reversible**: Ajustes se registran, no se borran
+✅ **Extensible**: Nuevas reglas se agregan sin cambiar código
+✅ **Compatible con plugins**: Sistema de eventos permite extensiones
+✅ **No rompe nómina**: Integración limpia con el módulo de nómina
 
 ## Riesgos Evitados
 
-❌ Hardcodear días legales  
-❌ Mezclar vacaciones con nómina  
-❌ Actualizar balances directamente  
-❌ No tener ledger (libro mayor)  
-❌ No modelar eventos  
+❌ Hardcodear días legales
+❌ Mezclar vacaciones con nómina
+❌ Actualizar balances directamente
+❌ No tener ledger (libro mayor)
+❌ No modelar eventos
 
 ## Próximas Mejoras
 

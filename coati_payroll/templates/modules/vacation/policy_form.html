@@ -9,7 +9,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 {% block content %}
 <div class="container">
     {{ render_form_errors(form) }}
-    
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>{{ titulo }}</h2>
         <a href="{{ url_for('vacation.policy_index') }}" class="btn btn-secondary">
@@ -21,7 +21,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <div class="card-body">
             <form method="POST" action="">
                 {{ form.hidden_tag() }}
-                
+
                 <h5 class="mb-3">{{ _('Información General') }}</h5>
                 <div class="row">
                     <div class="col-md-4">
@@ -31,18 +31,19 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {{ render_field(form.nombre) }}
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-12">
                         {{ render_field(form.descripcion) }}
                     </div>
                 </div>
-                
+
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle me-2"></i>
-                    <strong>{{ _('Asociación de Política:') }}</strong> {{ _('Las políticas pueden asociarse a una Planilla específica (recomendado para multi-país) o a una Empresa completa. Una instalación puede tener varias planillas con distintas reglas de vacaciones.') }}
+                    <strong>{{ _('Asociación de Política:') }}</strong>
+                    {{ _('Las políticas pueden asociarse a una Planilla específica (recomendado para multi-país) o a una Empresa completa. Una instalación puede tener varias planillas con distintas reglas de vacaciones.') }}
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         {{ render_field(form.planilla_id) }}
@@ -51,7 +52,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {{ render_field(form.empresa_id) }}
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-12">
                         {{ render_field(form.activo) }}
@@ -59,7 +60,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 </div>
 
                 <hr class="my-4">
-                
+
                 <h5 class="mb-3">{{ _('Configuración de Acumulación') }}</h5>
                 <div class="row">
                     <div class="col-md-4">
@@ -72,7 +73,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {{ render_field(form.accrual_frequency) }}
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         {{ render_field(form.accrual_basis) }}
@@ -82,8 +83,14 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ render_field(form.prorate_by_period_days) }}
+                    </div>
+                </div>
+
                 <hr class="my-4">
-                
+
                 <h5 class="mb-3">{{ _('Límites de Balance') }}</h5>
                 <div class="row">
                     <div class="col-md-4">
@@ -98,7 +105,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 </div>
 
                 <hr class="my-4">
-                
+
                 <h5 class="mb-3">{{ _('Reglas de Vencimiento') }}</h5>
                 <div class="row">
                     <div class="col-md-4">
@@ -113,7 +120,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 </div>
 
                 <hr class="my-4">
-                
+
                 <h5 class="mb-3">{{ _('Configuración de Uso') }}</h5>
                 <div class="row">
                     <div class="col-md-4">
@@ -126,7 +133,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {{ render_field(form.accrue_during_leave) }}
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-4">
                         {{ render_field(form.count_weekends) }}
@@ -138,13 +145,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {{ render_field(form.partial_units_allowed) }}
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-12">
                         {{ render_field(form.rounding_rule) }}
                     </div>
                 </div>
-                
+
 
                 <hr class="my-4">
 

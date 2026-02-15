@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `mes_inicio_fiscal` to `Planilla` and exposed it in the payroll template form as a month selector (January-December).
+- Added `prorate_by_period_days` to `VacationPolicy` to control period-day proration for periodic accruals.
 
 ### Changed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated monthly fiscal progression inputs used by calculation rules to align with the planilla fiscal-start month.
 - Deferred vacation ledger side effects to the payroll apply step to avoid mutating balances during generation.
 - Rounded vacation ledger accruals to 2 decimal places for balance consistency.
+- Updated Nicaragua default vacation policy to accrue full monthly rate regardless of month length.
 
 ### Fixed
 

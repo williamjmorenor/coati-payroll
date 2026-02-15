@@ -1673,6 +1673,14 @@ class VacationPolicyForm(FlaskForm):
             "cuando el período real no coincide."
         ),
     )
+    prorate_by_period_days = BooleanField(
+        _("Prorratear por Días del Período"),
+        default=True,
+        description=_(
+            "Si se desactiva, la acumulación periódica usa la tasa completa del ciclo "
+            "(ej: mensual) aunque el mes tenga menos días."
+        ),
+    )
     accrual_basis = SelectField(
         _("Base de Acumulación"),
         choices=[
