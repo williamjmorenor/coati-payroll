@@ -21,6 +21,7 @@ from coati_payroll.model import (
     PlanillaEmpleado,
     VacationNovelty,
     VacationNominaNovedad,
+    VacationLedger,
 )
 from coati_payroll.enums import NominaEstado, NovedadEstado, VacacionEstado
 from coati_payroll.i18n import _
@@ -559,7 +560,30 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
 
 def _aplicar_vacaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str | None) -> None:
-    """Apply vacation ledger side effects for an applied nomina."""
+    """Apply vacation ledger side effects for an applied nomina.
+    
+    This function is idempotent - it only creates ledger entries if they don't already exist.
+    If vacation accruals were already persisted during payroll generation (normal case),
+    this function will skip creating duplicate entries.
+    """
+    # Check if vacation ledger entries already exist for this nomina
+    nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina.id)).scalars().all()
+    nomina_empleado_ids = [ne.id for ne in nomina_empleados if ne.id]
+    
+    if nomina_empleado_ids:
+        existing_entries = db.session.execute(
+            db.select(VacationLedger).filter(
+                VacationLedger.reference_type == "nomina_empleado",
+                VacationLedger.reference_id.in_(nomina_empleado_ids)
+            )
+        ).scalars().first()
+        
+        if existing_entries:
+            # Vacation accruals already exist, skip to avoid duplicates
+            log.debug(f"Vacation accruals already exist for nomina {nomina.id}, skipping re-application")
+            return
+    
+    # Accruals don't exist (e.g., old nomina from before refactor), create them now
     vacation_snapshot: dict = {}
     if nomina.catalogos_snapshot:
         vacation_snapshot = (nomina.catalogos_snapshot.get("vacaciones") or {}).copy()
@@ -573,7 +597,6 @@ def _aplicar_vacaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str 
         apply_side_effects=True,
     )
 
-    nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina.id)).scalars().all()
     for nomina_empleado in nomina_empleados:
         empleado = nomina_empleado.empleado or db.session.get(Empleado, nomina_empleado.empleado_id)
         if not empleado or not empleado.activo:

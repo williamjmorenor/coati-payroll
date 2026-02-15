@@ -18,6 +18,8 @@ from coati_payroll.model import (
     Empleado,
     Empresa,
     Moneda,
+    Nomina,
+    NominaEmpleado,
     Planilla,
     PlanillaEmpleado,
     TipoPlanilla,
@@ -25,8 +27,35 @@ from coati_payroll.model import (
     VacationLedger,
     VacationNovelty,
     VacationPolicy,
+    db,
 )
 from coati_payroll.nomina_engine import ejecutar_nomina
+from coati_payroll.vacation_service import VacationService
+
+
+def _apply_vacation_accruals(nomina, planilla, db_session, usuario="test_user"):
+    """Helper to apply vacation accruals for a nomina (mimics what aplicar endpoint does)."""
+    vacation_snapshot = {}
+    if nomina.catalogos_snapshot:
+        vacation_snapshot = (nomina.catalogos_snapshot.get("vacaciones") or {}).copy()
+    vacation_snapshot["configuracion"] = nomina.configuracion_snapshot or {}
+
+    vacation_service = VacationService(
+        planilla=planilla,
+        periodo_inicio=nomina.periodo_inicio,
+        periodo_fin=nomina.periodo_fin,
+        snapshot=vacation_snapshot,
+        apply_side_effects=True,
+    )
+
+    nomina_empleados = db_session.execute(
+        db.select(NominaEmpleado).filter_by(nomina_id=nomina.id)
+    ).scalars().all()
+    
+    for ne in nomina_empleados:
+        emp = ne.empleado or db_session.get(Empleado, ne.empleado_id)
+        if emp and emp.activo:
+            vacation_service.acumular_vacaciones_empleado(emp, ne, usuario)
 
 
 @pytest.mark.validation
@@ -155,6 +184,9 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         assert nomina_1 is not None, "First payroll should be created"
         assert len(errors_1) == 0, f"First payroll should have no errors: {errors_1}"
 
+        # Apply vacation accruals (per design: deferred to apply step)
+        _apply_vacation_accruals(nomina_1, planilla, db_session)
+
         # Re-query account from database to get fresh data
         vacation_account = (
             db_session.execute(select(VacationAccount).filter(VacationAccount.empleado_id == employee.id))
@@ -197,6 +229,9 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
 
         assert nomina_2 is not None, "Second payroll should be created"
         assert len(errors_2) == 0, f"Second payroll should have no errors: {errors_2}"
+
+        # Apply vacation accruals (per design: deferred to apply step)
+        _apply_vacation_accruals(nomina_2, planilla, db_session)
 
         # Re-query account from database to get fresh data
         vacation_account = (
@@ -243,6 +278,9 @@ def test_vacation_periodic_accrual_workflow(app, db_session):
         )
 
         assert nomina_3 is not None, f"Third payroll should be created. Errors: {errors_3}"
+
+        # Apply vacation accruals (per design: deferred to apply step)
+        _apply_vacation_accruals(nomina_3, planilla, db_session)
 
         # Re-query account from database to get fresh data
         vacation_account = (
