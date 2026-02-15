@@ -560,7 +560,7 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
 def _aplicar_vacaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str | None) -> None:
     """Apply vacation ledger side effects for an applied nomina."""
-    vacation_snapshot = {}
+    vacation_snapshot: dict = {}
     if nomina.catalogos_snapshot:
         vacation_snapshot = (nomina.catalogos_snapshot.get("vacaciones") or {}).copy()
     vacation_snapshot["configuracion"] = nomina.configuracion_snapshot or {}

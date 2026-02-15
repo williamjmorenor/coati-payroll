@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 class VacationService:
     """Service for vacation accrual and usage during payroll execution."""
 
-    ACCRUAL_PRECISION = Decimal("0.01")
+    ACCRUAL_PRECISION = Decimal("0.0001")
     ROUNDING_RULES = {
         "up": ROUND_UP,
         "down": ROUND_DOWN,
