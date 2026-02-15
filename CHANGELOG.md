@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated fiscal-period resolution in payroll accumulation and annual lookup logic to use `Planilla.mes_inicio_fiscal` as the source of truth.
 - Updated monthly fiscal progression inputs used by calculation rules to align with the planilla fiscal-start month.
 - Deferred vacation ledger side effects to the payroll apply step to avoid mutating balances during generation.
+- Rounded vacation ledger accruals to 2 decimal places for balance consistency.
 
 ### Fixed
 
