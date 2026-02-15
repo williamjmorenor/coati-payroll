@@ -44,7 +44,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <td>
                         {% if nomina.estado == 'calculating' %}
                         <span class="badge bg-primary">
-                            <i class="fas fa-spinner fa-spin"></i> Calculando
+                            <i class="bi bi-arrow-repeat"></i> Calculando
                             {% if nomina.total_empleados and nomina.total_empleados > 0 %}
                             ({{ nomina.empleados_procesados }}/{{ nomina.total_empleados }})
                             {% endif %}
@@ -77,7 +77,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <button type="submit" class="btn btn-sm btn-warning" 
                                     onclick="return confirm('¿Reintentar esta nómina?')"
                                     title="Reintentar Procesamiento">
-                                <i class="fas fa-redo"></i>
+                                <i class="bi bi-arrow-clockwise"></i>
                             </button>
                         </form>
                         {% endif %}
@@ -88,10 +88,11 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         </table>
         {% else %}
         <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> No hay nóminas generadas para esta planilla.
+            <i class="bi bi-info-circle"></i> No hay nóminas generadas para esta planilla.
             <a href="{{ url_for('planilla.ejecutar_nomina', planilla_id=planilla.id) }}">Ejecutar primera nómina</a>
         </div>
         {% endif %}
     </div>
 </div>
 {% endblock %}
+

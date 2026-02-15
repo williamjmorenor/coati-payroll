@@ -18,7 +18,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 
 {% if has_errors %}
 <div class="alert alert-danger mb-4">
-    <h5><i class="fas fa-times-circle"></i> Esta Nómina Tiene Errores de Procesamiento</h5>
+    <h5><i class="bi bi-x-circle"></i> Esta Nómina Tiene Errores de Procesamiento</h5>
     <p class="mb-2">No se puede aprobar ni aplicar esta nómina hasta que se corrijan los siguientes errores:</p>
     <ul class="mb-2">
         {% for error in error_messages %}
@@ -32,7 +32,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </div>
 {% elif has_warnings %}
 <div class="alert alert-warning mb-4">
-    <h5><i class="fas fa-exclamation-triangle"></i> Esta Nómina Tiene Advertencias</h5>
+    <h5><i class="bi bi-exclamation-triangle"></i> Esta Nómina Tiene Advertencias</h5>
     <p class="mb-2">La nómina se procesó pero hay situaciones que requieren su atención:</p>
     <ul class="mb-2">
         {% for warning in warning_messages %}
@@ -49,7 +49,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 <div class="card mb-4 border-primary">
     <div class="card-header bg-primary text-white">
         <h5 class="mb-0">
-            <i class="fas fa-spinner fa-spin"></i> Calculando Nómina en Segundo Plano
+            <i class="bi bi-arrow-repeat"></i> Calculando Nómina en Segundo Plano
         </h5>
     </div>
     <div class="card-body">
@@ -60,7 +60,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         
         <!-- Current employee being processed -->
         <div class="alert alert-info mb-3" id="current-employee-alert">
-            <i class="fas fa-user-clock"></i> 
+            <i class="bi bi-person-clock"></i> 
             <strong>Procesando:</strong> 
             <span id="empleado-actual">{{ nomina.empleado_actual or 'Iniciando...' }}</span>
         </div>
@@ -104,9 +104,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <div class="card">
             <div class="card-header bg-light">
                 <h6 class="mb-0">
-                    <i class="fas fa-list"></i> Registro de Actividad
+                    <i class="bi bi-list-ul"></i> Registro de Actividad
                     <button class="btn btn-sm btn-outline-secondary float-end" onclick="scrollLogToBottom()">
-                        <i class="fas fa-arrow-down"></i> Ir al final
+                        <i class="bi bi-arrow-down"></i> Ir al final
                     </button>
                 </h6>
             </div>
@@ -114,7 +114,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 {% if nomina.log_procesamiento %}
                     {% for entry in nomina.log_procesamiento %}
                     <div class="log-entry {% if entry.status == 'success' %}text-success{% elif entry.status == 'error' %}text-danger{% elif entry.status == 'warning' %}text-warning{% else %}text-muted{% endif %}">
-                        {% if entry.status == 'error' %}<i class="fas fa-times-circle"></i> {% elif entry.status == 'warning' %}<i class="fas fa-exclamation-triangle"></i> {% endif %}{{ entry.message }}
+                        {% if entry.status == 'error' %}<i class="bi bi-x-circle"></i> {% elif entry.status == 'warning' %}<i class="bi bi-exclamation-triangle"></i> {% endif %}{{ entry.message }}
                     </div>
                     {% endfor %}
                 {% else %}
@@ -125,7 +125,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         
         <div class="text-center mt-3">
             <small class="text-muted">
-                <i class="fas fa-sync-alt fa-spin"></i> 
+                <i class="bi bi-arrow-repeat"></i> 
                 Esta página se actualiza automáticamente cada 3 segundos
             </small>
         </div>
@@ -133,7 +133,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </div>
 {% elif nomina.estado == 'error' %}
 <div class="alert alert-danger">
-    <h5><i class="fas fa-exclamation-triangle"></i> Error en el Cálculo de la Nómina</h5>
+    <h5><i class="bi bi-exclamation-triangle"></i> Error en el Cálculo de la Nómina</h5>
     <p>Ocurrió un error durante el cálculo de la nómina. Detalles:</p>
     {% if nomina.errores_calculo %}
     <ul>
@@ -159,12 +159,12 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-warning" 
                     onclick="return confirm('¿Reintentar el procesamiento de esta nómina? Se limpiarán los datos parciales y se intentará procesar nuevamente.')">
-                <i class="fas fa-redo"></i> Reintentar Procesamiento
+                <i class="bi bi-arrow-clockwise"></i> Reintentar Procesamiento
             </button>
         </form>
         {% if nomina.errores_calculo and nomina.errores_calculo.get('is_recoverable') == False %}
         <small class="text-muted d-block mt-2">
-            <i class="fas fa-info-circle"></i> 
+            <i class="bi bi-info-circle"></i> 
             Este error no es recuperable automáticamente. Revise la configuración o los datos antes de reintentar.
         </small>
         {% endif %}
@@ -174,7 +174,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 
 {% if nomina.estado == 'generated' and nomina.empleados_con_error and nomina.empleados_con_error > 0 %}
 <div class="alert alert-warning">
-    <h5><i class="fas fa-exclamation-circle"></i> Advertencia: Algunos Empleados No Se Procesaron Correctamente</h5>
+    <h5><i class="bi bi-exclamation-circle"></i> Advertencia: Algunos Empleados No Se Procesaron Correctamente</h5>
     <p>La nómina se generó exitosamente, pero {{ nomina.empleados_con_error }} empleado(s) tuvieron errores durante el cálculo.</p>
     {% if nomina.errores_calculo %}
     <details>
@@ -236,32 +236,32 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <i class="bi bi-list-check"></i> Novedades
                 </a>
                 <a href="{{ url_for('planilla.ver_log_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-list-alt"></i> Log de Ejecución
+                    <i class="bi bi-card-list"></i> Log de Ejecución
                 </a>
                 {% if nomina.estado in ['generated', 'approved', 'applied'] %}
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-file-excel"></i> Exportar
+                        <i class="bi bi-file-earmark-excel"></i> Exportar
                     </button>
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" href="{{ url_for('planilla.exportar_nomina_excel', planilla_id=planilla.id, nomina_id=nomina.id) }}">
-                                <i class="fas fa-file-excel"></i> Nómina (Excel)
+                                <i class="bi bi-file-earmark-excel"></i> Nómina (Excel)
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="{{ url_for('planilla.exportar_prestaciones_excel', planilla_id=planilla.id, nomina_id=nomina.id) }}">
-                                <i class="fas fa-file-excel"></i> Prestaciones (Excel)
+                                <i class="bi bi-file-earmark-excel"></i> Prestaciones (Excel)
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="{{ url_for('planilla.exportar_comprobante_excel', planilla_id=planilla.id, nomina_id=nomina.id) }}">
-                                <i class="fas fa-file-invoice"></i> Comprobante Contable (Excel)
+                                <i class="bi bi-receipt"></i> Comprobante Contable (Excel)
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="{{ url_for('planilla.exportar_comprobante_detallado_excel', planilla_id=planilla.id, nomina_id=nomina.id) }}">
-                                <i class="fas fa-list-alt"></i> Comprobante Detallado por Empleado (Excel)
+                                <i class="bi bi-card-list"></i> Comprobante Detallado por Empleado (Excel)
                             </a>
                         </li>
                     </ul>
@@ -279,7 +279,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             <div class="col-md-2">
                 <strong>Estado:</strong><br>
                 {% if nomina.estado == 'calculating' %}
-                <span class="badge bg-primary"><i class="fas fa-spinner fa-spin"></i> Calculando</span>
+                <span class="badge bg-primary"><i class="bi bi-arrow-repeat"></i> Calculando</span>
                 {% elif nomina.estado == 'generated' %}
                 <span class="badge bg-warning">Generado</span>
                 {% elif nomina.estado == 'approved' %}
@@ -490,3 +490,4 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </script>
 {% endif %}
 {% endblock %}
+

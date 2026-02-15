@@ -13,12 +13,12 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">
-                        <i class="fas fa-file-excel"></i> {{ _('Carga Masiva de Saldos Iniciales desde Excel') }}
+                        <i class="bi bi-file-earmark-excel"></i> {{ _('Carga Masiva de Saldos Iniciales desde Excel') }}
                     </h4>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
+                        <i class="bi bi-info-circle"></i>
                         <strong>{{ _('Uso:') }}</strong> 
                         {{ _('Use esta función para cargar los saldos iniciales de vacaciones de múltiples empleados desde un archivo Excel durante la implementación del sistema.') }}
                     </div>
@@ -131,7 +131,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                                 
                                 <div class="form-group mt-4">
                                     <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-upload"></i> {{ _('Cargar Saldos Iniciales') }}
+                                        <i class="bi bi-upload"></i> {{ _('Cargar Saldos Iniciales') }}
                                     </button>
                                     <a href="{{ url_for('vacation.dashboard') }}" class="btn btn-secondary">
                                         {{ _('Cancelar') }}
@@ -142,7 +142,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </div>
                     
                     <div class="alert alert-primary mt-4">
-                        <i class="fas fa-lightbulb"></i>
+                        <i class="bi bi-lightbulb"></i>
                         <strong>{{ _('Consejo:') }}</strong> 
                         {{ _('Para cargar un solo empleado o hacer correcciones, use el') }} 
                         <a href="{{ url_for('vacation.initial_balance_form') }}">{{ _('formulario individual') }}</a>.
