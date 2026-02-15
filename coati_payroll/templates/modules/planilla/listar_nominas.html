@@ -9,10 +9,10 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     <h3>Historial de Nóminas: {{ planilla.nombre }}</h3>
     <div>
         <a href="{{ url_for('planilla.edit', planilla_id=planilla.id) }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver a Planilla
+            <i class="bi bi-arrow-left me-1"></i> Volver a Planilla
         </a>
         <a href="{{ url_for('planilla.ejecutar_nomina', planilla_id=planilla.id) }}" class="btn btn-primary">
-            <i class="fas fa-play"></i> Nueva Ejecución
+            <i class="bi bi-play-fill me-1"></i> Nueva Ejecución
         </a>
     </div>
 </div>

@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.sql.functions import count
 from coati_payroll.model import (
     db,
+    Nomina,
     Planilla,
     PlanillaEmpleado,
     PlanillaIngreso,
@@ -38,6 +39,20 @@ def get_planilla_component_counts(planilla_id: str) -> dict:
             select(count()).select_from(PlanillaReglaCalculo).filter_by(planilla_id=planilla_id)
         ).scalar(),
     }
+
+
+def get_nomina_counts_by_planilla(planilla_ids: list[str]) -> dict[str, int]:
+    """Get nomina counts grouped by planilla id."""
+    if not planilla_ids:
+        return {}
+
+    rows = db.session.execute(
+        select(Nomina.planilla_id, count(Nomina.id)).where(Nomina.planilla_id.in_(planilla_ids)).group_by(Nomina.planilla_id)
+    ).all()
+
+    counts = {planilla_id: 0 for planilla_id in planilla_ids}
+    counts.update({planilla_id: total for planilla_id, total in rows})
+    return counts
 
 
 def agregar_asociacion(

@@ -9,8 +9,8 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 <div class="container">
     
     <div class="mb-4">
-        <h2>{{ _('Gestión de Vacaciones') }}</h2>
-        <p class="text-muted">{{ _('Sistema robusto y flexible para el control de vacaciones') }}</p>
+        <h2><i class="bi bi-calendar2-check me-2"></i>{{ _('Gestión de Vacaciones') }}</h2>
+        <p class="text-muted">{{ _('Gestión y control de vacaciones') }}</p>
     </div>
 
     <!-- Statistics Cards -->
@@ -56,13 +56,13 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             <h4>{{ _('Acciones Rápidas') }}</h4>
             <div class="btn-group" role="group">
                 <a href="{{ url_for('vacation.policy_new') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-plus-lg me-1"></i>{{ _('Nueva Política') }}
+                    <i class="bi bi-plus-circle me-1"></i>{{ _('Nueva Política') }}
                 </a>
                 <a href="{{ url_for('vacation.account_new') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-plus-lg me-1"></i>{{ _('Nueva Cuenta') }}
+                    <i class="bi bi-plus-circle me-1"></i>{{ _('Nueva Cuenta') }}
                 </a>
                 <a href="{{ url_for('vacation.leave_request_new') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-plus-lg me-1"></i>{{ _('Nueva Solicitud') }}
+                    <i class="bi bi-plus-circle me-1"></i>{{ _('Nueva Solicitud') }}
                 </a>
                 <a href="{{ url_for('vacation.register_vacation_taken') }}" class="btn btn-success">
                     <i class="bi bi-calendar-check me-1"></i>{{ _('Registrar Vacaciones Descansadas') }}

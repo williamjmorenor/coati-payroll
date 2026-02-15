@@ -90,6 +90,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <th class="text-center">{{ _('Percepciones') }}</th>
                             <th class="text-center">{{ _('Deducciones') }}</th>
                             <th class="text-center">{{ _('Prestaciones') }}</th>
+                            <th class="text-center">{{ _('Nóminas') }}</th>
                             <th class="text-center">{{ _('Activo') }}</th>
                             <th class="text-end">{{ _('Acciones') }}</th>
                         </tr>
@@ -98,7 +99,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {% for planilla in planillas %}
                         <tr>
                             <td>
-                                <strong>{{ planilla.nombre }}</strong>
+                                <strong><a href="{{ url_for('planilla.edit', planilla_id=planilla.id) }}" class="text-decoration-none">{{ planilla.nombre }}</a></strong>
                                 {% if planilla.descripcion %}
                                 <br><small class="text-muted">{{ planilla.descripcion }}</small>
                                 {% endif %}
@@ -128,6 +129,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             </td>
                             <td class="text-center">
                                 <span class="text-muted">{{ planilla.planilla_prestaciones | length }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-muted">{{ nomina_counts.get(planilla.id, 0) }}</span>
                             </td>
                             <td class="text-center">
                                 {% if planilla.activo %}

@@ -10,7 +10,11 @@ from coati_payroll.model import db, Planilla, VacationPolicy
 from coati_payroll.forms import PlanillaForm
 from coati_payroll.i18n import _
 from coati_payroll.rbac import require_read_access, require_write_access
-from coati_payroll.vistas.planilla.helpers import populate_form_choices, get_planilla_component_counts
+from coati_payroll.vistas.planilla.helpers import (
+    populate_form_choices,
+    get_planilla_component_counts,
+    get_nomina_counts_by_planilla,
+)
 from coati_payroll.vistas.planilla.services import PlanillaService
 
 # Import blueprint from __init__.py
@@ -71,6 +75,7 @@ def index():
     empresas = (
         db.session.execute(db.select(Empresa).filter_by(activo=True).order_by(Empresa.razon_social)).scalars().all()
     )
+    nomina_counts = get_nomina_counts_by_planilla([planilla.id for planilla in pagination.items])
 
     return render_template(
         "modules/planilla/index.html",
@@ -82,6 +87,7 @@ def index():
         empresa_id=empresa_id,
         tipos_planilla=tipos_planilla,
         empresas=empresas,
+        nomina_counts=nomina_counts,
     )
 
 

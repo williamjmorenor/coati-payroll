@@ -11,7 +11,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     </h3>
     <div>
         <a href="{{ url_for('planilla.listar_nominas', planilla_id=planilla.id) }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver al Historial
+            <i class="bi bi-arrow-left me-1"></i> Volver al Historial
         </a>
     </div>
 </div>
@@ -200,11 +200,11 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     {% if has_errors %}
                     <button type="button" class="btn btn-success" disabled title="No se puede aprobar una nómina con errores de procesamiento">
-                        <i class="fas fa-check"></i> Aprobar
+                        <i class="bi bi-check-circle me-1"></i> Aprobar
                     </button>
                     {% else %}
                     <button type="submit" class="btn btn-success" onclick="return confirm('¿Aprobar esta nómina?')">
-                        <i class="fas fa-check"></i> Aprobar
+                        <i class="bi bi-check-circle me-1"></i> Aprobar
                     </button>
                     {% endif %}
                 </form>
@@ -213,7 +213,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                       method="post" style="display: inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-primary" onclick="return confirm('¿Marcar como aplicada/pagada?')">
-                        <i class="fas fa-money-bill"></i> Aplicar/Pagar
+                        <i class="bi bi-cash-coin me-1"></i> Aplicar/Pagar
                     </button>
                 </form>
                 {% endif %}
@@ -222,7 +222,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                       method="post" style="display: inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-warning" onclick="return confirm('¿Recalcular esta nómina? Se eliminarán los datos actuales y se generarán nuevamente.')">
-                        <i class="fas fa-sync-alt"></i> Recalcular
+                        <i class="bi bi-arrow-clockwise me-1"></i> Recalcular
                     </button>
                 </form>
                 {% endif %}

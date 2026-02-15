@@ -11,6 +11,7 @@ from coati_payroll.vistas.planilla.helpers.excel_helpers import check_openpyxl_a
 from coati_payroll.vistas.planilla.helpers.association_helpers import (
     agregar_asociacion,
     get_planilla_component_counts,
+    get_nomina_counts_by_planilla,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "check_openpyxl_available",
     "agregar_asociacion",
     "get_planilla_component_counts",
+    "get_nomina_counts_by_planilla",
 ]
