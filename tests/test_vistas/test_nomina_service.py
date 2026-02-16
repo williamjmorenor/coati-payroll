@@ -191,11 +191,13 @@ class TestEjecutarNomina:
 
     @patch("coati_payroll.vistas.planilla.services.nomina_service.get_queue_driver")
     @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
+    @patch("coati_payroll.vistas.planilla.services.nomina_service.DramatiqDriver")
     def test_ejecutar_nomina_background_large_payroll(
-        self, mock_engine_class, mock_get_queue, app, db_session, planilla, moneda, empresa, admin_user
+        self, mock_dramatiq_driver, mock_engine_class, mock_get_queue, app, db_session, planilla, moneda, empresa, admin_user
     ):
         """Test background execution for large payroll (above threshold)."""
         with app.app_context():
+            app.config["QUEUE_ENABLED"] = True
             # Create many employees to exceed threshold
             # Default threshold is 100, so create 101 employees
             for i in range(101):
@@ -223,8 +225,9 @@ class TestEjecutarNomina:
             db_session.commit()
             db_session.refresh(planilla)
 
-            # Mock queue driver
-            mock_queue = MagicMock()
+            # Mock queue driver as Dramatiq available
+            mock_queue = mock_dramatiq_driver.return_value
+            mock_queue.is_available.return_value = True
             mock_get_queue.return_value = mock_queue
 
             # Setup
@@ -262,11 +265,14 @@ class TestEjecutarNomina:
             mock_engine_class.assert_not_called()
 
     @patch("coati_payroll.vistas.planilla.services.nomina_service.get_queue_driver")
-    def test_ejecutar_nomina_background_queue_error(
-        self, mock_get_queue, app, db_session, planilla, moneda, empresa, admin_user
+    @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
+    @patch("coati_payroll.vistas.planilla.services.nomina_service.DramatiqDriver")
+    def test_ejecutar_nomina_background_queue_error_falls_back_to_sync(
+        self, mock_dramatiq_driver, mock_engine_class, mock_get_queue, app, db_session, planilla, moneda, empresa, admin_user
     ):
-        """Test background execution handles queue errors gracefully."""
+        """Test queue enqueue failure falls back to synchronous execution."""
         with app.app_context():
+            app.config["QUEUE_ENABLED"] = True
             # Create many employees to exceed threshold
             for i in range(101):
                 empleado = Empleado(
@@ -293,10 +299,19 @@ class TestEjecutarNomina:
             db_session.commit()
             db_session.refresh(planilla)
 
-            # Mock queue driver to raise an error
-            mock_queue = MagicMock()
+            # Mock queue driver (Dramatiq) and force enqueue failure
+            mock_queue = mock_dramatiq_driver.return_value
+            mock_queue.is_available.return_value = True
             mock_queue.enqueue.side_effect = Exception("Queue connection failed")
             mock_get_queue.return_value = mock_queue
+
+            # Mock synchronous engine fallback
+            mock_engine = MagicMock()
+            mock_nomina = MagicMock(spec=Nomina)
+            mock_engine.ejecutar.return_value = mock_nomina
+            mock_engine.errors = []
+            mock_engine.warnings = []
+            mock_engine_class.return_value = mock_engine
 
             # Setup
             periodo_inicio = date(2024, 1, 1)
@@ -313,18 +328,12 @@ class TestEjecutarNomina:
                 usuario=usuario,
             )
 
-            # Assert
-            assert nomina is None
-            assert len(errors) == 1
-            assert "Error al iniciar el procesamiento en segundo plano" in errors[0]
-            assert "Queue connection failed" in errors[0]
+            # Assert fallback to sync happened
+            assert nomina == mock_nomina
+            assert errors == []
             assert warnings == []
-
-            # Verify nomina was created but marked as ERROR
-            nomina_in_db = db_session.query(Nomina).filter_by(planilla_id=planilla.id).first()
-            assert nomina_in_db is not None
-            assert nomina_in_db.estado == NominaEstado.ERROR
-            assert "background_task_initialization_error" in nomina_in_db.errores_calculo
+            mock_queue.enqueue.assert_called_once()
+            mock_engine.ejecutar.assert_called_once()
 
 
 # ============================================================================

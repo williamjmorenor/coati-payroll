@@ -5,7 +5,6 @@
 This module provides a unified interface for background job processing
 with automatic backend selection:
 - Dramatiq + Redis (production/high-scale deployments)
-- Huey + Filesystem (fallback for environments without Redis)
 
 Usage:
     from coati_payroll.queue import get_queue_driver
