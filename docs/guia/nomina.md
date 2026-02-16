@@ -186,6 +186,19 @@ stateDiagram-v2
 | **Aprobado** | Nómina revisada, autorizada para pago | Aplicar |
 | **Aplicado** | Nómina pagada | Solo consulta |
 
+### Efectos por estado (importante para auditoría)
+
+El cálculo y la contabilización se separan por estado para evitar duplicidades al recalcular:
+
+- **Generado / Aprobado**:
+  - Se recalculan montos y detalles de nómina.
+  - **No** se aplican mutaciones definitivas del libro mayor de vacaciones ni de acumulados de prestaciones.
+- **Aplicado/Pagado**:
+  - Se materializan los efectos definitivos en ledger (vacaciones y prestaciones acumuladas).
+  - Se registran usuarios de trazabilidad (`generado_por`, `aprobado_por`, `aplicado_por`) para auditoría.
+
+Esto permite recalcular borradores sin afectar saldos históricos y mantiene el proceso idempotente hasta el momento de aplicar la nómina.
+
 ### Aprobar Nómina
 
 1. Revise el detalle de la nómina
@@ -193,7 +206,7 @@ stateDiagram-v2
 3. Haga clic en **Aprobar**
 
 !!! warning "Revisar Antes de Aprobar"
-    Una vez aprobada, no es posible modificar la nómina. Revise cuidadosamente todos los detalles.
+    Aunque puede recalcular una nómina en estado **Aprobado**, es una buena práctica validar el detalle antes de aprobar para reducir recálculos y facilitar auditorías.
 
 ### Aplicar Nómina
 

@@ -94,11 +94,17 @@ Las siguientes variables de entorno son utilizadas por el sistema:
 
 | Variable | Descripción | Requerida |
 |----------|-------------|-----------|
-| `DATABASE_URL` | URI de conexión a la base de datos | No (usa SQLite por defecto) |
+| `FLASK_ENV` | Entorno de ejecución (`development`/`production`) | Sí (producción) |
+| `DATABASE_URL` | URI de conexión a la base de datos | Sí (producción) |
 | `SECRET_KEY` | Clave secreta para sesiones | Sí (producción) |
-| `ADMIN_USER` | Usuario administrador inicial | No (default: `coati-admin`) |
-| `ADMIN_PASSWORD` | Contraseña del administrador | No (default: `coati-admin`) |
+| `ADMIN_USER` | Usuario administrador inicial | Sí (producción) |
+| `ADMIN_PASSWORD` | Contraseña del administrador | Sí (producción) |
 | `SESSION_REDIS_URL` | URL de Redis para sesiones | No |
+| `REDIS_URL` | URL de Redis para cola | No |
+| `QUEUE_ENABLED` | Habilita/deshabilita colas | No (default: `1`) |
+| `COATI_QUEUE_PATH` | Ruta para cola en filesystem (Huey) | No |
+| `BACKGROUND_PAYROLL_THRESHOLD` | Umbral de empleados para cola | No (default: `100`) |
+| `MAX_CONTENT_LENGTH` | Límite de subida en bytes | No (default: `2097152`) |
 | `PORT` | Puerto de la aplicación | No (default: 5000) |
 
 !!! warning "Seguridad"

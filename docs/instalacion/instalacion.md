@@ -112,14 +112,36 @@ pip install -r requirements.txt
 
 ### 4. Configurar Variables de Entorno
 
+Coati Payroll sigue el enfoque **12-factor app**: la configuración de runtime se lee desde variables de entorno.
+
+En **producción** (`FLASK_ENV=production`) estas variables son obligatorias porque el arranque las valida en `app.py`:
+
+- `FLASK_ENV=production`
+- `DATABASE_URL`
+- `SECRET_KEY`
+- `ADMIN_USER`
+- `ADMIN_PASSWORD`
+
+Variables opcionales recomendadas:
+
+- `PORT` (por defecto `5000`)
+- `MAX_CONTENT_LENGTH` (por defecto `2097152`)
+- `QUEUE_ENABLED` (por defecto `1`)
+- `REDIS_URL` (si desea Dramatiq/Redis)
+- `COATI_QUEUE_PATH` (si usa Huey filesystem)
+- `BACKGROUND_PAYROLL_THRESHOLD` (por defecto `100`)
+
 Cree un archivo `.env` o configure las variables directamente:
 
 ```bash
+export FLASK_ENV=production
 export DATABASE_URL="postgresql://coati_user:contraseña@localhost:5432/coati_db"
 export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
 export ADMIN_USER="admin"
 export ADMIN_PASSWORD="tu_contraseña_segura"
 export MAX_CONTENT_LENGTH=2097152  # ~2 MB (~1000 filas Excel típicas)
+export QUEUE_ENABLED=1
+export BACKGROUND_PAYROLL_THRESHOLD=100
 export PORT=5000
 ```
 
@@ -144,8 +166,7 @@ User=coati
 Group=coati
 WorkingDirectory=/home/coati/coati
 Environment="PATH=/home/coati/coati/venv/bin"
-Environment="DATABASE_URL=postgresql://coati_user:contraseña@localhost:5432/coati_db"
-Environment="SECRET_KEY=tu_clave_secreta"
+EnvironmentFile=/etc/coati-payroll/coati.env
 ExecStart=/home/coati/coati/venv/bin/python app.py
 Restart=always
 RestartSec=10
@@ -153,6 +174,22 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 ```
+
+Archivo recomendado: `/etc/coati-payroll/coati.env`
+
+```bash
+FLASK_ENV=production
+DATABASE_URL=postgresql://coati_user:contraseña@localhost:5432/coati_db
+SECRET_KEY=tu_clave_secreta
+ADMIN_USER=admin
+ADMIN_PASSWORD=tu_contraseña_segura
+PORT=5000
+MAX_CONTENT_LENGTH=2097152
+QUEUE_ENABLED=1
+BACKGROUND_PAYROLL_THRESHOLD=100
+```
+
+Este enfoque evita hardcodear secretos en la unidad y mantiene consistencia con el modelo 12-factor.
 
 ```bash
 # Habilitar e iniciar el servicio
@@ -201,6 +238,33 @@ sudo apt-get install certbot python3-certbot-nginx
 # Obtener certificado SSL
 sudo certbot --nginx -d tu_dominio.com
 ```
+
+
+## Ejecución en Contenedor Docker (Producción)
+
+El `Dockerfile` define `FLASK_ENV=production` por defecto y el contenedor inicia con `docker-entrypoint.sh`, que ejecuta:
+
+1. `payrollctl database init`
+2. `payrollctl database migrate`
+3. `python app.py`
+
+Por ello, al correr en producción debe inyectar todas las variables requeridas por `app.py`:
+
+```bash
+docker run -d --name coati-payroll \
+  -p 5000:5000 \
+  -e FLASK_ENV=production \
+  -e DATABASE_URL="postgresql://coati_user:password@db:5432/coati_db" \
+  -e SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')" \
+  -e ADMIN_USER="admin" \
+  -e ADMIN_PASSWORD="tu_password_seguro" \
+  -e PORT=5000 \
+  -e QUEUE_ENABLED=1 \
+  -e BACKGROUND_PAYROLL_THRESHOLD=100 \
+  coati-payroll:latest
+```
+
+Si omite `DATABASE_URL`, `SECRET_KEY`, `ADMIN_USER` o `ADMIN_PASSWORD` con `FLASK_ENV=production`, el proceso fallará en arranque por validaciones explícitas.
 
 ## Verificar la Instalación
 

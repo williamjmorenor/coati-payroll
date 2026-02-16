@@ -275,9 +275,18 @@ El comprobante se puede exportar a Excel para revisión y análisis:
 2. Hacer clic en **"Exportar Comprobante Contable a Excel"**
 3. El archivo descargado incluirá:
    - Información de la planilla y período
+   - Identificadores de trazabilidad de la ejecución (`ID planilla` y `estado de nómina`)
    - Detalle de todos los asientos contables
    - Totales de débitos y créditos
    - Indicador visual de balance
+
+Además, al pie del archivo se incluye una sección de **Trazabilidad de Usuario** con:
+
+- `Creado por`
+- `Aprobado por`
+- `Aplicado por`
+
+Esta sección facilita conciliación operativa y auditorías internas cuando un mismo comprobante atraviesa varias etapas del flujo de nómina.
 
 ## Guía de Depuración
 

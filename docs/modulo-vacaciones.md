@@ -316,6 +316,19 @@ Representa una solicitud de vacaciones que afecta el balance cuando es aprobada.
    c. Se integra con nómina para pago
 ```
 
+### Consideraciones de recálculo y aplicación
+
+Para mantener consistencia contable y evitar dobles acumulaciones, el sistema opera así:
+
+- La **acumulación de vacaciones** se calcula durante la generación/revisión de nómina, pero el movimiento definitivo en `VacationLedger` se materializa al **aplicar/pagar** la nómina.
+- Al recalcular una nómina no aplicada, se limpian referencias heredadas del recálculo previo para impedir duplicados en el ledger.
+- Los montos de acumulación se redondean a **2 decimales** para mantener balances estables entre recálculos y exportaciones.
+- En políticas periódicas, `prorate_by_period_days` permite elegir entre:
+  - aplicar la tasa completa mensual (valor recomendado por defecto en configuración estándar Nicaragua), o
+  - prorratear por días reales del período (útil para periodos parciales).
+
+Este diseño permite recalcular borradores sin contaminar saldos históricos y dejar la mutación contable para el cierre operativo de la nómina.
+
 ## Casos de Uso Cubiertos
 
 ### ✅ LATAM (Ejemplo: Nicaragua)

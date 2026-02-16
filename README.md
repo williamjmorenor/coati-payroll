@@ -122,7 +122,7 @@ docker run -d -p 5000:5000 \
   coati-payroll:latest
 ```
 
-3. **Run with production settings (requires database)**
+3. **Run with production settings (12-factor, required env vars)**
 
 ```bash
 docker run -d -p 5000:5000 \
@@ -131,9 +131,12 @@ docker run -d -p 5000:5000 \
   -e SECRET_KEY="your-secret-key-here" \
   -e ADMIN_USER="admin" \
   -e ADMIN_PASSWORD="secure-password" \
+  -e PORT=5000 \
   --name coati-payroll \
   coati-payroll:latest
 ```
+
+> In `FLASK_ENV=production`, the app startup validates `DATABASE_URL`, `SECRET_KEY`, `ADMIN_USER`, and `ADMIN_PASSWORD`.
 
 4. **Access the system**
 
@@ -383,18 +386,23 @@ payrollctl debug routes
 
 ### Environment Variables
 
-| Variable | Description | Default Value |
-|----------|-------------|---------------|
-| `DATABASE_URL` | Database connection URI | Local SQLite |
-| `SECRET_KEY` | Secret key for sessions | Auto-generated |
-| `ADMIN_USER` | Initial admin user | `coati-admin` |
-| `ADMIN_PASSWORD` | Admin password | `coati-admin` |
-| `PORT` | Application port | `5000` |
-| `SESSION_REDIS_URL` | Redis URL for sessions | None (uses SQLAlchemy) |
-| `REDIS_URL` | Redis URL for queue system | None (uses Huey) |
-| `QUEUE_ENABLED` | Enable queue system | `1` |
-| `COATI_QUEUE_PATH` | Path for Huey storage | Auto-detected |
-| `BACKGROUND_PAYROLL_THRESHOLD` | Employee threshold for background processing | `100` |
+| Variable | Description | Required in `FLASK_ENV=production` | Default (non-production) |
+|----------|-------------|--------------------------------------|--------------------------|
+| `FLASK_ENV` | Runtime environment (`development` / `production`) | Yes | `production` in Docker image |
+| `DATABASE_URL` | Database connection URI | Yes | Local SQLite file |
+| `SECRET_KEY` | Secret key for sessions | Yes | `dev` (unsafe for production) |
+| `ADMIN_USER` | Initial admin user (startup/bootstrap) | Yes | `coati-admin` |
+| `ADMIN_PASSWORD` | Initial admin password (startup/bootstrap) | Yes | `coati-admin` |
+| `PORT` | Application port | No | `5000` |
+| `MAX_CONTENT_LENGTH` | Max upload size in bytes | No | `2097152` (~2 MB) |
+| `SESSION_REDIS_URL` | Redis URL for sessions/rate limit backend | No | None (SQLAlchemy session backend) |
+| `REDIS_URL` | Redis URL for queue backend auto-selection | No | None (Huey filesystem fallback) |
+| `QUEUE_ENABLED` | Enable queue processing | No | `1` |
+| `COATI_QUEUE_PATH` | Path for Huey queue files | No | Driver-managed path |
+| `BACKGROUND_PAYROLL_THRESHOLD` | Employee threshold for background payroll | No | `100` |
+| `COATI_AUTO_MIGRATE` | Enable automatic migration behavior | No | `0` |
+
+> Coati Payroll follows a 12-factor approach: runtime configuration is sourced from environment variables.
 
 ### Database
 
