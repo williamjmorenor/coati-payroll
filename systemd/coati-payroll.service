@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
+#
+# Coati Payroll - Main Application Service
+#
+# This systemd unit file manages the Coati Payroll web application.
+#
+# Installation:
+#   1. Copy this file to /etc/systemd/system/coati-payroll.service
+#   2. Edit the Environment variables below to match your deployment
+#   3. Run: sudo systemctl daemon-reload
+#   4. Run: sudo systemctl enable coati-payroll
+#   5. Run: sudo systemctl start coati-payroll
+#
+# Usage:
+#   - Start:   sudo systemctl start coati-payroll
+#   - Stop:    sudo systemctl stop coati-payroll
+#   - Restart: sudo systemctl restart coati-payroll
+#   - Status:  sudo systemctl status coati-payroll
+#   - Logs:    sudo journalctl -u coati-payroll -f
+
+[Unit]
+Description=Coati Payroll Application
+Documentation=https://github.com/williamjmorenor/coati-payroll
+After=network.target postgresql.service redis.service
+Wants=coati-payroll-worker.service
+
+[Service]
+Type=simple
+User=coati
+Group=coati
+WorkingDirectory=/home/coati/coati-payroll
+
+# Path to Python virtual environment
+Environment="PATH=/home/coati/coati-payroll/venv/bin"
+
+# Database configuration
+Environment="DATABASE_URL=postgresql://coati_user:CHANGE_ME@localhost:5432/coati_db"
+
+# Security
+Environment="SECRET_KEY=CHANGE_ME_TO_RANDOM_SECRET"
+
+# Admin credentials
+Environment="ADMIN_USER=admin"
+Environment="ADMIN_PASSWORD=CHANGE_ME"
+
+# Application settings
+Environment="PORT=5000"
+Environment="MAX_CONTENT_LENGTH=2097152"
+
+# Queue system (requires Redis and coati-payroll-worker.service)
+Environment="QUEUE_ENABLED=1"
+Environment="REDIS_URL=redis://localhost:6379/0"
+Environment="BACKGROUND_PAYROLL_THRESHOLD=100"
+
+# Session storage (optional, uses Redis if configured)
+Environment="SESSION_REDIS_URL=redis://localhost:6379/1"
+
+# Start the application
+ExecStart=/home/coati/coati-payroll/venv/bin/python /home/coati/coati-payroll/app.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=coati-payroll
+
+[Install]
+WantedBy=multi-user.target

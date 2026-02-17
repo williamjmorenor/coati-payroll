@@ -128,41 +128,84 @@ export PORT=5000
 
 ### 5. Configurar Servicio Systemd
 
-Cree un archivo de servicio para gestionar la aplicación:
+El repositorio incluye archivos de servicio systemd de ejemplo en el directorio `systemd/`:
+
+- `coati-payroll.service`: Servicio principal de la aplicación web
+- `coati-payroll-worker.service`: Worker Dramatiq para procesamiento en segundo plano
+
+#### Opción A: Instalación Completa (con procesamiento en segundo plano)
+
+Si desea habilitar el procesamiento de planillas grandes en segundo plano, necesita **ambos** servicios y Redis:
 
 ```bash
-sudo nano /etc/systemd/system/coati.service
-```
+# Instalar Redis
+sudo apt-get install redis-server
+sudo systemctl enable redis
+sudo systemctl start redis
 
-```ini
-[Unit]
-Description=Coati Payroll Application
-After=network.target postgresql.service
+# Copiar archivos de servicio
+sudo cp systemd/coati-payroll.service /etc/systemd/system/
+sudo cp systemd/coati-payroll-worker.service /etc/systemd/system/
 
-[Service]
-User=coati
-Group=coati
-WorkingDirectory=/home/coati/coati
-Environment="PATH=/home/coati/coati/venv/bin"
-Environment="DATABASE_URL=postgresql://coati_user:contraseña@localhost:5432/coati_db"
-Environment="SECRET_KEY=tu_clave_secreta"
-ExecStart=/home/coati/coati/venv/bin/python app.py
-Restart=always
-RestartSec=10
+# Editar variables de entorno en ambos archivos
+sudo nano /etc/systemd/system/coati-payroll.service
+sudo nano /etc/systemd/system/coati-payroll-worker.service
 
-[Install]
-WantedBy=multi-user.target
-```
+# Cambiar al menos:
+# - DATABASE_URL
+# - SECRET_KEY
+# - REDIS_URL
+# - ADMIN_USER y ADMIN_PASSWORD
 
-```bash
-# Habilitar e iniciar el servicio
+# Recargar systemd
 sudo systemctl daemon-reload
-sudo systemctl enable coati
-sudo systemctl start coati
+
+# Habilitar e iniciar servicios (worker primero)
+sudo systemctl enable coati-payroll-worker
+sudo systemctl enable coati-payroll
+sudo systemctl start coati-payroll-worker
+sudo systemctl start coati-payroll
 
 # Verificar estado
-sudo systemctl status coati
+sudo systemctl status coati-payroll-worker
+sudo systemctl status coati-payroll
 ```
+
+#### Opción B: Instalación Básica (sin procesamiento en segundo plano)
+
+Si no necesita procesamiento en segundo plano, puede instalar solo el servicio principal:
+
+```bash
+# Copiar y editar el archivo de servicio principal
+sudo cp systemd/coati-payroll.service /etc/systemd/system/
+
+# Editar el archivo y cambiar QUEUE_ENABLED=0
+sudo nano /etc/systemd/system/coati-payroll.service
+
+# Cambiar:
+# Environment="QUEUE_ENABLED=0"
+
+# Recargar systemd
+sudo systemctl daemon-reload
+
+# Habilitar e iniciar el servicio
+sudo systemctl enable coati-payroll
+sudo systemctl start coati-payroll
+
+# Verificar estado
+sudo systemctl status coati-payroll
+```
+
+!!! info "Procesamiento en Segundo Plano"
+    El worker Dramatiq es **requerido** cuando:
+    
+    - `QUEUE_ENABLED=1`
+    - Redis está disponible
+    - Las planillas tienen más empleados que `BACKGROUND_PAYROLL_THRESHOLD` (default: 100)
+    
+    Si no se cumple alguna condición, el cálculo se ejecuta sincrónicamente.
+
+Para más detalles sobre la configuración de systemd, consulte [systemd/README.md](../../systemd/README.md).
 
 ### 6. Configurar Proxy Inverso (Nginx)
 
