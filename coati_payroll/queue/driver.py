@@ -11,7 +11,7 @@ from typing import Any, Callable
 class QueueDriver(ABC):
     """Abstract base class for queue drivers.
 
-    All queue implementations (Dramatiq, Huey) must implement this interface
+    All queue implementations (currently Dramatiq) must implement this interface
     to provide a consistent API for background job processing.
     """
 

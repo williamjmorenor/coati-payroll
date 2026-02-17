@@ -11,7 +11,6 @@ from coati_payroll.queue.driver import QueueDriver
 
 # Error messages
 ERROR_DRAMATIQ_NOT_AVAILABLE = "Dramatiq driver not available"
-ERROR_HUEY_NOT_AVAILABLE = "Huey driver not available"
 
 
 class DramatiqDriver(QueueDriver):

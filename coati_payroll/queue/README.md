@@ -53,7 +53,6 @@ coati_payroll/queue/
 └── drivers/
     ├── dramatiq_driver.py
     ├── noop_driver.py
-    └── huey_driver.py (legado, no usado por selector)
 ```
 
 ## Troubleshooting

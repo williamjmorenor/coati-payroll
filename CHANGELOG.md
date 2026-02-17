@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restricted payroll background processing to Dramatiq+Redis only; removed operational fallback to Huey.
 - Updated queue and background payroll documentation to reflect Dramatiq+Redis as the only supported background backend and Noop degradation when Redis is unavailable.
 - Removed `huey` from runtime dependencies in `requirements.txt`.
+- Removed legacy `coati_payroll/queue/drivers/huey_driver.py` and remaining runtime references to Huey.
 
 ## [1.6.0] - 2026-02-15
 
