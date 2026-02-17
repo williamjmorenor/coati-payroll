@@ -11,7 +11,7 @@
 - **Formula Engine** (`coati_payroll/formula_engine/`): Uses AST and Visitor patterns for safe, dynamic formula evaluation. All calculation logic is schema-driven.
 - **Payroll Engine** (`coati_payroll/nomina_engine/`): Orchestrates payroll execution using domain, validator, calculator, processor, repository, and service layers. Follows clear separation of concerns.
 - **RBAC** (`coati_payroll/rbac.py`): Role-based access control with Admin, HR, and Audit roles.
-- **Queue System** (`coati_payroll/queue/`): Supports Dramatiq+Redis (prod) and Huey+FS (dev), with automatic backend selection.
+- **Queue System** (`coati_payroll/queue/`): Supports Dramatiq+Redis for background processing. If Redis is unavailable, uses NoopQueueDriver (synchronous execution).
 - **Internationalization**: All user-facing text is translatable via `coati_payroll/translations/`.
 - **Configuration**: Environment variables control DB, queue, and other settings. See README for details.
 
@@ -53,7 +53,7 @@
 
 - To add a new payroll concept: define it in configuration, not code.
 - To add a test: use a factory to create data, ensure no shared state, and verify both HTTP and DB results.
-- To run a background payroll: ensure `QUEUE_ENABLED=1` and Redis/Huey is configured.
+- To run a background payroll: ensure `QUEUE_ENABLED=1` and Redis is configured and available.
 
 ---
 

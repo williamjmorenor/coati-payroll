@@ -77,11 +77,6 @@ Fecha en que el empleado dejó de trabajar en la empresa.
 ### Gravable
 Que está sujeto al pago de impuestos. Una percepción gravable aumenta la base sobre la cual se calcula el IR.
 
-## H
-
-### Huey
-Sistema de colas de tareas ligero que usa filesystem como backend. Utilizado como fallback automático cuando Redis no está disponible, ideal para desarrollo y entornos pequeños.
-
 ## I
 
 ### INATEC
