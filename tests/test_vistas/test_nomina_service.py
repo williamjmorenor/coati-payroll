@@ -25,6 +25,7 @@ from coati_payroll.model import (
     TipoPlanilla,
 )
 from coati_payroll.vistas.planilla.services.nomina_service import NominaService
+from coati_payroll.queue.drivers.dramatiq_driver import DramatiqDriver
 
 
 # ============================================================================
@@ -191,9 +192,8 @@ class TestEjecutarNomina:
 
     @patch("coati_payroll.vistas.planilla.services.nomina_service.get_queue_driver")
     @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
-    @patch("coati_payroll.vistas.planilla.services.nomina_service.DramatiqDriver")
     def test_ejecutar_nomina_background_large_payroll(
-        self, mock_dramatiq_driver, mock_engine_class, mock_get_queue, app, db_session, planilla, moneda, empresa, admin_user
+        self, mock_engine_class, mock_get_queue, app, db_session, planilla, moneda, empresa, admin_user
     ):
         """Test background execution for large payroll (above threshold)."""
         with app.app_context():
@@ -226,7 +226,7 @@ class TestEjecutarNomina:
             db_session.refresh(planilla)
 
             # Mock queue driver as Dramatiq available
-            mock_queue = mock_dramatiq_driver.return_value
+            mock_queue = MagicMock(spec=DramatiqDriver)
             mock_queue.is_available.return_value = True
             mock_get_queue.return_value = mock_queue
 
@@ -266,9 +266,8 @@ class TestEjecutarNomina:
 
     @patch("coati_payroll.vistas.planilla.services.nomina_service.get_queue_driver")
     @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
-    @patch("coati_payroll.vistas.planilla.services.nomina_service.DramatiqDriver")
     def test_ejecutar_nomina_background_queue_error_falls_back_to_sync(
-        self, mock_dramatiq_driver, mock_engine_class, mock_get_queue, app, db_session, planilla, moneda, empresa, admin_user
+        self, mock_engine_class, mock_get_queue, app, db_session, planilla, moneda, empresa, admin_user
     ):
         """Test queue enqueue failure falls back to synchronous execution."""
         with app.app_context():
@@ -300,7 +299,7 @@ class TestEjecutarNomina:
             db_session.refresh(planilla)
 
             # Mock queue driver (Dramatiq) and force enqueue failure
-            mock_queue = mock_dramatiq_driver.return_value
+            mock_queue = MagicMock(spec=DramatiqDriver)
             mock_queue.is_available.return_value = True
             mock_queue.enqueue.side_effect = Exception("Queue connection failed")
             mock_get_queue.return_value = mock_queue
