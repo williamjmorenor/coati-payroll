@@ -181,68 +181,67 @@ For production deployments requiring scalability and fault isolation:
 
 **Using Docker Compose** (recommended):
 
-Create `docker-compose.yml`:
+A production-ready `docker-compose.yml` is provided in the repository with:
+- **Nginx reverse proxy** (serves static files and handles HTTPS)
+- PostgreSQL database (with MySQL as commented alternative)
+- Redis for queue and cache
+- Dedicated worker container
+- Web application container (WSGI server)
+- Certbot for Let's Encrypt SSL certificates (optional)
+- Health checks and proper service dependencies
 
-```yaml
-version: '3.8'
+**Quick start**:
 
-services:
-  redis:
-    image: redis:alpine
-    restart: always
-    volumes:
-      - redis-data:/data
+```bash
+# 1. Copy and customize environment variables
+cp .env.example .env
+# Edit .env and set secure passwords and secrets!
 
-  postgres:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      POSTGRES_DB: coati_payroll
-      POSTGRES_USER: coati
-      POSTGRES_PASSWORD: changeme
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+# 2. Start all services
+docker-compose up -d
 
-  web:
-    image: coati-payroll:latest
-    restart: always
-    ports:
-      - "5000:5000"
-    environment:
-      FLASK_ENV: production
-      DATABASE_URL: postgresql://coati:changeme@postgres:5432/coati_payroll
-      SECRET_KEY: change-this-to-a-random-secret
-      ADMIN_USER: admin
-      ADMIN_PASSWORD: changeme
-      QUEUE_ENABLED: 1
-      PROCESS_ROLE: web
-      REDIS_URL: redis://redis:6379/0
-      BACKGROUND_PAYROLL_THRESHOLD: 100
-    depends_on:
-      - postgres
-      - redis
+# 3. View logs
+docker-compose logs -f
 
-  worker:
-    image: coati-payroll:latest
-    restart: always
-    environment:
-      FLASK_ENV: production
-      DATABASE_URL: postgresql://coati:changeme@postgres:5432/coati_payroll
-      QUEUE_ENABLED: 1
-      PROCESS_ROLE: worker
-      REDIS_URL: redis://redis:6379/0
-      DRAMATIQ_WORKER_THREADS: 8
-      DRAMATIQ_WORKER_PROCESSES: 2
-    depends_on:
-      - postgres
-      - redis
-
-volumes:
-  redis-data:
-  postgres-data:
+# 4. Access the application
+# HTTP: http://localhost or http://your-server-ip
+# HTTPS: https://your-domain.com (after configuring SSL)
 ```
 
-Start with: `docker-compose up -d`
+**Static files are served by nginx**, not the WSGI server. This provides:
+- Faster delivery of CSS, JavaScript, and images
+- Reduced load on the application server
+- Better caching and compression
+
+**HTTPS setup with Let's Encrypt**:
+
+For production deployments with SSL certificates:
+
+```bash
+# Run the Let's Encrypt initialization script
+chmod +x nginx/init-letsencrypt.sh
+./nginx/init-letsencrypt.sh your-domain.com your-email@example.com
+
+# Edit nginx/nginx.conf and uncomment the HTTPS server block
+# Uncomment the certbot service in docker-compose.yml
+
+# Restart services
+docker-compose restart nginx
+```
+
+See `nginx/README.md` for detailed HTTPS configuration instructions.
+
+**Scale workers** (if you need more processing capacity):
+```bash
+docker-compose up -d --scale worker=3
+```
+
+**Using MySQL instead of PostgreSQL**:
+Edit `docker-compose.yml` and:
+1. Comment out the `postgres` service
+2. Uncomment the `mysql` service
+3. Update `DATABASE_URL` in `web` and `worker` services
+4. Update `depends_on` to reference `mysql` instead of `postgres`
 
 **Or using individual containers**:
 
