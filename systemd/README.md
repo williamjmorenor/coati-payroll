@@ -2,10 +2,45 @@
 
 This directory contains systemd service unit files for deploying Coati Payroll on Linux systems using systemd.
 
+## Architecture
+
+The systemd deployment follows **Option 3** (separate processes) architecture:
+
+- **Web Service** (`coati-payroll.service`): Serves the Flask application
+- **Worker Service** (`coati-payroll-worker.service`): Processes background payroll jobs with Dramatiq
+
+This separation provides:
+- Independent scaling of web and worker components
+- Fault isolation (worker failures don't affect web serving)
+- Optimized resource allocation per component
+- Standard production deployment pattern
+
 ## Files
 
 - **coati-payroll.service**: Main web application service
 - **coati-payroll-worker.service**: Dramatiq background worker service for processing payroll jobs
+
+## Deployment Options
+
+### Option A: Full Setup (Web + Worker + Background Processing)
+
+Use **both** services for production deployments with background payroll processing:
+
+- Web service handles HTTP requests
+- Worker service processes large payroll calculations asynchronously
+- Both services share the same database and Redis
+
+**Recommended for**: Production environments with >100 employees per payroll
+
+### Option B: Web Only (No Background Processing)
+
+Use **only** the web service if background processing is not needed:
+
+- Set `QUEUE_ENABLED=0` in the web service
+- Do not install/start the worker service
+- All payroll calculations execute synchronously
+
+**Recommended for**: Small deployments with <100 employees per payroll
 
 ## Prerequisites
 

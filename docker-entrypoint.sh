@@ -31,25 +31,52 @@ if [ ! -x "$DRAMATIQ" ]; then
   exit 1
 fi
 
-echo "[entrypoint] Initializing database: payrollctl database init"
-$PAYROLLCTL database init || true
+# Determine process role
+# Options: web (only app), worker (only Dramatiq), all (app + worker in same container)
+PROCESS_ROLE="${PROCESS_ROLE:-all}"
 
-echo "[entrypoint] Running migrations: payrollctl database migrate"
-$PAYROLLCTL database migrate || true
+echo "[entrypoint] Process role: $PROCESS_ROLE"
 
-# Start Dramatiq worker in background when queue is enabled and Redis is configured.
-# This is the minimal operational setup so enqueued payroll jobs are processed.
+# Database initialization only for web or all roles
+if [ "$PROCESS_ROLE" = "web" ] || [ "$PROCESS_ROLE" = "all" ]; then
+  echo "[entrypoint] Initializing database: payrollctl database init"
+  $PAYROLLCTL database init || true
+
+  echo "[entrypoint] Running migrations: payrollctl database migrate"
+  $PAYROLLCTL database migrate || true
+fi
+
+# Worker configuration
 QUEUE_ENABLED="${QUEUE_ENABLED:-1}"
 REDIS_URL="${REDIS_URL:-${CACHE_REDIS_URL:-}}"
 WORKER_THREADS="${DRAMATIQ_WORKER_THREADS:-8}"
 WORKER_PROCESSES="${DRAMATIQ_WORKER_PROCESSES:-2}"
 
-if is_true "$QUEUE_ENABLED" && [ -n "$REDIS_URL" ]; then
-  echo "[entrypoint] Starting Dramatiq worker (threads=$WORKER_THREADS, processes=$WORKER_PROCESSES)"
-  "$DRAMATIQ" coati_payroll.queue.tasks --threads "$WORKER_THREADS" --processes "$WORKER_PROCESSES" &
+# Start Dramatiq worker based on role
+if [ "$PROCESS_ROLE" = "worker" ]; then
+  # Dedicated worker mode: only run Dramatiq worker
+  if is_true "$QUEUE_ENABLED" && [ -n "$REDIS_URL" ]; then
+    echo "[entrypoint] Starting Dramatiq worker (dedicated mode, threads=$WORKER_THREADS, processes=$WORKER_PROCESSES)"
+    exec "$DRAMATIQ" coati_payroll.queue.tasks --threads "$WORKER_THREADS" --processes "$WORKER_PROCESSES"
+  else
+    echo "[entrypoint] ERROR: Worker role requires QUEUE_ENABLED=1 and REDIS_URL to be configured"
+    exit 1
+  fi
+elif [ "$PROCESS_ROLE" = "all" ]; then
+  # All-in-one mode: worker in background + app (for development or small deployments)
+  if is_true "$QUEUE_ENABLED" && [ -n "$REDIS_URL" ]; then
+    echo "[entrypoint] Starting Dramatiq worker in background (all-in-one mode, threads=$WORKER_THREADS, processes=$WORKER_PROCESSES)"
+    "$DRAMATIQ" coati_payroll.queue.tasks --threads "$WORKER_THREADS" --processes "$WORKER_PROCESSES" &
+  else
+    echo "[entrypoint] Dramatiq worker not started (QUEUE_ENABLED=$QUEUE_ENABLED, REDIS_URL configured=$([ -n "$REDIS_URL" ] && echo yes || echo no))"
+  fi
+  echo "[entrypoint] Starting app: $*"
+  exec "$PYTHON" app.py
+elif [ "$PROCESS_ROLE" = "web" ]; then
+  # Web-only mode: no worker (worker runs in separate container)
+  echo "[entrypoint] Starting app in web-only mode (no worker): $*"
+  exec "$PYTHON" app.py
 else
-  echo "[entrypoint] Dramatiq worker not started (QUEUE_ENABLED=$QUEUE_ENABLED, REDIS_URL configured=$([ -n "$REDIS_URL" ] && echo yes || echo no))"
+  echo "[entrypoint] ERROR: Invalid PROCESS_ROLE='$PROCESS_ROLE'. Valid options: web, worker, all"
+  exit 1
 fi
-
-echo "[entrypoint] Starting app: $*"
-exec "$PYTHON" app.py

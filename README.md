@@ -105,17 +105,25 @@ Open your browser at `http://localhost:5000`
 
 ### Docker Installation
 
-You can also run Coati Payroll using Docker:
+Coati Payroll supports three deployment architectures with Docker:
 
-1. **Build the Docker image**
+#### Architecture Options
+
+1. **Option 1: Single container without queue processing** - Simplest setup for development or small deployments
+2. **Option 2: Single container with background processing** - All-in-one deployment with app + worker in same container
+3. **Option 3: Separate containers (Production)** - Web and worker in separate containers for scalability
+
+---
+
+#### Option 1: Single Container Without Queue Processing
+
+For development or when background processing is not needed:
 
 ```bash
+# Build the image
 docker build -t coati-payroll:latest .
-```
 
-2. **Run with development settings (SQLite, no background processing)**
-
-```bash
+# Run without queue processing
 docker run -d -p 5000:5000 \
   -e FLASK_ENV=development \
   -e QUEUE_ENABLED=0 \
@@ -123,15 +131,19 @@ docker run -d -p 5000:5000 \
   coati-payroll:latest
 ```
 
-3. **Run with production settings and background processing**
+**Behavior**: All payroll calculations execute synchronously. No Redis required.
 
-When `QUEUE_ENABLED=1` and `REDIS_URL` is configured, the container automatically starts a Dramatiq worker in the background to process large payrolls asynchronously.
+---
+
+#### Option 2: Single Container With Background Processing (All-in-one)
+
+For small to medium deployments where separating web/worker isn't necessary:
 
 ```bash
-# First, start Redis (if not already running)
+# Start Redis
 docker run -d -p 6379:6379 --name redis redis:alpine
 
-# Then start Coati Payroll with background processing enabled
+# Start Coati Payroll with worker in same container
 docker run -d -p 5000:5000 \
   -e FLASK_ENV=production \
   -e DATABASE_URL="postgresql://user:password@host:5432/coati_payroll" \
@@ -139,6 +151,7 @@ docker run -d -p 5000:5000 \
   -e ADMIN_USER="admin" \
   -e ADMIN_PASSWORD="secure-password" \
   -e QUEUE_ENABLED=1 \
+  -e PROCESS_ROLE=all \
   -e REDIS_URL="redis://redis:6379/0" \
   -e BACKGROUND_PAYROLL_THRESHOLD=100 \
   -e DRAMATIQ_WORKER_THREADS=8 \
@@ -148,16 +161,27 @@ docker run -d -p 5000:5000 \
   coati-payroll:latest
 ```
 
-**Note**: The Docker entrypoint automatically starts the Dramatiq worker when both `QUEUE_ENABLED=1` and `REDIS_URL` are configured. Check the container logs to verify:
+**Behavior**: 
+- Web app serves requests
+- Dramatiq worker runs in background in same container
+- Suitable for deployments with moderate load
+- Default behavior when `PROCESS_ROLE` is not specified
 
+**Verify worker started**:
 ```bash
 docker logs coati-payroll
-# Should show: "[entrypoint] Starting Dramatiq worker (threads=8, processes=2)"
+# Should show: "[entrypoint] Starting Dramatiq worker in background (all-in-one mode, threads=8, processes=2)"
 ```
 
-4. **Using Docker Compose (recommended for production)**
+---
 
-Create a `docker-compose.yml`:
+#### Option 3: Separate Containers (Recommended for Production)
+
+For production deployments requiring scalability and fault isolation:
+
+**Using Docker Compose** (recommended):
+
+Create `docker-compose.yml`:
 
 ```yaml
 version: '3.8'
@@ -179,7 +203,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
-  coati-payroll:
+  web:
     image: coati-payroll:latest
     restart: always
     ports:
@@ -191,8 +215,22 @@ services:
       ADMIN_USER: admin
       ADMIN_PASSWORD: changeme
       QUEUE_ENABLED: 1
+      PROCESS_ROLE: web
       REDIS_URL: redis://redis:6379/0
       BACKGROUND_PAYROLL_THRESHOLD: 100
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    image: coati-payroll:latest
+    restart: always
+    environment:
+      FLASK_ENV: production
+      DATABASE_URL: postgresql://coati:changeme@postgres:5432/coati_payroll
+      QUEUE_ENABLED: 1
+      PROCESS_ROLE: worker
+      REDIS_URL: redis://redis:6379/0
       DRAMATIQ_WORKER_THREADS: 8
       DRAMATIQ_WORKER_PROCESSES: 2
     depends_on:
@@ -206,9 +244,72 @@ volumes:
 
 Start with: `docker-compose up -d`
 
-5. **Access the system**
+**Or using individual containers**:
 
-Open your browser at `http://localhost:5000`
+```bash
+# Build image
+docker build -t coati-payroll:latest .
+
+# Start infrastructure
+docker run -d --name redis redis:alpine
+docker run -d --name postgres -e POSTGRES_PASSWORD=changeme postgres:15-alpine
+
+# Start web container (no worker)
+docker run -d -p 5000:5000 \
+  --name coati-web \
+  -e PROCESS_ROLE=web \
+  -e QUEUE_ENABLED=1 \
+  -e REDIS_URL=redis://redis:6379/0 \
+  -e DATABASE_URL=postgresql://postgres:changeme@postgres:5432/postgres \
+  --link redis:redis \
+  --link postgres:postgres \
+  coati-payroll:latest
+
+# Start worker container (dedicated)
+docker run -d \
+  --name coati-worker \
+  -e PROCESS_ROLE=worker \
+  -e QUEUE_ENABLED=1 \
+  -e REDIS_URL=redis://redis:6379/0 \
+  -e DATABASE_URL=postgresql://postgres:changeme@postgres:5432/postgres \
+  -e DRAMATIQ_WORKER_THREADS=8 \
+  -e DRAMATIQ_WORKER_PROCESSES=2 \
+  --link redis:redis \
+  --link postgres:postgres \
+  coati-payroll:latest
+```
+
+**Benefits of Option 3**:
+- Scale web and worker independently
+- Isolate failures (worker crash doesn't affect web)
+- Optimize resource allocation per component
+- Standard production architecture pattern
+
+**Verify services**:
+```bash
+# Check web container
+docker logs coati-web
+# Should show: "[entrypoint] Starting app in web-only mode (no worker)"
+
+# Check worker container
+docker logs coati-worker
+# Should show: "[entrypoint] Starting Dramatiq worker (dedicated mode, threads=8, processes=2)"
+```
+
+---
+
+#### Environment Variables Reference
+
+| Variable | Description | Default | Required for |
+|----------|-------------|---------|--------------|
+| `PROCESS_ROLE` | Container role: `web`, `worker`, or `all` | `all` | Options 2, 3 |
+| `QUEUE_ENABLED` | Enable queue system | `1` | Options 2, 3 |
+| `REDIS_URL` | Redis connection string | - | Options 2, 3 |
+| `BACKGROUND_PAYROLL_THRESHOLD` | Min employees for background processing | `100` | Options 2, 3 |
+| `DRAMATIQ_WORKER_THREADS` | Worker threads per process | `8` | Options 2, 3 |
+| `DRAMATIQ_WORKER_PROCESSES` | Worker processes | `2` | Options 2, 3 |
+
+**Access the system**: Open your browser at `http://localhost:5000`
 
 ## Documentation
 
