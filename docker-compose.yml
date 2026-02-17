@@ -9,7 +9,9 @@
 # - PostgreSQL database (or MySQL as alternative, see below)
 # - Redis for queue/cache
 # - Dedicated Dramatiq worker container
-# - Web application container
+# - Web application container (WSGI server)
+# - Nginx reverse proxy (serves static files and proxies to WSGI)
+# - Certbot for Let's Encrypt SSL certificates (optional)
 #
 # Usage:
 #   docker-compose up -d
@@ -157,8 +159,9 @@ services:
     image: coati-payroll:latest
     container_name: coati-web
     restart: unless-stopped
-    ports:
-      - "${HOST_PORT:-5000}:5000"
+    # NOTE: Port 5000 is NOT exposed to host - nginx handles external traffic
+    expose:
+      - "5000"
     environment:
       # Process role
       PROCESS_ROLE: web
@@ -216,6 +219,51 @@ services:
           cpus: '0.25'
           memory: 256M
 
+  # ===========================================================================
+  # Nginx Reverse Proxy - Serves Static Files and Proxies to WSGI
+  # ===========================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: coati-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx configuration
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Static files from application
+      - ./coati_payroll/static:/usr/share/nginx/html/static:ro
+      # Let's Encrypt certificates
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    networks:
+      - coati-network
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ===========================================================================
+  # Certbot - Let's Encrypt SSL Certificate Manager (Optional)
+  # ===========================================================================
+  # Uncomment this service to enable automatic SSL certificate management
+  # See nginx/README.md for setup instructions
+  #
+  # certbot:
+  #   image: certbot/certbot:latest
+  #   container_name: coati-certbot
+  #   volumes:
+  #     - ./certbot/conf:/etc/letsencrypt
+  #     - ./certbot/www:/var/www/certbot
+  #   # Auto-renew certificates twice daily
+  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
 # =============================================================================
 # Networks
 # =============================================================================
@@ -233,3 +281,8 @@ volumes:
   #   driver: local
   redis-data:
     driver: local
+  # Uncomment these when using Let's Encrypt SSL certificates
+  # certbot-conf:
+  #   driver: local
+  # certbot-www:
+  #   driver: local

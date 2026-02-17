@@ -182,10 +182,12 @@ For production deployments requiring scalability and fault isolation:
 **Using Docker Compose** (recommended):
 
 A production-ready `docker-compose.yml` is provided in the repository with:
+- **Nginx reverse proxy** (serves static files and handles HTTPS)
 - PostgreSQL database (with MySQL as commented alternative)
 - Redis for queue and cache
 - Dedicated worker container
-- Web application container
+- Web application container (WSGI server)
+- Certbot for Let's Encrypt SSL certificates (optional)
 - Health checks and proper service dependencies
 
 **Quick start**:
@@ -202,8 +204,32 @@ docker-compose up -d
 docker-compose logs -f
 
 # 4. Access the application
-# Open http://localhost:5000 in your browser
+# HTTP: http://localhost or http://your-server-ip
+# HTTPS: https://your-domain.com (after configuring SSL)
 ```
+
+**Static files are served by nginx**, not the WSGI server. This provides:
+- Faster delivery of CSS, JavaScript, and images
+- Reduced load on the application server
+- Better caching and compression
+
+**HTTPS setup with Let's Encrypt**:
+
+For production deployments with SSL certificates:
+
+```bash
+# Run the Let's Encrypt initialization script
+chmod +x nginx/init-letsencrypt.sh
+./nginx/init-letsencrypt.sh your-domain.com your-email@example.com
+
+# Edit nginx/nginx.conf and uncomment the HTTPS server block
+# Uncomment the certbot service in docker-compose.yml
+
+# Restart services
+docker-compose restart nginx
+```
+
+See `nginx/README.md` for detailed HTTPS configuration instructions.
 
 **Scale workers** (if you need more processing capacity):
 ```bash
