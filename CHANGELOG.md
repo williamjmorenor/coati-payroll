@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Changed
+
+- Restricted payroll background processing to Dramatiq+Redis only; removed operational fallback to Huey.
+- Updated queue and background payroll documentation to reflect Dramatiq+Redis as the only supported background backend and Noop degradation when Redis is unavailable.
+- Removed `huey` from runtime dependencies in `requirements.txt`.
+
 ## [1.6.0] - 2026-02-15
 
 ### Changed
