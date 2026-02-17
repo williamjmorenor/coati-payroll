@@ -49,7 +49,7 @@ as-is, without warranties of fitness for any particular purpose.
 - **Planilla Cloning (Web UI)**: Duplicate an existing payroll template from the planilla list, including perceptions, deductions, and benefits
 - **Loans and Advances**: Loan control with automatic installment deduction
 - **Multi-currency**: Support for multiple currencies with exchange rates
-- **Background Processing**: Queue system for large payrolls with Dramatiq/Huey
+- **Background Processing**: Queue system for large payrolls with Dramatiq+Redis
 - **Vacation Management**: Complete module for vacation accrual, usage, and audit with configurable policies
 - **Role-Based Access Control (RBAC)**: Permission system with Admin, HR, and Audit roles
 - **Reporting System**: Custom reports with role-based permissions and execution audit
@@ -256,7 +256,7 @@ coati/
 │   ├── report_engine.py   # Reporting engine
 │   ├── forms.py           # WTForms forms
 │   ├── cli.py             # Command-line interface (payrollctl)
-│   ├── queue/             # Queue system (Dramatiq/Huey)
+│   ├── queue/             # Queue system (Dramatiq+Redis)
 │   │   ├── driver.py
 │   │   ├── selector.py
 │   │   ├── tasks.py
@@ -391,9 +391,8 @@ payrollctl debug routes
 | `ADMIN_PASSWORD` | Admin password | `coati-admin` |
 | `PORT` | Application port | `5000` |
 | `SESSION_REDIS_URL` | Redis URL for sessions | None (uses SQLAlchemy) |
-| `REDIS_URL` | Redis URL for queue system | None (uses Huey) |
+| `REDIS_URL` | Redis URL for queue system | None (background disabled) |
 | `QUEUE_ENABLED` | Enable queue system | `1` |
-| `COATI_QUEUE_PATH` | Path for Huey storage | Auto-detected |
 | `BACKGROUND_PAYROLL_THRESHOLD` | Employee threshold for background processing | `100` |
 
 ### Database
@@ -409,10 +408,9 @@ The system is designed to be **database engine agnostic**. For more details on c
 
 For long-running operations, the system includes a **background process queue system**:
 
-- **Dramatiq + Redis**: For production environments with high scale
-- **Huey + Filesystem**: For development or as automatic fallback
-- **Automatic selection**: The system chooses the best available backend
-- **Parallel processing**: Large payrolls are automatically processed in the background
+- **Dramatiq + Redis**: Required for background processing
+- **Automatic degradation**: If Redis is unavailable, background processing is disabled and payrolls execute synchronously
+- **Parallel processing**: Large payrolls (above threshold) are automatically processed in the background when queue is enabled
 - **Real-time feedback**: Task progress tracking
 
 For more information, see the [Queue System Documentation](docs/queue_system.md) and [Background Payroll Processing](docs/background-payroll-processing.md).
