@@ -8,12 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Docker deployment architecture**: Added `PROCESS_ROLE` environment variable to support three deployment options:
+  - `PROCESS_ROLE=web`: Web-only container (no worker) for separate web/worker deployments
+  - `PROCESS_ROLE=worker`: Dedicated Dramatiq worker container
+  - `PROCESS_ROLE=all`: All-in-one container with app + worker (default, backward compatible)
+- **Systemd deployment**: Added example unit files for production systemd deployments:
+  - `systemd/coati-payroll.service`: Web application service
+  - `systemd/coati-payroll-worker.service`: Dedicated Dramatiq worker service
+  - `systemd/README.md`: Complete installation and configuration guide
+- Comprehensive deployment documentation in README.md covering:
+  - Option 1: Single container without queue processing (development)
+  - Option 2: All-in-one container with background processing (small/medium deployments)
+  - Option 3: Separate web/worker containers with Redis (production, scalable)
+
 ### Changed
 
 - Restricted payroll background processing to Dramatiq+Redis only; removed operational fallback to Huey.
 - Updated queue and background payroll documentation to reflect Dramatiq+Redis as the only supported background backend and Noop degradation when Redis is unavailable.
 - Removed `huey` from runtime dependencies in `requirements.txt`.
 - Removed legacy `coati_payroll/queue/drivers/huey_driver.py` and remaining runtime references to Huey.
+- Refactored `docker-entrypoint.sh` to support role-based container startup with proper database initialization only for web/all roles.
 
 ## [1.6.0] - 2026-02-15
 
