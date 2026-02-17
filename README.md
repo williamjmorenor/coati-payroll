@@ -181,68 +181,41 @@ For production deployments requiring scalability and fault isolation:
 
 **Using Docker Compose** (recommended):
 
-Create `docker-compose.yml`:
+A production-ready `docker-compose.yml` is provided in the repository with:
+- PostgreSQL database (with MySQL as commented alternative)
+- Redis for queue and cache
+- Dedicated worker container
+- Web application container
+- Health checks and proper service dependencies
 
-```yaml
-version: '3.8'
+**Quick start**:
 
-services:
-  redis:
-    image: redis:alpine
-    restart: always
-    volumes:
-      - redis-data:/data
+```bash
+# 1. Copy and customize environment variables
+cp .env.example .env
+# Edit .env and set secure passwords and secrets!
 
-  postgres:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      POSTGRES_DB: coati_payroll
-      POSTGRES_USER: coati
-      POSTGRES_PASSWORD: changeme
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+# 2. Start all services
+docker-compose up -d
 
-  web:
-    image: coati-payroll:latest
-    restart: always
-    ports:
-      - "5000:5000"
-    environment:
-      FLASK_ENV: production
-      DATABASE_URL: postgresql://coati:changeme@postgres:5432/coati_payroll
-      SECRET_KEY: change-this-to-a-random-secret
-      ADMIN_USER: admin
-      ADMIN_PASSWORD: changeme
-      QUEUE_ENABLED: 1
-      PROCESS_ROLE: web
-      REDIS_URL: redis://redis:6379/0
-      BACKGROUND_PAYROLL_THRESHOLD: 100
-    depends_on:
-      - postgres
-      - redis
+# 3. View logs
+docker-compose logs -f
 
-  worker:
-    image: coati-payroll:latest
-    restart: always
-    environment:
-      FLASK_ENV: production
-      DATABASE_URL: postgresql://coati:changeme@postgres:5432/coati_payroll
-      QUEUE_ENABLED: 1
-      PROCESS_ROLE: worker
-      REDIS_URL: redis://redis:6379/0
-      DRAMATIQ_WORKER_THREADS: 8
-      DRAMATIQ_WORKER_PROCESSES: 2
-    depends_on:
-      - postgres
-      - redis
-
-volumes:
-  redis-data:
-  postgres-data:
+# 4. Access the application
+# Open http://localhost:5000 in your browser
 ```
 
-Start with: `docker-compose up -d`
+**Scale workers** (if you need more processing capacity):
+```bash
+docker-compose up -d --scale worker=3
+```
+
+**Using MySQL instead of PostgreSQL**:
+Edit `docker-compose.yml` and:
+1. Comment out the `postgres` service
+2. Uncomment the `mysql` service
+3. Update `DATABASE_URL` in `web` and `worker` services
+4. Update `depends_on` to reference `mysql` instead of `postgres`
 
 **Or using individual containers**:
 
