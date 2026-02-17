@@ -9,7 +9,7 @@ This module defines tasks that can be executed in the background:
 - Email notifications
 
 Tasks are automatically registered with the available queue driver
-(Dramatiq or Huey) and can be enqueued for background execution.
+(Dramatiq) and can be enqueued for background execution.
 """
 
 from __future__ import annotations

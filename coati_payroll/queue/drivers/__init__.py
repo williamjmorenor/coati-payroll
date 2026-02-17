@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from coati_payroll.queue.drivers.dramatiq_driver import DramatiqDriver
-from coati_payroll.queue.drivers.huey_driver import HueyDriver
 from coati_payroll.queue.drivers.noop_driver import NoopQueueDriver
 
-__all__ = ["DramatiqDriver", "HueyDriver", "NoopQueueDriver"]
+__all__ = ["DramatiqDriver", "NoopQueueDriver"]

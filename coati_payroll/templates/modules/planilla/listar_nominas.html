@@ -20,7 +20,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 <div class="card">
     <div class="card-body">
         {% if nominas %}
-        <table class="table table-striped table-hover">
+        <table class="table table-striped table-hover" id="nominas-table">
             <thead>
                 <tr>
                     <th>Período</th>
@@ -35,7 +35,10 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             </thead>
             <tbody>
                 {% for nomina in nominas %}
-                <tr>
+                <tr {% if nomina.estado == 'calculating' %}class="table-primary"{% endif %}
+                    data-nomina-id="{{ nomina.id }}"
+                    data-planilla-id="{{ planilla.id }}"
+                    data-estado="{{ nomina.estado }}">
                     <td>
                         {{ nomina.periodo_inicio.strftime('%d/%m/%Y') }} -
                         {{ nomina.periodo_fin.strftime('%d/%m/%Y') }}
@@ -43,10 +46,10 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <td>{{ nomina.fecha_generacion.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td>
                         {% if nomina.estado == 'calculating' %}
-                        <span class="badge bg-primary">
+                        <span class="badge bg-primary js-estado-badge">
                             <i class="bi bi-arrow-repeat"></i> Calculando
                             {% if nomina.total_empleados and nomina.total_empleados > 0 %}
-                            ({{ nomina.empleados_procesados }}/{{ nomina.total_empleados }})
+                            (<span class="js-procesados">{{ nomina.empleados_procesados }}</span>/<span class="js-total">{{ nomina.total_empleados }}</span>)
                             {% endif %}
                         </span>
                         {% elif nomina.estado == 'generated' %}
@@ -86,6 +89,11 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 {% endfor %}
             </tbody>
         </table>
+        <div class="mt-2" id="background-refresh-hint" style="display: none;">
+            <small class="text-muted">
+                <i class="bi bi-arrow-repeat"></i> El historial se actualiza automáticamente cada 3 segundos mientras haya nóminas en cálculo.
+            </small>
+        </div>
         {% else %}
         <div class="alert alert-info">
             <i class="bi bi-info-circle"></i> No hay nóminas generadas para esta planilla.
@@ -94,5 +102,80 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         {% endif %}
     </div>
 </div>
-{% endblock %}
 
+{% if nominas %}
+<script>
+(function() {
+    const rows = Array.from(document.querySelectorAll('tr[data-nomina-id][data-estado="calculating"]'));
+    const hint = document.getElementById('background-refresh-hint');
+
+    if (!rows.length) {
+        return;
+    }
+
+    if (hint) {
+        hint.style.display = '';
+    }
+
+    let hasCompletedNomina = false;
+
+    function updateRow(row, data) {
+        const badge = row.querySelector('.js-estado-badge');
+        const processed = row.querySelector('.js-procesados');
+        const total = row.querySelector('.js-total');
+
+        if (processed) {
+            processed.textContent = data.empleados_procesados || 0;
+        }
+
+        if (total) {
+            total.textContent = data.total_empleados || 0;
+        }
+
+        if (data.estado && data.estado !== 'calculating') {
+            hasCompletedNomina = true;
+            row.setAttribute('data-estado', data.estado);
+            if (badge) {
+                badge.classList.remove('bg-primary');
+                badge.classList.add(data.estado === 'error' ? 'bg-danger' : 'bg-success');
+                badge.innerHTML = data.estado === 'error' ? 'Error' : 'Completado';
+            }
+        }
+    }
+
+    async function pollProgress() {
+        await Promise.all(
+            rows.map(async (row) => {
+                if (row.getAttribute('data-estado') !== 'calculating') {
+                    return;
+                }
+
+                const nominaId = row.getAttribute('data-nomina-id');
+                const progressUrlTemplate = '{{ url_for("planilla.progreso_nomina", planilla_id=planilla.id, nomina_id="__NOMINA_ID__") }}';
+                const progressUrl = progressUrlTemplate.replace('__NOMINA_ID__', nominaId);
+
+                try {
+                    const response = await fetch(progressUrl);
+                    if (!response.ok) {
+                        return;
+                    }
+                    const data = await response.json();
+                    updateRow(row, data);
+                } catch (_error) {
+                    // Silent retry in next polling cycle
+                }
+            })
+        );
+
+        if (hasCompletedNomina) {
+            setTimeout(() => window.location.reload(), 750);
+        }
+    }
+
+    pollProgress();
+    const intervalId = setInterval(pollProgress, 3000);
+    window.addEventListener('beforeunload', () => clearInterval(intervalId));
+})();
+</script>
+{% endif %}
+{% endblock %}

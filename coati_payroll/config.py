@@ -193,15 +193,14 @@ if isinstance(database_url_base, str):
 
 # < --------------------------------------------------------------------------------------------- >
 # Queue configuration for background job processing
-# The system will automatically select between Dramatiq (Redis) and Huey (filesystem)
-# based on REDIS_URL availability
+# Background queues require Dramatiq + Redis.
+# If unavailable, payroll execution remains synchronous.
 CONFIGURACION["QUEUE_ENABLED"] = environ.get("QUEUE_ENABLED", "1") in [
     "1",
     "true",
     "True",
     "yes",
 ]
-CONFIGURACION["QUEUE_STORAGE_PATH"] = environ.get("COATI_QUEUE_PATH")  # For Huey filesystem
 
 # Background payroll processing configuration
 # Threshold for automatic background processing (number of employees)

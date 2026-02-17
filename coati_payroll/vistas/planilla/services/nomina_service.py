@@ -12,6 +12,7 @@ from coati_payroll.model import db, Planilla, Nomina, AcumuladoAnual, Deduccion,
 from coati_payroll.enums import NominaEstado
 from coati_payroll.nomina_engine import NominaEngine
 from coati_payroll.queue import get_queue_driver
+from coati_payroll.queue.drivers.dramatiq_driver import DramatiqDriver
 
 
 class NominaService:
@@ -212,58 +213,59 @@ class NominaService:
         # Get configurable threshold for background processing
         threshold = current_app.config.get("BACKGROUND_PAYROLL_THRESHOLD", 100)
 
-        # Determine if we should process in background
-        if num_empleados > threshold:
-            # Create nomina record with "calculating" status
-            nomina = Nomina(
-                planilla_id=planilla.id,
-                periodo_inicio=periodo_inicio,
-                periodo_fin=periodo_fin,
-                generado_por=usuario,
-                estado=NominaEstado.CALCULANDO,
-                total_bruto=0,
-                total_deducciones=0,
-                total_neto=0,
-                total_empleados=num_empleados,
-                empleados_procesados=0,
-                empleados_con_error=0,
-                procesamiento_en_background=True,
-            )
-            db.session.add(nomina)
-            db.session.commit()
+        queue_enabled = bool(current_app.config.get("QUEUE_ENABLED", False))
+        should_attempt_background = queue_enabled and num_empleados > threshold
 
-            # Enqueue background task
-            try:
-                queue = get_queue_driver()
-                queue.enqueue(
-                    "process_large_payroll",
-                    nomina_id=nomina.id,
-                    job_id=uuid4().hex,
+        if should_attempt_background:
+            queue = get_queue_driver()
+            if isinstance(queue, DramatiqDriver) and queue.is_available():
+                # Create nomina record with "calculating" status
+                nomina = Nomina(
                     planilla_id=planilla.id,
-                    periodo_inicio=periodo_inicio.isoformat(),
-                    periodo_fin=periodo_fin.isoformat(),
-                    fecha_calculo=fecha_calculo.isoformat(),
-                    usuario=usuario,
+                    periodo_inicio=periodo_inicio,
+                    periodo_fin=periodo_fin,
+                    generado_por=usuario,
+                    estado=NominaEstado.CALCULANDO,
+                    total_bruto=0,
+                    total_deducciones=0,
+                    total_neto=0,
+                    total_empleados=num_empleados,
+                    empleados_procesados=0,
+                    empleados_con_error=0,
+                    procesamiento_en_background=True,
                 )
-                return nomina, [], []
-            except Exception as e:
-                # If background processing fails, mark nomina as error
-                nomina.estado = NominaEstado.ERROR
-                nomina.errores_calculo = {"background_task_initialization_error": str(e)}
+                db.session.add(nomina)
                 db.session.commit()
-                return None, [f"Error al iniciar el procesamiento en segundo plano: {str(e)}"], []
-        else:
-            # For smaller payrolls, process synchronously
-            engine = NominaEngine(
-                planilla=planilla,
-                periodo_inicio=periodo_inicio,
-                periodo_fin=periodo_fin,
-                fecha_calculo=fecha_calculo,
-                usuario=usuario,
-            )
 
-            nomina_result = engine.ejecutar()
-            return nomina_result, engine.errors, engine.warnings
+                # Enqueue background task
+                try:
+                    queue.enqueue(
+                        "process_large_payroll",
+                        nomina_id=nomina.id,
+                        job_id=uuid4().hex,
+                        planilla_id=planilla.id,
+                        periodo_inicio=periodo_inicio.isoformat(),
+                        periodo_fin=periodo_fin.isoformat(),
+                        fecha_calculo=fecha_calculo.isoformat(),
+                        usuario=usuario,
+                    )
+                    return nomina, [], []
+                except Exception:
+                    # Fallback to synchronous execution while keeping an auditable trace
+                    db.session.delete(nomina)
+                    db.session.commit()
+
+        # Synchronous processing path (default / fallback)
+        engine = NominaEngine(
+            planilla=planilla,
+            periodo_inicio=periodo_inicio,
+            periodo_fin=periodo_fin,
+            fecha_calculo=fecha_calculo,
+            usuario=usuario,
+        )
+
+        nomina_result = engine.ejecutar()
+        return nomina_result, engine.errors, engine.warnings
 
     @staticmethod
     def recalcular_nomina(

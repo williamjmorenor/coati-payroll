@@ -136,8 +136,8 @@ Para nóminas grandes (más de 100 empleados por defecto), el sistema utiliza pr
 
 - **Procesamiento paralelo**: Los empleados se procesan de forma concurrente
 - **Feedback en tiempo real**: Progreso visible durante el cálculo
-- **Doble backend**: Dramatiq+Redis (producción) o Huey+Filesystem (desarrollo)
-- **Selección automática**: El sistema elige el mejor backend disponible
+- **Backend soportado**: Dramatiq+Redis (con degradación a Noop cuando Redis no está disponible)
+- **Selección automática**: El sistema usa Dramatiq cuando Redis está disponible
 
 [:octicons-arrow-right-24: Más sobre el Sistema de Colas](queue_system.md)
 

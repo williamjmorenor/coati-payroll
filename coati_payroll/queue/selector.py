@@ -9,7 +9,7 @@ import sys
 
 from coati_payroll.log import log
 from coati_payroll.queue.driver import QueueDriver
-from coati_payroll.queue.drivers import DramatiqDriver, HueyDriver, NoopQueueDriver
+from coati_payroll.queue.drivers import DramatiqDriver, NoopQueueDriver
 
 _cached_driver: QueueDriver | None = None
 
@@ -70,15 +70,15 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
     """Get the appropriate queue driver based on environment.
 
     Selection logic:
-    1. If force_backend is specified, use that backend
+    1. If force_backend is specified and supported, use that backend
     2. If REDIS_URL exists and Redis responds -> use Dramatiq
-    3. Otherwise -> use Huey with filesystem backend
+    3. Otherwise -> use Noop driver (background disabled)
 
     Args:
-        force_backend: Optional backend to force ('dramatiq' or 'huey')
+        force_backend: Optional backend to force ('dramatiq')
 
     Returns:
-        QueueDriver instance (Dramatiq or Huey)
+        QueueDriver instance (Dramatiq or Noop)
 
     Raises:
         RuntimeError: If no driver is available
@@ -99,8 +99,11 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
     # Get Redis URL from environment
     redis_url = os.environ.get("REDIS_URL") or os.environ.get("CACHE_REDIS_URL")
 
-    # Try Dramatiq first if Redis is available (unless forcing Huey)
-    if force_backend != "huey" and redis_url and _ping_redis(redis_url):
+    if force_backend not in {None, "dramatiq"}:
+        raise RuntimeError(f"Unsupported queue backend '{force_backend}'. Only 'dramatiq' is supported.")
+
+    # Try Dramatiq only if Redis is available
+    if redis_url and _ping_redis(redis_url):
         driver = DramatiqDriver(redis_url=redis_url)
         if driver.is_available():
             log.info("Using Dramatiq driver with Redis backend")
@@ -108,22 +111,15 @@ def get_queue_driver(force_backend: str | None = None) -> QueueDriver:
             return driver
         log.warning("Redis available but Dramatiq failed to initialize")
 
-    # Fallback to Huey with filesystem (unless forcing Dramatiq)
-    if force_backend != "dramatiq":
-        if _is_production_env():
-            raise RuntimeError("Production environment requires Dramatiq+Redis. Huey fallback is disabled.")
-        storage_path = os.environ.get("COATI_QUEUE_PATH")
-        driver = HueyDriver(storage_path=storage_path)
-        if driver.is_available():
-            log.info("Using Huey driver with filesystem backend")
-            _cached_driver = driver
-            return driver
-        log.error("Huey driver failed to initialize")
+    # No background queue available -> return Noop driver to keep app operational
+    if _is_production_env():
+        log.warning("Dramatiq+Redis unavailable in production. Background queue is disabled (Noop driver active).")
+    else:
+        log.info("Dramatiq+Redis unavailable. Background queue is disabled (Noop driver active).")
 
-    # No driver available
-    raise RuntimeError(
-        "No queue driver available. Please install 'dramatiq' and 'huey': " "pip install dramatiq[redis] huey"
-    )
+    driver = NoopQueueDriver()
+    _cached_driver = driver
+    return driver
 
 
 def reset_cached_driver() -> None:

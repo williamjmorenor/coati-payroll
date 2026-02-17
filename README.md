@@ -49,7 +49,7 @@ as-is, without warranties of fitness for any particular purpose.
 - **Planilla Cloning (Web UI)**: Duplicate an existing payroll template from the planilla list, including perceptions, deductions, and benefits
 - **Loans and Advances**: Loan control with automatic installment deduction
 - **Multi-currency**: Support for multiple currencies with exchange rates
-- **Background Processing**: Queue system for large payrolls with Dramatiq/Huey
+- **Background Processing**: Queue system for large payrolls with Dramatiq+Redis
 - **Vacation Management**: Complete module for vacation accrual, usage, and audit with configurable policies
 - **Role-Based Access Control (RBAC)**: Permission system with Admin, HR, and Audit roles
 - **Reporting System**: Custom reports with role-based permissions and execution audit
@@ -105,42 +105,210 @@ Open your browser at `http://localhost:5000`
 
 ### Docker Installation
 
-You can also run Coati Payroll using Docker:
+Coati Payroll supports three deployment architectures with Docker:
 
-1. **Build the Docker image**
+#### Architecture Options
+
+1. **Option 1: Single container without queue processing** - Simplest setup for development or small deployments
+2. **Option 2: Single container with background processing** - All-in-one deployment with app + worker in same container
+3. **Option 3: Separate containers (Production)** - Web and worker in separate containers for scalability
+
+---
+
+#### Option 1: Single Container Without Queue Processing
+
+For development or when background processing is not needed:
 
 ```bash
+# Build the image
 docker build -t coati-payroll:latest .
-```
 
-2. **Run with development settings (SQLite)**
-
-```bash
+# Run without queue processing
 docker run -d -p 5000:5000 \
   -e FLASK_ENV=development \
+  -e QUEUE_ENABLED=0 \
   --name coati-payroll \
   coati-payroll:latest
 ```
 
-3. **Run with production settings (12-factor, required env vars)**
+**Behavior**: All payroll calculations execute synchronously. No Redis required.
+
+---
+
+#### Option 2: Single Container With Background Processing (All-in-one)
+
+For small to medium deployments where separating web/worker isn't necessary:
 
 ```bash
+# Start Redis
+docker run -d -p 6379:6379 --name redis redis:alpine
+
+# Start Coati Payroll with worker in same container
 docker run -d -p 5000:5000 \
   -e FLASK_ENV=production \
   -e DATABASE_URL="postgresql://user:password@host:5432/coati_payroll" \
   -e SECRET_KEY="your-secret-key-here" \
   -e ADMIN_USER="admin" \
   -e ADMIN_PASSWORD="secure-password" \
-  -e PORT=5000 \
+  -e QUEUE_ENABLED=1 \
+  -e PROCESS_ROLE=all \
+  -e REDIS_URL="redis://redis:6379/0" \
+  -e BACKGROUND_PAYROLL_THRESHOLD=100 \
+  -e DRAMATIQ_WORKER_THREADS=8 \
+  -e DRAMATIQ_WORKER_PROCESSES=2 \
+  --link redis:redis \
   --name coati-payroll \
   coati-payroll:latest
 ```
 
-> In `FLASK_ENV=production`, the app startup validates `DATABASE_URL`, `SECRET_KEY`, `ADMIN_USER`, and `ADMIN_PASSWORD`.
+**Behavior**: 
+- Web app serves requests
+- Dramatiq worker runs in background in same container
+- Suitable for deployments with moderate load
+- Default behavior when `PROCESS_ROLE` is not specified
 
-4. **Access the system**
+**Verify worker started**:
+```bash
+docker logs coati-payroll
+# Should show: "[entrypoint] Starting Dramatiq worker in background (all-in-one mode, threads=8, processes=2)"
+```
 
-Open your browser at `http://localhost:5000`
+---
+
+#### Option 3: Separate Containers (Recommended for Production)
+
+For production deployments requiring scalability and fault isolation:
+
+**Using Docker Compose** (recommended):
+
+A production-ready `docker-compose.yml` is provided in the repository with:
+- **Nginx reverse proxy** (serves static files and handles HTTPS)
+- PostgreSQL database (with MySQL as commented alternative)
+- Redis for queue and cache
+- Dedicated worker container
+- Web application container (WSGI server)
+- Certbot for Let's Encrypt SSL certificates (optional)
+- Health checks and proper service dependencies
+
+**Quick start**:
+
+```bash
+# 1. Copy and customize environment variables
+cp .env.example .env
+# Edit .env and set secure passwords and secrets!
+
+# 2. Start all services
+docker-compose up -d
+
+# 3. View logs
+docker-compose logs -f
+
+# 4. Access the application
+# HTTP: http://localhost or http://your-server-ip
+# HTTPS: https://your-domain.com (after configuring SSL)
+```
+
+**Static files are served by nginx**, not the WSGI server. This provides:
+- Faster delivery of CSS, JavaScript, and images
+- Reduced load on the application server
+- Better caching and compression
+
+**HTTPS setup with Let's Encrypt**:
+
+For production deployments with SSL certificates:
+
+```bash
+# Run the Let's Encrypt initialization script
+chmod +x nginx/init-letsencrypt.sh
+./nginx/init-letsencrypt.sh your-domain.com your-email@example.com
+
+# Edit nginx/nginx.conf and uncomment the HTTPS server block
+# Uncomment the certbot service in docker-compose.yml
+
+# Restart services
+docker-compose restart nginx
+```
+
+See `nginx/README.md` for detailed HTTPS configuration instructions.
+
+**Scale workers** (if you need more processing capacity):
+```bash
+docker-compose up -d --scale worker=3
+```
+
+**Using MySQL instead of PostgreSQL**:
+Edit `docker-compose.yml` and:
+1. Comment out the `postgres` service
+2. Uncomment the `mysql` service
+3. Update `DATABASE_URL` in `web` and `worker` services
+4. Update `depends_on` to reference `mysql` instead of `postgres`
+
+**Or using individual containers**:
+
+```bash
+# Build image
+docker build -t coati-payroll:latest .
+
+# Start infrastructure
+docker run -d --name redis redis:alpine
+docker run -d --name postgres -e POSTGRES_PASSWORD=changeme postgres:15-alpine
+
+# Start web container (no worker)
+docker run -d -p 5000:5000 \
+  --name coati-web \
+  -e PROCESS_ROLE=web \
+  -e QUEUE_ENABLED=1 \
+  -e REDIS_URL=redis://redis:6379/0 \
+  -e DATABASE_URL=postgresql://postgres:changeme@postgres:5432/postgres \
+  --link redis:redis \
+  --link postgres:postgres \
+  coati-payroll:latest
+
+# Start worker container (dedicated)
+docker run -d \
+  --name coati-worker \
+  -e PROCESS_ROLE=worker \
+  -e QUEUE_ENABLED=1 \
+  -e REDIS_URL=redis://redis:6379/0 \
+  -e DATABASE_URL=postgresql://postgres:changeme@postgres:5432/postgres \
+  -e DRAMATIQ_WORKER_THREADS=8 \
+  -e DRAMATIQ_WORKER_PROCESSES=2 \
+  --link redis:redis \
+  --link postgres:postgres \
+  coati-payroll:latest
+```
+
+**Benefits of Option 3**:
+- Scale web and worker independently
+- Isolate failures (worker crash doesn't affect web)
+- Optimize resource allocation per component
+- Standard production architecture pattern
+
+**Verify services**:
+```bash
+# Check web container
+docker logs coati-web
+# Should show: "[entrypoint] Starting app in web-only mode (no worker)"
+
+# Check worker container
+docker logs coati-worker
+# Should show: "[entrypoint] Starting Dramatiq worker (dedicated mode, threads=8, processes=2)"
+```
+
+---
+
+#### Environment Variables Reference
+
+| Variable | Description | Default | Required for |
+|----------|-------------|---------|--------------|
+| `PROCESS_ROLE` | Container role: `web`, `worker`, or `all` | `all` | Options 2, 3 |
+| `QUEUE_ENABLED` | Enable queue system | `1` | Options 2, 3 |
+| `REDIS_URL` | Redis connection string | - | Options 2, 3 |
+| `BACKGROUND_PAYROLL_THRESHOLD` | Min employees for background processing | `100` | Options 2, 3 |
+| `DRAMATIQ_WORKER_THREADS` | Worker threads per process | `8` | Options 2, 3 |
+| `DRAMATIQ_WORKER_PROCESSES` | Worker processes | `2` | Options 2, 3 |
+
+**Access the system**: Open your browser at `http://localhost:5000`
 
 ## Documentation
 
@@ -259,7 +427,7 @@ coati/
 │   ├── report_engine.py   # Reporting engine
 │   ├── forms.py           # WTForms forms
 │   ├── cli.py             # Command-line interface (payrollctl)
-│   ├── queue/             # Queue system (Dramatiq/Huey)
+│   ├── queue/             # Queue system (Dramatiq+Redis)
 │   │   ├── driver.py
 │   │   ├── selector.py
 │   │   ├── tasks.py
@@ -386,23 +554,17 @@ payrollctl debug routes
 
 ### Environment Variables
 
-| Variable | Description | Required in `FLASK_ENV=production` | Default (non-production) |
-|----------|-------------|--------------------------------------|--------------------------|
-| `FLASK_ENV` | Runtime environment (`development` / `production`) | Yes | `production` in Docker image |
-| `DATABASE_URL` | Database connection URI | Yes | Local SQLite file |
-| `SECRET_KEY` | Secret key for sessions | Yes | `dev` (unsafe for production) |
-| `ADMIN_USER` | Initial admin user (startup/bootstrap) | Yes | `coati-admin` |
-| `ADMIN_PASSWORD` | Initial admin password (startup/bootstrap) | Yes | `coati-admin` |
-| `PORT` | Application port | No | `5000` |
-| `MAX_CONTENT_LENGTH` | Max upload size in bytes | No | `2097152` (~2 MB) |
-| `SESSION_REDIS_URL` | Redis URL for sessions/rate limit backend | No | None (SQLAlchemy session backend) |
-| `REDIS_URL` | Redis URL for queue backend auto-selection | No | None (Huey filesystem fallback) |
-| `QUEUE_ENABLED` | Enable queue processing | No | `1` |
-| `COATI_QUEUE_PATH` | Path for Huey queue files | No | Driver-managed path |
-| `BACKGROUND_PAYROLL_THRESHOLD` | Employee threshold for background payroll | No | `100` |
-| `COATI_AUTO_MIGRATE` | Enable automatic migration behavior | No | `0` |
-
-> Coati Payroll follows a 12-factor approach: runtime configuration is sourced from environment variables.
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `DATABASE_URL` | Database connection URI | Local SQLite |
+| `SECRET_KEY` | Secret key for sessions | Auto-generated |
+| `ADMIN_USER` | Initial admin user | `coati-admin` |
+| `ADMIN_PASSWORD` | Admin password | `coati-admin` |
+| `PORT` | Application port | `5000` |
+| `SESSION_REDIS_URL` | Redis URL for sessions | None (uses SQLAlchemy) |
+| `REDIS_URL` | Redis URL for queue system | None (background disabled) |
+| `QUEUE_ENABLED` | Enable queue system | `1` |
+| `BACKGROUND_PAYROLL_THRESHOLD` | Employee threshold for background processing | `100` |
 
 ### Database
 
@@ -417,10 +579,9 @@ The system is designed to be **database engine agnostic**. For more details on c
 
 For long-running operations, the system includes a **background process queue system**:
 
-- **Dramatiq + Redis**: For production environments with high scale
-- **Huey + Filesystem**: For development or as automatic fallback
-- **Automatic selection**: The system chooses the best available backend
-- **Parallel processing**: Large payrolls are automatically processed in the background
+- **Dramatiq + Redis**: Required for background processing
+- **Automatic degradation**: If Redis is unavailable, background processing is disabled and payrolls execute synchronously
+- **Parallel processing**: Large payrolls (above threshold) are automatically processed in the background when queue is enabled
 - **Real-time feedback**: Task progress tracking
 
 For more information, see the [Queue System Documentation](docs/queue_system.md) and [Background Payroll Processing](docs/background-payroll-processing.md).

@@ -3,7 +3,7 @@
 
 """No-op queue driver for test environments.
 
-This driver avoids importing optional dependencies (huey/dramatiq) while
+This driver avoids importing optional dependencies (dramatiq) while
 providing a compatible interface.
 """
 

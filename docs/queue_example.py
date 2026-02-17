@@ -50,7 +50,7 @@ def main():
     print("Background Queue System Example")
     print("=" * 60)
 
-    # Get the queue driver (auto-selects Dramatiq or Huey)
+    # Get the queue driver (auto-selects Dramatiq or Noop)
     print("\n1. Getting queue driver...")
     queue = get_queue_driver()
 
@@ -77,20 +77,9 @@ def main():
         task_ids.append(task_id)
         print(f"   Task {i} enqueued: value={i * 10}")
 
-    # For Huey, we need to execute tasks in immediate mode for this example
-    # In production, workers would process these in the background
-    if hasattr(queue, "get_huey_instance"):
-        huey = queue.get_huey_instance()
-        if huey:
-            print("\n4. Processing tasks (Huey immediate mode for demo)...")
-            # In production, you would run: huey_consumer coati_payroll.queue.drivers.huey_driver.huey
-            # For this demo, we'll just show the enqueuing
-            print("   Note: In production, run workers to process tasks:")
-            print("   $ huey_consumer coati_payroll.queue.drivers.huey_driver.huey --workers 4")
-    else:
-        print("\n4. Tasks are being processed by Dramatiq workers...")
-        print("   Note: Make sure Dramatiq workers are running:")
-        print("   $ dramatiq coati_payroll.queue.tasks --threads 8")
+    print("\n4. Tasks are processed by Dramatiq workers...")
+    print("   Note: Make sure Dramatiq workers are running:")
+    print("   $ dramatiq coati_payroll.queue.tasks --threads 8")
 
     # Get bulk feedback
     print("\n5. Getting bulk task feedback...")
@@ -119,7 +108,6 @@ def main():
     print("1. Configure Redis (for production): export REDIS_URL=redis://localhost:6379/0")
     print("2. Start workers:")
     print("   - Dramatiq: dramatiq coati_payroll.queue.tasks --threads 8")
-    print("   - Huey: huey_consumer coati_payroll.queue.drivers.huey_driver.huey --workers 4")
     print("3. Use the tasks in your application to process payrolls in background")
     print("\nFor more information, see: docs/queue_system.md")
 

@@ -6,7 +6,9 @@ This feature enables automatic background processing of large payrolls to preven
 
 ## When is Background Processing Used?
 
-Background processing is automatically triggered when:
+Background processing is automatically triggered when **all** conditions are met:
+- `QUEUE_ENABLED` is active
+- Redis is available and the selected queue driver is Dramatiq
 - A planilla has more employees than the configured threshold
 - Default threshold: **100 employees**
 - Threshold is configurable via environment variable
@@ -43,7 +45,7 @@ BACKGROUND_PAYROLL_THRESHOLD = 75
 When a user executes a payroll for a planilla with more than the threshold number of employees:
 
 1. The system creates a nomina record with status **"calculando"**
-2. The background task is queued
+2. The background task is queued (Dramatiq + Redis)
 3. User is redirected to the nomina detail page
 4. A flash message informs the user: *"La nómina está siendo calculada en segundo plano. Se procesarán X empleados."*
 
@@ -87,6 +89,8 @@ If some employees fail to process:
 - Successfully calculated employees are saved
 
 ## Technical Details
+
+> Note: No fallback to Huey is used. If Redis is unavailable, payroll calculation remains synchronous.
 
 ### Database Schema
 
