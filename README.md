@@ -113,29 +113,100 @@ You can also run Coati Payroll using Docker:
 docker build -t coati-payroll:latest .
 ```
 
-2. **Run with development settings (SQLite)**
+2. **Run with development settings (SQLite, no background processing)**
 
 ```bash
 docker run -d -p 5000:5000 \
   -e FLASK_ENV=development \
+  -e QUEUE_ENABLED=0 \
   --name coati-payroll \
   coati-payroll:latest
 ```
 
-3. **Run with production settings (requires database)**
+3. **Run with production settings and background processing**
+
+When `QUEUE_ENABLED=1` and `REDIS_URL` is configured, the container automatically starts a Dramatiq worker in the background to process large payrolls asynchronously.
 
 ```bash
+# First, start Redis (if not already running)
+docker run -d -p 6379:6379 --name redis redis:alpine
+
+# Then start Coati Payroll with background processing enabled
 docker run -d -p 5000:5000 \
   -e FLASK_ENV=production \
   -e DATABASE_URL="postgresql://user:password@host:5432/coati_payroll" \
   -e SECRET_KEY="your-secret-key-here" \
   -e ADMIN_USER="admin" \
   -e ADMIN_PASSWORD="secure-password" \
+  -e QUEUE_ENABLED=1 \
+  -e REDIS_URL="redis://redis:6379/0" \
+  -e BACKGROUND_PAYROLL_THRESHOLD=100 \
+  -e DRAMATIQ_WORKER_THREADS=8 \
+  -e DRAMATIQ_WORKER_PROCESSES=2 \
+  --link redis:redis \
   --name coati-payroll \
   coati-payroll:latest
 ```
 
-4. **Access the system**
+**Note**: The Docker entrypoint automatically starts the Dramatiq worker when both `QUEUE_ENABLED=1` and `REDIS_URL` are configured. Check the container logs to verify:
+
+```bash
+docker logs coati-payroll
+# Should show: "[entrypoint] Starting Dramatiq worker (threads=8, processes=2)"
+```
+
+4. **Using Docker Compose (recommended for production)**
+
+Create a `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: coati_payroll
+      POSTGRES_USER: coati
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  coati-payroll:
+    image: coati-payroll:latest
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: production
+      DATABASE_URL: postgresql://coati:changeme@postgres:5432/coati_payroll
+      SECRET_KEY: change-this-to-a-random-secret
+      ADMIN_USER: admin
+      ADMIN_PASSWORD: changeme
+      QUEUE_ENABLED: 1
+      REDIS_URL: redis://redis:6379/0
+      BACKGROUND_PAYROLL_THRESHOLD: 100
+      DRAMATIQ_WORKER_THREADS: 8
+      DRAMATIQ_WORKER_PROCESSES: 2
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  redis-data:
+  postgres-data:
+```
+
+Start with: `docker-compose up -d`
+
+5. **Access the system**
 
 Open your browser at `http://localhost:5000`
 

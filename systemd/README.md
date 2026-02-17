@@ -1,0 +1,190 @@
+# Systemd Unit Files
+
+This directory contains systemd service unit files for deploying Coati Payroll on Linux systems using systemd.
+
+## Files
+
+- **coati-payroll.service**: Main web application service
+- **coati-payroll-worker.service**: Dramatiq background worker service for processing payroll jobs
+
+## Prerequisites
+
+1. A Linux system with systemd (Ubuntu 16.04+, Debian 8+, CentOS 7+, etc.)
+2. Redis server installed and running (required for background processing)
+3. PostgreSQL or MySQL database server
+4. Python 3.11+ with virtual environment
+5. Coati Payroll installed in `/home/coati/coati-payroll` (adjust paths as needed)
+
+## Installation
+
+### 1. Prepare the Environment
+
+```bash
+# Create coati user
+sudo useradd -m -s /bin/bash coati
+
+# Switch to coati user
+sudo su - coati
+
+# Clone and setup the application
+git clone https://github.com/williamjmorenor/coati-payroll.git
+cd coati-payroll
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment Variables
+
+Edit both service files to match your deployment:
+
+- `DATABASE_URL`: Your database connection string
+- `SECRET_KEY`: Generate with `python -c 'import secrets; print(secrets.token_hex(32))'`
+- `ADMIN_USER` and `ADMIN_PASSWORD`: Initial admin credentials
+- `REDIS_URL`: Your Redis connection string
+
+### 3. Install Service Files
+
+```bash
+# Copy service files to systemd directory
+sudo cp systemd/coati-payroll.service /etc/systemd/system/
+sudo cp systemd/coati-payroll-worker.service /etc/systemd/system/
+
+# Reload systemd to recognize new services
+sudo systemctl daemon-reload
+```
+
+### 4. Enable and Start Services
+
+```bash
+# Enable services to start on boot
+sudo systemctl enable coati-payroll-worker
+sudo systemctl enable coati-payroll
+
+# Start the worker first (to process any queued jobs)
+sudo systemctl start coati-payroll-worker
+
+# Start the main application
+sudo systemctl start coati-payroll
+```
+
+### 5. Verify Services
+
+```bash
+# Check worker status
+sudo systemctl status coati-payroll-worker
+
+# Check main application status
+sudo systemctl status coati-payroll
+
+# View worker logs
+sudo journalctl -u coati-payroll-worker -f
+
+# View application logs
+sudo journalctl -u coati-payroll -f
+```
+
+## Service Management
+
+### Start Services
+
+```bash
+sudo systemctl start coati-payroll-worker
+sudo systemctl start coati-payroll
+```
+
+### Stop Services
+
+```bash
+sudo systemctl stop coati-payroll
+sudo systemctl stop coati-payroll-worker
+```
+
+### Restart Services
+
+```bash
+sudo systemctl restart coati-payroll-worker
+sudo systemctl restart coati-payroll
+```
+
+### View Logs
+
+```bash
+# Real-time logs
+sudo journalctl -u coati-payroll -f
+sudo journalctl -u coati-payroll-worker -f
+
+# Last 100 lines
+sudo journalctl -u coati-payroll -n 100
+sudo journalctl -u coati-payroll-worker -n 100
+```
+
+## Background Processing
+
+The `coati-payroll-worker.service` is **required** for background processing of large payrolls. When configured:
+
+1. **Queue Enabled**: Set `QUEUE_ENABLED=1` in both service files
+2. **Redis Available**: Redis must be running and accessible at `REDIS_URL`
+3. **Threshold Met**: Payrolls with more than `BACKGROUND_PAYROLL_THRESHOLD` employees will process in background
+
+If any condition is not met, payroll calculations will execute synchronously.
+
+### Worker Configuration
+
+Adjust worker capacity in `coati-payroll-worker.service`:
+
+```ini
+Environment="DRAMATIQ_WORKER_THREADS=8"    # Threads per process
+Environment="DRAMATIQ_WORKER_PROCESSES=2"  # Number of worker processes
+```
+
+**Recommendations**:
+- For small servers: 4 threads, 1-2 processes
+- For medium servers: 8 threads, 2-4 processes
+- For large servers: 8-16 threads, 4-8 processes
+
+## Troubleshooting
+
+### Worker not processing jobs
+
+1. Check Redis is running: `sudo systemctl status redis`
+2. Verify Redis URL in both services matches
+3. Check worker logs: `sudo journalctl -u coati-payroll-worker -f`
+4. Restart worker: `sudo systemctl restart coati-payroll-worker`
+
+### Application not starting
+
+1. Check service status: `sudo systemctl status coati-payroll`
+2. View error logs: `sudo journalctl -u coati-payroll -xe`
+3. Verify database is accessible
+4. Check file permissions: `ls -la /home/coati/coati-payroll`
+
+### Database connection errors
+
+1. Verify `DATABASE_URL` is correct in service file
+2. Test database connection manually
+3. Check database server is running
+4. Verify network connectivity
+
+## Security Considerations
+
+Both service files include basic security hardening:
+
+- `NoNewPrivileges=true`: Prevents privilege escalation
+- `PrivateTmp=true`: Isolates /tmp directory
+- Services run as dedicated `coati` user (not root)
+
+For production deployments, consider additional hardening:
+
+1. Use a reverse proxy (nginx/Apache) with HTTPS
+2. Configure firewall rules
+3. Implement rate limiting
+4. Regular security updates
+5. Database connection over SSL
+6. Redis authentication
+
+## See Also
+
+- [Installation Guide](../docs/instalacion/instalacion.md)
+- [Queue System Documentation](../docs/queue_system.md)
+- [Background Processing](../docs/background-payroll-processing.md)
