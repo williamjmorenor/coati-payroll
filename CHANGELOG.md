@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerated audit vouchers during payroll apply after prestaciones/vacation side effects, ensuring persisted accounting lines include paid vacation liability for detailed voucher exports.
 - Made `aplicar_nomina` transactional around side effects and voucher regeneration so failures roll back the apply operation and avoid partial persistence.
 - Reused a shared voucher-regeneration helper in the manual regeneration route to keep calculation date/user behavior consistent.
+- Updated payroll Excel export (`exportar-excel`) to a dynamic 5-section layout with extended header metadata, generic reclassification handling, and vacation liability in labor benefits.
 
 ### Tests
 
