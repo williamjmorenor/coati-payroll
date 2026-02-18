@@ -3,6 +3,7 @@
 """Service for Excel export operations."""
 
 from io import BytesIO
+from typing import Any, cast
 
 from coati_payroll.enums import NominaEstado, TipoDetalle
 from coati_payroll.model import (
@@ -75,24 +76,35 @@ class ExportService:
         nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina.id)).scalars().all()
         nomina_empleado_ids = [ne.id for ne in nomina_empleados if ne.id]
 
-        detalles = []
+        detalles: list[NominaDetalle] = []
         if nomina_empleado_ids:
-            detalles = (
-                db.session.execute(db.select(NominaDetalle).where(NominaDetalle.nomina_empleado_id.in_(nomina_empleado_ids)))
+            detalles = cast(
+                list[NominaDetalle],
+                db.session.execute(
+                    db.select(NominaDetalle).where(NominaDetalle.nomina_empleado_id.in_(nomina_empleado_ids))
+                )
                 .scalars()
-                .all()
+                .all(),
             )
 
+        percepciones_planilla = cast(list[Any], planilla.planilla_percepciones)
+        deducciones_planilla = cast(list[Any], planilla.planilla_deducciones)
+        prestaciones_planilla = cast(list[Any], planilla.planilla_prestaciones)
+
         ingresos_asociados = sorted(
-            [assoc for assoc in planilla.planilla_percepciones if assoc.activo and assoc.percepcion],
+            [assoc for assoc in percepciones_planilla if assoc.activo and assoc.percepcion],
             key=lambda assoc: (assoc.orden or 0, assoc.percepcion.nombre or assoc.percepcion.codigo or ""),
         )
         deducciones_asociadas = sorted(
-            [assoc for assoc in planilla.planilla_deducciones if assoc.activo and assoc.deduccion],
-            key=lambda assoc: (assoc.prioridad or 0, assoc.orden or 0, assoc.deduccion.nombre or assoc.deduccion.codigo or ""),
+            [assoc for assoc in deducciones_planilla if assoc.activo and assoc.deduccion],
+            key=lambda assoc: (
+                assoc.prioridad or 0,
+                assoc.orden or 0,
+                assoc.deduccion.nombre or assoc.deduccion.codigo or "",
+            ),
         )
         prestaciones_asociadas = sorted(
-            [assoc for assoc in planilla.planilla_prestaciones if assoc.activo and assoc.prestacion],
+            [assoc for assoc in prestaciones_planilla if assoc.activo and assoc.prestacion],
             key=lambda assoc: (assoc.orden or 0, assoc.prestacion.nombre or assoc.prestacion.codigo or ""),
         )
 
@@ -119,7 +131,9 @@ class ExportService:
                     bucket = ingresos_catalogo_by_ne.setdefault(ne_id, {})
                     bucket[detalle.percepcion_id] = bucket.get(detalle.percepcion_id, 0.0) + monto
                 else:
-                    extra_key = f"income:{detalle.percepcion_id or ''}:{detalle.codigo or ''}:{detalle.descripcion or ''}"
+                    extra_key = (
+                        f"income:{detalle.percepcion_id or ''}:{detalle.codigo or ''}:{detalle.descripcion or ''}"
+                    )
                     bucket = ingresos_extra_by_ne.setdefault(ne_id, {})
                     bucket[extra_key] = bucket.get(extra_key, 0.0) + monto
                     ingresos_extra_labels.setdefault(extra_key, (detalle.descripcion or "", detalle.codigo or ""))
@@ -129,7 +143,9 @@ class ExportService:
                     bucket = deducciones_catalogo_by_ne.setdefault(ne_id, {})
                     bucket[detalle.deduccion_id] = bucket.get(detalle.deduccion_id, 0.0) + monto
                 else:
-                    extra_key = f"deduction:{detalle.deduccion_id or ''}:{detalle.codigo or ''}:{detalle.descripcion or ''}"
+                    extra_key = (
+                        f"deduction:{detalle.deduccion_id or ''}:{detalle.codigo or ''}:{detalle.descripcion or ''}"
+                    )
                     bucket = deducciones_extra_by_ne.setdefault(ne_id, {})
                     bucket[extra_key] = bucket.get(extra_key, 0.0) + monto
                     deducciones_extra_labels.setdefault(extra_key, (detalle.descripcion or "", detalle.codigo or ""))
@@ -139,7 +155,9 @@ class ExportService:
                     bucket = prestaciones_catalogo_by_ne.setdefault(ne_id, {})
                     bucket[detalle.prestacion_id] = bucket.get(detalle.prestacion_id, 0.0) + monto
                 else:
-                    extra_key = f"benefit:{detalle.prestacion_id or ''}:{detalle.codigo or ''}:{detalle.descripcion or ''}"
+                    extra_key = (
+                        f"benefit:{detalle.prestacion_id or ''}:{detalle.codigo or ''}:{detalle.descripcion or ''}"
+                    )
                     bucket = prestaciones_extra_by_ne.setdefault(ne_id, {})
                     bucket[extra_key] = bucket.get(extra_key, 0.0) + monto
                     prestaciones_extra_labels.setdefault(extra_key, (detalle.descripcion or "", detalle.codigo or ""))
@@ -162,7 +180,9 @@ class ExportService:
             if not concept.mostrar_como_ingreso_reportes:
                 reclasificacion_ids.add(concept.id)
 
-        for key, (desc, code) in sorted(ingresos_extra_labels.items(), key=lambda item: ((item[1][0] or item[1][1] or ""), item[0])):
+        for key, (desc, code) in sorted(
+            ingresos_extra_labels.items(), key=lambda item: ((item[1][0] or item[1][1] or ""), item[0])
+        ):
             label = _unique_label(ingreso_headers_seen, desc, code, "Ingreso Extra")
             ingresos_cols.append({"type": "income_extra", "id": key, "header": f"{label} (Extra)"})
 
@@ -194,12 +214,12 @@ class ExportService:
 
         vacation_liability_by_ne: dict[str, float] = {}
         show_vacation_liability = bool(
-            planilla.vacation_policy_id
-            and planilla.vacation_policy
-            and planilla.vacation_policy.son_vacaciones_pagadas
+            planilla.vacation_policy_id and planilla.vacation_policy and planilla.vacation_policy.son_vacaciones_pagadas
         )
 
-        comprobante = db.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)).scalar_one_or_none()
+        comprobante = db.session.execute(
+            db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)
+        ).scalar_one_or_none()
         if comprobante:
             vac_lines = (
                 db.session.execute(
@@ -363,7 +383,7 @@ class ExportService:
             )
 
             for col_idx, column in enumerate(table_columns, start=1):
-                value = ""
+                value: str | float = ""
                 col_type = column["type"]
 
                 if col_type == "separator":
@@ -375,7 +395,15 @@ class ExportService:
                 if col_type == "employee_code":
                     value = empleado.codigo_empleado
                 elif col_type == "employee_full_name":
-                    value = f"{empleado.primer_nombre} {empleado.segundo_nombre or ''} {empleado.primer_apellido} {empleado.segundo_apellido or ''}".strip()
+                    full_name = " ".join(
+                        [
+                            empleado.primer_nombre or "",
+                            empleado.segundo_nombre or "",
+                            empleado.primer_apellido or "",
+                            empleado.segundo_apellido or "",
+                        ]
+                    )
+                    value = full_name.strip()
                 elif col_type == "employee_id":
                     value = empleado.identificacion_personal or ""
                 elif col_type == "employee_ssn":
@@ -517,12 +545,12 @@ class ExportService:
         headers.extend([p[1] or p[0] for p in prestaciones_list])
 
         show_vacation_liability = bool(
-            planilla.vacation_policy_id
-            and planilla.vacation_policy
-            and planilla.vacation_policy.son_vacaciones_pagadas
+            planilla.vacation_policy_id and planilla.vacation_policy and planilla.vacation_policy.son_vacaciones_pagadas
         )
         vacation_liability_by_nomina_empleado: dict[str, float] = {}
-        comprobante = db.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)).scalar_one_or_none()
+        comprobante = db.session.execute(
+            db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)
+        ).scalar_one_or_none()
         if comprobante:
             liability_lines = (
                 db.session.execute(

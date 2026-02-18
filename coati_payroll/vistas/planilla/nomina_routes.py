@@ -538,7 +538,8 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
 
         # Actualizar novedades que corresponden a este período
         if empleado_ids:
-            novedades = (
+            novedades = cast(
+                list[NominaNovedad],
                 db.session.execute(
                     db.select(NominaNovedad).filter(
                         NominaNovedad.empleado_id.in_(empleado_ids),
@@ -548,7 +549,7 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
                     )
                 )
                 .scalars()
-                .all()
+                .all(),
             )
 
         for novedad in novedades:
@@ -587,6 +588,7 @@ def _regenerar_comprobante_contable_nomina(
     accounting_service = AccountingVoucherService(db.session)
     fecha_calculo = nomina.fecha_calculo_original or nomina.periodo_fin
     return accounting_service.generate_audit_voucher(nomina, planilla, fecha_calculo, usuario)
+
 
 def _aplicar_prestaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str | None) -> None:
     """Apply prestaciones ledger side effects for an applied/paid nomina.
