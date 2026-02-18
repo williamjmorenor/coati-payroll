@@ -48,17 +48,26 @@ class AcumuladoRepository(BaseRepository[AcumuladoAnual]):
                 periodo_fiscal_inicio.year + 1, periodo_fiscal_inicio.month, periodo_fiscal_inicio.day
             )
 
+            salario_inicial_acumulado = Decimal("0.00")
+            impuesto_retenido_inicial = Decimal("0.00")
+            periodos_iniciales = 0
+
+            if self._is_implementation_fiscal_period(empleado, periodo_fiscal_inicio):
+                salario_inicial_acumulado = Decimal(str(empleado.salario_acumulado or 0))
+                impuesto_retenido_inicial = Decimal(str(empleado.impuesto_acumulado or 0))
+                periodos_iniciales = self._calculate_initial_processed_periods(empleado, periodo_fiscal_inicio)
+
             acumulado = AcumuladoAnual(
                 empleado_id=empleado.id,
                 tipo_planilla_id=tipo_planilla_id,
                 empresa_id=empresa_id,
                 periodo_fiscal_inicio=periodo_fiscal_inicio,
                 periodo_fiscal_fin=periodo_fiscal_fin,
-                salario_bruto_acumulado=empleado.salario_acumulado or Decimal("0.00"),
+                salario_bruto_acumulado=salario_inicial_acumulado,
                 salario_gravable_acumulado=Decimal("0.00"),
-                deducciones_antes_impuesto_acumulado=empleado.impuesto_acumulado or Decimal("0.00"),
-                impuesto_retenido_acumulado=Decimal("0.00"),
-                periodos_procesados=0,
+                deducciones_antes_impuesto_acumulado=Decimal("0.00"),
+                impuesto_retenido_acumulado=impuesto_retenido_inicial,
+                periodos_procesados=periodos_iniciales,
                 salario_acumulado_mes=Decimal("0.00"),
             )
             self.session.add(acumulado)
@@ -69,3 +78,26 @@ class AcumuladoRepository(BaseRepository[AcumuladoAnual]):
         """Save acumulado."""
         self.session.add(acumulado)
         return acumulado
+
+    def _is_implementation_fiscal_period(self, empleado: Empleado, periodo_fiscal_inicio: date) -> bool:
+        """Return True when current fiscal period matches employee implementation year."""
+        if not empleado.anio_implementacion_inicial:
+            return False
+
+        return int(empleado.anio_implementacion_inicial) == int(periodo_fiscal_inicio.year)
+
+    def _calculate_initial_processed_periods(self, empleado: Empleado, periodo_fiscal_inicio: date) -> int:
+        """Calculate closed fiscal periods before first payroll execution in the system."""
+        if not empleado.mes_ultimo_cierre:
+            return 0
+
+        mes_ultimo_cierre = int(empleado.mes_ultimo_cierre)
+        if mes_ultimo_cierre < 1 or mes_ultimo_cierre > 12:
+            return 0
+
+        anio_cierre = int(empleado.anio_implementacion_inicial or periodo_fiscal_inicio.year)
+        ultimo_cierre = date(anio_cierre, mes_ultimo_cierre, 1)
+        fiscal_start = date(periodo_fiscal_inicio.year, periodo_fiscal_inicio.month, 1)
+
+        months = (ultimo_cierre.year - fiscal_start.year) * 12 + (ultimo_cierre.month - fiscal_start.month) + 1
+        return max(months, 0)

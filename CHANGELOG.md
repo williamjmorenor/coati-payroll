@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.7.2] - 2026-02-18
+
+### Changed
+
+- Improved annual accumulation bootstrap logic for mid-year payroll implementations by applying employee-provided initial balances only during the configured implementation fiscal year.
+- Added explicit implementer guidance for fiscal mid-year cutovers with accumulated salary and retained income tax balances.
+
+### Fixed
+
+- Fixed IR carry-in initialization so `impuesto_acumulado` is now mapped to `impuesto_retenido_acumulado` (retained tax), not to pre-tax deductions.
+- Fixed initial processed-period bootstrap for fiscal calculations by deriving `periodos_procesados` from `mes_ultimo_cierre` during implementation cutovers.
+
+### Tests
+
+- Added repository-level tests to validate mid-year bootstrap balances and prevent reapplying initial carry-in values in subsequent fiscal years.
+
+
 ## [1.7.1] - 2026-02-17
 
 ### Fixed
