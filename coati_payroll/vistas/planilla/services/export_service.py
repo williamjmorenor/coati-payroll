@@ -14,6 +14,7 @@ from coati_payroll.model import (
     Liquidacion,
     LiquidacionDetalle,
     ComprobanteContable,
+    ComprobanteContableLinea,
 )
 from coati_payroll.vistas.planilla.helpers.excel_helpers import check_openpyxl_available
 from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
@@ -216,8 +217,14 @@ class ExportService:
                 ws[f"A{row}"] = "RUC:"
                 ws[f"B{row}"] = planilla.empresa.ruc
                 row += 1
+        ws[f"A{row}"] = "ID Planilla:"
+        ws[f"B{row}"] = planilla.id
+        row += 1
         ws[f"A{row}"] = "Período:"
         ws[f"B{row}"] = f"{nomina.periodo_inicio.strftime('%d/%m/%Y')} - {nomina.periodo_fin.strftime('%d/%m/%Y')}"
+        row += 1
+        ws[f"A{row}"] = "Estado Nómina (Generado, Aprobado, Aplicado):"
+        ws[f"B{row}"] = nomina.estado
         row += 2
 
         # Table headers
@@ -238,6 +245,34 @@ class ExportService:
 
         prestaciones_list = sorted(prestaciones_set, key=lambda x: x[0])
         headers.extend([p[1] or p[0] for p in prestaciones_list])
+
+        show_vacation_liability = bool(
+            planilla.vacation_policy_id
+            and planilla.vacation_policy
+            and planilla.vacation_policy.son_vacaciones_pagadas
+        )
+        vacation_liability_by_nomina_empleado: dict[str, float] = {}
+        comprobante = db.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)).scalar_one_or_none()
+        if comprobante:
+            liability_lines = (
+                db.session.execute(
+                    db.select(ComprobanteContableLinea).filter_by(
+                        comprobante_id=comprobante.id,
+                        tipo_concepto="vacation_liability",
+                        tipo_debito_credito="credito",
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            if liability_lines:
+                show_vacation_liability = True
+            for line in liability_lines:
+                current = vacation_liability_by_nomina_empleado.get(line.nomina_empleado_id, 0.0)
+                vacation_liability_by_nomina_empleado[line.nomina_empleado_id] = current + float(line.credito)
+
+        if show_vacation_liability:
+            headers.append("Provisión de Vacaciones")
 
         for col, header in enumerate(headers, start=1):
             cell = ws.cell(row=row, column=col, value=header)
@@ -275,9 +310,18 @@ class ExportService:
                 cell = ws.cell(row=row, column=col_idx, value=prestaciones_dict.get(codigo, 0.0))
                 cell.border = border
 
+            if show_vacation_liability:
+                vac_col = 4 + len(prestaciones_list)
+                vac_amount = vacation_liability_by_nomina_empleado.get(ne.id, 0.0)
+                vac_cell = ws.cell(row=row, column=vac_col, value=vac_amount)
+                vac_cell.border = border
+
         # Auto-adjust column widths
         for col in range(1, min(len(headers) + 1, 27)):
             ws.column_dimensions[chr(64 + col)].width = 15
+
+        row += 2
+        ExportService._add_traceability_section(ws, row, nomina)
 
         # Save to BytesIO
         output = BytesIO()

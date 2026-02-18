@@ -619,6 +619,114 @@ class TestExportarPrestacionesExcel:
             assert isinstance(output, BytesIO)
             assert filename is not None
 
+    def test_exportar_prestaciones_excel_incluye_encabezado_y_auditoria(
+        self, app, db_session, planilla, nomina, nomina_empleado, nomina_detalle_prestacion
+    ):
+        """Export must include planilla id, nomina status and audit marks."""
+        from openpyxl import load_workbook
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+        with app.app_context():
+            nomina.generado_por = "creator_user"
+            nomina.aprobado_por = "approver_user"
+            nomina.aplicado_por = "applier_user"
+            nomina.estado = "applied"
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+            output, _filename = ExportService.exportar_prestaciones_excel(planilla, nomina)
+
+            wb = load_workbook(output)
+            ws = wb.active
+
+            labels = {}
+            for row in range(1, 50):
+                key = ws[f"A{row}"].value
+                if key:
+                    labels[key] = ws[f"B{row}"].value
+
+            assert labels.get("ID Planilla:") == planilla.id
+            assert labels.get("Estado Nómina (Generado, Aprobado, Aplicado):") == "applied"
+            assert labels.get("Creado por:") == "creator_user"
+            assert labels.get("Aprobado por:") == "approver_user"
+            assert labels.get("Aplicado por:") == "applier_user"
+
+    def test_exportar_prestaciones_excel_incluye_provision_vacaciones_desde_comprobante(
+        self, app, db_session, planilla, nomina, nomina_empleado, nomina_detalle_prestacion
+    ):
+        """Export must include vacation liability column and amount from voucher lines."""
+        from openpyxl import load_workbook
+        from coati_payroll.model import ComprobanteContable, ComprobanteContableLinea, VacationPolicy
+        from coati_payroll.vistas.planilla.services.export_service import ExportService
+
+        with app.app_context():
+            policy = VacationPolicy(
+                codigo="VAC-POL-EXP-001",
+                nombre="Vacation Export Policy",
+                planilla_id=planilla.id,
+                son_vacaciones_pagadas=True,
+            )
+            db_session.add(policy)
+            db_session.flush()
+
+            planilla.vacation_policy_id = policy.id
+
+            comprobante = ComprobanteContable(
+                nomina_id=nomina.id,
+                fecha_calculo=nomina.periodo_fin,
+                concepto="Comprobante test",
+                moneda_id=planilla.moneda_id,
+            )
+            db_session.add(comprobante)
+            db_session.flush()
+
+            linea = ComprobanteContableLinea(
+                comprobante_id=comprobante.id,
+                nomina_empleado_id=nomina_empleado.id,
+                empleado_id=nomina_empleado.empleado_id,
+                empleado_codigo=nomina_empleado.empleado.codigo_empleado,
+                empleado_nombre=f"{nomina_empleado.empleado.primer_nombre} {nomina_empleado.empleado.primer_apellido}",
+                codigo_cuenta="2199",
+                descripcion_cuenta="Pasivo vacaciones",
+                centro_costos="CC-001",
+                tipo_debito_credito="credito",
+                debito=Decimal("0.00"),
+                credito=Decimal("123.45"),
+                monto_calculado=Decimal("123.45"),
+                concepto="Vacaciones pagadas",
+                tipo_concepto="vacation_liability",
+                concepto_codigo="VAC_PAID_LIAB",
+                orden=1,
+            )
+            db_session.add(linea)
+            db_session.commit()
+
+            planilla, nomina = _prepare_objects_for_export(planilla, nomina)
+            output, _filename = ExportService.exportar_prestaciones_excel(planilla, nomina)
+
+            wb = load_workbook(output)
+            ws = wb.active
+
+            header_row = None
+            for row in range(1, 60):
+                if ws.cell(row=row, column=1).value in ("Cód. Empleado", "Cod. Empleado"):
+                    header_row = row
+                    break
+            assert header_row is not None
+
+            headers = []
+            col = 1
+            while True:
+                value = ws.cell(row=header_row, column=col).value
+                if value is None:
+                    break
+                headers.append(value)
+                col += 1
+
+            assert "Provisión de Vacaciones" in headers
+            vac_col = headers.index("Provisión de Vacaciones") + 1
+            assert float(ws.cell(row=header_row + 1, column=vac_col).value) == pytest.approx(123.45)
+
     def test_exportar_prestaciones_excel_missing_openpyxl(self, app, db_session, planilla, nomina, monkeypatch):
         """
         Test that export raises ImportError when openpyxl is not available.
