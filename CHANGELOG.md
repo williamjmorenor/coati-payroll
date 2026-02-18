@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Fixed
+
+- Regenerated audit vouchers during payroll apply after prestaciones/vacation side effects, ensuring persisted accounting lines include paid vacation liability for detailed voucher exports.
+- Made `aplicar_nomina` transactional around side effects and voucher regeneration so failures roll back the apply operation and avoid partial persistence.
+- Reused a shared voucher-regeneration helper in the manual regeneration route to keep calculation date/user behavior consistent.
+
+### Tests
+
+- Added route-level coverage to verify payroll apply persists a voucher and rolls back correctly when voucher regeneration fails.
+- Updated vacation accrual end-to-end validation to assert `vacation_liability` lines are available from persisted detailed voucher data after applying payroll, without manual regeneration.
+
+
 ## [1.7.0] - 2026-02-17
 
 ### Added

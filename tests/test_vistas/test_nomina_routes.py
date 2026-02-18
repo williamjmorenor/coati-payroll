@@ -8,7 +8,14 @@ from decimal import Decimal
 from unittest.mock import patch, MagicMock
 
 from coati_payroll.enums import NominaEstado
-from coati_payroll.model import Nomina, NominaEmpleado, NominaDetalle, Prestacion, PrestacionAcumulada
+from coati_payroll.model import (
+    Nomina,
+    NominaEmpleado,
+    NominaDetalle,
+    Prestacion,
+    PrestacionAcumulada,
+    ComprobanteContable,
+)
 from tests.helpers.auth import login_user
 
 
@@ -638,7 +645,7 @@ def test_aplicar_nomina_requires_write_access(app, client, db_session, planilla,
 
 
 def test_aplicar_nomina_success(app, client, admin_user, db_session, planilla, nomina):
-    """Test successful nomina application."""
+    """Test successful nomina application regenerates accounting voucher in DB."""
     with app.app_context():
         from coati_payroll.model import db
 
@@ -655,6 +662,42 @@ def test_aplicar_nomina_success(app, client, admin_user, db_session, planilla, n
         # Verify nomina was applied
         updated_nomina = db.session.get(Nomina, nomina.id)
         assert updated_nomina.estado == "applied"
+
+        comprobante = db.session.execute(
+            db.select(ComprobanteContable).filter_by(nomina_id=nomina.id)
+        ).scalar_one_or_none()
+        assert comprobante is not None
+
+
+def test_aplicar_nomina_rolls_back_when_voucher_regeneration_fails(
+    app, client, admin_user, db_session, planilla, nomina
+):
+    """Applying payroll must rollback state changes if voucher regeneration fails."""
+    with app.app_context():
+        from coati_payroll.model import db
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina = db.session.merge(nomina)
+        nomina.estado = NominaEstado.APROBADO
+        db.session.commit()
+        nomina_id = nomina.id
+
+        with (
+            patch("coati_payroll.vistas.planilla.nomina_routes.db.session.rollback") as mock_rollback,
+            patch("coati_payroll.vistas.planilla.nomina_routes.db.session.commit") as mock_commit,
+            patch(
+                "coati_payroll.vistas.planilla.nomina_routes._regenerar_comprobante_contable_nomina",
+                side_effect=Exception("voucher regen failed"),
+            ),
+        ):
+            response = client.post(
+                f"/planilla/{planilla.id}/nomina/{nomina_id}/aplicar",
+                follow_redirects=False,
+            )
+            assert response.status_code == 302
+            mock_rollback.assert_called_once()
+            mock_commit.assert_not_called()
 
 
 def test_aplicar_nomina_wrong_state(app, client, admin_user, db_session, planilla, nomina):

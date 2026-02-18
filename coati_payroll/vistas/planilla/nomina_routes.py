@@ -524,36 +524,50 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         flash(_("Solo se pueden aplicar nóminas en estado 'approved'."), "error")
         return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
-    nomina.estado = "applied"
-    nomina.modificado_por = current_user.usuario
-
-    # Actualizar estado de todas las novedades asociadas a "ejecutada"
     planilla = db.get_or_404(Planilla, planilla_id)
-    planilla_empleados = cast(list[Any], planilla.planilla_empleados)
-    empleado_ids = [pe.empleado_id for pe in planilla_empleados if pe.activo]
+    nomina_id_value = nomina.id
+    planilla_id_value = planilla.id
+    novedades: list[NominaNovedad] = []
+    try:
+        nomina.estado = "applied"
+        nomina.modificado_por = current_user.usuario
 
-    # Actualizar novedades que corresponden a este período
-    novedades = (
-        db.session.execute(
-            db.select(NominaNovedad).filter(
-                NominaNovedad.empleado_id.in_(empleado_ids),
-                NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
-                NominaNovedad.fecha_novedad <= nomina.periodo_fin,
-                NominaNovedad.estado == NovedadEstado.PENDIENTE,
+        # Actualizar estado de todas las novedades asociadas a "ejecutada"
+        planilla_empleados = cast(list[Any], planilla.planilla_empleados)
+        empleado_ids = [pe.empleado_id for pe in planilla_empleados if pe.activo]
+
+        # Actualizar novedades que corresponden a este período
+        if empleado_ids:
+            novedades = (
+                db.session.execute(
+                    db.select(NominaNovedad).filter(
+                        NominaNovedad.empleado_id.in_(empleado_ids),
+                        NominaNovedad.fecha_novedad >= nomina.periodo_inicio,
+                        NominaNovedad.fecha_novedad <= nomina.periodo_fin,
+                        NominaNovedad.estado == NovedadEstado.PENDIENTE,
+                    )
+                )
+                .scalars()
+                .all()
             )
+
+        for novedad in novedades:
+            novedad.estado = NovedadEstado.EJECUTADA
+            novedad.modificado_por = current_user.usuario
+
+        _aplicar_prestaciones_nomina(nomina, planilla, current_user.usuario)
+        _aplicar_vacaciones_nomina(nomina, planilla, current_user.usuario)
+        _regenerar_comprobante_contable_nomina(nomina, planilla, current_user.usuario)
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        log.exception(
+            "Failed to apply nomina and regenerate voucher",
+            extra={"nomina_id": nomina_id_value, "planilla_id": planilla_id_value},
         )
-        .scalars()
-        .all()
-    )
-
-    for novedad in novedades:
-        novedad.estado = NovedadEstado.EJECUTADA
-        novedad.modificado_por = current_user.usuario
-
-    _aplicar_prestaciones_nomina(nomina, planilla, current_user.usuario)
-    _aplicar_vacaciones_nomina(nomina, planilla, current_user.usuario)
-
-    db.session.commit()
+        flash(_("Error al aplicar nómina: {}").format(str(e)), "error")
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
     flash(
         _("Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas.").format(len(novedades)),
@@ -561,6 +575,18 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
     )
     return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
+
+def _regenerar_comprobante_contable_nomina(
+    nomina: Nomina,
+    planilla: Planilla,
+    usuario: str | None,
+):
+    """Regenerate the audit voucher with current persisted side effects."""
+    from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
+
+    accounting_service = AccountingVoucherService(db.session)
+    fecha_calculo = nomina.fecha_calculo_original or nomina.periodo_fin
+    return accounting_service.generate_audit_voucher(nomina, planilla, fecha_calculo, usuario)
 
 def _aplicar_prestaciones_nomina(nomina: Nomina, planilla: Planilla, usuario: str | None) -> None:
     """Apply prestaciones ledger side effects for an applied/paid nomina.
@@ -751,14 +777,8 @@ def regenerar_comprobante_contable(planilla_id: str, nomina_id: str):
         return redirect(url_for("planilla.ver_nomina", planilla_id=planilla_id, nomina_id=nomina_id))
 
     try:
-        from coati_payroll.nomina_engine.services.accounting_voucher_service import AccountingVoucherService
-
-        accounting_service = AccountingVoucherService(db.session)
-
-        # Regenerate voucher using existing nomina data
-        fecha_calculo = nomina.fecha_calculo_original or nomina.periodo_fin
         usuario = current_user.nombre_usuario if current_user and current_user.is_authenticated else None
-        comprobante = accounting_service.generate_audit_voucher(nomina, planilla, fecha_calculo, usuario)
+        comprobante = _regenerar_comprobante_contable_nomina(nomina, planilla, usuario)
 
         db.session.commit()
 
