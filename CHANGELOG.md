@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.7.3] - 2026-02-19
+
+### Changed
+
+- Replaced mid-year carry-in bootstrap strategy from employee-level implementation fields to company-level configuration using `primer_mes_nomina` and `primer_anio_nomina`.
+- Added bootstrap period fields to company management forms and company edit views.
+- Added server-side lock for company bootstrap period fields when payroll runs already exist in `applied` or `paid` status.
+- Updated payroll calculation flow so employee carry-in values are applied only when `periodo_inicio` matches the company's configured first payroll period.
+- Updated accumulation bootstrap to derive `periodos_procesados` from fiscal start month and payroll periodicity (`periodos_por_anio`) without hardcoded assumptions.
+
+### Fixed
+
+- Fixed carry-in behavior to avoid reapplying employee bootstrap balances outside the configured initial company period.
+- Fixed company form rendering to support disabled fields in `render_field` macro, ensuring lock UX works correctly.
+
+### Documentation
+
+- Updated employer docs to describe company-level bootstrap configuration and lock behavior.
+- Updated employee docs to remove legacy implementation year/month fields and keep only carry-in balances.
+- Clarified that implementation period is not configured in global calculation settings.
+
+### Tests
+
+- Updated repository tests for company-level bootstrap behavior and derived initial period counts.
+- Added company view test coverage for bootstrap field lock when payroll is already applied.
+
+
 ## [1.7.2] - 2026-02-18
 
 ### Changed

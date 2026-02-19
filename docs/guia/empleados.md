@@ -203,3 +203,16 @@ Use los filtros disponibles para buscar empleados:
 - Verifique que el empleado esté activo
 - Verifique que el empleado esté asignado a la planilla
 - Verifique la fecha de inicio de la asignación
+
+## Actualizacion: Implementacion Mid-Year por Empresa
+
+Desde la version 1.7.3, el periodo inicial de implementacion ya no se define en el empleado.
+
+- Se eliminaron los campos de implementacion por empleado:
+  - `anio_implementacion_inicial`
+  - `mes_ultimo_cierre`
+- El empleado mantiene unicamente los saldos de carry-in:
+  - `salario_acumulado`
+  - `impuesto_acumulado`
+
+Durante el periodo inicial configurado en la empresa, si ambos saldos (`salario_acumulado` e `impuesto_acumulado`) estan en `0` o vacios, el sistema emite advertencia por empleado y continua con el calculo.

@@ -223,8 +223,6 @@ def new():
         employee.creado_por = current_user.usuario
 
         # Initial implementation data
-        employee.anio_implementacion_inicial = form.anio_implementacion_inicial.data
-        employee.mes_ultimo_cierre = form.mes_ultimo_cierre.data
         employee.salario_acumulado = form.salario_acumulado.data or Decimal("0.00")
         employee.impuesto_acumulado = form.impuesto_acumulado.data or Decimal("0.00")
 
@@ -303,8 +301,6 @@ def edit(id_: str):
         employee.modificado_por = current_user.usuario
 
         # Initial implementation data
-        employee.anio_implementacion_inicial = form.anio_implementacion_inicial.data
-        employee.mes_ultimo_cierre = form.mes_ultimo_cierre.data
         employee.salario_acumulado = form.salario_acumulado.data or Decimal("0.00")
         employee.impuesto_acumulado = form.impuesto_acumulado.data or Decimal("0.00")
 

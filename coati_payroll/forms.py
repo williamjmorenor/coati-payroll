@@ -40,7 +40,7 @@ from wtforms.validators import (
 # Third party libraries
 # <-------------------------------------------------------------------------> #
 from coati_payroll.enums import TipoUsuario
-from coati_payroll.i18n import _
+from coati_payroll.i18n import _l as _
 
 
 class LoginForm(FlaskForm):
@@ -268,32 +268,6 @@ class EmployeeForm(FlaskForm):
         validators=[Optional()],
     )
     # Datos iniciales de implementación
-    anio_implementacion_inicial = IntegerField(
-        _("Año de implementación inicial"),
-        validators=[Optional(), NumberRange(min=1900, max=2100)],
-        description=_("Año fiscal cuando se implementó el sistema por primera vez"),
-    )
-    mes_ultimo_cierre = SelectField(
-        _("Último mes cerrado"),
-        choices=[
-            ("", _("Seleccionar...")),
-            ("1", _("Enero")),
-            ("2", _("Febrero")),
-            ("3", _("Marzo")),
-            ("4", _("Abril")),
-            ("5", _("Mayo")),
-            ("6", _("Junio")),
-            ("7", _("Julio")),
-            ("8", _("Agosto")),
-            ("9", _("Septiembre")),
-            ("10", _("Octubre")),
-            ("11", _("Noviembre")),
-            ("12", _("Diciembre")),
-        ],
-        validators=[Optional()],
-        coerce=lambda x: int(x) if x else None,
-        description=_("Último mes cerrado antes de pasar al nuevo sistema"),
-    )
     salario_acumulado = DecimalField(
         _("Salario acumulado"),
         validators=[Optional()],
@@ -1522,6 +1496,32 @@ class EmpresaForm(FlaskForm):
         _("Representante Legal"),
         validators=[Optional(), Length(max=150)],
     )
+    primer_mes_nomina = SelectField(
+        _("Primer Mes de Nómina"),
+        choices=[
+            ("", _("Seleccionar...")),
+            ("1", _("Enero")),
+            ("2", _("Febrero")),
+            ("3", _("Marzo")),
+            ("4", _("Abril")),
+            ("5", _("Mayo")),
+            ("6", _("Junio")),
+            ("7", _("Julio")),
+            ("8", _("Agosto")),
+            ("9", _("Septiembre")),
+            ("10", _("Octubre")),
+            ("11", _("Noviembre")),
+            ("12", _("Diciembre")),
+        ],
+        validators=[Optional()],
+        coerce=lambda x: int(x) if x else None,
+        description=_("Mes del primer período de nómina en el sistema para esta empresa"),
+    )
+    primer_anio_nomina = IntegerField(
+        _("Primer Año de Nómina"),
+        validators=[Optional(), NumberRange(min=1900, max=2100)],
+        description=_("Año del primer período de nómina en el sistema para esta empresa"),
+    )
     activo = BooleanField(_("Activo"), default=True)
     submit = SubmitField(_("Guardar"))
 
@@ -2003,5 +2003,5 @@ class VacationInitialBalanceForm(FlaskForm):
 
 
 class ConfiguracionIdiomaForm(FlaskForm):
-    idioma = SelectField("Idioma", validators=[DataRequired()])
-    submit = SubmitField("Guardar Cambios")
+    idioma = SelectField(_("Idioma"), validators=[DataRequired()])
+    submit = SubmitField(_("Guardar Cambios"))

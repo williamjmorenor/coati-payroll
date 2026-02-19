@@ -213,6 +213,10 @@ class Empresa(database.Model, BaseTabla):
     # Status
     activo = database.Column(database.Boolean(), default=True, nullable=False)
 
+    # Initial payroll implementation period for company-level mid-year carry-in
+    primer_mes_nomina = database.Column(database.Integer, nullable=True, default=lambda: date.today().month)
+    primer_anio_nomina = database.Column(database.Integer, nullable=True, default=lambda: date.today().year)
+
     # Relationships
     empleados = database.relationship("Empleado", back_populates="empresa")
     planillas = database.relationship("Planilla", back_populates="empresa")
@@ -328,8 +332,6 @@ class Empleado(database.Model, BaseTabla):
     # Datos iniciales de implementación
     # Estos campos almacenan saldos acumulados cuando el sistema se implementa
     # a mitad de un período fiscal
-    anio_implementacion_inicial = database.Column(database.Integer, nullable=True)
-    mes_ultimo_cierre = database.Column(database.Integer, nullable=True)
     salario_acumulado = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     impuesto_acumulado = database.Column(database.Numeric(14, 2), nullable=True, default=Decimal("0.00"))
     ultimos_tres_salarios = database.Column(MutableDict.as_mutable(OrjsonType), nullable=True, default=dict)

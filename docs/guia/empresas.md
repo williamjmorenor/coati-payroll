@@ -270,3 +270,24 @@ Después de configurar empresas, continúe con:
 - [Gestión de Empleados](empleados.md)
 - [Configuración de Planillas](planillas.md)
 - [Tutorial: Nómina Completa](../tutorial/nomina-completa.md)
+
+## Implementacion de Nomina por Empresa
+
+Cada empresa define su primer periodo de nomina con estos campos:
+
+- `primer_mes_nomina` (1..12)
+- `primer_anio_nomina` (1900..2100)
+
+Regla funcional:
+
+- Si el `periodo_inicio` de la nomina coincide con ese mes/anio, se aplica bootstrap usando `salario_acumulado` e `impuesto_acumulado` del empleado.
+- Si no coincide, el sistema usa acumulados normales del sistema.
+
+### Bloqueo de Edicion
+
+La edicion de `primer_mes_nomina` y `primer_anio_nomina` queda bloqueada cuando existe al menos una nomina de la empresa en estado:
+
+- `applied`
+- `paid`
+
+Si se intenta cambiar esos campos en ese escenario, el backend ignora el cambio, muestra advertencia y conserva los valores existentes.
