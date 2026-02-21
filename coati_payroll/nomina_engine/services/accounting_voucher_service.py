@@ -37,7 +37,9 @@ class AccountingVoucherService:
     def __init__(self, session):
         self.session = session
 
-    def _resolve_base_salary_accounts(self, planilla: Planilla) -> tuple[str | None, str | None, str | None, str | None, str]:
+    def _resolve_base_salary_accounts(
+        self, planilla: Planilla
+    ) -> tuple[str | None, str | None, str | None, str | None, str]:
         """Resolve base salary accounting accounts, preferring company-level configuration."""
         empresa = cast(Empresa | None, planilla.empresa)
         if empresa:
@@ -541,11 +543,7 @@ class AccountingVoucherService:
                         empleado_codigo=empleado.codigo_empleado,
                         empleado_nombre=empleado_nombre_completo,
                         codigo_cuenta=haber_salario,  # Can be None
-                        descripcion_cuenta=(
-                            (desc_haber_salario or "Salario por Pagar")
-                            if haber_salario
-                            else None
-                        ),
+                        descripcion_cuenta=((desc_haber_salario or "Salario por Pagar") if haber_salario else None),
                         centro_costos=centro_costos,
                         tipo_debito_credito="debito",
                         debito=detalle_monto,
