@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added Alembic migration `20260221_120000_empresa_salario_accounts` to create company-level salary base accounting fields.
 - Added documentation for robust summarized voucher setup, including source-of-truth matrix for salario básico, percepciones, deducciones, prestaciones, and paid-vacation accrual liability.
 
 
