@@ -42,7 +42,8 @@ class AccountingVoucherService:
     ) -> tuple[str | None, str | None, str | None, str | None, str]:
         """Resolve base salary accounting accounts, preferring company-level configuration."""
         empresa = cast(Empresa | None, planilla.empresa)
-        if empresa:
+        # Use empresa accounts only if at least one account is configured
+        if empresa and (empresa.codigo_cuenta_debe_salario or empresa.codigo_cuenta_haber_salario):
             return (
                 empresa.codigo_cuenta_debe_salario,
                 empresa.descripcion_cuenta_debe_salario,
@@ -51,6 +52,7 @@ class AccountingVoucherService:
                 "empresa",
             )
 
+        # Fallback to planilla accounts
         return (
             planilla.codigo_cuenta_debe_salario,
             planilla.descripcion_cuenta_debe_salario,
