@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added server-side lock for company bootstrap period fields when payroll runs already exist in `applied` or `paid` status.
 - Updated payroll calculation flow so employee carry-in values are applied only when `periodo_inicio` matches the company's configured first payroll period.
 - Updated accumulation bootstrap to derive `periodos_procesados` from fiscal start month and payroll periodicity (`periodos_por_anio`) without hardcoded assumptions.
+- Added an initial implementation helper at `/settings/helpers/` to import summarized accounting voucher account mappings from an Excel template using user-visible names (not internal database IDs) for companies, earnings, deductions, benefits, and vacation policies.
 
 ### Fixed
 
