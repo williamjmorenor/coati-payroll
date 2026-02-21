@@ -18,7 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added documentation for robust summarized voucher setup, including source-of-truth matrix for salario básico, percepciones, deducciones, prestaciones, and paid-vacation accrual liability.
+- Edit html forms.
+- Updated payroll novelties concept selectors to use only active concepts assigned to the payroll template (`Planilla`).
+- Updated novelties deduction selector to exclude deduction types `tax` and `social_security`.
 
+### Tests
+
+- Added coverage for novelties selector filtering by planilla assignment, active state, and deduction type exclusion (`tax` / `social_security`).
 
 ## [1.7.3] - 2026-02-19
 

@@ -139,6 +139,7 @@ def deduccion(app, db_session):
             nombre="INSS Laboral",
             descripcion="Seguro Social Laboral",
             formula_tipo="percentage",
+            tipo="general",
             activo=True,
         )
         db_session.add(deduccion)
@@ -918,6 +919,31 @@ def nomina_empleado(app, db_session, nomina, empleado):
         return nomina_empleado
 
 
+@pytest.fixture
+def planilla_novedad_conceptos(app, db_session, planilla, percepcion, deduccion, admin_user):
+    """Assign active income/deduction concepts to planilla for novedades tests."""
+    with app.app_context():
+        from coati_payroll.model import PlanillaIngreso, PlanillaDeduccion
+
+        ingreso = PlanillaIngreso(
+            planilla_id=planilla.id,
+            percepcion_id=percepcion.id,
+            orden=1,
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        egreso = PlanillaDeduccion(
+            planilla_id=planilla.id,
+            deduccion_id=deduccion.id,
+            prioridad=1,
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add_all([ingreso, egreso])
+        db_session.commit()
+        return ingreso, egreso
+
+
 def test_listar_novedades_displays(app, client, admin_user, db_session, planilla, nomina, empleado):
     """Test that GET /planilla/<id>/nomina/<nomina_id>/novedades displays novedades list."""
     with app.app_context():
@@ -948,8 +974,173 @@ def test_nueva_novedad_get_displays_form(app, client, admin_user, db_session, pl
         assert response.status_code == 200
 
 
+def test_nueva_novedad_get_filters_concepts_by_planilla_state_and_type(
+    app,
+    client,
+    admin_user,
+    db_session,
+    planilla,
+    nomina,
+    nomina_empleado,
+    percepcion,
+    deduccion,
+    planilla_novedad_conceptos,
+):
+    """GET novedades/new should show only active planilla concepts and hide tax/social_security deductions."""
+    with app.app_context():
+        from coati_payroll.model import Planilla, Percepcion, Deduccion, PlanillaIngreso, PlanillaDeduccion
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        # Unassigned/hidden income concepts
+        percepcion_no_asignada = Percepcion(
+            codigo="BONO_OUT",
+            nombre="Bono Fuera de Planilla",
+            formula_tipo="fixed",
+            activo=True,
+        )
+        percepcion_inactiva = Percepcion(
+            codigo="BONO_OFF",
+            nombre="Bono Inactivo",
+            formula_tipo="fixed",
+            activo=False,
+        )
+
+        # Deductions for filtering scenarios
+        deduccion_tax = Deduccion(
+            codigo="DED_TAX",
+            nombre="Impuesto Test",
+            tipo="tax",
+            formula_tipo="fixed",
+            activo=True,
+        )
+        deduccion_social = Deduccion(
+            codigo="DED_SS",
+            nombre="Seguro Social Test",
+            tipo="social_security",
+            formula_tipo="fixed",
+            activo=True,
+        )
+        deduccion_otra_planilla = Deduccion(
+            codigo="DED_OTHER",
+            nombre="Deducción Otra Planilla",
+            tipo="general",
+            formula_tipo="fixed",
+            activo=True,
+        )
+        deduccion_asoc_inactiva = Deduccion(
+            codigo="DED_ASSOC_OFF",
+            nombre="Deducción Asociación Inactiva",
+            tipo="general",
+            formula_tipo="fixed",
+            activo=True,
+        )
+        deduccion_catalogo_inactivo = Deduccion(
+            codigo="DED_CAT_OFF",
+            nombre="Deducción Catálogo Inactivo",
+            tipo="general",
+            formula_tipo="fixed",
+            activo=False,
+        )
+        db_session.add_all(
+            [
+                percepcion_no_asignada,
+                percepcion_inactiva,
+                deduccion_tax,
+                deduccion_social,
+                deduccion_otra_planilla,
+                deduccion_asoc_inactiva,
+                deduccion_catalogo_inactivo,
+            ]
+        )
+        db_session.commit()
+
+        # Second planilla to verify scope filtering
+        otra_planilla = Planilla(
+            nombre="Otra Planilla Test",
+            descripcion="Planilla secundaria",
+            tipo_planilla_id=planilla.tipo_planilla_id,
+            moneda_id=planilla.moneda_id,
+            empresa_id=planilla.empresa_id,
+            periodo_fiscal_inicio=planilla.periodo_fiscal_inicio,
+            periodo_fiscal_fin=planilla.periodo_fiscal_fin,
+            activo=True,
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(otra_planilla)
+        db_session.commit()
+        db_session.refresh(otra_planilla)
+
+        # Associations for visibility/hiding checks
+        db_session.add(
+            PlanillaIngreso(
+                planilla_id=planilla.id,
+                percepcion_id=percepcion_inactiva.id,
+                orden=2,
+                activo=True,
+                creado_por=admin_user.usuario,
+            )
+        )
+        db_session.add_all(
+            [
+                PlanillaDeduccion(
+                    planilla_id=planilla.id,
+                    deduccion_id=deduccion_tax.id,
+                    prioridad=2,
+                    activo=True,
+                    creado_por=admin_user.usuario,
+                ),
+                PlanillaDeduccion(
+                    planilla_id=planilla.id,
+                    deduccion_id=deduccion_social.id,
+                    prioridad=3,
+                    activo=True,
+                    creado_por=admin_user.usuario,
+                ),
+                PlanillaDeduccion(
+                    planilla_id=planilla.id,
+                    deduccion_id=deduccion_asoc_inactiva.id,
+                    prioridad=4,
+                    activo=False,
+                    creado_por=admin_user.usuario,
+                ),
+                PlanillaDeduccion(
+                    planilla_id=planilla.id,
+                    deduccion_id=deduccion_catalogo_inactivo.id,
+                    prioridad=5,
+                    activo=True,
+                    creado_por=admin_user.usuario,
+                ),
+                PlanillaDeduccion(
+                    planilla_id=otra_planilla.id,
+                    deduccion_id=deduccion_otra_planilla.id,
+                    prioridad=1,
+                    activo=True,
+                    creado_por=admin_user.usuario,
+                ),
+            ]
+        )
+        db_session.commit()
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/novedades/new")
+        assert response.status_code == 200
+
+        # Visible: assigned and active
+        assert b"BONO - Bono Mensual" in response.data
+        assert b"INSS - INSS Laboral" in response.data
+
+        # Hidden: not assigned, wrong type, inactive association, inactive concept, other planilla
+        assert b"BONO_OUT - Bono Fuera de Planilla" not in response.data
+        assert b"BONO_OFF - Bono Inactivo" not in response.data
+        assert b"DED_TAX - Impuesto Test" not in response.data
+        assert b"DED_SS - Seguro Social Test" not in response.data
+        assert b"DED_OTHER - Deducci\xc3\xb3n Otra Planilla" not in response.data
+        assert b"DED_ASSOC_OFF - Deducci\xc3\xb3n Asociaci\xc3\xb3n Inactiva" not in response.data
+        assert b"DED_CAT_OFF - Deducci\xc3\xb3n Cat\xc3\xa1logo Inactivo" not in response.data
+
+
 def test_nueva_novedad_post_creates_novedad(
-    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion, planilla_novedad_conceptos
 ):
     """Test that POST /planilla/<id>/nomina/<nomina_id>/novedades/new creates a novedad."""
     with app.app_context():
@@ -983,7 +1174,15 @@ def test_nueva_novedad_post_creates_novedad(
 
 
 def test_nueva_novedad_post_uses_concept_absence_defaults_when_flags_omitted(
-    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+    app,
+    client,
+    admin_user,
+    db_session,
+    planilla,
+    nomina,
+    nomina_empleado,
+    percepcion,
+    planilla_novedad_conceptos,
 ):
     """When absence flags are omitted, use Percepcion defaults."""
     with app.app_context():
@@ -1021,7 +1220,15 @@ def test_nueva_novedad_post_uses_concept_absence_defaults_when_flags_omitted(
 
 
 def test_nueva_novedad_post_respects_explicit_flags_over_concept_defaults(
-    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+    app,
+    client,
+    admin_user,
+    db_session,
+    planilla,
+    nomina,
+    nomina_empleado,
+    percepcion,
+    planilla_novedad_conceptos,
 ):
     """If flags are explicitly present in payload, they override concept defaults."""
     with app.app_context():
@@ -1061,7 +1268,15 @@ def test_nueva_novedad_post_respects_explicit_flags_over_concept_defaults(
 
 
 def test_nueva_novedad_post_uses_deduccion_absence_defaults_when_flags_omitted(
-    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, deduccion
+    app,
+    client,
+    admin_user,
+    db_session,
+    planilla,
+    nomina,
+    nomina_empleado,
+    deduccion,
+    planilla_novedad_conceptos,
 ):
     """When absence flags are omitted, use Deduccion defaults."""
     with app.app_context():
@@ -1099,7 +1314,15 @@ def test_nueva_novedad_post_uses_deduccion_absence_defaults_when_flags_omitted(
 
 
 def test_editar_novedad_get_displays_form(
-    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+    app,
+    client,
+    admin_user,
+    db_session,
+    planilla,
+    nomina,
+    nomina_empleado,
+    percepcion,
+    planilla_novedad_conceptos,
 ):
     """Test that GET /planilla/<id>/nomina/<nomina_id>/novedades/<novedad_id>/edit displays form."""
     with app.app_context():
@@ -1128,7 +1351,15 @@ def test_editar_novedad_get_displays_form(
 
 
 def test_editar_novedad_post_updates_novedad(
-    app, client, admin_user, db_session, planilla, nomina, nomina_empleado, percepcion
+    app,
+    client,
+    admin_user,
+    db_session,
+    planilla,
+    nomina,
+    nomina_empleado,
+    percepcion,
+    planilla_novedad_conceptos,
 ):
     """Test that POST /planilla/<id>/nomina/<nomina_id>/novedades/<novedad_id>/edit updates novedad."""
     with app.app_context():
