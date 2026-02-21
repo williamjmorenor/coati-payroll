@@ -46,7 +46,9 @@ def _find_company(visible_id: str) -> Empresa | None:
     ).scalar_one_or_none()
 
 
-def _find_by_name_or_code(model: type[Percepcion] | type[Deduccion] | type[Prestacion] | type[VacationPolicy], visible_id: str):
+def _find_by_name_or_code(
+    model: type[Percepcion] | type[Deduccion] | type[Prestacion] | type[VacationPolicy], visible_id: str
+):
     lowered = visible_id.strip().lower()
     return db.session.execute(
         db.select(model).where(or_(func.lower(model.nombre) == lowered, func.lower(model.codigo) == lowered))
