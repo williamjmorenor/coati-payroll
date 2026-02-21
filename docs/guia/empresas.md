@@ -91,6 +91,21 @@ Opcionalmente, agregue información de contacto:
 2. Haga clic en **Guardar**
 3. La empresa quedará activa y disponible para asignar empleados y planillas
 
+## Configuración Contable de Salario Básico en Empresa
+
+Desde la versión **1.7.4**, la empresa puede definir las cuentas contables del salario básico que usa el comprobante resumido de nómina:
+
+- **Cuenta Débito Salario Básico**
+- **Descripción Débito Salario Básico**
+- **Cuenta Crédito Salario Básico**
+- **Descripción Crédito Salario Básico**
+
+### ¿Por qué configurarlo en Empresa?
+
+- Permite una fuente de verdad única para varias planillas de la misma razón social.
+- Reduce inconsistencias cuando diferentes planillas comparten la misma política contable.
+- Mantiene compatibilidad con planillas legacy (fallback), pero se recomienda centralizar en empresa.
+
 ## Asignar Empresas
 
 ### Asignar Empleados a una Empresa

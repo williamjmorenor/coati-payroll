@@ -15,6 +15,7 @@ from coati_payroll.model import (
     NominaEmpleado,
     NominaDetalle,
     Planilla,
+    Empresa,
     Percepcion,
     Deduccion,
     Prestacion,
@@ -36,6 +37,26 @@ class AccountingVoucherService:
     def __init__(self, session):
         self.session = session
 
+    def _resolve_base_salary_accounts(self, planilla: Planilla) -> tuple[str | None, str | None, str | None, str | None, str]:
+        """Resolve base salary accounting accounts, preferring company-level configuration."""
+        empresa = cast(Empresa | None, planilla.empresa)
+        if empresa:
+            return (
+                empresa.codigo_cuenta_debe_salario,
+                empresa.descripcion_cuenta_debe_salario,
+                empresa.codigo_cuenta_haber_salario,
+                empresa.descripcion_cuenta_haber_salario,
+                "empresa",
+            )
+
+        return (
+            planilla.codigo_cuenta_debe_salario,
+            planilla.descripcion_cuenta_debe_salario,
+            planilla.codigo_cuenta_haber_salario,
+            planilla.descripcion_cuenta_haber_salario,
+            "planilla",
+        )
+
     def validate_accounting_configuration(self, planilla: Planilla) -> tuple[bool, list[str]]:
         """Validate that all accounting configuration is complete.
 
@@ -48,10 +69,14 @@ class AccountingVoucherService:
         warnings = []
 
         # Check base salary accounts
-        if not planilla.codigo_cuenta_debe_salario:
-            warnings.append("Falta configurar la cuenta de débito para salario básico en la planilla")
-        if not planilla.codigo_cuenta_haber_salario:
-            warnings.append("Falta configurar la cuenta de crédito para salario básico en la planilla")
+        debe_salario, _desc_debe_salario, haber_salario, _desc_haber_salario, account_scope = (
+            self._resolve_base_salary_accounts(planilla)
+        )
+        scope_label = "empresa" if account_scope == "empresa" else "planilla"
+        if not debe_salario:
+            warnings.append(f"Falta configurar la cuenta de débito para salario básico en la {scope_label}")
+        if not haber_salario:
+            warnings.append(f"Falta configurar la cuenta de crédito para salario básico en la {scope_label}")
 
         # Check percepciones
         percepciones = (
@@ -402,6 +427,10 @@ class AccountingVoucherService:
         orden = 0
         null_account_count = 0
 
+        debe_salario, desc_debe_salario, haber_salario, desc_haber_salario, _account_scope = (
+            self._resolve_base_salary_accounts(planilla)
+        )
+
         # Process each employee
         for ne in nomina_empleados:
             empleado = ne.empleado
@@ -414,7 +443,7 @@ class AccountingVoucherService:
 
             # Debit: Salary Expense
             orden += 1
-            if planilla.codigo_cuenta_debe_salario is None:
+            if debe_salario is None:
                 null_account_count += 1
             linea_debe = ComprobanteContableLinea(
                 comprobante_id=comprobante.id,
@@ -422,9 +451,8 @@ class AccountingVoucherService:
                 empleado_id=empleado.id,
                 empleado_codigo=empleado.codigo_empleado,
                 empleado_nombre=empleado_nombre_completo,
-                codigo_cuenta=planilla.codigo_cuenta_debe_salario,  # Can be None if not configured
-                descripcion_cuenta=planilla.descripcion_cuenta_debe_salario
-                or ("Gasto por Salario" if planilla.codigo_cuenta_debe_salario else None),
+                codigo_cuenta=debe_salario,  # Can be None if not configured
+                descripcion_cuenta=desc_debe_salario or ("Gasto por Salario" if debe_salario else None),
                 centro_costos=centro_costos,
                 tipo_debito_credito="debito",
                 debito=salario_base,
@@ -440,7 +468,7 @@ class AccountingVoucherService:
 
             # Credit: Salary Payable
             orden += 1
-            if planilla.codigo_cuenta_haber_salario is None:
+            if haber_salario is None:
                 null_account_count += 1
             linea_haber = ComprobanteContableLinea(
                 comprobante_id=comprobante.id,
@@ -448,9 +476,8 @@ class AccountingVoucherService:
                 empleado_id=empleado.id,
                 empleado_codigo=empleado.codigo_empleado,
                 empleado_nombre=empleado_nombre_completo,
-                codigo_cuenta=planilla.codigo_cuenta_haber_salario,  # Can be None if not configured
-                descripcion_cuenta=planilla.descripcion_cuenta_haber_salario
-                or ("Salario por Pagar" if planilla.codigo_cuenta_haber_salario else None),
+                codigo_cuenta=haber_salario,  # Can be None if not configured
+                descripcion_cuenta=desc_haber_salario or ("Salario por Pagar" if haber_salario else None),
                 centro_costos=centro_costos,
                 tipo_debito_credito="credito",
                 debito=Decimal("0.00"),
@@ -504,7 +531,7 @@ class AccountingVoucherService:
 
                     # Debit: Salary Payable (same as base salary credit account, can be NULL)
                     orden += 1
-                    if planilla.codigo_cuenta_haber_salario is None:
+                    if haber_salario is None:
                         null_account_count += 1
                     detalle_monto = round_money(detalle.monto, planilla_moneda)
                     linea_debe = ComprobanteContableLinea(
@@ -513,10 +540,10 @@ class AccountingVoucherService:
                         empleado_id=empleado.id,
                         empleado_codigo=empleado.codigo_empleado,
                         empleado_nombre=empleado_nombre_completo,
-                        codigo_cuenta=planilla.codigo_cuenta_haber_salario,  # Can be None
+                        codigo_cuenta=haber_salario,  # Can be None
                         descripcion_cuenta=(
-                            (planilla.descripcion_cuenta_haber_salario or "Salario por Pagar")
-                            if planilla.codigo_cuenta_haber_salario
+                            (desc_haber_salario or "Salario por Pagar")
+                            if haber_salario
                             else None
                         ),
                         centro_costos=centro_costos,

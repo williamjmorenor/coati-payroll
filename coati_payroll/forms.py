@@ -1499,6 +1499,26 @@ class EmpresaForm(FlaskForm):
         _("Representante Legal"),
         validators=[Optional(), Length(max=150)],
     )
+    codigo_cuenta_debe_salario = StringField(
+        _("Cuenta Débito Salario Básico"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta contable débito para salario básico"),
+    )
+    descripcion_cuenta_debe_salario = StringField(
+        _("Descripción Débito Salario Básico"),
+        validators=[Optional(), Length(max=255)],
+        description=_("Descripción de la cuenta débito para salario básico"),
+    )
+    codigo_cuenta_haber_salario = StringField(
+        _("Cuenta Crédito Salario Básico"),
+        validators=[Optional(), Length(max=64)],
+        description=_("Cuenta contable crédito para salario básico"),
+    )
+    descripcion_cuenta_haber_salario = StringField(
+        _("Descripción Crédito Salario Básico"),
+        validators=[Optional(), Length(max=255)],
+        description=_("Descripción de la cuenta crédito para salario básico"),
+    )
     primer_mes_nomina = SelectField(
         _("Primer Mes de Nómina"),
         choices=[

@@ -217,6 +217,12 @@ class Empresa(database.Model, BaseTabla):
     primer_mes_nomina = database.Column(database.Integer, nullable=True, default=lambda: date.today().month)
     primer_anio_nomina = database.Column(database.Integer, nullable=True, default=lambda: date.today().year)
 
+    # Accounting control for base salary at company level
+    codigo_cuenta_debe_salario = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_debe_salario = database.Column(database.String(255), nullable=True)
+    codigo_cuenta_haber_salario = database.Column(database.String(64), nullable=True)
+    descripcion_cuenta_haber_salario = database.Column(database.String(255), nullable=True)
+
     # Relationships
     empleados = database.relationship("Empleado", back_populates="empresa")
     planillas = database.relationship("Planilla", back_populates="empresa")
