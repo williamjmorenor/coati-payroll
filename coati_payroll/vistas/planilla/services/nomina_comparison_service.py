@@ -10,7 +10,7 @@ from typing import Any
 
 from sqlalchemy.orm import selectinload
 
-from coati_payroll.constantes import NominaEstado
+from coati_payroll.enums import NominaEstado
 from coati_payroll.model import (
     Deduccion,
     Nomina,
