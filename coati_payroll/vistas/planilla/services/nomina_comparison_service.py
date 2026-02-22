@@ -732,7 +732,7 @@ class NominaComparisonService:
             )
 
         def serialize(data: dict[str, dict[str, Decimal | int]], key_name: str) -> list[dict[str, Any]]:
-            rows = []
+            rows: list[dict[str, Any]] = []
             for key, values in data.items():
                 base = cls._to_decimal(values["base"])
                 actual = cls._to_decimal(values["actual"])
@@ -744,7 +744,7 @@ class NominaComparisonService:
                         "variacion_pct": cls._percent(cls._pct_delta(actual, base)),
                     }
                 )
-            rows.sort(key=lambda item: abs(float(item["variacion_total_neto"])), reverse=True)
+            rows.sort(key=lambda item: abs(item["variacion_total_neto"]), reverse=True)
             return rows
 
         return {
