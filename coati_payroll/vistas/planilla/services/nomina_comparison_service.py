@@ -11,7 +11,7 @@ from typing import Any
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
-from coati_payroll.constantes import NominaEstado
+from coati_payroll.enums import NominaEstado
 from coati_payroll.model import (
     Deduccion,
     Nomina,
@@ -47,7 +47,7 @@ class NominaComparisonService:
         query = db.select(Nomina).filter(Nomina.planilla_id == planilla_id).order_by(Nomina.periodo_fin.desc())
         if excluir_nomina_id:
             query = query.filter(Nomina.id != excluir_nomina_id)
-        return db.session.execute(query).scalars().all()
+        return list(db.session.execute(query).scalars().all())
 
     @staticmethod
     def get_nomina_base_default(nomina_actual: Nomina) -> Nomina | None:
@@ -434,11 +434,11 @@ class NominaComparisonService:
 
     @staticmethod
     def _load_nomina_empleados(nomina_id: str) -> list[NominaEmpleado]:
-        return (
+        return list(
             db.session.execute(
                 db.select(NominaEmpleado)
                 .filter(NominaEmpleado.nomina_id == nomina_id)
-                .options(selectinload(NominaEmpleado.empleado))
+                .options(selectinload(NominaEmpleado.empleado))  # type: ignore[arg-type]
             )
             .scalars()
             .all()
@@ -732,7 +732,7 @@ class NominaComparisonService:
             )
 
         def serialize(data: dict[str, dict[str, Decimal | int]], key_name: str) -> list[dict[str, Any]]:
-            rows = []
+            rows: list[dict[str, Any]] = []
             for key, values in data.items():
                 base = cls._to_decimal(values["base"])
                 actual = cls._to_decimal(values["actual"])
