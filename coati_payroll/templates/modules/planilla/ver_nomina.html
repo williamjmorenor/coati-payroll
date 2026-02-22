@@ -238,6 +238,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 <a href="{{ url_for('planilla.ver_log_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-outline-secondary">
                     <i class="bi bi-card-list"></i> Log de Ejecución
                 </a>
+                <a href="{{ url_for('planilla.comparar_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-outline-dark">
+                    <i class="bi bi-clipboard-data"></i> Comparar con otra nómina
+                </a>
                 {% if nomina.estado in ['generated', 'approved', 'applied'] %}
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -490,4 +493,3 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </script>
 {% endif %}
 {% endblock %}
-

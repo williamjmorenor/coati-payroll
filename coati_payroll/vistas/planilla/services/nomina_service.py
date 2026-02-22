@@ -291,6 +291,7 @@ class NominaService:
             VacationLedger,
             VacationAccount,
         )
+        from coati_payroll.vistas.planilla.services.nomina_comparison_service import NominaComparisonService
 
         # Store the original period and calculation date for consistency
         periodo_inicio = nomina.periodo_inicio
@@ -397,6 +398,13 @@ class NominaService:
             # Remove existing accounting voucher tied to the old nomina.
             # The voucher has a non-nullable FK, so it must be deleted before the nomina.
             db.session.execute(db.delete(ComprobanteContable).where(ComprobanteContable.nomina_id == nomina.id))
+
+            # Refresh comparisons that referenced the old payroll id.
+            NominaComparisonService.refresh_after_recalculo(
+                planilla_id=planilla.id,
+                nomina_original_id=nomina_original_id,
+                nomina_nueva_id=new_nomina.id,
+            )
 
             # Delete the old nomina record after moving linked novelties
             db.session.delete(nomina)
