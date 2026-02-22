@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.8.1] - 2026-02-22
+
+### Added
+
+- Added payroll comparison flow with a dedicated route, comparison dashboard template, and a "Comparar con otra nómina" action from payroll detail.
+- Added `NominaComparacion` model persistence for cached base-vs-actual comparison results, including freshness and approval metadata.
+- Added `NominaComparisonService` with KPI generation for alerts, outliers, concept drivers, segmentation, structural changes, stability score, and vacation-rule comparisons.
+- Added comparison-oriented indexes on `NominaEmpleado (nomina_id, empleado_id)` and `NominaDetalle (nomina_empleado_id, tipo, codigo)`.
+
+### Changed
+
+- Updated payroll recalculation flow to refresh/re-point comparison cache rows that referenced the replaced payroll id.
+- Exposed `NominaComparisonService` through the planilla services package exports.
+
+### Fixed
+
+- Added race-safe comparison cache persistence by handling concurrent insert `IntegrityError` with rollback and cached-row re-read fallback.
+
+### Tests
+
+- Added unit tests for comparison KPI/statistical helpers, approval metadata helpers, and concurrent cache insert fallback handling.
+
 ## [1.8.0] - 2026-02-21
 
 ### Changed
