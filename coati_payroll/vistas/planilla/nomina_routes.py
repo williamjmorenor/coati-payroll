@@ -150,6 +150,9 @@ def ver_nomina(planilla_id: str, nomina_id: str):
         db.select(Nomina).filter(Nomina.id == nomina_id, Nomina.planilla_id == planilla_id)
     ).scalar_one_or_none()
     if not nomina:
+        nomina_real = db.session.get(Nomina, nomina_id)
+        if nomina_real:
+            return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=nomina_real.planilla_id, nomina_id=nomina_id))
         abort(404)
     _apply_progress_snapshots([nomina])
 
