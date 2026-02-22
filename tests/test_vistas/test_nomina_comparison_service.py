@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 from sqlalchemy.exc import IntegrityError
 
-from coati_payroll.constantes import NominaEstado
+from coati_payroll.enums import NominaEstado
 from coati_payroll.vistas.planilla.services.nomina_comparison_service import NominaComparisonService
 
 
