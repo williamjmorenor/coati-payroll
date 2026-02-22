@@ -12,16 +12,20 @@ from sqlalchemy.orm import selectinload
 
 from coati_payroll.constantes import NominaEstado
 from coati_payroll.model import (
+    Deduccion,
     Nomina,
     NominaComparacion,
     NominaDetalle,
     NominaEmpleado,
     NominaNovedad,
+    Percepcion,
     Planilla,
     PlanillaDeduccion,
     PlanillaIngreso,
     PlanillaPrestacion,
     PlanillaReglaCalculo,
+    Prestacion,
+    ReglaCalculo,
     db,
     utc_now,
 )
@@ -423,25 +427,41 @@ class NominaComparisonService:
     @staticmethod
     def _comparar_componentes_planilla(planilla_id: str) -> dict[str, list[str]]:
         percepciones = (
-            db.session.execute(db.select(PlanillaIngreso.codigo).filter(PlanillaIngreso.planilla_id == planilla_id))
+            db.session.execute(
+                db.select(Percepcion.codigo)
+                .select_from(PlanillaIngreso)
+                .join(Percepcion, Percepcion.id == PlanillaIngreso.percepcion_id)
+                .filter(PlanillaIngreso.planilla_id == planilla_id)
+            )
             .scalars()
             .all()
         )
         deducciones = (
-            db.session.execute(db.select(PlanillaDeduccion.codigo).filter(PlanillaDeduccion.planilla_id == planilla_id))
+            db.session.execute(
+                db.select(Deduccion.codigo)
+                .select_from(PlanillaDeduccion)
+                .join(Deduccion, Deduccion.id == PlanillaDeduccion.deduccion_id)
+                .filter(PlanillaDeduccion.planilla_id == planilla_id)
+            )
             .scalars()
             .all()
         )
         prestaciones = (
             db.session.execute(
-                db.select(PlanillaPrestacion.codigo).filter(PlanillaPrestacion.planilla_id == planilla_id)
+                db.select(Prestacion.codigo)
+                .select_from(PlanillaPrestacion)
+                .join(Prestacion, Prestacion.id == PlanillaPrestacion.prestacion_id)
+                .filter(PlanillaPrestacion.planilla_id == planilla_id)
             )
             .scalars()
             .all()
         )
         reglas = (
             db.session.execute(
-                db.select(PlanillaReglaCalculo.codigo).filter(PlanillaReglaCalculo.planilla_id == planilla_id)
+                db.select(ReglaCalculo.codigo)
+                .select_from(PlanillaReglaCalculo)
+                .join(ReglaCalculo, ReglaCalculo.id == PlanillaReglaCalculo.regla_calculo_id)
+                .filter(PlanillaReglaCalculo.planilla_id == planilla_id)
             )
             .scalars()
             .all()
