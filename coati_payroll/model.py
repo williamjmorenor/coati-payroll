@@ -933,6 +933,44 @@ class Nomina(database.Model, BaseTabla):
         back_populates="nomina",
         cascade="all, delete-orphan",
     )
+    comparaciones_actual = database.relationship(
+        "NominaComparacion",
+        back_populates="nomina_actual",
+        foreign_keys="NominaComparacion.nomina_actual_id",
+    )
+    comparaciones_base = database.relationship(
+        "NominaComparacion",
+        back_populates="nomina_base",
+        foreign_keys="NominaComparacion.nomina_base_id",
+    )
+
+
+class NominaComparacion(database.Model, BaseTabla):
+    """Cached comparison between two payroll runs in the same planilla."""
+
+    __tablename__ = "nomina_comparacion"
+    __table_args__ = (
+        database.UniqueConstraint("nomina_base_id", "nomina_actual_id", name="uq_nomina_comparacion_par"),
+        database.CheckConstraint("nomina_base_id <> nomina_actual_id", name="ck_nomina_comparacion_distintas"),
+    )
+
+    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=False)
+    nomina_base_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
+    nomina_actual_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
+    resumen_json = database.Column(JSON, nullable=False)
+    base_modificado_en = database.Column(database.DateTime, nullable=True)
+    actual_modificado_en = database.Column(database.DateTime, nullable=True)
+    es_calculo_actual = database.Column(database.Boolean, nullable=False, default=True)
+    planilla_actual_aprobada = database.Column(database.Boolean, nullable=False, default=False)
+    generado_en = database.Column(database.DateTime, nullable=False, default=utc_now)
+
+    planilla = database.relationship("Planilla")
+    nomina_base = database.relationship("Nomina", foreign_keys=[nomina_base_id], back_populates="comparaciones_base")
+    nomina_actual = database.relationship(
+        "Nomina",
+        foreign_keys=[nomina_actual_id],
+        back_populates="comparaciones_actual",
+    )
 
 
 class NominaProgress(database.Model, BaseTabla):
@@ -954,6 +992,9 @@ class NominaProgress(database.Model, BaseTabla):
 
 class NominaEmpleado(database.Model, BaseTabla):
     __tablename__ = "nomina_empleado"
+    __table_args__ = (
+        database.Index("ix_nomina_empleado_nomina_empleado", "nomina_id", "empleado_id"),
+    )
 
     nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
     empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False)
@@ -989,6 +1030,9 @@ class NominaEmpleado(database.Model, BaseTabla):
 
 class NominaDetalle(database.Model, BaseTabla):
     __tablename__ = "nomina_detalle"
+    __table_args__ = (
+        database.Index("ix_nomina_detalle_emp_tipo_codigo", "nomina_empleado_id", "tipo", "codigo"),
+    )
 
     nomina_empleado_id = database.Column(database.String(26), database.ForeignKey("nomina_empleado.id"), nullable=False)
     tipo = database.Column(database.String(15), nullable=False)  # income | deduction | benefit

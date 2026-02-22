@@ -4,7 +4,7 @@
 
 from datetime import date
 from typing import Any, cast
-from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from coati_payroll.log import log
@@ -29,7 +29,7 @@ from coati_payroll.i18n import _
 from coati_payroll.nomina_engine.processors.accounting_processor import AccountingProcessor
 from coati_payroll.rbac import require_read_access, require_write_access
 from coati_payroll.vistas.planilla import planilla_bp
-from coati_payroll.vistas.planilla.services import NominaService, NovedadService
+from coati_payroll.vistas.planilla.services import NominaService, NovedadService, NominaComparisonService
 from coati_payroll.queue.tasks import retry_failed_nomina
 from coati_payroll.vacation_service import VacationService
 
@@ -146,12 +146,12 @@ def listar_nominas(planilla_id: str):
 def ver_nomina(planilla_id: str, nomina_id: str):
     """View details of a specific nomina."""
     planilla = db.get_or_404(Planilla, planilla_id)
-    nomina = db.get_or_404(Nomina, nomina_id)
+    nomina = db.session.execute(
+        db.select(Nomina).filter(Nomina.id == nomina_id, Nomina.planilla_id == planilla_id)
+    ).scalar_one_or_none()
+    if not nomina:
+        abort(404)
     _apply_progress_snapshots([nomina])
-
-    if nomina.planilla_id != planilla_id:
-        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
-        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
 
     nomina_empleados = db.session.execute(db.select(NominaEmpleado).filter_by(nomina_id=nomina_id)).scalars().all()
 
@@ -180,6 +180,51 @@ def ver_nomina(planilla_id: str, nomina_id: str):
         has_warnings=has_warnings,
         error_messages=error_messages,
         warning_messages=warning_messages,
+    )
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/comparar", methods=["GET"])
+@require_read_access()
+def comparar_nomina(planilla_id: str, nomina_id: str):
+    """Compare selected nomina against another nomina in the same planilla."""
+    planilla = db.get_or_404(Planilla, planilla_id)
+    nomina_actual = db.session.execute(
+        db.select(Nomina).filter(Nomina.id == nomina_id, Nomina.planilla_id == planilla_id)
+    ).scalar_one_or_none()
+    if not nomina_actual:
+        abort(404)
+
+    nominas_para_comparar = NominaComparisonService.get_nominas_disponibles(
+        planilla_id=planilla_id,
+        excluir_nomina_id=nomina_id,
+    )
+    base_seleccionada_id = request.args.get("nomina_base_id")
+    ejecutar = request.args.get("ejecutar") == "1"
+
+    nomina_base = None
+    comparacion_payload: dict[str, Any] | None = None
+
+    if nominas_para_comparar:
+        nomina_base = next((n for n in nominas_para_comparar if n.id == base_seleccionada_id), None)
+        if base_seleccionada_id and nomina_base is None:
+            flash(_("La nómina base seleccionada no es válida para esta planilla."), "warning")
+        if nomina_base is None:
+            nomina_base = NominaComparisonService.get_nomina_base_default(nomina_actual)
+
+    if ejecutar and nomina_base:
+        comparacion_payload = NominaComparisonService.compare_or_cached(
+            planilla=planilla,
+            nomina_base=nomina_base,
+            nomina_actual=nomina_actual,
+        )
+
+    return render_template(
+        "modules/planilla/comparar_nomina.html",
+        planilla=planilla,
+        nomina_actual=nomina_actual,
+        nomina_base=nomina_base,
+        nominas_para_comparar=nominas_para_comparar,
+        comparacion_payload=comparacion_payload,
     )
 
 
