@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from types import SimpleNamespace
 
-from coati_payroll.constantes import NominaEstado
+from coati_payroll.enums import NominaEstado
 from coati_payroll.vistas.planilla.services.nomina_comparison_service import NominaComparisonService
 
 

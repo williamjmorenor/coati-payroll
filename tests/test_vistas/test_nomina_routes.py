@@ -347,7 +347,7 @@ def test_ver_nomina_accessible_to_authenticated_users(app, client, admin_user, d
 
 
 def test_ver_nomina_wrong_planilla_redirects(app, client, admin_user, db_session, planilla, nomina):
-    """Test that ver_nomina redirects if nomina doesn't belong to planilla."""
+    """Test that ver_nomina returns 404 if nomina doesn't belong to planilla."""
     with app.app_context():
         from coati_payroll.model import Planilla, TipoPlanilla, Moneda
 
@@ -369,7 +369,7 @@ def test_ver_nomina_wrong_planilla_redirects(app, client, admin_user, db_session
         login_user(client, admin_user.usuario, "admin-password")
 
         response = client.get(f"/planilla/{other_planilla.id}/nomina/{nomina.id}", follow_redirects=False)
-        assert response.status_code == 302
+        assert response.status_code == 404
 
 
 def test_ver_nomina_with_errors(app, client, admin_user, db_session, planilla, nomina):
