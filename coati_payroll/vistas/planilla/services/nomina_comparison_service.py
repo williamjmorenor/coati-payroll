@@ -109,20 +109,28 @@ class NominaComparisonService:
     @classmethod
     def refresh_after_recalculo(cls, planilla_id: str, nomina_original_id: str, nomina_nueva_id: str) -> None:
         """Re-point comparison cache rows when a payroll is recalculated into a new id."""
-        comparaciones = db.session.execute(
-            db.select(NominaComparacion).filter(
-                NominaComparacion.planilla_id == planilla_id,
-                (NominaComparacion.nomina_base_id == nomina_original_id)
-                | (NominaComparacion.nomina_actual_id == nomina_original_id),
+        comparaciones = (
+            db.session.execute(
+                db.select(NominaComparacion).filter(
+                    NominaComparacion.planilla_id == planilla_id,
+                    (NominaComparacion.nomina_base_id == nomina_original_id)
+                    | (NominaComparacion.nomina_actual_id == nomina_original_id),
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         if not comparaciones:
             return
 
         for comparacion in comparaciones:
-            nuevo_base_id = nomina_nueva_id if comparacion.nomina_base_id == nomina_original_id else comparacion.nomina_base_id
-            nuevo_actual_id = nomina_nueva_id if comparacion.nomina_actual_id == nomina_original_id else comparacion.nomina_actual_id
+            nuevo_base_id = (
+                nomina_nueva_id if comparacion.nomina_base_id == nomina_original_id else comparacion.nomina_base_id
+            )
+            nuevo_actual_id = (
+                nomina_nueva_id if comparacion.nomina_actual_id == nomina_original_id else comparacion.nomina_actual_id
+            )
 
             if nuevo_base_id == nuevo_actual_id:
                 db.session.delete(comparacion)
@@ -259,7 +267,9 @@ class NominaComparisonService:
                     }
                 )
 
-        resumen_totales = cls._resumen_totales(nomina_base, nomina_actual, empleados_base, empleados_actual, ids_base, ids_actual)
+        resumen_totales = cls._resumen_totales(
+            nomina_base, nomina_actual, empleados_base, empleados_actual, ids_base, ids_actual
+        )
 
         outliers_neto.sort(key=lambda item: abs(item["variacion_neto"]), reverse=True)
         salarios_cambiados.sort(key=lambda item: abs(item["variacion"]), reverse=True)
@@ -295,7 +305,9 @@ class NominaComparisonService:
             "variacion_total_deducciones": resumen_totales["variacion_total_deducciones"],
             "variacion_total_bruto": resumen_totales["variacion_total_bruto"],
         }
-        calidad = cls._build_calidad(nomina_base_id=nomina_base.id, nomina_actual_id=nomina_actual.id, empleados_actual_total=len(ids_actual))
+        calidad = cls._build_calidad(
+            nomina_base_id=nomina_base.id, nomina_actual_id=nomina_actual.id, empleados_actual_total=len(ids_actual)
+        )
         cambios_estructurales = cls._build_cambios_estructurales(nomina_base=nomina_base, nomina_actual=nomina_actual)
         indice_estabilidad = cls._build_indice_estabilidad(
             impacto_empleados=impacto_empleados,
@@ -330,7 +342,10 @@ class NominaComparisonService:
             },
             "conceptos": conceptos,
             "vacaciones": cls._comparar_reglas_vacaciones(nomina_base.id, nomina_actual.id),
-            "parametros": {"outlier_delta_abs": cls._money(cls.OUTLIER_DELTA_ABS), "outlier_delta_pct": cls._percent(cls.OUTLIER_DELTA_PCT)},
+            "parametros": {
+                "outlier_delta_abs": cls._money(cls.OUTLIER_DELTA_ABS),
+                "outlier_delta_pct": cls._percent(cls.OUTLIER_DELTA_PCT),
+            },
             "es_calculo_actual": True,
             "planilla_actual_aprobada": cls._planilla_actual_aprobada(nomina_actual),
             "flujo_aprobacion": cls._flujo_aprobacion(nomina_actual),
@@ -407,18 +422,30 @@ class NominaComparisonService:
 
     @staticmethod
     def _comparar_componentes_planilla(planilla_id: str) -> dict[str, list[str]]:
-        percepciones = db.session.execute(
-            db.select(PlanillaIngreso.codigo).filter(PlanillaIngreso.planilla_id == planilla_id)
-        ).scalars().all()
-        deducciones = db.session.execute(
-            db.select(PlanillaDeduccion.codigo).filter(PlanillaDeduccion.planilla_id == planilla_id)
-        ).scalars().all()
-        prestaciones = db.session.execute(
-            db.select(PlanillaPrestacion.codigo).filter(PlanillaPrestacion.planilla_id == planilla_id)
-        ).scalars().all()
-        reglas = db.session.execute(
-            db.select(PlanillaReglaCalculo.codigo).filter(PlanillaReglaCalculo.planilla_id == planilla_id)
-        ).scalars().all()
+        percepciones = (
+            db.session.execute(db.select(PlanillaIngreso.codigo).filter(PlanillaIngreso.planilla_id == planilla_id))
+            .scalars()
+            .all()
+        )
+        deducciones = (
+            db.session.execute(db.select(PlanillaDeduccion.codigo).filter(PlanillaDeduccion.planilla_id == planilla_id))
+            .scalars()
+            .all()
+        )
+        prestaciones = (
+            db.session.execute(
+                db.select(PlanillaPrestacion.codigo).filter(PlanillaPrestacion.planilla_id == planilla_id)
+            )
+            .scalars()
+            .all()
+        )
+        reglas = (
+            db.session.execute(
+                db.select(PlanillaReglaCalculo.codigo).filter(PlanillaReglaCalculo.planilla_id == planilla_id)
+            )
+            .scalars()
+            .all()
+        )
         return {
             "percepciones": sorted(set(percepciones)),
             "deducciones": sorted(set(deducciones)),
@@ -428,7 +455,11 @@ class NominaComparisonService:
 
     @classmethod
     def _comparar_conceptos(cls, nomina_base_id: str, nomina_actual_id: str) -> dict[str, Any]:
-        def aggregate(nomina_id: str) -> tuple[dict[str, dict[str, Decimal]], dict[str, dict[str, set[str]]], dict[str, dict[str, dict[str, Decimal]]]]:
+        def aggregate(
+            nomina_id: str,
+        ) -> tuple[
+            dict[str, dict[str, Decimal]], dict[str, dict[str, set[str]]], dict[str, dict[str, dict[str, Decimal]]]
+        ]:
             rows = db.session.execute(
                 db.select(NominaDetalle.tipo, NominaDetalle.codigo, NominaDetalle.monto, NominaEmpleado.empleado_id)
                 .join(NominaEmpleado, NominaEmpleado.id == NominaDetalle.nomina_empleado_id)
@@ -436,7 +467,9 @@ class NominaComparisonService:
             ).all()
             grouped: dict[str, dict[str, Decimal]] = defaultdict(lambda: defaultdict(lambda: Decimal("0")))
             affected: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
-            by_employee: dict[str, dict[str, dict[str, Decimal]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: Decimal("0"))))
+            by_employee: dict[str, dict[str, dict[str, Decimal]]] = defaultdict(
+                lambda: defaultdict(lambda: defaultdict(lambda: Decimal("0")))
+            )
             for tipo, codigo, monto, empleado_id in rows:
                 monto_decimal = cls._to_decimal(monto)
                 grouped[tipo][codigo] += monto_decimal
@@ -466,7 +499,9 @@ class NominaComparisonService:
                     "empleados_base": empleados_base,
                     "empleados_actual": empleados_actual,
                     "promedio_base": cls._money(base_monto / Decimal(empleados_base)) if empleados_base else 0.0,
-                    "promedio_actual": cls._money(actual_monto / Decimal(empleados_actual)) if empleados_actual else 0.0,
+                    "promedio_actual": (
+                        cls._money(actual_monto / Decimal(empleados_actual)) if empleados_actual else 0.0
+                    ),
                     "nuevo_en_actual": empleados_base == 0 and empleados_actual > 0,
                     "eliminado_en_actual": empleados_base > 0 and empleados_actual == 0,
                     "tipo": tipo,
@@ -517,8 +552,9 @@ class NominaComparisonService:
     def _comparar_reglas_vacaciones(cls, nomina_base_id: str, nomina_actual_id: str) -> dict[str, Any]:
         def aggregate(nomina_id: str) -> dict[str, Decimal]:
             rows = db.session.execute(
-                db.select(NominaNovedad.codigo_concepto, NominaNovedad.valor_cantidad)
-                .filter(NominaNovedad.nomina_id == nomina_id, NominaNovedad.es_descanso_vacaciones.is_(True))
+                db.select(NominaNovedad.codigo_concepto, NominaNovedad.valor_cantidad).filter(
+                    NominaNovedad.nomina_id == nomina_id, NominaNovedad.es_descanso_vacaciones.is_(True)
+                )
             ).all()
             grouped: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
             for codigo_concepto, cantidad in rows:
@@ -555,12 +591,18 @@ class NominaComparisonService:
             "total_comunes": total_comunes,
             "empleados_con_variacion": empleados_con_variacion,
             "porcentaje_con_variacion": cls._percent((Decimal(empleados_con_variacion) / total) * Decimal("100")),
-            "porcentaje_con_variacion_positiva": cls._percent((Decimal(empleados_variacion_positiva) / total) * Decimal("100")),
-            "porcentaje_con_variacion_negativa": cls._percent((Decimal(empleados_variacion_negativa) / total) * Decimal("100")),
+            "porcentaje_con_variacion_positiva": cls._percent(
+                (Decimal(empleados_variacion_positiva) / total) * Decimal("100")
+            ),
+            "porcentaje_con_variacion_negativa": cls._percent(
+                (Decimal(empleados_variacion_negativa) / total) * Decimal("100")
+            ),
         }
 
     @classmethod
-    def _build_concentracion_impacto(cls, variaciones_neto_detalle: list[dict[str, Any]], conceptos: dict[str, Any]) -> dict[str, Any]:
+    def _build_concentracion_impacto(
+        cls, variaciones_neto_detalle: list[dict[str, Any]], conceptos: dict[str, Any]
+    ) -> dict[str, Any]:
         total_delta_abs = sum((item["delta_neto_abs"] for item in variaciones_neto_detalle), Decimal("0"))
         top_emp = sorted((item["delta_neto_abs"] for item in variaciones_neto_detalle), reverse=True)
 
@@ -574,8 +616,12 @@ class NominaComparisonService:
         return {
             "top_5_empleados_pct": cls._percent(cls._safe_pct(sum(top_emp[:5], Decimal("0")), total_delta_abs)),
             "top_10_empleados_pct": cls._percent(cls._safe_pct(sum(top_emp[:10], Decimal("0")), total_delta_abs)),
-            "top_5_conceptos_pct": cls._percent(cls._safe_pct(sum(concept_items[:5], Decimal("0")), total_concept_delta)),
-            "top_10_conceptos_pct": cls._percent(cls._safe_pct(sum(concept_items[:10], Decimal("0")), total_concept_delta)),
+            "top_5_conceptos_pct": cls._percent(
+                cls._safe_pct(sum(concept_items[:5], Decimal("0")), total_concept_delta)
+            ),
+            "top_10_conceptos_pct": cls._percent(
+                cls._safe_pct(sum(concept_items[:10], Decimal("0")), total_concept_delta)
+            ),
         }
 
     @classmethod
@@ -617,14 +663,20 @@ class NominaComparisonService:
         actual_by_emp: dict[str, NominaEmpleado],
         comunes: list[str],
     ) -> dict[str, Any]:
-        dept_data: dict[str, dict[str, Decimal | int]] = defaultdict(lambda: {"empleados": 0, "base": Decimal("0"), "actual": Decimal("0")})
-        contrato_data: dict[str, dict[str, Decimal | int]] = defaultdict(lambda: {"empleados": 0, "base": Decimal("0"), "actual": Decimal("0")})
+        dept_data: dict[str, dict[str, Decimal | int]] = defaultdict(
+            lambda: {"empleados": 0, "base": Decimal("0"), "actual": Decimal("0")}
+        )
+        contrato_data: dict[str, dict[str, Decimal | int]] = defaultdict(
+            lambda: {"empleados": 0, "base": Decimal("0"), "actual": Decimal("0")}
+        )
 
         for empleado_id in comunes:
             base_item = base_by_emp[empleado_id]
             actual_item = actual_by_emp[empleado_id]
             departamento = (actual_item.empleado.area or base_item.empleado.area or "Sin departamento").strip()
-            tipo_contrato = (actual_item.empleado.tipo_contrato or base_item.empleado.tipo_contrato or "Sin tipo").strip()
+            tipo_contrato = (
+                actual_item.empleado.tipo_contrato or base_item.empleado.tipo_contrato or "Sin tipo"
+            ).strip()
 
             base_neto = cls._to_decimal(base_item.salario_neto)
             actual_neto = cls._to_decimal(actual_item.salario_neto)
@@ -635,7 +687,9 @@ class NominaComparisonService:
 
             contrato_data[tipo_contrato]["empleados"] = int(contrato_data[tipo_contrato]["empleados"]) + 1
             contrato_data[tipo_contrato]["base"] = cls._to_decimal(contrato_data[tipo_contrato]["base"]) + base_neto
-            contrato_data[tipo_contrato]["actual"] = cls._to_decimal(contrato_data[tipo_contrato]["actual"]) + actual_neto
+            contrato_data[tipo_contrato]["actual"] = (
+                cls._to_decimal(contrato_data[tipo_contrato]["actual"]) + actual_neto
+            )
 
         def serialize(data: dict[str, dict[str, Decimal | int]], key_name: str) -> list[dict[str, Any]]:
             rows = []
@@ -677,10 +731,14 @@ class NominaComparisonService:
     @classmethod
     def _build_calidad(cls, nomina_base_id: str, nomina_actual_id: str, empleados_actual_total: int) -> dict[str, Any]:
         empleados_base = set(
-            db.session.execute(db.select(NominaNovedad.empleado_id).filter(NominaNovedad.nomina_id == nomina_base_id)).scalars().all()
+            db.session.execute(db.select(NominaNovedad.empleado_id).filter(NominaNovedad.nomina_id == nomina_base_id))
+            .scalars()
+            .all()
         )
         empleados_actual = set(
-            db.session.execute(db.select(NominaNovedad.empleado_id).filter(NominaNovedad.nomina_id == nomina_actual_id)).scalars().all()
+            db.session.execute(db.select(NominaNovedad.empleado_id).filter(NominaNovedad.nomina_id == nomina_actual_id))
+            .scalars()
+            .all()
         )
         total = Decimal(empleados_actual_total or 1)
         return {
@@ -692,9 +750,11 @@ class NominaComparisonService:
     @classmethod
     def _build_cambios_estructurales(cls, nomina_base: Nomina, nomina_actual: Nomina) -> dict[str, bool]:
         return {
-            "reglas_cambiadas": (nomina_base.configuracion_snapshot or {}) != (nomina_actual.configuracion_snapshot or {}),
+            "reglas_cambiadas": (nomina_base.configuracion_snapshot or {})
+            != (nomina_actual.configuracion_snapshot or {}),
             "catalogos_cambiados": (nomina_base.catalogos_snapshot or {}) != (nomina_actual.catalogos_snapshot or {}),
-            "tipos_cambio_modificados": (nomina_base.tipos_cambio_snapshot or {}) != (nomina_actual.tipos_cambio_snapshot or {}),
+            "tipos_cambio_modificados": (nomina_base.tipos_cambio_snapshot or {})
+            != (nomina_actual.tipos_cambio_snapshot or {}),
         }
 
     @classmethod
@@ -850,7 +910,6 @@ class NominaComparisonService:
         if value is None:
             return None
         return float(value.quantize(Decimal("0.01")))
-
 
     @staticmethod
     def _iso_utc(value: Any) -> str | None:

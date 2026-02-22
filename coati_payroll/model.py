@@ -992,9 +992,7 @@ class NominaProgress(database.Model, BaseTabla):
 
 class NominaEmpleado(database.Model, BaseTabla):
     __tablename__ = "nomina_empleado"
-    __table_args__ = (
-        database.Index("ix_nomina_empleado_nomina_empleado", "nomina_id", "empleado_id"),
-    )
+    __table_args__ = (database.Index("ix_nomina_empleado_nomina_empleado", "nomina_id", "empleado_id"),)
 
     nomina_id = database.Column(database.String(26), database.ForeignKey(FK_NOMINA_ID), nullable=False)
     empleado_id = database.Column(database.String(26), database.ForeignKey(FK_EMPLEADO_ID), nullable=False)
@@ -1030,9 +1028,7 @@ class NominaEmpleado(database.Model, BaseTabla):
 
 class NominaDetalle(database.Model, BaseTabla):
     __tablename__ = "nomina_detalle"
-    __table_args__ = (
-        database.Index("ix_nomina_detalle_emp_tipo_codigo", "nomina_empleado_id", "tipo", "codigo"),
-    )
+    __table_args__ = (database.Index("ix_nomina_detalle_emp_tipo_codigo", "nomina_empleado_id", "tipo", "codigo"),)
 
     nomina_empleado_id = database.Column(database.String(26), database.ForeignKey("nomina_empleado.id"), nullable=False)
     tipo = database.Column(database.String(15), nullable=False)  # income | deduction | benefit
