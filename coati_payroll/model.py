@@ -446,7 +446,10 @@ class Planilla(database.Model, BaseTabla):
 
     # Strong relationship: each payroll can bind to one specific vacation accrual policy
     vacation_policy_id = database.Column(
-        database.String(26), database.ForeignKey("vacation_policy.id"), nullable=True, index=True
+        database.String(26),
+        database.ForeignKey("vacation_policy.id", name="fk_planilla_vacation_policy_id"),
+        nullable=True,
+        index=True,
     )
     vacation_policy = database.relationship("VacationPolicy", foreign_keys=[vacation_policy_id])
 
@@ -2042,7 +2045,12 @@ class VacationPolicy(database.Model, BaseTabla):
 
     # Payroll association (primary) - policies are tied to specific payrolls
     # This allows different vacation rules for different payrolls in consolidated companies
-    planilla_id = database.Column(database.String(26), database.ForeignKey(FK_PLANILLA_ID), nullable=True, index=True)
+    planilla_id = database.Column(
+        database.String(26),
+        database.ForeignKey(FK_PLANILLA_ID, name="fk_vacation_policy_planilla_id"),
+        nullable=True,
+        index=True,
+    )
     planilla = database.relationship("Planilla", foreign_keys=[planilla_id], backref="vacation_policies")
 
     # Company association (secondary, optional) - for policies that apply to entire company
