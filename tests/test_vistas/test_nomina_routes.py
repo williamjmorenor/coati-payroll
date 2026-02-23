@@ -293,6 +293,34 @@ def test_ejecutar_nomina_post_background_processing(mock_ejecutar, app, client, 
         assert response.status_code == 302
 
 
+@patch("coati_payroll.vistas.planilla.nomina_routes.NominaService.ejecutar_nomina")
+def test_ejecutar_nomina_post_displays_warning_messages(
+    mock_ejecutar, app, client, admin_user, db_session, planilla, nomina
+):
+    """Warnings returned by service must be shown to the user in response UI."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        warning = (
+            "WARNING: Este calculo de planilla tiene menos dias de lo esperado para una periodicidad mensual."
+        )
+        nomina.procesamiento_en_background = False
+        mock_ejecutar.return_value = (nomina, [], [warning])
+
+        response = client.post(
+            f"/planilla/{planilla.id}/ejecutar",
+            data={
+                "periodo_inicio": "2025-01-01",
+                "periodo_fin": "2025-01-01",
+                "fecha_calculo": "2025-01-01",
+            },
+            follow_redirects=True,
+        )
+
+        assert response.status_code == 200
+        assert warning in response.get_data(as_text=True)
+
+
 # ============================================================================
 # TESTS FOR listar_nominas
 # ============================================================================

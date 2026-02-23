@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 """Unit tests for NominaComparisonService KPI helpers."""
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from types import SimpleNamespace
 
@@ -171,6 +171,38 @@ def test_statistical_helpers_return_expected_values() -> None:
     assert NominaComparisonService._percentile(values, 75) == Decimal("3")
     assert NominaComparisonService._iqr(values) == Decimal("2")
     assert NominaComparisonService._std_dev(values).quantize(Decimal("0.0001")) == Decimal("1.1180")
+
+
+def test_resumen_totales_includes_period_days_variation() -> None:
+    nomina_base = SimpleNamespace(
+        total_bruto=Decimal("1000"),
+        total_deducciones=Decimal("100"),
+        total_neto=Decimal("900"),
+        periodo_inicio=date(2026, 2, 1),
+        periodo_fin=date(2026, 2, 28),
+    )
+    nomina_actual = SimpleNamespace(
+        total_bruto=Decimal("50"),
+        total_deducciones=Decimal("5"),
+        total_neto=Decimal("45"),
+        periodo_inicio=date(2026, 1, 1),
+        periodo_fin=date(2026, 1, 1),
+    )
+    empleados_base = [SimpleNamespace(salario_neto=Decimal("900"), salario_bruto=Decimal("1000"))]
+    empleados_actual = [SimpleNamespace(salario_neto=Decimal("45"), salario_bruto=Decimal("50"))]
+
+    resumen = NominaComparisonService._resumen_totales(
+        nomina_base=nomina_base,
+        nomina_actual=nomina_actual,
+        empleados_base=empleados_base,
+        empleados_actual=empleados_actual,
+        ids_base={"E1"},
+        ids_actual={"E1"},
+    )
+
+    assert resumen["dias_calculo_base"] == 28
+    assert resumen["dias_calculo_actual"] == 1
+    assert resumen["variacion_dias_calculo"] == -27
 
 
 def test_iso_utc_normalizes_naive_and_aware_datetimes() -> None:

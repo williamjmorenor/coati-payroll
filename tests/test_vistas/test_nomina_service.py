@@ -191,6 +191,40 @@ class TestEjecutarNomina:
             mock_engine.ejecutar.assert_called_once()
 
     @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
+    def test_ejecutar_nomina_warns_when_period_has_fewer_days_than_expected(
+        self, mock_engine_class, app, db_session, planilla, planilla_empleado, admin_user
+    ):
+        """Monthly payroll with very short period should return an explicit warning."""
+        with app.app_context():
+            periodo_inicio = date(2024, 1, 1)
+            periodo_fin = date(2024, 1, 1)
+            fecha_calculo = date(2024, 1, 1)
+            usuario = admin_user.usuario
+
+            mock_engine = MagicMock()
+            mock_nomina = MagicMock(spec=Nomina)
+            mock_nomina.id = "NOM-TEST-SHORT-PERIOD"
+            mock_engine.ejecutar.return_value = mock_nomina
+            mock_engine.errors = []
+            mock_engine.warnings = []
+            mock_engine_class.return_value = mock_engine
+
+            nomina, errors, warnings = NominaService.ejecutar_nomina(
+                planilla=planilla,
+                periodo_inicio=periodo_inicio,
+                periodo_fin=periodo_fin,
+                fecha_calculo=fecha_calculo,
+                usuario=usuario,
+            )
+
+            assert nomina == mock_nomina
+            assert errors == []
+            assert len(warnings) == 1
+            assert "WARNING: Este calculo de planilla tiene menos dias de lo esperado" in warnings[0]
+            assert "periodicidad mensual" in warnings[0]
+            assert "2024-01-01 a 2024-01-01" in warnings[0]
+
+    @patch("coati_payroll.vistas.planilla.services.nomina_service.NominaEngine")
     def test_ejecutar_nomina_warns_when_first_payroll_is_outside_fiscal_start(
         self, mock_engine_class, app, db_session, planilla, planilla_empleado, admin_user
     ):

@@ -18,6 +18,15 @@ from coati_payroll.queue.drivers.dramatiq_driver import DramatiqDriver
 class NominaService:
     """Service for nomina operations."""
 
+    _PERIODICIDAD_SHORT_PERIOD_RULES: dict[str, tuple[str, int]] = {
+        "monthly": ("mensual", 30),
+        "mensual": ("mensual", 30),
+        "biweekly": ("quincenal", 15),
+        "quincenal": ("quincenal", 15),
+        "weekly": ("semanal", 7),
+        "semanal": ("semanal", 7),
+    }
+
     @staticmethod
     def _rollback_accumulations_for_nomina(nomina: Nomina, planilla: Planilla) -> None:
         """Rollback accumulated annual values produced by one payroll.
@@ -221,6 +230,44 @@ class NominaService:
         )
 
     @staticmethod
+    def _build_short_period_warning(planilla: Planilla, periodo_inicio: date, periodo_fin: date) -> str | None:
+        """Warn when selected payroll period has fewer days than expected by payroll periodicity."""
+        dias_periodo = (periodo_fin - periodo_inicio).days + 1
+        if dias_periodo <= 0:
+            return None
+
+        tipo_planilla = planilla.tipo_planilla
+        if not tipo_planilla:
+            return None
+
+        periodicidad = (tipo_planilla.periodicidad or "").strip().lower()
+        periodicidad_label, dias_esperados = NominaService._PERIODICIDAD_SHORT_PERIOD_RULES.get(
+            periodicidad,
+            ("periodica", int(tipo_planilla.dias or 0)),
+        )
+
+        if dias_esperados <= 0:
+            return None
+
+        # For monthly payrolls, a full natural month (28/29/30/31 days) is expected and valid.
+        if periodicidad in {"monthly", "mensual"}:
+            same_month = periodo_inicio.year == periodo_fin.year and periodo_inicio.month == periodo_fin.month
+            if same_month and periodo_inicio.day == 1:
+                next_month = periodo_inicio.replace(day=28) + timedelta(days=4)
+                fin_mes = next_month - timedelta(days=next_month.day)
+                if periodo_fin == fin_mes:
+                    return None
+
+        if dias_periodo >= dias_esperados:
+            return None
+
+        return (
+            "WARNING: Este calculo de planilla tiene menos dias de lo esperado para una "
+            f"periodicidad {periodicidad_label}. Se seleccionaron {dias_periodo} dias y se esperan al menos "
+            f"{dias_esperados}. Periodo: {periodo_inicio.isoformat()} a {periodo_fin.isoformat()}."
+        )
+
+    @staticmethod
     def ejecutar_nomina(
         planilla: Planilla,
         periodo_inicio: date,
@@ -241,6 +288,10 @@ class NominaService:
             Tuple of (nomina, errors, warnings)
         """
         warnings: list[str] = []
+        short_period_warning = NominaService._build_short_period_warning(planilla, periodo_inicio, periodo_fin)
+        if short_period_warning:
+            warnings.append(short_period_warning)
+
         fiscal_start_warning = NominaService._build_first_payroll_fiscal_start_warning(planilla, periodo_inicio)
         if fiscal_start_warning:
             warnings.append(fiscal_start_warning)
@@ -337,6 +388,10 @@ class NominaService:
         periodo_fin = nomina.periodo_fin
         fecha_calculo_original = nomina.fecha_calculo_original or nomina.fecha_generacion.date()
         nomina_original_id = nomina.id
+        warnings: list[str] = []
+        short_period_warning = NominaService._build_short_period_warning(planilla, periodo_inicio, periodo_fin)
+        if short_period_warning:
+            warnings.append(short_period_warning)
         novedad_ids = (
             db.session.execute(db.select(NominaNovedad.id).where(NominaNovedad.nomina_id == nomina.id)).scalars().all()
         )
@@ -468,4 +523,4 @@ class NominaService:
 
             db.session.commit()
 
-        return new_nomina, engine.errors, engine.warnings
+        return new_nomina, engine.errors, warnings + list(engine.warnings or [])

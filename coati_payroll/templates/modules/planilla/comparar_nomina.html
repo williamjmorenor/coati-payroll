@@ -179,6 +179,17 @@ N/A
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <div class="text-muted">Var dias calculo</div>
+                                <h6>{{ fmt_int(resumen.get('dias_calculo_base')) }} ->
+                                    {{ fmt_int(resumen.get('dias_calculo_actual')) }}</h6>
+                                {% set var_dias = resumen.get('variacion_dias_calculo') %}
+                                <small>Delta {% if var_dias is not none and var_dias > 0 %}+{% endif %}{{ fmt_int(var_dias) }}</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

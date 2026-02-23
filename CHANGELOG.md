@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated payroll detail/history views to render `Anulado` (`cancelled`) status and expose the `Anular` action when applicable.
 - Clarified payroll overlap behavior so `cancelled` payrolls do not block creating new payroll runs for overlapping periods.
 - Restricted payroll void operation to disallow cancellation while payroll is `calculating`, avoiding invalid state transitions during background processing.
+- Added a visible warning when payroll is executed/recalculated with fewer days than expected for the payroll periodicity (for example, a monthly payroll calculated for a single day).
+- Added `Var dias calculo` as a primary KPI in payroll comparison dashboard (`comparar nomina`) to highlight period-length changes between base and current payroll.
 
 ### Tests
 

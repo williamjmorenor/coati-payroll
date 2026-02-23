@@ -397,6 +397,13 @@ class NominaComparisonService:
         netos_actual = [cls._to_decimal(item.salario_neto) for item in empleados_actual]
         brutos_base = [cls._to_decimal(item.salario_bruto) for item in empleados_base]
         brutos_actual = [cls._to_decimal(item.salario_bruto) for item in empleados_actual]
+        dias_calculo_base = cls._dias_periodo(nomina_base)
+        dias_calculo_actual = cls._dias_periodo(nomina_actual)
+        variacion_dias_calculo = (
+            (dias_calculo_actual - dias_calculo_base)
+            if dias_calculo_base is not None and dias_calculo_actual is not None
+            else None
+        )
 
         return {
             "empleados_base": len(ids_base),
@@ -418,6 +425,9 @@ class NominaComparisonService:
             "promedio_bruto_actual": cls._money(cls._avg(brutos_actual)),
             "promedio_neto_base": cls._money(cls._avg(netos_base)),
             "promedio_neto_actual": cls._money(cls._avg(netos_actual)),
+            "dias_calculo_base": dias_calculo_base,
+            "dias_calculo_actual": dias_calculo_actual,
+            "variacion_dias_calculo": variacion_dias_calculo,
             "mediana_bruto_base": cls._money(cls._median(brutos_base)),
             "mediana_bruto_actual": cls._money(cls._median(brutos_actual)),
             "mediana_neto_base": cls._money(cls._median(netos_base)),
@@ -431,6 +441,12 @@ class NominaComparisonService:
                 "iqr_neto_actual": cls._money(cls._iqr(netos_actual)),
             },
         }
+
+    @staticmethod
+    def _dias_periodo(nomina: Nomina) -> int | None:
+        if not nomina.periodo_inicio or not nomina.periodo_fin:
+            return None
+        return (nomina.periodo_fin - nomina.periodo_inicio).days + 1
 
     @staticmethod
     def _load_nomina_empleados(nomina_id: str) -> list[NominaEmpleado]:
