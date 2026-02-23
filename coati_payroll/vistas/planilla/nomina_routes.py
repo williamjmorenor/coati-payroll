@@ -3,7 +3,7 @@
 """Routes for nomina execution and management."""
 
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, cast
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -34,6 +34,7 @@ from coati_payroll.vistas.planilla import planilla_bp
 from coati_payroll.vistas.planilla.services import NominaService, NovedadService, NominaComparisonService
 from coati_payroll.queue.tasks import retry_failed_nomina
 from coati_payroll.vacation_service import VacationService
+from coati_payroll.nomina_engine.repositories.config_repository import ConfigRepository
 
 # Constants
 ROUTE_EJECUTAR_NOMINA = "planilla.ejecutar_nomina"
@@ -456,6 +457,29 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
         except (ArithmeticError, TypeError, ValueError):
             return Decimal("0")
 
+    configuracion_snapshot = nomina.configuracion_snapshot or {}
+
+    dias_mes_nomina = _to_decimal(configuracion_snapshot.get("dias_mes_nomina"))
+    horas_jornada_diaria = _to_decimal(configuracion_snapshot.get("horas_jornada_diaria"))
+
+    if dias_mes_nomina <= 0 or horas_jornada_diaria <= 0:
+        config_resuelta = ConfigRepository(db.session).get_for_empresa(planilla.empresa_id)
+        if dias_mes_nomina <= 0:
+            dias_mes_nomina = _to_decimal(getattr(config_resuelta, "dias_mes_nomina", None))
+        if horas_jornada_diaria <= 0:
+            horas_jornada_diaria = _to_decimal(getattr(config_resuelta, "horas_jornada_diaria", None))
+    sueldo_base_historico = _to_decimal(nomina_empleado.sueldo_base_historico)
+
+    valor_dia_referencia: Decimal | None = None
+    if dias_mes_nomina > 0:
+        valor_dia_referencia = (sueldo_base_historico / dias_mes_nomina).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    valor_hora_referencia: Decimal | None = None
+    if valor_dia_referencia is not None and horas_jornada_diaria > 0:
+        valor_hora_referencia = (valor_dia_referencia / horas_jornada_diaria).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
     percepcion_ids = sorted({n.percepcion_id for n in novedades_aplicadas if n.percepcion_id})
     deduccion_ids = sorted({n.deduccion_id for n in novedades_aplicadas if n.deduccion_id})
 
@@ -477,6 +501,119 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
             novedad.valor_cantidad
         )
 
+    def _concepto_key_from_novedad(novedad: NominaNovedad) -> str:
+        if novedad.percepcion_id:
+            return f"percepcion:{novedad.percepcion_id}"
+        if novedad.deduccion_id:
+            return f"deduccion:{novedad.deduccion_id}"
+        return f"codigo:{novedad.codigo_concepto}"
+
+    def _concepto_key_from_detalle(detalle: NominaDetalle) -> str:
+        if detalle.percepcion_id:
+            return f"percepcion:{detalle.percepcion_id}"
+        if detalle.deduccion_id:
+            return f"deduccion:{detalle.deduccion_id}"
+        return f"codigo:{detalle.codigo}"
+
+    monto_por_concepto: dict[str, Decimal] = {}
+    for detalle in detalles:
+        concepto_key = _concepto_key_from_detalle(detalle)
+        monto_por_concepto[concepto_key] = monto_por_concepto.get(concepto_key, Decimal("0")) + _to_decimal(detalle.monto)
+
+    monto_novedad_referencia: dict[str, dict[str, Any]] = {}
+    for novedad in novedades_aplicadas:
+        novedad_key = _concepto_key_from_novedad(novedad)
+        tipo_valor_normalizado = (novedad.tipo_valor or "").lower()
+        monto_ajuste_salario_base: Decimal | None = None
+        if novedad.descontar_pago_inasistencia:
+            cantidad = _to_decimal(novedad.valor_cantidad)
+            if tipo_valor_normalizado == "dias" and valor_dia_referencia is not None:
+                monto_ajuste_salario_base = (cantidad * valor_dia_referencia).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+            elif tipo_valor_normalizado == "horas" and valor_hora_referencia is not None:
+                monto_ajuste_salario_base = (cantidad * valor_hora_referencia).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+            elif tipo_valor_normalizado == "monto":
+                monto_ajuste_salario_base = cantidad.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        if tipo_valor_normalizado == "monto":
+            monto_novedad_referencia[str(novedad.id)] = {
+                "monto": _to_decimal(novedad.valor_cantidad),
+                "detalle": "Monto directo reportado en la novedad",
+                "es_estimado": False,
+            }
+        elif novedad_key in monto_por_concepto:
+            monto_novedad_referencia[str(novedad.id)] = {
+                "monto": monto_por_concepto[novedad_key],
+                "detalle": "Monto total calculado para el concepto en la nomina",
+                "es_estimado": False,
+            }
+        elif monto_ajuste_salario_base is not None:
+            monto_novedad_referencia[str(novedad.id)] = {
+                "monto": monto_ajuste_salario_base,
+                "detalle": "Monto estimado por ajuste de salario base segun configuracion de la nomina",
+                "es_estimado": True,
+            }
+        else:
+            monto_novedad_referencia[str(novedad.id)] = {
+                "monto": None,
+                "detalle": "Sin monto monetario directo",
+                "es_estimado": False,
+            }
+
+    novedades_por_id = {str(n.id): n for n in novedades_aplicadas}
+    novedades_descuento_ids = [str(n.id) for n in novedades_aplicadas if n.descontar_pago_inasistencia]
+    if novedades_descuento_ids:
+        descuento_total = _to_decimal(nomina_empleado.inasistencia_descuento)
+        if descuento_total > 0:
+            suma_asignada = sum(
+                _to_decimal(monto_novedad_referencia[nid]["monto"])
+                for nid in novedades_descuento_ids
+                if monto_novedad_referencia[nid]["monto"] is not None
+            )
+            residuo = (descuento_total - suma_asignada).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+            if residuo != Decimal("0.00"):
+                pendientes_sin_monto = [
+                    nid for nid in novedades_descuento_ids if monto_novedad_referencia[nid]["monto"] is None
+                ]
+                if pendientes_sin_monto:
+                    pesos = [
+                        max(_to_decimal(novedades_por_id[nid].valor_cantidad), Decimal("0")) for nid in pendientes_sin_monto
+                    ]
+                    suma_pesos = sum(pesos)
+
+                    if suma_pesos <= 0:
+                        pesos = [Decimal("1")] * len(pendientes_sin_monto)
+                        suma_pesos = Decimal(str(len(pendientes_sin_monto)))
+
+                    acumulado = Decimal("0")
+                    for idx, nid in enumerate(pendientes_sin_monto):
+                        if idx < len(pendientes_sin_monto) - 1:
+                            asignado = (residuo * pesos[idx] / suma_pesos).quantize(
+                                Decimal("0.01"), rounding=ROUND_HALF_UP
+                            )
+                            acumulado += asignado
+                        else:
+                            asignado = residuo - acumulado
+                        monto_novedad_referencia[nid]["monto"] = asignado
+                        monto_novedad_referencia[nid][
+                            "detalle"
+                        ] = "Monto prorrateado por conciliacion del descuento total aplicado al salario base"
+                        monto_novedad_referencia[nid]["es_estimado"] = True
+                else:
+                    estimadas = [nid for nid in novedades_descuento_ids if monto_novedad_referencia[nid].get("es_estimado")]
+                    if estimadas:
+                        objetivo_id = estimadas[-1]
+                        monto_actual = _to_decimal(monto_novedad_referencia[objetivo_id]["monto"])
+                        monto_nuevo = (monto_actual + residuo).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                        monto_novedad_referencia[objetivo_id]["monto"] = monto_nuevo
+                        monto_novedad_referencia[objetivo_id][
+                            "detalle"
+                        ] = "Monto estimado por ajuste de salario base segun configuracion de la nomina (ajustado por conciliacion de centavos)"
+
     resumen_novedades = {
         "total": len(novedades_aplicadas),
         "con_percepcion": sum(1 for n in novedades_aplicadas if n.percepcion_id),
@@ -486,13 +623,16 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
         "acumulado_tipo_valor": acumulado_tipo_valor,
     }
 
-    configuracion_snapshot = nomina.configuracion_snapshot or {}
     configuracion_contexto: dict[str, Any] = {}
     for clave, valor in configuracion_snapshot.items():
         if valor is None or valor == "":
             continue
         if isinstance(valor, (str, int, float, bool, Decimal, date)):
             configuracion_contexto[str(clave)] = valor
+    if "dias_mes_nomina" not in configuracion_contexto and dias_mes_nomina > 0:
+        configuracion_contexto["dias_mes_nomina"] = dias_mes_nomina
+    if "horas_jornada_diaria" not in configuracion_contexto and horas_jornada_diaria > 0:
+        configuracion_contexto["horas_jornada_diaria"] = horas_jornada_diaria
 
     salario_base_historico = _to_decimal(nomina_empleado.sueldo_base_historico)
     salario_base_resultante = _to_decimal(salario_base_visual)
@@ -518,6 +658,7 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
         percepcion_catalogo=percepcion_catalogo,
         deduccion_catalogo=deduccion_catalogo,
         resumen_novedades=resumen_novedades,
+        monto_novedad_referencia=monto_novedad_referencia,
         conciliacion_salario_base=conciliacion_salario_base,
     )
 

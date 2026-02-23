@@ -1,4 +1,4 @@
-{#-
+﻿{#-
 SPDX-License-Identifier: Apache-2.0
 SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 -#}
@@ -9,7 +9,8 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     <h3>
         Detalle de Nómina: {{ nomina_empleado.empleado.primer_nombre }} {{ nomina_empleado.empleado.primer_apellido }}
     </h3>
-    <a href="{{ url_for('planilla.ver_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}" class="btn btn-secondary">
+    <a href="{{ url_for('planilla.ver_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
+        class="btn btn-secondary">
         <i class="bi bi-arrow-left"></i> Volver a la Nómina
     </a>
 </div>
@@ -22,7 +23,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <div class="row">
             <div class="col-md-4">
                 <strong>Nombre Completo:</strong><br>
-                {{ nomina_empleado.empleado.primer_nombre }} 
+                {{ nomina_empleado.empleado.primer_nombre }}
                 {% if nomina_empleado.empleado.segundo_nombre %}{{ nomina_empleado.empleado.segundo_nombre }}{% endif %}
                 {{ nomina_empleado.empleado.primer_apellido }}
                 {% if nomina_empleado.empleado.segundo_apellido %}{{ nomina_empleado.empleado.segundo_apellido }}{% endif %}
@@ -58,19 +59,23 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </tr>
                     <tr>
                         <td>Total Ingresos:</td>
-                        <td class="text-right text-primary">+{{ "{:,.2f}".format(nomina_empleado.total_ingresos|float) }}</td>
+                        <td class="text-right text-primary">
+                            +{{ "{:,.2f}".format(nomina_empleado.total_ingresos|float) }}</td>
                     </tr>
                     <tr class="table-light">
                         <td><strong>Salario Bruto:</strong></td>
-                        <td class="text-right"><strong>{{ "{:,.2f}".format(nomina_empleado.salario_bruto|float) }}</strong></td>
+                        <td class="text-right">
+                            <strong>{{ "{:,.2f}".format(nomina_empleado.salario_bruto|float) }}</strong></td>
                     </tr>
                     <tr>
                         <td>Total Deducciones:</td>
-                        <td class="text-right text-danger">-{{ "{:,.2f}".format(nomina_empleado.total_deducciones|float) }}</td>
+                        <td class="text-right text-danger">
+                            -{{ "{:,.2f}".format(nomina_empleado.total_deducciones|float) }}</td>
                     </tr>
                     <tr class="table-success">
                         <td><strong>Salario Neto:</strong></td>
-                        <td class="text-right"><strong>{{ "{:,.2f}".format(nomina_empleado.salario_neto|float) }}</strong></td>
+                        <td class="text-right">
+                            <strong>{{ "{:,.2f}".format(nomina_empleado.salario_neto|float) }}</strong></td>
                     </tr>
                     {% if nomina_empleado.tipo_cambio_aplicado and nomina_empleado.tipo_cambio_aplicado != 1 %}
                     <tr>
@@ -168,44 +173,6 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     </div>
 </div>
 
-<!-- Prestaciones (Costo Empleador) -->
-{% if prestaciones %}
-<div class="card mb-4">
-    <div class="card-header bg-warning">
-        <h6 class="mb-0">Prestaciones (Costo Empleador - No afecta salario neto)</h6>
-    </div>
-    <div class="card-body">
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Concepto</th>
-                    <th class="text-right">Monto</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in prestaciones %}
-                <tr>
-                    <td><code>{{ p.codigo }}</code></td>
-                    <td>{{ p.descripcion }}</td>
-                    <td class="text-right">{{ "{:,.2f}".format(p.monto|float) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot class="table-warning">
-                <tr>
-                    <th colspan="2">Total Prestaciones (Costo Empleador)</th>
-                    <th class="text-right">
-                        {% set total_prestaciones = prestaciones|map(attribute='monto')|sum %}
-                        {{ "{:,.2f}".format(total_prestaciones|float) }}
-                    </th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-</div>
-{% endif %}
-
 <div class="card mb-4">
     <div class="card-header bg-light">
         <h6 class="mb-0">Novedades Aplicadas al Calculo</h6>
@@ -268,15 +235,19 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     <table class="table table-sm mb-3">
                         <tr>
                             <td>Salario base historico</td>
-                            <td class="text-right">{{ "{:,.2f}".format(conciliacion_salario_base.salario_base_historico|float) }}</td>
+                            <td class="text-right">
+                                {{ "{:,.2f}".format(conciliacion_salario_base.salario_base_historico|float) }}</td>
                         </tr>
                         <tr>
                             <td>(-) Ajuste total aplicado al salario base</td>
-                            <td class="text-right text-danger">-{{ "{:,.2f}".format(conciliacion_salario_base.ajuste_total_salario_base|float) }}</td>
+                            <td class="text-right text-danger">
+                                -{{ "{:,.2f}".format(conciliacion_salario_base.ajuste_total_salario_base|float) }}</td>
                         </tr>
                         <tr class="table-light">
                             <td><strong>Salario base resultante</strong></td>
-                            <td class="text-right"><strong>{{ "{:,.2f}".format(conciliacion_salario_base.salario_base_resultante|float) }}</strong></td>
+                            <td class="text-right">
+                                <strong>{{ "{:,.2f}".format(conciliacion_salario_base.salario_base_resultante|float) }}</strong>
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -310,7 +281,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <h6 class="mb-2">Detalle de Novedades Aplicadas</h6>
         {% if novedades_aplicadas %}
         <div class="table-responsive">
-            <table class="table table-sm table-striped align-middle mb-0">
+            <table class="table table-striped align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>Fecha</th>
@@ -318,6 +289,8 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         <th>Concepto</th>
                         <th>Tipo Valor</th>
                         <th class="text-right">Cantidad</th>
+                        <th class="text-right">Monto</th>
+                        <th>Detalle Monto</th>
                         <th>Indicadores</th>
                         <th>Estado</th>
                     </tr>
@@ -329,43 +302,58 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         <td><code>{{ novedad.codigo_concepto }}</code></td>
                         <td>
                             {% if novedad.percepcion_id %}
-                                {{ percepcion_catalogo.get(novedad.percepcion_id, novedad.codigo_concepto) }}
-                                <span class="badge badge-primary ml-1">Percepcion</span>
+                            {{ percepcion_catalogo.get(novedad.percepcion_id, novedad.codigo_concepto) }}
+                            <span class="badge bg-primary text-white ml-1">Percepcion</span>
                             {% elif novedad.deduccion_id %}
-                                {{ deduccion_catalogo.get(novedad.deduccion_id, novedad.codigo_concepto) }}
-                                <span class="badge badge-danger ml-1">Deduccion</span>
+                            {{ deduccion_catalogo.get(novedad.deduccion_id, novedad.codigo_concepto) }}
+                            <span class="badge bg-danger text-white ml-1">Deduccion</span>
                             {% else %}
-                                {{ novedad.codigo_concepto }}
-                                <span class="badge badge-secondary ml-1">General</span>
+                            {{ novedad.codigo_concepto }}
+                            <span class="badge bg-secondary text-white ml-1">General</span>
                             {% endif %}
                         </td>
                         <td><code>{{ novedad.tipo_valor or '-' }}</code></td>
                         <td class="text-right">{{ "{:,.2f}".format(novedad.valor_cantidad|float) }}</td>
+                        {% set ref_monto = monto_novedad_referencia.get(novedad.id|string) %}
+                        <td class="text-right">
+                            {% if ref_monto and ref_monto.monto is not none %}
+                            <strong>{{ "{:,.2f}".format(ref_monto.monto|float) }}</strong>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ref_monto and ref_monto.detalle %}
+                            {{ ref_monto.detalle }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% set total_indicadores = 0 %}
                             {% if novedad.es_inasistencia %}
-                                {% set total_indicadores = total_indicadores + 1 %}
-                                <span class="badge badge-warning">es_inasistencia</span>
+                            {% set total_indicadores = total_indicadores + 1 %}
+                            <span class="badge bg-warning text-dark">es_inasistencia</span>
                             {% endif %}
                             {% if novedad.descontar_pago_inasistencia %}
-                                {% set total_indicadores = total_indicadores + 1 %}
-                                <span class="badge badge-danger">descontar_pago</span>
+                            {% set total_indicadores = total_indicadores + 1 %}
+                            <span class="badge bg-danger text-white">descontar_pago</span>
                             {% endif %}
                             {% if novedad.es_descanso_vacaciones %}
-                                {% set total_indicadores = total_indicadores + 1 %}
-                                <span class="badge badge-info">descanso</span>
+                            {% set total_indicadores = total_indicadores + 1 %}
+                            <span class="badge bg-info text-dark">descanso</span>
                             {% endif %}
                             {% if total_indicadores == 0 %}
-                                <span class="text-muted">-</span>
+                            <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if novedad.estado == 'executed' %}
-                                <span class="badge badge-success">executed</span>
+                            <span class="badge bg-success text-white">executed</span>
                             {% elif novedad.estado == 'pending' %}
-                                <span class="badge badge-warning">pending</span>
+                            <span class="badge bg-warning text-dark">pending</span>
                             {% else %}
-                                <span class="badge badge-secondary">{{ novedad.estado }}</span>
+                            <span class="badge bg-secondary text-white">{{ novedad.estado }}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -378,6 +366,44 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         {% endif %}
     </div>
 </div>
+
+<!-- Prestaciones (Costo Empleador) -->
+{% if prestaciones %}
+<div class="card mb-4">
+    <div class="card-header bg-warning">
+        <h6 class="mb-0">Prestaciones (Costo Empleador - No afecta salario neto)</h6>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Concepto</th>
+                    <th class="text-right">Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in prestaciones %}
+                <tr>
+                    <td><code>{{ p.codigo }}</code></td>
+                    <td>{{ p.descripcion }}</td>
+                    <td class="text-right">{{ "{:,.2f}".format(p.monto|float) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-warning">
+                <tr>
+                    <th colspan="2">Total Prestaciones (Costo Empleador)</th>
+                    <th class="text-right">
+                        {% set total_prestaciones = prestaciones|map(attribute='monto')|sum %}
+                        {{ "{:,.2f}".format(total_prestaciones|float) }}
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endif %}
 
 <div class="card">
     <div class="card-header">

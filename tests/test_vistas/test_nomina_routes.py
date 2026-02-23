@@ -589,7 +589,99 @@ def test_ver_nomina_empleado_muestra_detalle_dinamico_de_novedades(
         assert b"AJUSTE_VAR" in response.data
         assert b"2.50" in response.data
         assert b"horas" in response.data
+        assert b"Detalle Monto" in response.data
         assert b"Total novedades aplicadas" in response.data
+
+
+def test_ver_nomina_empleado_calcula_monto_referencia_para_deduccion_por_horas(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """If there is no direct amount line, deduction-by-hours should show a dynamic estimated amount."""
+    with app.app_context():
+        nomina.configuracion_snapshot = {
+            "dias_mes_nomina": 10,
+            "horas_jornada_diaria": 5,
+        }
+        nomina_empleado.sueldo_base_historico = Decimal("1000.00")
+        novedad = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="AJUSTE_HORAS",
+            tipo_valor="horas",
+            valor_cantidad=Decimal("2.00"),
+            fecha_novedad=date(2025, 1, 12),
+            es_inasistencia=True,
+            descontar_pago_inasistencia=True,
+            estado="pending",
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(novedad)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}")
+        assert response.status_code == 200
+        assert b"AJUSTE_HORAS" in response.data
+        assert b"40.00" in response.data
+        assert b"Monto estimado por ajuste de salario base segun configuracion de la nomina" in response.data
+
+
+def test_ver_nomina_empleado_concilia_residuo_con_descuento_total_persistido(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """When snapshot is empty, residual cents should be reconciled against persisted descuento total."""
+    with app.app_context():
+        nomina.configuracion_snapshot = {}
+        nomina_empleado.sueldo_base_historico = Decimal("10000.00")
+        nomina_empleado.inasistencia_descuento = Decimal("416.67")
+
+        novedad_dia = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="VAC_DESC",
+            tipo_valor="dias",
+            valor_cantidad=Decimal("1.00"),
+            es_inasistencia=True,
+            descontar_pago_inasistencia=True,
+            estado="pending",
+            creado_por=admin_user.usuario,
+        )
+        novedad_hora = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="LLEGADA_TARDE",
+            tipo_valor="horas",
+            valor_cantidad=Decimal("2.00"),
+            es_inasistencia=True,
+            descontar_pago_inasistencia=True,
+            estado="pending",
+            creado_por=admin_user.usuario,
+        )
+        db_session.add_all([novedad_dia, novedad_hora])
+        db_session.flush()
+
+        detalle_dia = NominaDetalle(
+            nomina_empleado_id=nomina_empleado.id,
+            tipo="income",
+            codigo="VAC_DESC",
+            descripcion="Reclasificacion vacaciones",
+            monto=Decimal("333.33"),
+            orden=5,
+        )
+        db_session.add(detalle_dia)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}")
+
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert "VAC_DESC" in html
+        assert "LLEGADA_TARDE" in html
+        assert "333.33" in html
+        assert "83.34" in html
+        assert "Monto estimado por ajuste de salario base segun configuracion de la nomina" in html
 
 
 # ============================================================================
