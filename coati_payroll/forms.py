@@ -846,7 +846,7 @@ class EmployeeSalaryChangeForm(FlaskForm):
     salario_base = DecimalField(_("Nuevo salario base"), validators=[DataRequired(), NumberRange(min=0)], places=2)
     moneda_id = SelectField(_("Nueva moneda"), validators=[DataRequired()], coerce=str)
     motivo = StringField(_("Motivo"), validators=[Optional(), Length(max=255)])
-    submit = SubmitField(_("Guardar cambio salarial"))
+    submit = SubmitField(_("Autorizar Cambio Salarial"))
 
 
 class TipoPlanillaForm(FlaskForm):

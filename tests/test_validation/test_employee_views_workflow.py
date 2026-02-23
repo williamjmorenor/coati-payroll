@@ -150,7 +150,7 @@ def test_employee_edit_view_shows_salary_change_button(app, client, db_session):
         assert resp.status_code == 200
 
         html = resp.data.decode("utf-8")
-        assert "Modificar Salario Base" in html
+        assert "Autorizar Cambio Salarial" in html
         assert f"/employee/edit/{emp.id}/salary" in html
 
 
@@ -186,7 +186,7 @@ def test_employee_salary_change_flow_updates_and_creates_history(app, client, db
                 "salario_base": "2200.00",
                 "moneda_id": str(moneda_usd.id),
                 "motivo": "Ajuste anual",
-                "submit": "Guardar cambio salarial",
+                "submit": "Autorizar Cambio Salarial",
             },
             follow_redirects=False,
         )

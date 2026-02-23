@@ -128,9 +128,9 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 <div class="row">
                     <div class="col-md-12">
                         <div class="alert alert-info py-2 d-flex justify-content-between align-items-center">
-                            <span class="small mb-0">{{ _('Salario base y moneda solo pueden actualizarse con el flujo especial.') }}</span>
+                            <span class="small mb-0">{{ _('Los cambios de salario deben ser autorizados mediante el flujo especial.') }}</span>
                             <a href="{{ url_for('employee.edit_salary', id_=employee.id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-cash-coin me-1"></i>{{ _('Modificar Salario Base') }}
+                                <i class="bi bi-cash-coin me-1"></i>{{ _('Autorizar Cambio Salarial') }}
                             </a>
                         </div>
                     </div>

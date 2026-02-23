@@ -386,7 +386,7 @@ def edit_salary(id_: str):
     return render_template(
         "modules/employee/salary_form.html",
         form=form,
-        title=_("Modificar Salario Base"),
+        title=_("Autorizar Cambio Salarial"),
         employee=employee,
     )
 
