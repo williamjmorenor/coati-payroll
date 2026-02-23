@@ -909,6 +909,83 @@ def test_aplicar_prestaciones_nomina_is_idempotent(app, db_session, planilla, no
 
 
 # ============================================================================
+# TESTS FOR anular_nomina
+# ============================================================================
+
+
+def test_anular_nomina_requires_write_access(app, client, db_session, planilla, nomina):
+    """Test that anular_nomina requires write access."""
+    with app.app_context():
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/anular", follow_redirects=False)
+        assert response.status_code == 302
+
+
+def test_anular_nomina_success_for_generated_state(app, client, admin_user, db_session, planilla, nomina):
+    """Test successful nomina cancellation for generated state."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina.estado = NominaEstado.GENERADO
+        db_session.commit()
+
+        response = client.post(
+            f"/planilla/{planilla.id}/nomina/{nomina.id}/anular",
+            data={"razon_anulacion": "Periodo inválido"},
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        db_session.refresh(nomina)
+        assert nomina.estado == NominaEstado.ANULADO
+        assert nomina.razon_anulacion == "Periodo inválido"
+        assert nomina.anulado_por == admin_user.usuario
+
+
+def test_anular_nomina_aplicado_state_fails(app, client, admin_user, db_session, planilla, nomina):
+    """Test that anular_nomina does not allow applied/payroll-paid nominas."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina.estado = NominaEstado.APLICADO
+        db_session.commit()
+
+        response = client.post(f"/planilla/{planilla.id}/nomina/{nomina.id}/anular", follow_redirects=False)
+        assert response.status_code == 302
+
+        db_session.refresh(nomina)
+        assert nomina.estado == NominaEstado.APLICADO
+
+
+def test_ver_nomina_shows_anular_button_for_non_applied_states(app, client, admin_user, db_session, planilla, nomina):
+    """Detail view should show Anular action when nomina is not applied/paid."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina.estado = NominaEstado.GENERADO
+        db_session.commit()
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}")
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert "Anular" in html
+        assert f"/planilla/{planilla.id}/nomina/{nomina.id}/anular" in html
+
+
+def test_ver_nomina_hides_anular_button_for_applied_state(app, client, admin_user, db_session, planilla, nomina):
+    """Detail view should not show Anular action for applied nominas."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina.estado = NominaEstado.APLICADO
+        db_session.commit()
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}")
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert f"/planilla/{planilla.id}/nomina/{nomina.id}/anular" not in html
+
+
+# ============================================================================
 # TESTS FOR reintentar_nomina
 # ============================================================================
 

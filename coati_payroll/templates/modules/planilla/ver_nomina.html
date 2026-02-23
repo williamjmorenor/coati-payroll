@@ -45,6 +45,22 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 </div>
 {% endif %}
 
+{% if nomina.estado == 'cancelled' %}
+<div class="alert alert-secondary mb-4">
+    <h5><i class="bi bi-slash-circle"></i> {{ _('Nómina Anulada') }}</h5>
+    <p class="mb-1">{{ _('Esta nómina fue marcada como no válida y no será pagada.') }}</p>
+    {% if nomina.razon_anulacion %}
+    <p class="mb-1"><strong>{{ _('Razón:') }}</strong> {{ nomina.razon_anulacion }}</p>
+    {% endif %}
+    {% if nomina.anulado_por or nomina.anulado_en %}
+    <p class="mb-0 text-muted">
+        {% if nomina.anulado_por %}{{ _('Anulada por') }} {{ nomina.anulado_por }}{% endif %}
+        {% if nomina.anulado_en %} {{ _('el') }} {{ nomina.anulado_en.strftime('%d/%m/%Y %H:%M') }}{% endif %}
+    </p>
+    {% endif %}
+</div>
+{% endif %}
+
 {% if nomina.estado == 'calculating' %}
 <div class="card mb-4 border-primary">
     <div class="card-header bg-primary text-white">
@@ -217,6 +233,17 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                     </button>
                 </form>
                 {% endif %}
+                {% if nomina.estado not in ['applied', 'paid', 'cancelled', 'calculating'] %}
+                <form action="{{ url_for('planilla.anular_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
+                      method="post" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="razon_anulacion" value="Nómina anulada desde interfaz de usuario.">
+                    <button type="submit" class="btn btn-outline-danger"
+                            onclick="return confirm('Â¿Anular esta nÃ³mina? Esta acciÃ³n la marca como no vÃ¡lida y no pagable.')">
+                        <i class="bi bi-slash-circle me-1"></i> Anular
+                    </button>
+                </form>
+                {% endif %}
                 {% if nomina.estado != 'applied' %}
                 <form action="{{ url_for('planilla.recalcular_nomina', planilla_id=planilla.id, nomina_id=nomina.id) }}"
                       method="post" style="display: inline;">
@@ -289,8 +316,14 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 <span class="badge bg-info">Aprobado</span>
                 {% elif nomina.estado == 'applied' %}
                 <span class="badge bg-success">Aplicado</span>
+                {% elif nomina.estado == 'paid' %}
+                <span class="badge bg-success">Pagado</span>
+                {% elif nomina.estado == 'cancelled' %}
+                <span class="badge bg-secondary">Anulado</span>
                 {% elif nomina.estado == 'error' %}
                 <span class="badge bg-danger">Error</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ nomina.estado }}</span>
                 {% endif %}
             </div>
             <div class="col-md-2">

@@ -7,6 +7,7 @@ from typing import Any, cast
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from coati_payroll.audit_helpers import anular_nomina as registrar_anulacion_nomina
 from coati_payroll.log import log
 from coati_payroll.model import (
     db,
@@ -644,6 +645,54 @@ def aplicar_nomina(planilla_id: str, nomina_id: str):
         _("Nómina aplicada exitosamente. {} novedad(es) marcadas como ejecutadas.").format(len(novedades)),
         "success",
     )
+    return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+
+@planilla_bp.route("/<planilla_id>/nomina/<nomina_id>/anular", methods=["POST"])
+@require_write_access()
+def anular_nomina(planilla_id: str, nomina_id: str):
+    """Void a nomina when it has not been applied/paid."""
+    nomina = db.get_or_404(Nomina, nomina_id)
+
+    if nomina.planilla_id != planilla_id:
+        flash(_(ERROR_NOMINA_NO_PERTENECE), "error")
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=planilla_id))
+
+    if nomina.estado in (NominaEstado.APLICADO, NominaEstado.PAGADO):
+        flash(_("No se puede anular una nómina en estado 'applied' o 'paid'."), "error")
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+    if nomina.estado == NominaEstado.CALCULANDO:
+        flash(
+            _("No se puede anular una nómina en estado 'calculating'. Espere a que termine el procesamiento."), "error"
+        )
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+    if nomina.estado == NominaEstado.ANULADO:
+        flash(_("La nómina ya está anulada."), "warning")
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+    razon_anulacion = (request.form.get("razon_anulacion") or "").strip()
+    if not razon_anulacion:
+        razon_anulacion = _("Nómina anulada por el usuario.")
+
+    try:
+        if not registrar_anulacion_nomina(nomina, current_user.usuario, razon_anulacion):
+            flash(_("No se pudo anular la nómina."), "error")
+            return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+        nomina.modificado_por = current_user.usuario
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        log.exception(
+            "Failed to void nomina",
+            extra={"nomina_id": nomina_id, "planilla_id": planilla_id},
+        )
+        flash(_("Error al anular nómina: {}").format(str(e)), "error")
+        return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
+
+    flash(_("Nómina anulada exitosamente."), "success")
     return redirect(url_for(ROUTE_VER_NOMINA, planilla_id=planilla_id, nomina_id=nomina_id))
 
 

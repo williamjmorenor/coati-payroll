@@ -11,10 +11,11 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import false, true
 
-from coati_payroll.forms import EmployeeForm
+from coati_payroll.enums import TipoUsuario
+from coati_payroll.forms import EmployeeForm, EmployeeSalaryChangeForm
 from coati_payroll.i18n import _
-from coati_payroll.model import CampoPersonalizado, Empleado, Moneda, db
-from coati_payroll.rbac import require_read_access, require_write_access
+from coati_payroll.model import CampoPersonalizado, Empleado, HistorialSalario, Moneda, db
+from coati_payroll.rbac import require_read_access, require_role, require_write_access
 from coati_payroll.vistas.constants import PER_PAGE
 
 employee_bp = Blueprint("employee", __name__, url_prefix="/employee")
@@ -288,8 +289,6 @@ def edit(id_: str):
         employee.cargo = form.cargo.data
         employee.area = form.area.data
         employee.centro_costos = form.centro_costos.data
-        employee.salario_base = form.salario_base.data or Decimal("0.00")
-        employee.moneda_id = form.moneda_id.data or None
         employee.empresa_id = form.empresa_id.data or None
         employee.correo = form.correo.data
         employee.telefono = form.telefono.data
@@ -334,6 +333,61 @@ def edit(id_: str):
         employee=employee,
         custom_fields=custom_fields,
         custom_values=custom_values,
+    )
+
+
+@employee_bp.route("/edit/<string:id_>/salary", methods=["GET", "POST"])
+@require_role(TipoUsuario.ADMIN, TipoUsuario.HHRR)
+def edit_salary(id_: str):
+    """Special flow for salary/currency changes with salary history tracking."""
+    employee = db.session.get(Empleado, id_)
+    if not employee:
+        flash(_("Empleado no encontrado."), "error")
+        return redirect(url_for("employee.index"))
+
+    form = EmployeeSalaryChangeForm()
+    form.moneda_id.choices = get_currency_choices()
+
+    if request.method == "GET":
+        form.fecha_efectiva.data = date.today()
+        form.salario_base.data = Decimal(str(employee.salario_base or Decimal("0.00")))
+        form.moneda_id.data = employee.moneda_id or ""
+
+    if form.validate_on_submit():
+        salario_anterior = Decimal(str(employee.salario_base or Decimal("0.00")))
+        salario_nuevo = form.salario_base.data or Decimal("0.00")
+        moneda_anterior_id = employee.moneda_id
+        moneda_nueva_id = form.moneda_id.data or None
+
+        if salario_anterior == salario_nuevo and moneda_anterior_id == moneda_nueva_id:
+            flash(_("No se detectaron cambios en salario base o moneda."), "warning")
+            return redirect(url_for("employee.edit_salary", id_=employee.id))
+
+        historial = HistorialSalario()
+        historial.empleado_id = employee.id
+        historial.fecha_efectiva = form.fecha_efectiva.data or date.today()
+        historial.salario_anterior = salario_anterior
+        historial.salario_nuevo = salario_nuevo
+        historial.motivo = form.motivo.data or None
+        historial.autorizado_por = current_user.usuario
+        historial.creado_por = current_user.usuario
+
+        employee.salario_base = salario_nuevo
+        employee.moneda_id = moneda_nueva_id
+        employee.modificado_por = current_user.usuario
+        if salario_anterior != salario_nuevo:
+            employee.fecha_ultimo_aumento = historial.fecha_efectiva
+
+        db.session.add(historial)
+        db.session.commit()
+        flash(_("Salario base y moneda actualizados exitosamente."), "success")
+        return redirect(url_for("employee.edit", id_=employee.id))
+
+    return render_template(
+        "modules/employee/salary_form.html",
+        form=form,
+        title=_("Modificar Salario Base"),
+        employee=employee,
     )
 
 

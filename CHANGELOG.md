@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- Added a dedicated employee salary-change flow at `/employee/edit/<id>/salary` with a `Modificar Salario Base` action in employee edit view.
+- Added salary change persistence in `HistorialSalario` when salary/currency updates are executed from the dedicated flow.
+- Added payroll void action (`POST /planilla/<planilla_id>/nomina/<nomina_id>/anular`) for payrolls that are not in `applied`/`paid` status, with audit trail and cancellation reason.
+
+### Changed
+
+- Locked `salario_base` and `moneda` fields in regular employee edit (`/employee/edit/<id>`) and enforced server-side protection so those values cannot be changed through the standard employee update endpoint.
+- Updated payroll detail/history views to render `Anulado` (`cancelled`) status and expose the `Anular` action when applicable.
+- Clarified payroll overlap behavior so `cancelled` payrolls do not block creating new payroll runs for overlapping periods.
+- Restricted payroll void operation to disallow cancellation while payroll is `calculating`, avoiding invalid state transitions during background processing.
+
+### Tests
+
+- Added route-level coverage for payroll void action permissions, valid/invalid state transitions, and `Anular` button visibility in payroll detail.
+- Re-validated overlap behavior with cancelled payrolls to ensure cancelled runs do not block new payroll generation for the same period.
+
 ### Fixed
 
 - Adjusted payroll employee detail summary to display `Salario Base` net of absence discounts (`sueldo_base_historico - inasistencia_descuento`) for reclassified novelties.

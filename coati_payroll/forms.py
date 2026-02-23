@@ -839,6 +839,16 @@ class PlanillaForm(FlaskForm):
     submit = SubmitField(_("Guardar"))
 
 
+class EmployeeSalaryChangeForm(FlaskForm):
+    """Form for salary/currency changes that require historical tracking."""
+
+    fecha_efectiva = DateField(_("Fecha efectiva"), validators=[DataRequired()])
+    salario_base = DecimalField(_("Nuevo salario base"), validators=[DataRequired(), NumberRange(min=0)], places=2)
+    moneda_id = SelectField(_("Nueva moneda"), validators=[DataRequired()], coerce=str)
+    motivo = StringField(_("Motivo"), validators=[Optional(), Length(max=255)])
+    submit = SubmitField(_("Guardar cambio salarial"))
+
+
 class TipoPlanillaForm(FlaskForm):
     """Form for creating and editing payroll types (TipoPlanilla).
 
