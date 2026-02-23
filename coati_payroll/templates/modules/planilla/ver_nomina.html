@@ -357,13 +357,14 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
             </thead>
             <tbody>
                 {% for ne in nomina_empleados %}
+                {% set salario_base_visual = (ne.sueldo_base_historico or 0) - (ne.inasistencia_descuento or 0) %}
                 <tr>
                     <td>
                         <strong>{{ ne.empleado.primer_nombre }} {{ ne.empleado.primer_apellido }}</strong>
                         {% if ne.empleado.segundo_apellido %}{{ ne.empleado.segundo_apellido }}{% endif %}
                     </td>
                     <td>{{ ne.cargo_snapshot or ne.empleado.cargo or 'N/A' }}</td>
-                    <td class="text-right">{{ "{:,.2f}".format(ne.sueldo_base_historico|float) }}</td>
+                    <td class="text-right">{{ "{:,.2f}".format(salario_base_visual|float) }}</td>
                     <td class="text-right text-primary">+{{ "{:,.2f}".format(ne.total_ingresos|float) }}</td>
                     <td class="text-right text-danger">-{{ "{:,.2f}".format(ne.total_deducciones|float) }}</td>
                     <td class="text-right"><strong>{{ "{:,.2f}".format(ne.salario_neto|float) }}</strong></td>

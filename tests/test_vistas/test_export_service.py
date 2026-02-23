@@ -610,6 +610,7 @@ class TestExportarNominaExcel:
             db_session.flush()
 
             nomina_empleado.salario_bruto = Decimal("1000.00")
+            nomina_empleado.total_ingresos = Decimal("125.00")
             db_session.add(PlanillaIngreso(planilla_id=planilla.id, percepcion_id=percepcion.id, orden=1, activo=True))
             db_session.add(
                 NominaDetalle(
@@ -641,10 +642,12 @@ class TestExportarNominaExcel:
             headers = [ws.cell(row=header_row, column=col).value for col in range(1, ws.max_column + 1)]
             salario_bruto_col = headers.index("Salario Bruto") + 1
             reclas_col = headers.index("Vacaciones Descansadas") + 1
+            total_ingresos_col = headers.index("Total Ingresos") + 1
 
             data_row = header_row + 1
             assert float(ws.cell(row=data_row, column=salario_bruto_col).value) == pytest.approx(875.00)
             assert float(ws.cell(row=data_row, column=reclas_col).value) == pytest.approx(125.00)
+            assert float(ws.cell(row=data_row, column=total_ingresos_col).value) == pytest.approx(1000.00)
 
     def test_exportar_nomina_excel_incluye_provision_vacaciones(
         self, app, db_session, planilla, nomina, nomina_empleado

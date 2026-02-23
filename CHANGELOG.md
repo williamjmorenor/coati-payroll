@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [UNRELEASED]
+
+### Fixed
+
+- Adjusted payroll employee detail summary to display `Salario Base` net of absence discounts (`sueldo_base_historico - inasistencia_descuento`) for reclassified novelties.
+- Adjusted payroll main detail table (`Detalle por Empleado`) to display `Salario Base` net of absence discounts (`sueldo_base_historico - inasistencia_descuento`).
+- Updated payroll Excel export (`exportar-excel`) so `Total Ingresos` reflects period gross pay while preserving the reclassification-adjusted salary display column.
+- Added an explicit warning when the first payroll run does not start at fiscal period start, recommending manual tax verification.
+- Fixed payroll comparison approval banner to label the approving user clearly and avoid 404s by flashing and redirecting when a comparison payroll id is missing.
+
+
 ## [1.8.1] - 2026-02-22
 
 ### Added

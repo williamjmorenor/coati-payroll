@@ -195,7 +195,13 @@ def comparar_nomina(planilla_id: str, nomina_id: str):
         db.select(Nomina).filter(Nomina.id == nomina_id, Nomina.planilla_id == planilla_id)
     ).scalar_one_or_none()
     if not nomina_actual:
-        abort(404)
+        nomina_real = db.session.get(Nomina, nomina_id)
+        target_planilla_id = nomina_real.planilla_id if nomina_real else planilla_id
+        flash(
+            _("No se encontro la comparativa solicitada porque una de las nominas no esta disponible."),
+            "warning",
+        )
+        return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=target_planilla_id))
 
     nominas_para_comparar = NominaComparisonService.get_nominas_disponibles(
         planilla_id=planilla_id,
@@ -203,6 +209,20 @@ def comparar_nomina(planilla_id: str, nomina_id: str):
     )
     base_seleccionada_id = request.args.get("nomina_base_id")
     ejecutar = request.args.get("ejecutar") == "1"
+
+    if base_seleccionada_id:
+        nomina_base_referenciada = db.session.get(Nomina, base_seleccionada_id)
+        if (
+            not nomina_base_referenciada
+            or nomina_base_referenciada.planilla_id != planilla_id
+            or nomina_base_referenciada.id == nomina_actual.id
+        ):
+            target_planilla_id = nomina_base_referenciada.planilla_id if nomina_base_referenciada else planilla_id
+            flash(
+                _("No se encontro la comparativa solicitada porque una de las nominas no esta disponible."),
+                "warning",
+            )
+            return redirect(url_for(ROUTE_LISTAR_NOMINAS, planilla_id=target_planilla_id))
 
     nomina_base = None
     comparacion_payload: dict[str, Any] | None = None
@@ -403,12 +423,14 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
     percepciones = [d for d in detalles if d.tipo == "income"]
     deducciones = [d for d in detalles if d.tipo == "deduction"]
     prestaciones = [d for d in detalles if d.tipo == "benefit"]
+    salario_base_visual = (nomina_empleado.sueldo_base_historico or 0) - (nomina_empleado.inasistencia_descuento or 0)
 
     return render_template(
         "modules/planilla/ver_nomina_empleado.html",
         planilla=planilla,
         nomina=nomina,
         nomina_empleado=nomina_empleado,
+        salario_base_visual=salario_base_visual,
         percepciones=percepciones,
         deducciones=deducciones,
         prestaciones=prestaciones,

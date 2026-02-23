@@ -187,6 +187,40 @@ class NominaService:
         return periodo_inicio_sugerido, periodo_fin_sugerido
 
     @staticmethod
+    def _build_first_payroll_fiscal_start_warning(planilla: Planilla, periodo_inicio: date) -> str | None:
+        """Warn when first payroll period does not start at fiscal period start.
+
+        This helps operators identify potential tax-side effects (e.g., annualized
+        income tax behaviors) when bootstrapping payroll mid-fiscal-year.
+        """
+        has_previous_nomina = db.session.execute(
+            db.select(Nomina.id).where(Nomina.planilla_id == planilla.id).limit(1)
+        ).scalar_one_or_none()
+        if has_previous_nomina:
+            return None
+
+        tipo_planilla = planilla.tipo_planilla
+        if not tipo_planilla:
+            return None
+
+        mes_inicio_fiscal = int(planilla.mes_inicio_fiscal or tipo_planilla.mes_inicio_fiscal or 1)
+        dia_inicio_fiscal = int(tipo_planilla.dia_inicio_fiscal or 1)
+        anio_fiscal = periodo_inicio.year if periodo_inicio.month >= mes_inicio_fiscal else periodo_inicio.year - 1
+
+        try:
+            inicio_fiscal = date(anio_fiscal, mes_inicio_fiscal, dia_inicio_fiscal)
+        except ValueError:
+            return None
+
+        if periodo_inicio == inicio_fiscal:
+            return None
+
+        return (
+            "La primera nomina calculada no coincide con el inicio del periodo fiscal "
+            f"({inicio_fiscal.isoformat()}). Se recomienda verificacion manual de impuestos."
+        )
+
+    @staticmethod
     def ejecutar_nomina(
         planilla: Planilla,
         periodo_inicio: date,
@@ -206,6 +240,11 @@ class NominaService:
         Returns:
             Tuple of (nomina, errors, warnings)
         """
+        warnings: list[str] = []
+        fiscal_start_warning = NominaService._build_first_payroll_fiscal_start_warning(planilla, periodo_inicio)
+        if fiscal_start_warning:
+            warnings.append(fiscal_start_warning)
+
         # Count active employees
         planilla_empleados = cast(list[Any], planilla.planilla_empleados)
         num_empleados = len([pe for pe in planilla_empleados if pe.activo and pe.empleado.activo])
@@ -249,7 +288,7 @@ class NominaService:
                         fecha_calculo=fecha_calculo.isoformat(),
                         usuario=usuario,
                     )
-                    return nomina, [], []
+                    return nomina, [], warnings
                 except Exception:
                     # Fallback to synchronous execution while keeping an auditable trace
                     db.session.delete(nomina)
@@ -265,7 +304,7 @@ class NominaService:
         )
 
         nomina_result = engine.ejecutar()
-        return nomina_result, engine.errors, engine.warnings
+        return nomina_result, engine.errors, warnings + list(engine.warnings or [])
 
     @staticmethod
     def recalcular_nomina(

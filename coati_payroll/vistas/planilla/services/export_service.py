@@ -375,6 +375,7 @@ class ExportService:
                 ingresos_catalogo_by_ne.get(ne.id, {}).get(concept_id, 0.0) for concept_id in reclasificacion_ids
             )
             salario_bruto_visual = float(ne.salario_bruto or 0) - reclasificacion_total
+            total_ingresos_visual = float(ne.salario_bruto or 0)
 
             total_prestaciones = (
                 sum(prestaciones_catalogo_by_ne.get(ne.id, {}).values())
@@ -415,7 +416,7 @@ class ExportService:
                 elif col_type == "gross_salary_adjusted":
                     value = salario_bruto_visual
                 elif col_type == "income_total":
-                    value = float(ne.total_ingresos or 0)
+                    value = total_ingresos_visual
                 elif col_type == "deduction_total":
                     value = float(ne.total_deducciones or 0)
                 elif col_type == "net_salary":

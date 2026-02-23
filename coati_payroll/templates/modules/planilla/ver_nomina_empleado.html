@@ -54,7 +54,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 <table class="table table-sm mb-0">
                     <tr>
                         <td>Salario Base:</td>
-                        <td class="text-right">{{ "{:,.2f}".format(nomina_empleado.sueldo_base_historico|float) }}</td>
+                        <td class="text-right">{{ "{:,.2f}".format(salario_base_visual|float) }}</td>
                     </tr>
                     <tr>
                         <td>Total Ingresos:</td>
@@ -234,4 +234,3 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
     </div>
 </div>
 {% endblock %}
-

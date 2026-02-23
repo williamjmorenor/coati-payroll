@@ -398,6 +398,23 @@ def test_ver_nomina_with_warnings(app, client, admin_user, db_session, planilla,
         assert response.status_code == 200
 
 
+def test_ver_nomina_muestra_salario_base_ajustado_por_inasistencia(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """Detalle por empleado should display base salary net of absence discount."""
+    with app.app_context():
+        nomina_empleado.sueldo_base_historico = Decimal("1000.00")
+        nomina_empleado.inasistencia_descuento = Decimal("333.33")
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}")
+        assert response.status_code == 200
+        assert b"Detalle por Empleado" in response.data
+        assert b"666.67" in response.data
+
+
 # ============================================================================
 # TESTS FOR ver_nomina_empleado
 # ============================================================================
@@ -459,6 +476,24 @@ def test_ver_nomina_empleado_shows_detalles(
 
         response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}")
         assert response.status_code == 200
+
+
+def test_ver_nomina_empleado_muestra_salario_base_ajustado_por_inasistencia(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """Salario Base in summary should display base salary net of absence discount."""
+    with app.app_context():
+        nomina_empleado.salario_bruto = Decimal("1000.00")
+        nomina_empleado.total_ingresos = Decimal("333.33")
+        nomina_empleado.inasistencia_descuento = Decimal("333.33")
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}")
+        assert response.status_code == 200
+        assert b"Salario Base:" in response.data
+        assert b"666.67" in response.data
 
 
 # ============================================================================
