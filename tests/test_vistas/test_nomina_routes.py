@@ -198,6 +198,32 @@ def test_ejecutar_nomina_get_accessible_to_authenticated_users(app, client, admi
         assert response.status_code == 200
 
 
+def test_ejecutar_nomina_get_handles_multiple_nominas_with_cancelled(app, client, admin_user, db_session, planilla):
+    """GET /ejecutar should not fail when planilla has multiple payroll runs, including cancelled ones."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        nomina_enero = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date(2025, 1, 1),
+            periodo_fin=date(2025, 1, 31),
+            generado_por=admin_user.usuario,
+            estado=NominaEstado.GENERADO,
+        )
+        nomina_febrero_anulada = Nomina(
+            planilla_id=planilla.id,
+            periodo_inicio=date(2025, 2, 1),
+            periodo_fin=date(2025, 2, 28),
+            generado_por=admin_user.usuario,
+            estado=NominaEstado.ANULADO,
+        )
+        db_session.add_all([nomina_enero, nomina_febrero_anulada])
+        db_session.commit()
+
+        response = client.get(f"/planilla/{planilla.id}/ejecutar")
+        assert response.status_code == 200
+
+
 def test_ejecutar_nomina_post_requires_write_access(app, client, db_session, planilla):
     """Test that ejecutar_nomina POST requires write access."""
     with app.app_context():

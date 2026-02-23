@@ -163,9 +163,26 @@ class NominaService:
             Tuple of (periodo_inicio, periodo_fin)
         """
         # Get last nomina for default dates
-        ultima_nomina = db.session.execute(
-            db.select(Nomina).filter_by(planilla_id=planilla.id).order_by(Nomina.periodo_fin.desc())
-        ).scalar_one_or_none()
+        estados_relevantes = (
+            NominaEstado.CALCULANDO,
+            NominaEstado.GENERADO,
+            NominaEstado.APROBADO,
+            NominaEstado.APLICADO,
+            NominaEstado.PAGADO,
+        )
+        ultima_nomina = (
+            db.session.execute(
+                db.select(Nomina)
+                .where(
+                    Nomina.planilla_id == planilla.id,
+                    Nomina.estado.in_(estados_relevantes),
+                )
+                .order_by(Nomina.periodo_fin.desc(), Nomina.fecha_generacion.desc())
+                .limit(1)
+            )
+            .scalars()
+            .first()
+        )
 
         hoy = date.today()
 

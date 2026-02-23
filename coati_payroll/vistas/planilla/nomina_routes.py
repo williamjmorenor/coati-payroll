@@ -109,9 +109,16 @@ def ejecutar_nomina(planilla_id: str):
     hoy = date.today()
 
     # Get last nomina for reference
-    ultima_nomina = db.session.execute(
-        db.select(Nomina).filter_by(planilla_id=planilla_id).order_by(Nomina.periodo_fin.desc())
-    ).scalar_one_or_none()
+    ultima_nomina = (
+        db.session.execute(
+            db.select(Nomina)
+            .where(Nomina.planilla_id == planilla_id)
+            .order_by(Nomina.periodo_fin.desc(), Nomina.fecha_generacion.desc())
+            .limit(1)
+        )
+        .scalars()
+        .first()
+    )
 
     return render_template(
         "modules/planilla/ejecutar_nomina.html",

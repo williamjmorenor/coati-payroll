@@ -138,6 +138,69 @@ def planilla_empleado(app, db_session, planilla, empleado):
 
 
 # ============================================================================
+# TESTS FOR calcular_periodo_sugerido
+# ============================================================================
+
+
+class TestCalcularPeriodoSugerido:
+    """Tests for NominaService.calcular_periodo_sugerido method."""
+
+    def test_ignora_nominas_anuladas_para_sugerir_inicio(
+        self, app, db_session, planilla, planilla_empleado, admin_user
+    ):
+        """Cancelled payrolls must not drive suggested start date."""
+        with app.app_context():
+            nomina_generada = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2024, 1, 1),
+                periodo_fin=date(2024, 1, 31),
+                generado_por=admin_user.usuario,
+                estado=NominaEstado.GENERADO,
+            )
+            nomina_anulada = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2024, 2, 1),
+                periodo_fin=date(2024, 2, 29),
+                generado_por=admin_user.usuario,
+                estado=NominaEstado.ANULADO,
+            )
+            db_session.add_all([nomina_generada, nomina_anulada])
+            db_session.commit()
+
+            inicio, fin = NominaService.calcular_periodo_sugerido(planilla)
+
+            assert inicio == date(2024, 2, 1)
+            assert fin == date(2024, 2, 29)
+
+    def test_no_falla_con_multiples_nominas_activas(
+        self, app, db_session, planilla, planilla_empleado, admin_user
+    ):
+        """Method must return latest period suggestion without MultipleResultsFound."""
+        with app.app_context():
+            nomina_enero = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2024, 1, 1),
+                periodo_fin=date(2024, 1, 31),
+                generado_por=admin_user.usuario,
+                estado=NominaEstado.GENERADO,
+            )
+            nomina_febrero = Nomina(
+                planilla_id=planilla.id,
+                periodo_inicio=date(2024, 2, 1),
+                periodo_fin=date(2024, 2, 29),
+                generado_por=admin_user.usuario,
+                estado=NominaEstado.APROBADO,
+            )
+            db_session.add_all([nomina_enero, nomina_febrero])
+            db_session.commit()
+
+            inicio, fin = NominaService.calcular_periodo_sugerido(planilla)
+
+            assert inicio == date(2024, 3, 1)
+            assert fin == date(2024, 3, 31)
+
+
+# ============================================================================
 # TESTS FOR ejecutar_nomina
 # ============================================================================
 

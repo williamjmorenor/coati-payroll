@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated payroll Excel export (`exportar-excel`) so `Total Ingresos` reflects period gross pay while preserving the reclassification-adjusted salary display column.
 - Added an explicit warning when the first payroll run does not start at fiscal period start, recommending manual tax verification.
 - Fixed payroll comparison approval banner to label the approving user clearly and avoid 404s by flashing and redirecting when a comparison payroll id is missing.
+- Fixed suggested payroll period selector (`/planilla/<id>/ejecutar`) to safely handle multiple payroll records and ignore cancelled runs when computing the recommended start date.
 
 
 ## [1.8.1] - 2026-02-22
