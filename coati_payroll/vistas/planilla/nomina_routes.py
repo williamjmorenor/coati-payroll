@@ -3,6 +3,7 @@
 """Routes for nomina execution and management."""
 
 from datetime import date
+from decimal import Decimal
 from typing import Any, cast
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -432,6 +433,77 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
     deducciones = [d for d in detalles if d.tipo == "deduction"]
     prestaciones = [d for d in detalles if d.tipo == "benefit"]
     salario_base_visual = (nomina_empleado.sueldo_base_historico or 0) - (nomina_empleado.inasistencia_descuento or 0)
+    novedades_aplicadas = (
+        db.session.execute(
+            db.select(NominaNovedad)
+            .where(
+                NominaNovedad.nomina_id == nomina_id,
+                NominaNovedad.empleado_id == nomina_empleado.empleado_id,
+            )
+            .order_by(NominaNovedad.fecha_novedad.asc(), NominaNovedad.timestamp.asc())
+        )
+        .scalars()
+        .all()
+    )
+
+    def _to_decimal(value: Any) -> Decimal:
+        if value is None or value == "":
+            return Decimal("0")
+        if isinstance(value, Decimal):
+            return value
+        try:
+            return Decimal(str(value))
+        except (ArithmeticError, TypeError, ValueError):
+            return Decimal("0")
+
+    percepcion_ids = sorted({n.percepcion_id for n in novedades_aplicadas if n.percepcion_id})
+    deduccion_ids = sorted({n.deduccion_id for n in novedades_aplicadas if n.deduccion_id})
+
+    percepcion_catalogo = {
+        percepcion.id: percepcion.descripcion or percepcion.nombre or percepcion.codigo
+        for percepcion in db.session.execute(db.select(Percepcion).where(Percepcion.id.in_(percepcion_ids))).scalars().all()
+    }
+    deduccion_catalogo = {
+        deduccion.id: deduccion.descripcion or deduccion.nombre or deduccion.codigo
+        for deduccion in db.session.execute(db.select(Deduccion).where(Deduccion.id.in_(deduccion_ids))).scalars().all()
+    }
+
+    conteo_tipo_valor: dict[str, int] = {}
+    acumulado_tipo_valor: dict[str, Decimal] = {}
+    for novedad in novedades_aplicadas:
+        tipo_valor = novedad.tipo_valor or "sin_tipo"
+        conteo_tipo_valor[tipo_valor] = conteo_tipo_valor.get(tipo_valor, 0) + 1
+        acumulado_tipo_valor[tipo_valor] = acumulado_tipo_valor.get(tipo_valor, Decimal("0")) + _to_decimal(
+            novedad.valor_cantidad
+        )
+
+    resumen_novedades = {
+        "total": len(novedades_aplicadas),
+        "con_percepcion": sum(1 for n in novedades_aplicadas if n.percepcion_id),
+        "con_deduccion": sum(1 for n in novedades_aplicadas if n.deduccion_id),
+        "sin_referencia_catalogo": sum(1 for n in novedades_aplicadas if not n.percepcion_id and not n.deduccion_id),
+        "conteo_tipo_valor": conteo_tipo_valor,
+        "acumulado_tipo_valor": acumulado_tipo_valor,
+    }
+
+    configuracion_snapshot = nomina.configuracion_snapshot or {}
+    configuracion_contexto: dict[str, Any] = {}
+    for clave, valor in configuracion_snapshot.items():
+        if valor is None or valor == "":
+            continue
+        if isinstance(valor, (str, int, float, bool, Decimal, date)):
+            configuracion_contexto[str(clave)] = valor
+
+    salario_base_historico = _to_decimal(nomina_empleado.sueldo_base_historico)
+    salario_base_resultante = _to_decimal(salario_base_visual)
+    ajuste_total_salario_base = salario_base_historico - salario_base_resultante
+
+    conciliacion_salario_base = {
+        "salario_base_historico": salario_base_historico,
+        "ajuste_total_salario_base": ajuste_total_salario_base,
+        "salario_base_resultante": salario_base_resultante,
+        "configuracion_contexto": configuracion_contexto,
+    }
 
     return render_template(
         "modules/planilla/ver_nomina_empleado.html",
@@ -442,6 +514,11 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
         percepciones=percepciones,
         deducciones=deducciones,
         prestaciones=prestaciones,
+        novedades_aplicadas=novedades_aplicadas,
+        percepcion_catalogo=percepcion_catalogo,
+        deduccion_catalogo=deduccion_catalogo,
+        resumen_novedades=resumen_novedades,
+        conciliacion_salario_base=conciliacion_salario_base,
     )
 
 

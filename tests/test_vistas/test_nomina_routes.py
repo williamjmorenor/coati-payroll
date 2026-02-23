@@ -12,6 +12,7 @@ from coati_payroll.model import (
     Nomina,
     NominaEmpleado,
     NominaDetalle,
+    NominaNovedad,
     Prestacion,
     PrestacionAcumulada,
     ComprobanteContable,
@@ -548,6 +549,47 @@ def test_ver_nomina_empleado_muestra_salario_base_ajustado_por_inasistencia(
         assert response.status_code == 200
         assert b"Salario Base:" in response.data
         assert b"666.67" in response.data
+
+
+def test_ver_nomina_empleado_muestra_seccion_novedades_aplicadas(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """Employee payroll detail should always show applied novelties section."""
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}")
+        assert response.status_code == 200
+        assert b"Novedades Aplicadas al Calculo" in response.data
+        assert b"Conciliacion de Salario Base" in response.data
+
+
+def test_ver_nomina_empleado_muestra_detalle_dinamico_de_novedades(
+    app, client, admin_user, db_session, planilla, nomina, nomina_empleado
+):
+    """Applied novelties detail must render novelty data dynamically."""
+    with app.app_context():
+        novedad = NominaNovedad(
+            nomina_id=nomina.id,
+            empleado_id=nomina_empleado.empleado_id,
+            codigo_concepto="AJUSTE_VAR",
+            tipo_valor="horas",
+            valor_cantidad=Decimal("2.50"),
+            fecha_novedad=date(2025, 1, 10),
+            estado="pending",
+            creado_por=admin_user.usuario,
+        )
+        db_session.add(novedad)
+        db_session.commit()
+
+        login_user(client, admin_user.usuario, "admin-password")
+
+        response = client.get(f"/planilla/{planilla.id}/nomina/{nomina.id}/empleado/{nomina_empleado.id}")
+        assert response.status_code == 200
+        assert b"AJUSTE_VAR" in response.data
+        assert b"2.50" in response.data
+        assert b"horas" in response.data
+        assert b"Total novedades aplicadas" in response.data
 
 
 # ============================================================================
