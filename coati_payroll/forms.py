@@ -301,6 +301,19 @@ class EmployeeForm(FlaskForm):
     submit = SubmitField(_("Guardar"))
 
 
+class SalaryChangeForm(FlaskForm):
+    """Form for drafting salary changes before applying them."""
+
+    fecha_efectiva = DateField(_("Fecha efectiva"), validators=[DataRequired()])
+    salario_nuevo = DecimalField(
+        _("Nuevo salario base"),
+        validators=[DataRequired(), NumberRange(min=Decimal("0.01"))],
+        places=2,
+    )
+    motivo = StringField(_("Motivo"), validators=[Optional(), Length(max=255)])
+    submit = SubmitField(_("Guardar borrador"))
+
+
 class CustomFieldForm(FlaskForm):
     """Form for creating and editing custom employee fields."""
 

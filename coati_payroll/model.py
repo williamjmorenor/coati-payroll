@@ -1291,7 +1291,11 @@ class HistorialSalario(database.Model, BaseTabla):
     salario_anterior = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     salario_nuevo = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     motivo = database.Column(database.String(255), nullable=True)
+    estado = database.Column(database.String(20), nullable=False, default="draft", index=True)
     autorizado_por = database.Column(database.String(150), nullable=True)
+    aprobado_en = database.Column(database.DateTime, nullable=True)
+    aplicado_por = database.Column(database.String(150), nullable=True)
+    aplicado_en = database.Column(database.DateTime, nullable=True)
 
     empleado = database.relationship("Empleado", back_populates="historial_salarios")
 

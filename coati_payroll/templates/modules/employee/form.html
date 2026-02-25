@@ -7,7 +7,6 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
 {% from 'macros.html' import render_field, render_form_errors %}
 
 {% block content %}
-{% set is_edit_mode = employee is defined %}
 <div class="container">
     {{ render_form_errors(form) }}
     
@@ -107,35 +106,21 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         {{ render_field(form.centro_costos) }}
                     </div>
                     <div class="col-md-4">
-                        {% if is_edit_mode %}
-                            {{ render_field(form.salario_base, disabled=True) }}
+                        {% if employee %}
+                            <label for="{{ form.salario_base.id }}" class="form-label">{{ form.salario_base.label.text }}</label>
+                            {{ form.salario_base(class="form-control", readonly=true) }}
+                            <div class="form-text">
+                                {{ _('Para modificar el salario use el flujo de cambios salariales.') }}
+                                <a href="{{ url_for('employee.salary_change_new', employee_id=employee.id) }}">{{ _('Crear cambio salarial') }}</a>
+                            </div>
                         {% else %}
                             {{ render_field(form.salario_base) }}
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        {% if is_edit_mode %}
-                            {{ render_field(form.moneda_id, disabled=True) }}
-                        {% else %}
-                            {{ render_field(form.moneda_id) }}
-                        {% endif %}
+                        {{ render_field(form.moneda_id) }}
                     </div>
                 </div>
-
-                {% if is_edit_mode %}
-                <input type="hidden" name="salario_base" value="{{ form.salario_base.data if form.salario_base.data is not none else '' }}">
-                <input type="hidden" name="moneda_id" value="{{ form.moneda_id.data if form.moneda_id.data is not none else '' }}">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="alert alert-info py-2 d-flex justify-content-between align-items-center">
-                            <span class="small mb-0">{{ _('Los cambios de salario deben ser autorizados mediante el flujo especial.') }}</span>
-                            <a href="{{ url_for('employee.edit_salary', id_=employee.id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-cash-coin me-1"></i>{{ _('Autorizar Cambio Salarial') }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
                 
                 <div class="row">
                     <div class="col-md-4">
