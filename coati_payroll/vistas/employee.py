@@ -12,7 +12,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import false, true
 
-from coati_payroll.forms import EmployeeForm, SalaryChangeForm
+from coati_payroll.forms import EmployeeForm, EmployeeSalaryChangeForm, SalaryChangeForm
 from coati_payroll.i18n import _
 from coati_payroll.model import CampoPersonalizado, Empleado, HistorialSalario, Moneda, db
 from coati_payroll.rbac import require_read_access, require_write_access
@@ -360,6 +360,54 @@ def delete(id_: str):
     db.session.commit()
     flash(_("Empleado eliminado exitosamente."), "success")
     return redirect(url_for("employee.index"))
+
+
+@employee_bp.route("/edit/<string:id_>/salary", methods=["GET", "POST"])
+@require_write_access()
+def salary_change_direct(id_: str):
+    """Single-step salary change flow: create, authorize and apply in one operation."""
+    employee = db.session.get(Empleado, id_)
+    if not employee:
+        flash(_("Empleado no encontrado."), "error")
+        return redirect(url_for("employee.index"))
+
+    form = EmployeeSalaryChangeForm()
+    form.moneda_id.choices = get_currency_choices()
+
+    if form.validate_on_submit():
+        salario_anterior = employee.salario_base or Decimal("0.00")
+        salario_nuevo = form.salario_base.data or Decimal("0.00")
+        now = datetime.utcnow()
+
+        historial = HistorialSalario(
+            empleado_id=employee.id,
+            fecha_efectiva=form.fecha_efectiva.data,
+            salario_anterior=salario_anterior,
+            salario_nuevo=salario_nuevo,
+            motivo=form.motivo.data,
+            estado="applied",
+            creado_por=current_user.usuario,
+            autorizado_por=current_user.usuario,
+            aprobado_en=now,
+            aplicado_por=current_user.usuario,
+            aplicado_en=now,
+        )
+        db.session.add(historial)
+
+        employee.salario_base = salario_nuevo
+        employee.moneda_id = form.moneda_id.data or employee.moneda_id
+        employee.modificado_por = current_user.usuario
+
+        db.session.commit()
+        flash(_("Cambio salarial autorizado y aplicado exitosamente."), "success")
+        return redirect(url_for("employee.edit", id_=employee.id))
+
+    return render_template(
+        "modules/employee/salary_form.html",
+        form=form,
+        title=_("Autorizar Cambio Salarial"),
+        employee=employee,
+    )
 
 
 def _requires_different_approver(employee: Empleado) -> bool:
