@@ -418,12 +418,15 @@ def salary_change_new(employee_id: str):
         return redirect(url_for("employee.index"))
 
     form = SalaryChangeForm()
+    form.moneda_nueva_id.choices = get_currency_choices()
     if form.validate_on_submit():
         salary_change = HistorialSalario(
             empleado_id=employee.id,
             fecha_efectiva=form.fecha_efectiva.data,
             salario_anterior=employee.salario_base or Decimal("0.00"),
+            moneda_anterior_id=employee.moneda_id,
             salario_nuevo=form.salario_nuevo.data or Decimal("0.00"),
+            moneda_nueva_id=form.moneda_nueva_id.data or employee.moneda_id,
             motivo=form.motivo.data,
             estado="draft",
             creado_por=current_user.usuario,
@@ -437,6 +440,8 @@ def salary_change_new(employee_id: str):
         form.fecha_efectiva.data = date.today()
     if not form.salario_nuevo.data:
         form.salario_nuevo.data = employee.salario_base
+    if not form.moneda_nueva_id.data and employee.moneda_id:
+        form.moneda_nueva_id.data = employee.moneda_id
 
     return render_template("modules/employee/salary_change_form.html", form=form, employee=employee)
 
@@ -491,7 +496,10 @@ def salary_change_apply(change_id: str):
         flash(_("Empleado no encontrado para este cambio salarial."), "error")
         return redirect(url_for("employee.salary_changes_index"))
 
-    cast(Empleado, salary_change.empleado).salario_base = salary_change.salario_nuevo
+    empleado = cast(Empleado, salary_change.empleado)
+    empleado.salario_base = salary_change.salario_nuevo
+    if salary_change.moneda_nueva_id:
+        empleado.moneda_id = salary_change.moneda_nueva_id
     salary_change.aplicado_por = current_user.usuario
     salary_change.aplicado_en = datetime.utcnow()
     salary_change.estado = "applied"

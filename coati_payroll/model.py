@@ -1289,7 +1289,9 @@ class HistorialSalario(database.Model, BaseTabla):
     )
     fecha_efectiva = database.Column(database.Date, nullable=False, index=True)
     salario_anterior = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    moneda_anterior_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=True)
     salario_nuevo = database.Column(database.Numeric(14, 2), nullable=False, default=Decimal("0.00"))
+    moneda_nueva_id = database.Column(database.String(26), database.ForeignKey(FK_MONEDA_ID), nullable=True)
     motivo = database.Column(database.String(255), nullable=True)
     estado = database.Column(database.String(20), nullable=False, default="draft", index=True)
     autorizado_por = database.Column(database.String(150), nullable=True)
@@ -1298,6 +1300,8 @@ class HistorialSalario(database.Model, BaseTabla):
     aplicado_en = database.Column(database.DateTime, nullable=True)
 
     empleado = database.relationship("Empleado", back_populates="historial_salarios")
+    moneda_anterior = database.relationship("Moneda", foreign_keys=[moneda_anterior_id])
+    moneda_nueva = database.relationship("Moneda", foreign_keys=[moneda_nueva_id])
 
 
 # Configuración de vacaciones por país/empresa

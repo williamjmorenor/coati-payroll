@@ -310,6 +310,7 @@ class SalaryChangeForm(FlaskForm):
         validators=[DataRequired(), NumberRange(min=Decimal("0.01"))],
         places=2,
     )
+    moneda_nueva_id = SelectField(_("Nueva moneda"), validators=[Optional()], coerce=str)
     motivo = StringField(_("Motivo"), validators=[Optional(), Length(max=255)])
     submit = SubmitField(_("Guardar borrador"))
 

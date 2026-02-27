@@ -149,3 +149,60 @@ def test_employee_edit_shows_single_salary_change_flow_hint(app, client, admin_u
         html = response.data.decode("utf-8")
         assert "Para modificar el salario use el flujo de cambios salariales." in html
         assert f"/employee/salary-changes/new/{empleado.id}" in html
+
+
+def test_salary_change_stores_currency_and_applies_on_currency_change(app, client, admin_user, db_session):
+    """Currency fields are recorded and applied when salary change includes a currency switch."""
+    from coati_payroll.model import Moneda
+
+    with app.app_context():
+        login_user(client, admin_user.usuario, "admin-password")
+        empresa = _create_company(db_session, "EMP-E")
+        moneda_nio = Moneda(codigo="NIO", nombre="Córdoba", simbolo="C$", activo=True)
+        moneda_usd = Moneda(codigo="USD", nombre="US Dollar", simbolo="$", activo=True)
+        db_session.add_all([moneda_nio, moneda_usd])
+        db_session.commit()
+
+        empleado = Empleado(
+            codigo_empleado="EMP400",
+            primer_nombre="Rosa",
+            primer_apellido="López",
+            identificacion_personal="ID-EMP400",
+            fecha_alta=date(2024, 1, 1),
+            salario_base=Decimal("1000.00"),
+            moneda_id=moneda_nio.id,
+            empresa_id=empresa.id,
+        )
+        db_session.add(empleado)
+        db_session.commit()
+
+        # Step 1 – create draft with a new currency
+        resp = client.post(
+            f"/employee/salary-changes/new/{empleado.id}",
+            data={
+                "fecha_efectiva": "2024-03-01",
+                "salario_nuevo": "500.00",
+                "moneda_nueva_id": moneda_usd.id,
+                "motivo": "Cambio a USD",
+            },
+            follow_redirects=False,
+        )
+        assert resp.status_code == 302
+
+        cambio = db_session.execute(db.select(HistorialSalario).filter_by(empleado_id=empleado.id)).scalar_one()
+        assert cambio.salario_anterior == Decimal("1000.00")
+        assert cambio.moneda_anterior_id == moneda_nio.id
+        assert cambio.salario_nuevo == Decimal("500.00")
+        assert cambio.moneda_nueva_id == moneda_usd.id
+
+        # Step 2 – approve
+        resp = client.post(f"/employee/salary-changes/{cambio.id}/approve", follow_redirects=False)
+        assert resp.status_code == 302
+
+        # Step 3 – apply: salary AND currency must be updated on the employee
+        resp = client.post(f"/employee/salary-changes/{cambio.id}/apply", follow_redirects=False)
+        assert resp.status_code == 302
+        db_session.refresh(empleado)
+        assert empleado.salario_base == Decimal("500.00")
+        assert empleado.moneda_id == moneda_usd.id
+
