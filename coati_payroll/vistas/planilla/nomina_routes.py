@@ -463,7 +463,7 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
     horas_jornada_diaria = _to_decimal(configuracion_snapshot.get("horas_jornada_diaria"))
 
     if dias_mes_nomina <= 0 or horas_jornada_diaria <= 0:
-        config_resuelta = ConfigRepository(db.session).get_for_empresa(planilla.empresa_id)
+        config_resuelta = ConfigRepository(cast(Any, db.session)).get_for_empresa(planilla.empresa_id)
         if dias_mes_nomina <= 0:
             dias_mes_nomina = _to_decimal(getattr(config_resuelta, "dias_mes_nomina", None))
         if horas_jornada_diaria <= 0:
@@ -472,7 +472,9 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
 
     valor_dia_referencia: Decimal | None = None
     if dias_mes_nomina > 0:
-        valor_dia_referencia = (sueldo_base_historico / dias_mes_nomina).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        valor_dia_referencia = (sueldo_base_historico / dias_mes_nomina).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
 
     valor_hora_referencia: Decimal | None = None
     if valor_dia_referencia is not None and horas_jornada_diaria > 0:
@@ -485,7 +487,9 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
 
     percepcion_catalogo = {
         percepcion.id: percepcion.descripcion or percepcion.nombre or percepcion.codigo
-        for percepcion in db.session.execute(db.select(Percepcion).where(Percepcion.id.in_(percepcion_ids))).scalars().all()
+        for percepcion in db.session.execute(db.select(Percepcion).where(Percepcion.id.in_(percepcion_ids)))
+        .scalars()
+        .all()
     }
     deduccion_catalogo = {
         deduccion.id: deduccion.descripcion or deduccion.nombre or deduccion.codigo
@@ -518,7 +522,9 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
     monto_por_concepto: dict[str, Decimal] = {}
     for detalle in detalles:
         concepto_key = _concepto_key_from_detalle(detalle)
-        monto_por_concepto[concepto_key] = monto_por_concepto.get(concepto_key, Decimal("0")) + _to_decimal(detalle.monto)
+        monto_por_concepto[concepto_key] = monto_por_concepto.get(concepto_key, Decimal("0")) + _to_decimal(
+            detalle.monto
+        )
 
     monto_novedad_referencia: dict[str, dict[str, Any]] = {}
     for novedad in novedades_aplicadas:
@@ -581,7 +587,8 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
                 ]
                 if pendientes_sin_monto:
                     pesos = [
-                        max(_to_decimal(novedades_por_id[nid].valor_cantidad), Decimal("0")) for nid in pendientes_sin_monto
+                        max(_to_decimal(novedades_por_id[nid].valor_cantidad), Decimal("0"))
+                        for nid in pendientes_sin_monto
                     ]
                     suma_pesos = sum(pesos)
 
@@ -604,15 +611,19 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
                         ] = "Monto prorrateado por conciliacion del descuento total aplicado al salario base"
                         monto_novedad_referencia[nid]["es_estimado"] = True
                 else:
-                    estimadas = [nid for nid in novedades_descuento_ids if monto_novedad_referencia[nid].get("es_estimado")]
+                    estimadas = [
+                        nid for nid in novedades_descuento_ids if monto_novedad_referencia[nid].get("es_estimado")
+                    ]
                     if estimadas:
                         objetivo_id = estimadas[-1]
                         monto_actual = _to_decimal(monto_novedad_referencia[objetivo_id]["monto"])
                         monto_nuevo = (monto_actual + residuo).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                         monto_novedad_referencia[objetivo_id]["monto"] = monto_nuevo
-                        monto_novedad_referencia[objetivo_id][
-                            "detalle"
-                        ] = "Monto estimado por ajuste de salario base segun configuracion de la nomina (ajustado por conciliacion de centavos)"
+                        monto_novedad_referencia[objetivo_id]["detalle"] = (
+                            "Monto estimado por ajuste de salario base"
+                            " segun configuracion de la nomina"
+                            " (ajustado por conciliacion de centavos)"
+                        )
 
     resumen_novedades = {
         "total": len(novedades_aplicadas),

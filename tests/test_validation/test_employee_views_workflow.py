@@ -151,17 +151,15 @@ def test_employee_edit_view_shows_salary_change_button(app, client, db_session):
 
         html = resp.data.decode("utf-8")
         assert "Autorizar Cambio Salarial" in html
-        assert f"/employee/edit/{emp.id}/salary" in html
+        assert f"/employee/salary-changes/new/{emp.id}" in html
 
 
 @pytest.mark.validation
 def test_employee_salary_change_flow_updates_and_creates_history(app, client, db_session):
+    """Small-company flow: same user creates, approves and applies the salary change."""
     with app.app_context():
         hr_user = create_user(db_session, "hr-emp4", "password", tipo=TipoUsuario.HHRR)
         empresa, moneda_nio = _create_empresa_moneda(db_session)
-        moneda_usd = Moneda(codigo="USD", nombre="US Dollar", simbolo="$", activo=True)
-        db_session.add(moneda_usd)
-        db_session.commit()
 
         emp = Empleado(
             empresa_id=empresa.id,
@@ -179,28 +177,39 @@ def test_employee_salary_change_flow_updates_and_creates_history(app, client, db
 
         login_user(client, hr_user.usuario, "password")
 
+        # Step 1: create draft
         resp = client.post(
-            f"/employee/edit/{emp.id}/salary",
+            f"/employee/salary-changes/new/{emp.id}",
             data={
                 "fecha_efectiva": date.today().isoformat(),
-                "salario_base": "2200.00",
-                "moneda_id": str(moneda_usd.id),
+                "salario_nuevo": "2200.00",
                 "motivo": "Ajuste anual",
-                "submit": "Autorizar Cambio Salarial",
             },
             follow_redirects=False,
         )
         assert resp.status_code == 302
 
-        updated = db_session.query(Empleado).filter(Empleado.id == emp.id).one()
-        assert updated.salario_base == Decimal("2200.00")
-        assert updated.moneda_id == moneda_usd.id
-
         history = db_session.query(HistorialSalario).filter(HistorialSalario.empleado_id == emp.id).all()
         assert len(history) == 1
-        assert history[0].salario_anterior == Decimal("1000.00")
-        assert history[0].salario_nuevo == Decimal("2200.00")
-        assert history[0].autorizado_por == hr_user.usuario
+        cambio = history[0]
+        assert cambio.salario_anterior == Decimal("1000.00")
+        assert cambio.salario_nuevo == Decimal("2200.00")
+        assert cambio.estado == "draft"
+
+        # Step 2: approve (same user allowed in small company)
+        resp = client.post(f"/employee/salary-changes/{cambio.id}/approve", follow_redirects=False)
+        assert resp.status_code == 302
+        db_session.refresh(cambio)
+        assert cambio.estado == "approved"
+        assert cambio.autorizado_por == hr_user.usuario
+
+        # Step 3: apply — salary is updated on the employee record
+        resp = client.post(f"/employee/salary-changes/{cambio.id}/apply", follow_redirects=False)
+        assert resp.status_code == 302
+        db_session.refresh(cambio)
+        db_session.refresh(emp)
+        assert cambio.estado == "applied"
+        assert emp.salario_base == Decimal("2200.00")
 
 
 @pytest.mark.validation
@@ -224,5 +233,5 @@ def test_employee_salary_change_flow_requires_admin_or_hr(app, client, db_sessio
 
         login_user(client, audit_user.usuario, "password")
 
-        resp = client.get(f"/employee/edit/{emp.id}/salary", follow_redirects=False)
+        resp = client.get(f"/employee/salary-changes/new/{emp.id}", follow_redirects=False)
         assert resp.status_code == 403

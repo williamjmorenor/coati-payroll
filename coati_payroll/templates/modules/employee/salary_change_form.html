@@ -19,7 +19,10 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
         <div class="card-body">
             <p class="text-muted mb-4">
                 {{ _('Empleado:') }} <strong>{{ employee.codigo_empleado }} - {{ employee.primer_nombre }} {{ employee.primer_apellido }}</strong><br>
-                {{ _('Salario actual:') }} <strong>{{ employee.salario_base }}</strong>
+                {{ _('Salario actual:') }}
+                <strong>
+                    {% if employee.moneda %}{{ employee.moneda.codigo }} {% endif %}{{ employee.salario_base }}
+                </strong>
             </p>
 
             <form method="POST">
@@ -27,6 +30,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                 <div class="row g-3">
                     <div class="col-md-4">{{ render_field(form.fecha_efectiva) }}</div>
                     <div class="col-md-4">{{ render_field(form.salario_nuevo) }}</div>
+                    <div class="col-md-4">{{ render_field(form.moneda_nueva_id) }}</div>
                     <div class="col-md-12">{{ render_field(form.motivo) }}</div>
                 </div>
 

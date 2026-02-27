@@ -58,6 +58,8 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <th>{{ _('Fecha efectiva') }}</th>
                             <th>{{ _('Salario anterior') }}</th>
                             <th>{{ _('Salario nuevo') }}</th>
+                            <th>{{ _('Moneda anterior') }}</th>
+                            <th>{{ _('Moneda nueva') }}</th>
                             <th>{{ _('Estado') }}</th>
                             <th>{{ _('Creado por') }}</th>
                             <th>{{ _('Aprobado por') }}</th>
@@ -71,6 +73,8 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                             <td>{{ change.fecha_efectiva }}</td>
                             <td>{{ change.salario_anterior }}</td>
                             <td>{{ change.salario_nuevo }}</td>
+                            <td>{{ change.moneda_anterior.codigo if change.moneda_anterior else '-' }}</td>
+                            <td>{{ change.moneda_nueva.codigo if change.moneda_nueva else '-' }}</td>
                             <td><span class="badge bg-{% if change.estado == 'applied' %}success{% elif change.estado == 'approved' %}info{% else %}secondary{% endif %}">{{ change.estado }}</span></td>
                             <td>{{ change.creado_por or '-' }}</td>
                             <td>{{ change.autorizado_por or '-' }}</td>
@@ -91,7 +95,7 @@ SPDX-FileCopyrightText: 2025 - 2026 BMO Soluciones, S.A.
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="8" class="text-center text-muted">{{ _('No hay cambios salariales registrados.') }}</td>
+                            <td colspan="10" class="text-center text-muted">{{ _('No hay cambios salariales registrados.') }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
