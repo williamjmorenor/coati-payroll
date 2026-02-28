@@ -4,6 +4,7 @@
 
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
+from types import SimpleNamespace
 from typing import Any, cast
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -18,6 +19,8 @@ from coati_payroll.model import (
     NominaDetalle,
     NominaNovedad,
     NominaProgress,
+    ComprobanteContable,
+    ComprobanteContableLinea,
     Empleado,
     Percepcion,
     Deduccion,
@@ -456,6 +459,34 @@ def ver_nomina_empleado(planilla_id: str, nomina_id: str, nomina_empleado_id: st
             return Decimal(str(value))
         except (ArithmeticError, TypeError, ValueError):
             return Decimal("0")
+
+    comprobante = db.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)).scalar_one_or_none()
+    if comprobante:
+        vacation_liability_rows = db.session.execute(
+            db.select(
+                ComprobanteContableLinea.concepto,
+                db.func.sum(ComprobanteContableLinea.credito).label("monto_total"),
+            )
+            .where(
+                ComprobanteContableLinea.comprobante_id == comprobante.id,
+                ComprobanteContableLinea.nomina_empleado_id == nomina_empleado_id,
+                ComprobanteContableLinea.tipo_concepto == "vacation_liability",
+                ComprobanteContableLinea.tipo_debito_credito == "credito",
+            )
+            .group_by(ComprobanteContableLinea.concepto)
+            .order_by(ComprobanteContableLinea.concepto.asc())
+        ).all()
+        for concepto, monto_total in vacation_liability_rows:
+            monto_provision = _to_decimal(monto_total)
+            if monto_provision <= Decimal("0"):
+                continue
+            prestaciones.append(
+                SimpleNamespace(
+                    codigo="vacation_liability",
+                    descripcion=(concepto or "Provision de Vacaciones"),
+                    monto=monto_provision,
+                )
+            )
 
     configuracion_snapshot = nomina.configuracion_snapshot or {}
 
