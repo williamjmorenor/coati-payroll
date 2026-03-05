@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+## [1.9.1] - 2026-03-05
+
+### Fixed
+
+ - Adjusted code long to avoid Text to long issue.
+
 ### Changed
 
  - Include vacations liability in details view.
