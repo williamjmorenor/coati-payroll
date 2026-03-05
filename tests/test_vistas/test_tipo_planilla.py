@@ -268,6 +268,31 @@ def test_tipo_planilla_fiscal_year_settings(app, client, admin_user, db_session)
             assert tipo.dia_inicio_fiscal == 1
 
 
+def test_tipo_planilla_accepts_long_codigo(app, client, admin_user, db_session):
+    """Test that codigo column accepts long combined codes (up to 50 chars)."""
+    with app.app_context():
+        long_codigo = "bmonic_PLANILLA_MENSUALv_lct2019"  # 32 chars
+        tipo = TipoPlanilla(
+            codigo=long_codigo,
+            descripcion="Planilla mensual según legislación nicaragüense",
+            periodicidad=Periodicidad.MENSUAL,
+            dias=30,
+            mes_inicio_fiscal=1,
+            dia_inicio_fiscal=1,
+            periodos_por_anio=12,
+            activo=True,
+            creado_por="admin-test",
+        )
+        db_session.add(tipo)
+        db_session.commit()
+
+        result = db_session.execute(
+            select(TipoPlanilla).filter_by(codigo=long_codigo)
+        ).scalar_one_or_none()
+        assert result is not None
+        assert result.codigo == long_codigo
+
+
 def test_tipo_planilla_workflow_create_edit_delete(app, client, admin_user, db_session):
     """End-to-end test: Create, edit, and delete a payroll type."""
     with app.app_context():

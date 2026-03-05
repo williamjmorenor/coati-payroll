@@ -379,7 +379,7 @@ class TipoPlanilla(database.Model, BaseTabla):
 
     __tablename__ = "tipo_planilla"
 
-    codigo = database.Column(database.String(20), unique=True, nullable=False)
+    codigo = database.Column(database.String(50), unique=True, nullable=False)
     descripcion = database.Column(database.String(150), nullable=True)
     dias = database.Column(database.Integer, nullable=False, default=30)  # días usados para prorrateos
     periodicidad = database.Column(
