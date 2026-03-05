@@ -1120,9 +1120,6 @@ def ver_log_nomina(planilla_id: str, nomina_id: str):
     # Get log entries
     log_entries = nomina.log_procesamiento or []
 
-    # Get comprobante warnings if exists
-    from coati_payroll.model import ComprobanteContable
-
     comprobante = db.session.execute(db.select(ComprobanteContable).filter_by(nomina_id=nomina_id)).scalar_one_or_none()
 
     comprobante_warnings = comprobante.advertencias if comprobante else []
